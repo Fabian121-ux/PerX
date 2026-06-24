@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="80" viewBox="0 0 128 80" role="img" aria-label="perX infinity symbol">
+  <defs>
+    <linearGradient id="prexSymbolGradient" x1="15" y1="18" x2="113" y2="62" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F7B733"/>
+      <stop offset="0.48" stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#4F46E5"/>
+    </linearGradient>
+    <filter id="prexSoftShadow" x="-20%" y="-25%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#111827" flood-opacity=".18"/>
+    </filter>
+  </defs>
+  <path d="M18 40C28 18 49 17 64 40C79 63 100 62 110 40C100 18 79 17 64 40C49 63 28 62 18 40Z" fill="none" stroke="url(#prexSymbolGradient)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" filter="url(#prexSoftShadow)"/>
+  <path d="M18 40C28 18 49 17 64 40C79 63 100 62 110 40" fill="none" stroke="#FFF7D6" stroke-width="3.2" stroke-linecap="round" opacity=".75"/>
+</svg>

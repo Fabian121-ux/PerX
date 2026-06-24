@@ -1,0 +1,678 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoleName {
+  FREELANCER
+  CLIENT
+  FOUNDER
+  INVESTOR
+  PROPERTY_OWNER
+  ADMIN
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum OpportunityType {
+  JOB
+  FREELANCE_PROJECT
+  STARTUP
+  COFOUNDER
+  INVESTMENT
+  PROPERTY
+  SERVICE
+  PARTNERSHIP
+}
+
+enum OpportunityStatus {
+  DRAFT
+  PUBLISHED
+  PAUSED
+  CLOSED
+  ARCHIVED
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FLAGGED
+}
+
+enum ConversationStatus {
+  ACTIVE
+  BLOCKED
+  REPORTED
+  ARCHIVED
+}
+
+enum MessageAttachmentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ProposalStatus {
+  DRAFT
+  SENT
+  WITHDRAWN
+  ACCEPTED
+  REJECTED
+  COUNTERED
+  EXPIRED
+}
+
+enum DealStatus {
+  DRAFT
+  AWAITING_FUNDING
+  FUNDED
+  IN_PROGRESS
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  RELEASED
+  CANCELLED
+  REFUND_PENDING
+  REFUNDED
+  DISPUTED
+  RESOLVED
+}
+
+enum MilestoneStatus {
+  PENDING
+  FUNDED
+  IN_PROGRESS
+  SUBMITTED
+  APPROVED
+  RELEASED
+  CANCELLED
+  DISPUTED
+}
+
+enum DeliveryStatus {
+  SUBMITTED
+  NEEDS_CHANGES
+  APPROVED
+  REJECTED
+}
+
+enum LedgerEntryType {
+  FUNDING_HELD
+  RELEASE
+  REFUND
+  ADJUSTMENT
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWING
+  ACTIONED
+  DISMISSED
+}
+
+enum ReviewVisibility {
+  PUBLIC
+  HIDDEN
+}
+
+enum NotificationType {
+  SYSTEM
+  MESSAGE
+  PROPOSAL
+  DEAL
+  REVIEW
+  MODERATION
+}
+
+model User {
+  id                 String                @id @default(cuid())
+  email              String                @unique
+  passwordHash       String
+  name               String
+  username           String                @unique
+  imageUrl           String?
+  emailVerifiedAt    DateTime?
+  verificationStatus VerificationStatus    @default(UNVERIFIED)
+  isActive           Boolean               @default(true)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  sessions           Session[]
+  roles              UserRole[]
+  profile            Profile?
+  opportunities      Opportunity[]         @relation("OpportunityOwner")
+  bookmarks          OpportunityBookmark[]
+  reports            OpportunityReport[]   @relation("Reporter")
+  proposals          Proposal[]            @relation("ProposalSender")
+  conversations      ConversationParticipant[]
+  messages           Message[]
+  deals              DealParticipant[]
+  deliveries         Delivery[]
+  approvals          Approval[]
+  releases           Release[]
+  refunds            Refund[]
+  disputesOpened     Dispute[]             @relation("DisputeOpenedBy")
+  reviewsGiven       Review[]              @relation("ReviewAuthor")
+  reviewsReceived    Review[]              @relation("ReviewSubject")
+  notifications      Notification[]
+  auditLogs          AuditLog[]            @relation("AuditActor")
+  moderationActions  ModerationAction[]    @relation("ModerationActor")
+
+  @@index([createdAt])
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  userAgent  String?
+  ipAddress  String?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Role {
+  id          String     @id @default(cuid())
+  name        RoleName   @unique
+  label       String
+  description String
+  users       UserRole[]
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+}
+
+model Profile {
+  id                   String                @id @default(cuid())
+  userId               String                @unique
+  headline             String
+  biography            String
+  location             String
+  websiteUrl           String?
+  profileImageUrl      String?
+  trustScore           Int                   @default(0)
+  profileCompleteness  Int                   @default(0)
+  completedDeals       Int                   @default(0)
+  averageRating        Decimal               @default(0) @db.Decimal(3, 2)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills               ProfileSkill[]
+  portfolio            PortfolioItem[]
+  workHistory          WorkHistory[]
+  verificationRequests VerificationRequest[]
+}
+
+model ProfileSkill {
+  id        String  @id @default(cuid())
+  profileId String
+  name      String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, name])
+}
+
+model PortfolioItem {
+  id          String   @id @default(cuid())
+  profileId   String
+  title       String
+  description String
+  url         String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model WorkHistory {
+  id          String    @id @default(cuid())
+  profileId   String
+  title       String
+  company     String
+  summary     String
+  startedAt   DateTime?
+  endedAt     DateTime?
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model VerificationRequest {
+  id        String             @id @default(cuid())
+  profileId String
+  status    VerificationStatus @default(PENDING)
+  notes     String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  profile   Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model OpportunityCategory {
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  description   String
+  opportunities Opportunity[]
+}
+
+model Opportunity {
+  id               String                     @id @default(cuid())
+  ownerId          String
+  categoryId       String?
+  type             OpportunityType
+  status           OpportunityStatus          @default(DRAFT)
+  moderationStatus ModerationStatus           @default(PENDING)
+  title            String
+  slug             String                     @unique
+  summary          String
+  description      String
+  location         String?
+  remote           Boolean                    @default(true)
+  budgetMinMinor   BigInt?
+  budgetMaxMinor   BigInt?
+  currency         String                     @default("NGN")
+  skills           String[]                   @default([])
+  publishedAt      DateTime?
+  pausedAt         DateTime?
+  closedAt         DateTime?
+  archivedAt       DateTime?
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+  owner            User                       @relation("OpportunityOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  category         OpportunityCategory?       @relation(fields: [categoryId], references: [id])
+  bookmarks        OpportunityBookmark[]
+  reports          OpportunityReport[]
+  statusHistory    OpportunityStatusHistory[]
+  proposals        Proposal[]
+  conversations    Conversation[]
+
+  @@index([status, moderationStatus, publishedAt])
+  @@index([ownerId, status])
+  @@index([type])
+  @@index([categoryId])
+}
+
+model OpportunityBookmark {
+  id            String      @id @default(cuid())
+  userId        String
+  opportunityId String
+  createdAt     DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, opportunityId])
+  @@index([userId])
+}
+
+model OpportunityReport {
+  id            String       @id @default(cuid())
+  opportunityId String
+  reporterId    String
+  reason        String
+  details       String?
+  status        ReportStatus @default(OPEN)
+  createdAt     DateTime     @default(now())
+  opportunity   Opportunity  @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  reporter      User         @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+}
+
+model OpportunityStatusHistory {
+  id            String             @id @default(cuid())
+  opportunityId String
+  fromStatus    OpportunityStatus?
+  toStatus      OpportunityStatus
+  actorId       String?
+  note          String?
+  createdAt     DateTime           @default(now())
+  opportunity   Opportunity        @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id            String                    @id @default(cuid())
+  opportunityId String?
+  status        ConversationStatus        @default(ACTIVE)
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  opportunity   Opportunity?              @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  participants  ConversationParticipant[]
+  messages      Message[]
+  proposals     Proposal[]
+
+  @@index([opportunityId])
+}
+
+model ConversationParticipant {
+  id             String       @id @default(cuid())
+  conversationId String
+  userId         String
+  lastReadAt     DateTime?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String               @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String
+  createdAt      DateTime             @default(now())
+  conversation   Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User                 @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  attachments    MessageAttachment[]
+  readReceipts   MessageReadReceipt[]
+
+  @@index([conversationId, createdAt])
+}
+
+model MessageAttachment {
+  id        String                  @id @default(cuid())
+  messageId String
+  filename  String
+  url       String
+  mimeType  String
+  byteSize  Int
+  status    MessageAttachmentStatus @default(PENDING)
+  createdAt DateTime                @default(now())
+  message   Message                 @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+model MessageReadReceipt {
+  id        String   @id @default(cuid())
+  messageId String
+  userId    String
+  readAt    DateTime @default(now())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+}
+
+model BlockedUser {
+  id            String   @id @default(cuid())
+  blockerUserId String
+  blockedUserId String
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  @@unique([blockerUserId, blockedUserId])
+}
+
+model Proposal {
+  id             String                  @id @default(cuid())
+  opportunityId  String
+  senderId       String
+  conversationId String?
+  status         ProposalStatus          @default(SENT)
+  amountMinor    BigInt
+  currency       String                  @default("NGN")
+  description    String
+  deliveryDays   Int
+  revisions      Int                     @default(1)
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  opportunity    Opportunity             @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  sender         User                    @relation("ProposalSender", fields: [senderId], references: [id], onDelete: Cascade)
+  conversation   Conversation?           @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  milestones     ProposalMilestone[]
+  statusHistory  ProposalStatusHistory[]
+  deal           Deal?
+
+  @@index([opportunityId, status])
+  @@index([senderId, status])
+}
+
+model ProposalMilestone {
+  id          String   @id @default(cuid())
+  proposalId  String
+  title       String
+  description String
+  amountMinor BigInt
+  dueInDays   Int
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+}
+
+model ProposalStatusHistory {
+  id         String          @id @default(cuid())
+  proposalId String
+  fromStatus ProposalStatus?
+  toStatus   ProposalStatus
+  actorId    String?
+  note       String?
+  createdAt  DateTime        @default(now())
+  proposal   Proposal        @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+}
+
+model Deal {
+  id             String                @id @default(cuid())
+  proposalId     String                @unique
+  opportunityId  String
+  status         DealStatus            @default(AWAITING_FUNDING)
+  valueMinor     BigInt
+  currency       String                @default("NGN")
+  idempotencyKey String?               @unique
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  proposal       Proposal              @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  participants   DealParticipant[]
+  milestones     DealMilestone[]
+  deliveries     Delivery[]
+  approvals      Approval[]
+  releases       Release[]
+  refunds        Refund[]
+  disputes       Dispute[]
+  ledgerEntries  LedgerEntry[]
+  statusHistory  EscrowStatusHistory[]
+  reviews        Review[]
+
+  @@index([status, createdAt])
+}
+
+model DealParticipant {
+  id        String   @id @default(cuid())
+  dealId    String
+  userId    String
+  role      String
+  createdAt DateTime @default(now())
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([dealId, userId])
+  @@index([userId])
+}
+
+model DealMilestone {
+  id          String          @id @default(cuid())
+  dealId      String
+  title       String
+  description String
+  amountMinor BigInt
+  currency    String          @default("NGN")
+  status      MilestoneStatus @default(PENDING)
+  dueAt       DateTime?
+  createdAt   DateTime        @default(now())
+  deal        Deal            @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  deliveries  Delivery[]
+}
+
+model Delivery {
+  id          String         @id @default(cuid())
+  dealId      String
+  milestoneId String?
+  submitterId String
+  title       String
+  notes       String
+  status      DeliveryStatus @default(SUBMITTED)
+  createdAt   DateTime       @default(now())
+  deal        Deal           @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  milestone   DealMilestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  submitter   User           @relation(fields: [submitterId], references: [id], onDelete: Cascade)
+}
+
+model Approval {
+  id        String   @id @default(cuid())
+  dealId    String
+  actorId   String
+  note      String?
+  createdAt DateTime @default(now())
+  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  actor     User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+}
+
+model Release {
+  id             String   @id @default(cuid())
+  dealId         String
+  actorId        String
+  amountMinor    BigInt
+  currency       String
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+  deal           Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  actor          User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+}
+
+model Refund {
+  id             String   @id @default(cuid())
+  dealId         String
+  actorId        String
+  amountMinor    BigInt
+  currency       String
+  reason         String
+  idempotencyKey String   @unique
+  createdAt      DateTime @default(now())
+  deal           Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  actor          User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+}
+
+model Dispute {
+  id         String   @id @default(cuid())
+  dealId     String
+  openedById String
+  reason     String
+  status     String   @default("OPEN")
+  resolution String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deal       Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  openedBy   User     @relation("DisputeOpenedBy", fields: [openedById], references: [id], onDelete: Cascade)
+}
+
+model LedgerEntry {
+  id             String          @id @default(cuid())
+  dealId         String
+  type           LedgerEntryType
+  amountMinor    BigInt
+  currency       String
+  idempotencyKey String          @unique
+  note           String?
+  createdAt      DateTime        @default(now())
+  deal           Deal            @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model EscrowStatusHistory {
+  id         String      @id @default(cuid())
+  dealId     String
+  fromStatus DealStatus?
+  toStatus   DealStatus
+  actorId    String?
+  reason     String?
+  createdAt  DateTime    @default(now())
+  deal       Deal        @relation(fields: [dealId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id         String           @id @default(cuid())
+  dealId     String
+  authorId   String
+  subjectId  String
+  rating     Int
+  title      String
+  body       String
+  visibility ReviewVisibility @default(PUBLIC)
+  createdAt  DateTime         @default(now())
+  deal       Deal             @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  author     User             @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  subject    User             @relation("ReviewSubject", fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([dealId, authorId, subjectId])
+  @@index([subjectId, createdAt])
+}
+
+model TrustSignal {
+  id        String   @id @default(cuid())
+  userId    String
+  key       String
+  label     String
+  value     Int
+  weight    Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+}
+
+model ModerationAction {
+  id         String   @id @default(cuid())
+  actorId    String
+  entityType String
+  entityId   String
+  action     String
+  reason     String
+  createdAt  DateTime @default(now())
+  actor      User     @relation("ModerationActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+}

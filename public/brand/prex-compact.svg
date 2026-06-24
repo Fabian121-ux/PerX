@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="176" height="76" viewBox="0 0 176 76" role="img" aria-label="perX compact logo">
+  <defs>
+    <linearGradient id="prexCompactGradient" x1="7" y1="19" x2="103" y2="57" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F7B733"/>
+      <stop offset=".5" stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#4F46E5"/>
+    </linearGradient>
+  </defs>
+  <path d="M12 38C22 17 43 16 58 38C73 60 94 59 104 38C94 17 73 16 58 38C43 60 22 59 12 38Z" fill="none" stroke="url(#prexCompactGradient)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="118" y="50" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="800" letter-spacing="-1" fill="#111827">X</text>
+</svg>

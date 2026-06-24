@@ -1,0 +1,71 @@
+"use client";
+
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { Plus, Briefcase, FileSignature, Handshake, FolderPlus } from "lucide-react";
+import Link from "next/link";
+import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
+
+export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
+  const getHref = (href: string) => (previewMode ? href.replace("/app", "/preview") : href);
+
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          className="hidden items-center gap-2 rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[color:var(--px-primary-strong)] sm:flex"
+          aria-label="Create new"
+        >
+          <Plus size={18} />
+          Create
+        </button>
+      </DropdownMenu.Trigger>
+      
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          className="z-[100] w-56 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-1 shadow-lg animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+          sideOffset={8}
+          align="end"
+        >
+          <DropdownMenu.Item asChild>
+            <Link
+              href={getHref("/app/opportunities/new")}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+            >
+              <Briefcase size={16} className="text-[color:var(--px-text-muted)]" />
+              Post an opportunity
+            </Link>
+          </DropdownMenu.Item>
+
+          <FeatureStatusDialog featureName="Create a project">
+            <DropdownMenu.Item asChild onSelect={(e) => e.preventDefault()}>
+              <button className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
+                <FileSignature size={16} className="text-[color:var(--px-text-muted)]" />
+                Create a project
+              </button>
+            </DropdownMenu.Item>
+          </FeatureStatusDialog>
+
+          <FeatureStatusDialog featureName="Start a deal">
+            <DropdownMenu.Item asChild onSelect={(e) => e.preventDefault()}>
+              <button className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
+                <Handshake size={16} className="text-[color:var(--px-text-muted)]" />
+                Start a deal
+              </button>
+            </DropdownMenu.Item>
+          </FeatureStatusDialog>
+
+          <DropdownMenu.Separator className="my-1 h-px bg-[color:var(--px-border)]" />
+
+          <FeatureStatusDialog featureName="Add portfolio work">
+            <DropdownMenu.Item asChild onSelect={(e) => e.preventDefault()}>
+              <button className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
+                <FolderPlus size={16} className="text-[color:var(--px-text-muted)]" />
+                Add portfolio work
+              </button>
+            </DropdownMenu.Item>
+          </FeatureStatusDialog>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}

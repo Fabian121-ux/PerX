@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="80" viewBox="0 0 128 80" role="img" aria-label="perX infinity symbol">
+  <defs>
+    <linearGradient id="perxGold" x1="16" x2="112" y1="62" y2="18" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9f7410"/>
+      <stop offset=".48" stop-color="#f5b942"/>
+      <stop offset="1" stop-color="#f7d77b"/>
+    </linearGradient>
+  </defs>
+  <path d="M18 40c0-13 9.5-23 21.5-23 10 0 17 6.7 24.5 18l6 9c7.5 11.3 14.5 19 27 19 12 0 22-10 22-23s-10-23-22-23c-12.5 0-19.5 7.7-27 19l-6 9C56.5 56.3 49.5 63 39.5 63 27.5 63 18 53 18 40Z" fill="none" stroke="url(#perxGold)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M29.5 40c0-6.3 4.3-11.2 10-11.2 5.9 0 10.5 5.2 16.1 13.5l3.8 5.6" fill="none" stroke="#fff0bd" stroke-width="4" stroke-linecap="round" opacity=".48"/>
+</svg>

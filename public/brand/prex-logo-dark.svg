@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="284" height="84" viewBox="0 0 284 84" role="img" aria-label="perX">
+  <defs>
+    <linearGradient id="prexLogoDarkGradient" x1="9" y1="20" x2="119" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFD166"/>
+      <stop offset=".5" stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+  <path d="M14 42C25 18 50 17 67 42C84 67 109 66 120 42C109 18 84 17 67 42C50 67 25 66 14 42Z" fill="none" stroke="url(#prexLogoDarkGradient)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M14 42C25 18 50 17 67 42C84 67 109 66 120 42" fill="none" stroke="#FFF7D6" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+  <text x="145" y="56" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="800" letter-spacing="-1.2" fill="#FFFFFF">perX</text>
+</svg>
