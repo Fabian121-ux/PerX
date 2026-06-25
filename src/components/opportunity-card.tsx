@@ -1,11 +1,14 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Bookmark, MapPin, ShieldCheck } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { formatBudgetRange } from "@/lib/money";
 
 type OpportunityCardProps = {
+  href?: string;
   opportunity: {
     slug: string;
     title: string;
@@ -16,14 +19,19 @@ type OpportunityCardProps = {
     budgetMinMinor?: bigint | number | string | null;
     budgetMaxMinor?: bigint | number | string | null;
     currency?: string;
+    imageAlt?: string;
+    imageUrl?: string;
     skills?: string[];
     category?: { name: string; slug: string } | null;
     owner?: { name: string; username?: string; profile?: { trustScore?: number } | null; trustScore?: number } | null;
   };
 };
 
-export function OpportunityCard({ opportunity }: OpportunityCardProps) {
+export function OpportunityCard({ href, opportunity }: OpportunityCardProps) {
   const trustScore = opportunity.owner?.profile?.trustScore ?? opportunity.owner?.trustScore;
+  const temporaryImage = getTemporaryOpportunityImage(opportunity.slug);
+  const imageSrc = opportunity.imageUrl ?? temporaryImage.src;
+  const imageAlt = opportunity.imageAlt ?? temporaryImage.alt;
   const ownerInitials = (opportunity.owner?.name ?? "perX")
     .split(" ")
     .map((part) => part[0])
@@ -32,30 +40,37 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
     .toUpperCase();
 
   return (
-    <Card className="grid gap-4 overflow-hidden p-0">
-      <div className="prex-opportunity-band relative min-h-28 p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="grid h-12 w-12 place-items-center rounded-[var(--px-radius-sm)] bg-white/15 text-sm font-black ring-1 ring-white/20">
+    <Card className="relative overflow-hidden p-0">
+      <button
+        aria-label={`Save ${opportunity.title}`}
+        className="absolute right-5 top-5 z-20 grid h-10 w-10 place-items-center rounded-full bg-black/45 text-white ring-1 ring-white/20 transition hover:bg-black/65 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+        type="button"
+      >
+        <Bookmark aria-hidden size={17} />
+      </button>
+      <Link className="group grid gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--px-focus)]" href={href ?? `/opportunities/${opportunity.slug}`}>
+        <div className="relative min-h-36 overflow-hidden p-5 text-white">
+          <Image
+            src={imageSrc}
+            alt={imageAlt}
+            fill
+            className="object-cover transition-transform duration-500 hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/78 via-black/52 to-black/25" />
+          <div className="relative z-10 grid h-12 w-12 place-items-center rounded-[var(--px-radius-sm)] bg-white/15 text-sm font-black ring-1 ring-white/20">
             {ownerInitials}
           </div>
-          <button
-            aria-label={`Save ${opportunity.title}`}
-            className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-white ring-1 ring-white/20 transition hover:bg-white/25"
-            type="button"
-          >
-            <Bookmark aria-hidden size={17} />
-          </button>
+          <div className="relative z-10 mt-6 flex flex-wrap items-center gap-2 pr-12">
+            <span className="rounded-full bg-white/16 px-3 py-1 text-xs font-semibold capitalize text-white ring-1 ring-white/20">
+              {opportunity.type.replaceAll("_", " ").toLowerCase()}
+            </span>
+            {opportunity.category ? (
+              <span className="rounded-full bg-white/16 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/20">{opportunity.category.name}</span>
+            ) : null}
+          </div>
         </div>
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-white/16 px-3 py-1 text-xs font-semibold capitalize text-white ring-1 ring-white/20">
-            {opportunity.type.replaceAll("_", " ").toLowerCase()}
-          </span>
-          {opportunity.category ? (
-            <span className="rounded-full bg-white/16 px-3 py-1 text-xs font-semibold text-white ring-1 ring-white/20">{opportunity.category.name}</span>
-          ) : null}
-        </div>
-      </div>
-      <div className="grid gap-4 p-5">
+        <div className="grid gap-4 p-5">
         <div className="flex flex-wrap items-center gap-2">
           {trustScore ? (
             <Badge className="border-green-200 bg-green-50 text-green-800">
@@ -69,9 +84,7 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
           </Badge>
         </div>
         <div>
-          <Link className="text-xl font-bold text-[color:var(--px-text)] hover:text-[color:var(--px-primary)]" href={`/opportunities/${opportunity.slug}`}>
-            {opportunity.title}
-          </Link>
+          <h2 className="text-xl font-bold text-[color:var(--px-text)] transition-colors group-hover:text-[color:var(--px-primary)]">{opportunity.title}</h2>
           <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">{opportunity.summary}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -85,11 +98,12 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
           <span className="font-bold text-[color:var(--px-text)]">
             {formatBudgetRange(opportunity.budgetMinMinor, opportunity.budgetMaxMinor, opportunity.currency ?? "NGN")}
           </span>
-          <Link className="text-sm font-semibold text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]" href={`/opportunities/${opportunity.slug}`}>
+          <span className="text-sm font-semibold text-[color:var(--px-primary)]">
             View details
-          </Link>
+          </span>
         </div>
       </div>
+      </Link>
     </Card>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useSyncExternalStore, type ReactNode } from "react";
 
 interface SidebarContextType {
   isCollapsed: boolean;
@@ -8,39 +8,45 @@ interface SidebarContextType {
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
+const SIDEBAR_STORAGE_KEY = "perx-sidebar-collapsed";
+const SIDEBAR_CHANGE_EVENT = "perx-sidebar-collapsed-change";
+
+function getSidebarSnapshot() {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function subscribeToSidebarChanges(onChange: () => void) {
+  if (typeof window === "undefined") return () => undefined;
+
+  window.addEventListener("storage", onChange);
+  window.addEventListener(SIDEBAR_CHANGE_EVENT, onChange);
+
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(SIDEBAR_CHANGE_EVENT, onChange);
+  };
+}
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const isCollapsed = useSyncExternalStore(subscribeToSidebarChanges, getSidebarSnapshot, () => false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsMounted(true), 0);
+  const toggleCollapse = useCallback(() => {
+    const next = !getSidebarSnapshot();
     try {
-      const stored = localStorage.getItem("perx-sidebar-collapsed");
-      if (stored === "true") {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setIsCollapsed(true);
-      }
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+      window.dispatchEvent(new Event(SIDEBAR_CHANGE_EVENT));
     } catch {
-      // Ignore
+      // Ignore storage failures.
     }
-    return () => clearTimeout(timer);
   }, []);
 
-  const toggleCollapse = () => {
-    setIsCollapsed((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem("perx-sidebar-collapsed", String(next));
-      } catch {
-        // Ignore
-      }
-      return next;
-    });
-  };
-
   return (
-    <SidebarContext.Provider value={{ isCollapsed: isMounted ? isCollapsed : false, toggleCollapse }}>
+    <SidebarContext.Provider value={{ isCollapsed, toggleCollapse }}>
       {children}
     </SidebarContext.Provider>
   );

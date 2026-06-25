@@ -4,10 +4,10 @@ import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "reac
 import { cn } from "@/lib/utils";
 
 const variants = {
-  ghost: "prex-btn-ghost border border-transparent",
-  primary: "prex-btn-primary",
-  secondary: "prex-btn-secondary",
-  warm: "prex-btn-warm",
+  ghost: "perx-btn-ghost border border-transparent",
+  primary: "perx-btn-primary",
+  secondary: "perx-btn-secondary",
+  warm: "perx-btn-warm",
   outline: "border border-[color:var(--px-border-strong)] bg-transparent text-[color:var(--px-text)] hover:bg-[color:var(--px-surface-soft)]",
   destructive: "bg-[color:var(--px-error)] text-white hover:bg-red-600 focus:ring-red-600",
   icon: "hover:bg-[color:var(--px-muted)] text-[color:var(--px-text-muted)] hover:text-[color:var(--px-text)]",

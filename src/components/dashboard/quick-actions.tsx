@@ -27,7 +27,7 @@ export function QuickActions() {
         {actions.map((action, i) => {
           const content = (
             <div className="group flex min-h-[92px] flex-col items-center justify-center gap-3 rounded-[var(--px-radius-sm)] border border-transparent p-2 transition-colors hover:border-[color:var(--px-primary)]/35 hover:bg-[color:var(--px-surface-soft)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-gold-soft)] transition-transform group-hover:scale-105 group-hover:text-[color:var(--px-gold-bright)]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)] transition-transform group-hover:scale-105 group-hover:text-[color:var(--px-primary-strong)]">
                 <action.icon size={23} />
               </div>
               <span className="text-center text-xs font-semibold text-[color:var(--px-text)]">{action.label}</span>

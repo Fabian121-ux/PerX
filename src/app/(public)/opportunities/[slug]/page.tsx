@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 
 import { PublicPageShell } from "@/components/standard-page";
 import { Badge } from "@/components/ui/badge";
@@ -8,17 +9,30 @@ import { Field, Input, Textarea } from "@/components/ui/form";
 import { bookmarkOpportunityAction, reportOpportunityAction } from "@/features/opportunities/actions";
 import { submitProposalAction } from "@/features/proposals/actions";
 import { getOpportunityBySlug } from "@/lib/data/opportunities";
+import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { formatBudgetRange } from "@/lib/money";
 
 export default async function OpportunityDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const opportunity = await getOpportunityBySlug(slug);
   if (!opportunity) notFound();
+  const image = getTemporaryOpportunityImage(opportunity.slug);
 
   return (
     <PublicPageShell>
       <main className="mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:px-6 lg:grid-cols-[1fr_380px] lg:px-8">
         <section>
+          <div className="relative mb-7 aspect-[16/8] overflow-hidden rounded-[24px] border border-[color:var(--px-border)] bg-[color:var(--px-muted)] shadow-[var(--px-shadow)]">
+            <Image
+              alt={image.alt}
+              className="object-cover"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 780px"
+              src={image.src}
+            />
+            <div className="absolute inset-0 bg-gradient-to-tr from-black/62 via-black/24 to-transparent" />
+          </div>
           <div className="flex flex-wrap gap-2">
             <Badge>{opportunity.type.replaceAll("_", " ").toLowerCase()}</Badge>
             {opportunity.category ? <Badge>{opportunity.category.name}</Badge> : null}

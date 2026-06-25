@@ -92,7 +92,7 @@ export const previewUser: PreviewUser = {
   id: "alex-demo",
   name: "Alex Morgan",
   username: "alex-demo",
-  email: "alex-demo@demo.prex.local",
+  email: "alex-demo@demo.perx.local",
   headline: "Product Designer and Startup Collaborator",
   biography: "Alex is a product designer and startup collaborator using perX to discover serious opportunities, negotiate structured work, and build a visible trust record.",
   location: "Toronto, Canada",

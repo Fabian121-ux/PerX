@@ -1,63 +1,106 @@
+import Image from "next/image";
+
 import { cn } from "@/lib/utils";
 
+type BrandVariant = "logo" | "horizontal" | "symbol" | "wordmark";
+type BrandTheme = "light" | "dark";
+
+const assetMap: Record<BrandVariant, Record<BrandTheme, string>> = {
+  logo: {
+    light: "/brand/perx-logo-light.png",
+    dark: "/brand/perx-logo-dark.png",
+  },
+  horizontal: {
+    light: "/brand/perx-logo-horizontal-light.png",
+    dark: "/brand/perx-logo-horizontal-dark.png",
+  },
+  symbol: {
+    light: "/brand/perx-symbol-light.png",
+    dark: "/brand/perx-symbol-dark.png",
+  },
+  wordmark: {
+    light: "/brand/perx-wordmark-light.png",
+    dark: "/brand/perx-wordmark-dark.png",
+  },
+};
+
+const defaultDimensions: Record<BrandVariant, { width: number; height: number; className: string }> = {
+  logo: { width: 420, height: 116, className: "h-10 w-auto" },
+  horizontal: { width: 420, height: 116, className: "h-10 w-auto" },
+  symbol: { width: 914, height: 273, className: "h-8 w-auto" },
+  wordmark: { width: 176, height: 96, className: "h-8 w-auto" },
+};
+
 export function BrandLogo({
+  ariaLabel = "perX",
   className,
   compact = false,
+  dark,
+  decorative = false,
+  height,
+  priority = false,
+  theme,
+  variant = "horizontal",
+  width,
 }: {
+  ariaLabel?: string;
   className?: string;
-  dark?: boolean;
   compact?: boolean;
+  dark?: boolean;
+  decorative?: boolean;
+  height?: number;
+  priority?: boolean;
+  theme?: BrandTheme;
+  variant?: BrandVariant;
+  width?: number;
 }) {
-  if (compact) {
-    return <BrandSymbol className={className} />;
-  }
+  const resolvedVariant = compact ? "symbol" : variant;
+  const resolvedTheme = theme ?? (dark ? "dark" : "light");
+  const dimensions = defaultDimensions[resolvedVariant];
 
   return (
-    <span
-      aria-label="perX"
-      className={cn("inline-flex items-center gap-2.5 whitespace-nowrap", className)}
-      role="img"
-    >
-      <BrandSymbol className="h-8 w-10 shrink-0 text-[color:var(--px-gold-bright)]" decorative />
-      <span className="text-[1.55rem] font-black leading-none tracking-normal">
-        <span className="text-[color:var(--px-text)]">per</span>
-        <span className="text-[color:var(--px-gold-bright)]">X</span>
-      </span>
-    </span>
+    <Image
+      alt={decorative ? "" : ariaLabel}
+      aria-hidden={decorative ? true : undefined}
+      className={cn("shrink-0 object-contain", dimensions.className, className)}
+      height={height ?? dimensions.height}
+      priority={priority}
+      src={assetMap[resolvedVariant][resolvedTheme]}
+      width={width ?? dimensions.width}
+    />
   );
 }
 
 export function BrandSymbol({
+  ariaLabel = "perX infinity symbol",
   className,
   decorative = false,
+  dark,
+  height,
+  priority = false,
+  theme,
+  width,
 }: {
+  ariaLabel?: string;
   className?: string;
   decorative?: boolean;
+  dark?: boolean;
+  height?: number;
+  priority?: boolean;
+  theme?: BrandTheme;
+  width?: number;
 }) {
   return (
-    <svg
-      aria-hidden={decorative ? true : undefined}
-      aria-label={decorative ? undefined : "perX infinity symbol"}
-      className={cn("h-8 w-12 overflow-visible", className)}
-      fill="none"
-      role={decorative ? undefined : "img"}
-      viewBox="0 0 92 54"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M13.8 27c0-9.6 7-17.3 16-17.3 7.2 0 12.5 4.8 18 13.2l4.3 6.5c5.5 8.4 10.7 14.9 19.6 14.9 9 0 16.2-7.7 16.2-17.3S80.7 9.7 71.7 9.7c-8.9 0-14.1 6.5-19.6 14.9l-4.3 6.5c-5.5 8.4-10.8 13.2-18 13.2-9 0-16-7.7-16-17.3Z"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="9"
-      />
-      <path
-        d="M22.5 27c0-4.7 3.2-8.4 7.4-8.4 4.4 0 7.9 3.9 12.1 10.1l2.9 4.2"
-        stroke="#fff0bd"
-        strokeLinecap="round"
-        strokeWidth="3"
-        opacity="0.5"
-      />
-    </svg>
+    <BrandLogo
+      ariaLabel={ariaLabel}
+      className={className}
+      compact
+      dark={dark}
+      decorative={decorative}
+      height={height}
+      priority={priority}
+      theme={theme}
+      width={width}
+    />
   );
 }

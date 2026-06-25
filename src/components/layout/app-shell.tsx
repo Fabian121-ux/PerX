@@ -19,15 +19,15 @@ export function AppShell({ children, user }: { children: ReactNode; user: Curren
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-dvh overflow-x-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200">
+      <div className="perx-shell relative flex h-dvh overflow-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200">
         <AnimatedBackground />
         <DashboardSidebar />
         <MobileDashboardDrawer open={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
           <DashboardTopbar user={user} onMenuClick={() => setMobileOpen(true)} />
 
-          <main className="dashboard-main flex-1 px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
+          <main className="dashboard-main min-h-0 flex-1 overflow-y-auto px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
             <div className="mx-auto max-w-[1480px]">{children}</div>
           </main>
 
@@ -50,7 +50,7 @@ const mobileLinks: Array<{ key: RouteKey; icon: typeof Home; label: string }> = 
   { key: "settings", icon: Settings, label: "Settings" },
 ];
 
-function MobileDashboardDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function MobileDashboardDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
   const env = getEnvironment(pathname);
 
@@ -64,9 +64,9 @@ function MobileDashboardDrawer({ open, onClose }: { open: boolean; onClose: () =
         aria-label="Close navigation menu"
         type="button"
       />
-      <div className="relative flex h-full w-[min(22rem,calc(100vw-2rem))] flex-col border-r border-[color:var(--px-border)] bg-[color:var(--px-navy-2)] p-4 shadow-2xl">
+      <div className="perx-sidebar relative flex h-full w-[min(22rem,calc(100vw-2rem))] flex-col border-r border-[color:var(--px-border)] p-4 shadow-2xl">
         <div className="flex h-12 items-center justify-between">
-          <BrandLogo className="h-8" dark />
+          <BrandLogo className="h-9 drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]" dark />
           <button
             className="flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             onClick={onClose}
@@ -87,7 +87,7 @@ function MobileDashboardDrawer({ open, onClose }: { open: boolean; onClose: () =
                 onClick={onClose}
                 className={`flex h-12 items-center gap-3 rounded-[var(--px-radius-sm)] px-3 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${
                   isActive
-                    ? "bg-[color:var(--px-primary)] text-[#070707]"
+                    ? "bg-[color:var(--px-primary)] text-white"
                     : "text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-text)]"
                 }`}
               >

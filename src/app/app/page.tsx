@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDashboardMetrics } from "@/lib/data/app";
 import { getOpportunityFeed } from "@/lib/data/opportunities";
+import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { HomeDashboard } from "@/components/dashboard/home-dashboard";
 import type { HomeDashboardData } from "@/components/dashboard/types";
 
@@ -47,24 +48,28 @@ export default async function DashboardPage() {
       { id: "tunde-bello", name: "Tunde Bello", username: "tunde-bello", role: "Startup Advisor", headline: "Connecting capital and talent", trustScore: 95 },
       { id: "sofia-martins", name: "Sofia Martins", username: "sofia-martins", role: "Product Designer", headline: "Designing trust-led platforms", trustScore: 88 },
     ],
-    recommendedOpportunities: topOpps.map(opp => ({
-      id: opp.id,
-      slug: opp.slug,
-      title: opp.title,
-      organisation: opp.owner?.name ?? "Independent",
-      location: opp.location ?? "Remote",
-      remote: opp.remote,
-      budgetMinMinor: Number(opp.budgetMinMinor ?? 0),
-      budgetMaxMinor: Number(opp.budgetMaxMinor ?? 0),
-      currency: opp.currency,
-      type: opp.type,
-      postedTimeAgo: getTimeAgo(opp.publishedAt || undefined),
-      imageUrl: undefined, // Add realistic image resolving logic if needed
-    })),
+    recommendedOpportunities: topOpps.map((opp) => {
+      const image = getTemporaryOpportunityImage(opp.slug);
+      return {
+        id: opp.id,
+        slug: opp.slug,
+        title: opp.title,
+        organisation: opp.owner?.name ?? "Independent",
+        location: opp.location ?? "Remote",
+        remote: opp.remote,
+        budgetMinMinor: Number(opp.budgetMinMinor ?? 0),
+        budgetMaxMinor: Number(opp.budgetMaxMinor ?? 0),
+        currency: opp.currency,
+        type: opp.type,
+        postedTimeAgo: getTimeAgo(opp.publishedAt || undefined),
+        imageAlt: image.alt,
+        imageUrl: image.src,
+      };
+    }),
     activityFeed: [
       { id: "act-1", message: "Maya Chen sent you a proposal for Product Discovery Sprint.", timeAgo: "1h ago", initials: "MC" },
       { id: "act-2", message: "David Okafor submitted milestone 2 for Marketplace MVP.", timeAgo: "3h ago", initials: "DO" },
-      { id: "act-3", message: "A saved opportunity is closing soon.", timeAgo: "5h ago", initials: "PX" },
+      { id: "act-3", message: "A saved opportunity is closing soon.", timeAgo: "5h ago", initials: "pX" },
     ],
     opportunityTrends: [
       { id: "tr-1", label: "Product design projects", percentage: "18.5%", isUp: true },

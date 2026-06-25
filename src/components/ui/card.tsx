@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export function Card({ children, className }: { children: ReactNode; className?: string }) {
-  return <section className={cn("prex-card p-5", className)}>{children}</section>;
+  return <section className={cn("perx-card p-5", className)}>{children}</section>;
 }
 
 export function EmptyState({ action, body, title }: { action?: ReactNode; body: string; title: string }) {

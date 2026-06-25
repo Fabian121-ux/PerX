@@ -1,45 +1,39 @@
+import { DiscoverExperience } from "@/components/discover/discover-experience";
+import { demoCategories } from "@/lib/data/demo";
 import { previewOpportunities } from "@/lib/data/preview";
-import { RecommendedOpportunities } from "@/components/dashboard/recommended-opportunities";
-import { RecommendedProfiles } from "@/components/dashboard/recommended-profiles";
 
-export default function PreviewDiscoverPage() {
-  const recommendedProfiles = [
-    { id: "maya-client", name: "Maya Chen", username: "maya-client", role: "Startup Founder", headline: "Building cross-border services", trustScore: 86 },
-    { id: "david-okafor", name: "David Okafor", username: "david-okafor", role: "Full-stack Developer", headline: "Scaling marketplace MVPs", trustScore: 92 },
-    { id: "amara-nwosu", name: "Amara Nwosu", username: "amara-nwosu", role: "Brand Strategist", headline: "Positioning health startups", trustScore: 78 },
-    { id: "tunde-bello", name: "Tunde Bello", username: "tunde-bello", role: "Startup Advisor", headline: "Connecting capital and talent", trustScore: 95 },
+export default async function PreviewDiscoverPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; q?: string; type?: string }>;
+}) {
+  const params = await searchParams;
+  const filtered = previewOpportunities.filter((opportunity) => {
+    const matchesCategory = !params.category || opportunity.category.slug === params.category;
+    const matchesType = !params.type || opportunity.type === params.type;
+    const matchesQuery =
+      !params.q ||
+      `${opportunity.title} ${opportunity.summary} ${opportunity.skills.join(" ")}`
+        .toLowerCase()
+        .includes(params.q.toLowerCase());
+    return matchesCategory && matchesType && matchesQuery;
+  });
+
+  const profiles = [
+    { headline: "Building cross-border services", name: "Maya Chen", role: "Startup Founder", trustScore: 86, username: "maya-client" },
+    { headline: "Scaling marketplace MVPs", name: "David Okafor", role: "Full-stack Developer", trustScore: 92, username: "david-okafor" },
+    { headline: "Positioning health startups", name: "Amara Nwosu", role: "Brand Strategist", trustScore: 78, username: "amara-nwosu" },
+    { headline: "Connecting capital and talent", name: "Tunde Bello", role: "Startup Advisor", trustScore: 95, username: "tunde-bello" },
   ];
 
-  const opportunities = previewOpportunities.map(opp => ({
-    id: opp.id,
-    slug: opp.slug,
-    title: opp.title,
-    organisation: opp.owner.name,
-    location: opp.location,
-    remote: opp.remote,
-    budgetMinMinor: opp.budgetMinMinor,
-    budgetMaxMinor: opp.budgetMaxMinor,
-    currency: opp.currency,
-    type: opp.type,
-    postedTimeAgo: "2h ago",
-  }));
-
   return (
-    <div className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-black text-[color:var(--px-text)] sm:text-3xl">Discover</h1>
-        <p className="text-sm text-[color:var(--px-text-muted)]">Find your next opportunity or collaborator.</p>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-        <div className="flex flex-col gap-8">
-          <RecommendedOpportunities opportunities={opportunities} />
-        </div>
-        
-        <div className="flex flex-col gap-6">
-          <RecommendedProfiles profiles={recommendedProfiles} />
-        </div>
-      </div>
-    </div>
+    <DiscoverExperience
+      basePath="/preview/discover"
+      categories={demoCategories}
+      mode="preview"
+      opportunities={filtered}
+      params={params}
+      profiles={profiles}
+    />
   );
 }

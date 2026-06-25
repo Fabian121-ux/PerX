@@ -1,50 +1,60 @@
-# Deployment
+# perX Deployment Notes
 
-## Required Environment
+## Required Commands
 
-- `DATABASE_URL`
-- `SESSION_COOKIE_NAME`
-- `AUTH_SESSION_DAYS`
-- `NEXT_PUBLIC_APP_URL`
-- `UPLOAD_MAX_BYTES`
-- `ERROR_MONITORING_DSN`
-- `DEMO_MODE_ENABLED` defaults to disabled unless explicitly set to `true`
+Before deployment:
 
-## Setup
+```bash
+npm run lint
+npm run type-check
+npm run test
+npm run test:e2e
+npm run build
+npx prisma validate
+```
 
-1. Provision PostgreSQL.
-2. Set environment variables from `.env.example`.
-3. Run `npm ci`.
-4. Run `npm run db:generate`.
-5. Run `npm run db:migrate`.
-6. Run `npm run db:seed` for initial demo/admin data if appropriate.
-7. Run `npm run build`.
-8. Start with `npm run start`.
+Regenerate brand assets after changing `public/image_ux_ux/MAIN_LOGO.jpg`:
 
-## Demo Preview
+```bash
+npm run brand:generate
+```
 
-Demo Preview is intended for review and staging environments. It is disabled by default and must not be enabled in production unless deliberately approved.
+## Environment
 
-1. Set `DEMO_MODE_ENABLED=true` only in the review environment.
-2. Run `npm run db:seed-demo` to reset and recreate fictional demo accounts and connected demo data.
-3. Use the `Enter Demo Preview` button on `/sign-in`.
-4. Use `Exit Demo` in the authenticated shell to clear the server-side session.
+- `DATABASE_URL`: required for production Prisma/PostgreSQL.
+- `NEXT_PUBLIC_APP_URL`: public canonical URL for metadata.
+- Demo/Test flags should remain disabled in production unless deliberately enabled.
 
-The seed command creates fictional users only under the `@demo.prex.local` email domain. It resets demo opportunities, conversations, proposals, deals, milestones, simulated escrow ledger entries, reviews, notifications and trust signals before recreating them.
+## PWA Cache Reset
 
-Demo accounts cannot change passwords, email addresses, roles, uploads, destructive deletes or destructive moderation actions. Demo login is rate-limited and logged without sensitive credentials.
+The service-worker cache is versioned in `public/sw.js` as `perx-public-shell-v3`. Increment it whenever icons, offline shell assets or public cached assets change.
 
-## Health Check
+For local hard refresh after icon changes:
 
-Use `/api/health`. It returns degraded status when `DATABASE_URL` is absent and unhealthy if the database query fails.
+1. Open DevTools -> Application -> Service Workers.
+2. Click Unregister for the local perX service worker.
+3. Clear Storage for the local origin.
+4. Hard refresh the page.
 
-## Backups and Migrations
+Console fallback for local testing:
 
-- Take a database backup before every production migration.
-- Run migrations in deployment, not from application request handlers.
-- Keep the Prisma schema, generated migration files, and deployment release aligned.
-- Test restore procedures with a staging database before relying on backups.
+```js
+navigator.serviceWorker.getRegistrations().then((registrations) => registrations.forEach((registration) => registration.unregister()));
+caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
+```
 
-## Monitoring
+## Cache Policy
 
-`ERROR_MONITORING_DSN` is reserved as the integration point for an error monitoring provider. Do not log secrets, session tokens, private messages, or sensitive deal data.
+The service worker may cache only safe public shell assets. It must not cache:
+
+- `/api`
+- `/app`
+- `/admin`
+- messages
+- deals
+- mutation responses
+- private user data
+
+## Logo/Icon Source
+
+All browser and app icons are generated from `public/image_ux_ux/MAIN_LOGO.jpg`. Do not replace them with generic icons or legacy SVG marks.

@@ -49,7 +49,7 @@ export function MetricGrid({ items }: { items: { label: string; value: string | 
           />
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm font-semibold text-[color:var(--px-text-muted)]">{item.label}</p>
-            <span className="prex-soft-tile grid h-8 w-8 place-items-center rounded-[var(--px-radius-sm)]">
+            <span className="perx-soft-tile grid h-8 w-8 place-items-center rounded-[var(--px-radius-sm)]">
               <ArrowUpRight aria-hidden size={16} />
             </span>
           </div>

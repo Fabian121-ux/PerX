@@ -1,15 +1,17 @@
-# Under Development Features
+# perX Under Development Features
 
-The following features and destinations are mapped to the generic `FeatureStatusDialog` as they are currently under development and not yet implemented in the perX application:
+Interactive controls for unfinished workflows should open the shared Feature Under Development dialog instead of using empty links or silent buttons.
 
-- Startup discovery
-- Messages interface
-- Settings / General Settings
-- Create a project
-- Start a deal
-- Add portfolio work
-- Search functionality (Top bar)
-- View profile
-- General notifications
+Current examples:
 
-These controls will pop up a safe dialog instead of leading to dead or 404 pages.
+- Voice and video calls in Messages.
+- Message attachments.
+- Deal tools where no persisted deal exists.
+- Advanced filters that require backend persistence.
+
+Rules:
+
+- Do not use `href="#"`.
+- Do not route authenticated users to public sign-in/sign-up navigation.
+- Keep `/app` links inside the app shell and `/preview` links inside preview shell.
+- Replace dialog placeholders with real server-backed actions as features mature.

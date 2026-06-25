@@ -18,7 +18,7 @@ export function ActivityFeed({ feed }: { feed: DashboardActivity[] }) {
       <div className="mt-4 flex flex-col gap-5">
         {feed.map((activity) => (
           <div key={activity.id} className="flex gap-3">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--px-primary)] text-xs font-bold text-[#070707]">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--px-primary)] text-xs font-bold text-white">
               {activity.initials || "pX"}
             </div>
             <div className="flex flex-col">

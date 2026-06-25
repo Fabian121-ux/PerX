@@ -15,11 +15,11 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
   return (
     <PublicPageShell>
       <main className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8">
-        <section className="prex-hero-card hidden rounded-[24px] p-8 shadow-[var(--px-shadow-xl)] lg:grid">
+        <section className="perx-hero-card hidden rounded-[24px] p-8 shadow-[var(--px-shadow-strong)] lg:grid">
           <div>
             <BrandLogo className="h-12" dark />
             <div className="mt-10 max-w-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--px-gold)]">Secure preview</p>
+              <p className="text-sm font-semibold uppercase tracking-wide text-blue-100">Secure preview</p>
               <h2 className="mt-3 text-4xl font-black">Deals start with verified access.</h2>
               <p className="mt-4 text-sm leading-7 text-blue-50">
                 Sign in to manage opportunities, proposals, messages, milestones, simulated escrow and reputation from one connected workspace.
@@ -30,7 +30,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
             {["Discovery", "Proposal", "Deal", "Trust"].map((item) => (
               <div className="flex items-center justify-between rounded-[var(--px-radius-sm)] bg-white/10 px-4 py-3 ring-1 ring-white/10" key={item}>
                 <span className="font-semibold">{item}</span>
-                <span className="rounded-full bg-white/14 px-2 py-1 text-xs font-bold text-[color:var(--px-gold)]">Ready</span>
+                <span className="rounded-full bg-white/14 px-2 py-1 text-xs font-bold text-white">Ready</span>
               </div>
             ))}
           </div>

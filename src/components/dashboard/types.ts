@@ -48,6 +48,7 @@ export interface DashboardOpportunity {
   currency: string;
   type: string;
   postedTimeAgo: string;
+  imageAlt?: string;
   imageUrl?: string;
 }
 

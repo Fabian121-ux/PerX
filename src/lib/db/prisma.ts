@@ -4,7 +4,7 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { hasDatabaseUrl } from "@/lib/env";
 
 declare global {
-  var __prexPrisma: PrismaClient | undefined;
+  var __perxPrisma: PrismaClient | undefined;
 }
 
 export function getPrisma() {
@@ -12,13 +12,13 @@ export function getPrisma() {
     throw new Error("DATABASE_URL is not configured.");
   }
 
-  if (!globalThis.__prexPrisma) {
+  if (!globalThis.__perxPrisma) {
     const adapter = new PrismaPg(process.env.DATABASE_URL!);
-    globalThis.__prexPrisma = new PrismaClient({
+    globalThis.__perxPrisma = new PrismaClient({
       adapter,
       log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     });
   }
 
-  return globalThis.__prexPrisma;
+  return globalThis.__perxPrisma;
 }

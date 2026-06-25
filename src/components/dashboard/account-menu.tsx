@@ -32,7 +32,7 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--px-primary-soft)] font-bold text-[color:var(--px-gold-soft)] ring-2 ring-[color:var(--px-surface)] transition-shadow hover:ring-[color:var(--px-primary)] focus:outline-none focus:ring-[color:var(--px-primary)]"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--px-primary)] font-bold text-white ring-2 ring-[color:var(--px-surface)] transition-shadow hover:ring-[color:var(--px-primary)] focus:outline-none focus:ring-[color:var(--px-primary)]"
           aria-label="Account menu"
         >
           {getInitials(user.name || "User")}
@@ -49,12 +49,12 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
             <span className="text-sm font-bold text-[color:var(--px-text)]">{user.name}</span>
             <span className="text-xs text-[color:var(--px-text-muted)] truncate">{user.email}</span>
             {isTest && (
-              <span className="mt-1 w-max rounded-full bg-[color:var(--px-primary-soft)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--px-gold-soft)] ring-1 ring-[color:var(--px-primary)]/35">
+              <span className="mt-1 w-max rounded-full bg-[color:var(--px-primary-soft)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--px-primary)] ring-1 ring-[color:var(--px-primary)]/35">
                 Test Account
               </span>
             )}
             {previewMode && (
-              <span className="mt-1 w-max rounded-full bg-[color:var(--px-primary-soft)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--px-gold-soft)] ring-1 ring-[color:var(--px-primary)]/35">
+              <span className="mt-1 w-max rounded-full bg-[color:var(--px-primary-soft)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--px-primary)] ring-1 ring-[color:var(--px-primary)]/35">
                 Preview Mode
               </span>
             )}

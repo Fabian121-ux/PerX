@@ -1,17 +1,96 @@
-import { AppSection } from "@/components/app-section";
-import { Card } from "@/components/ui/card";
+import { notFound, redirect } from "next/navigation";
+
+import { MessageWorkspace, type WorkspaceConversation } from "@/components/messages/message-workspace";
+import { getCurrentUser, type CurrentUser } from "@/lib/auth/session";
+import { getConversations } from "@/lib/data/app";
+
+type PreviewConversationLike = {
+  id: string;
+  lastMessage?: string;
+  messages: { body: string; createdAt: string; id: string; senderId: string; senderName: string }[];
+  opportunityTitle: string;
+  participantName: string;
+  participantUsername?: string;
+};
+
+type DbConversationLike = {
+  id: string;
+  messages: { body: string; createdAt: Date; id: string; senderId: string }[];
+  opportunity?: { title: string } | null;
+  participants: { user?: { name: string | null; username: string | null } | null; userId: string }[];
+};
+
+function isPreviewConversation(conversation: unknown): conversation is PreviewConversationLike {
+  return (
+    Boolean(conversation) &&
+    typeof conversation === "object" &&
+    typeof (conversation as { participantName?: unknown }).participantName === "string" &&
+    Array.isArray((conversation as { messages?: unknown }).messages)
+  );
+}
+
+function toWorkspaceConversation(conversation: unknown, user: CurrentUser): WorkspaceConversation {
+  if (isPreviewConversation(conversation)) {
+    return {
+      context: conversation.opportunityTitle,
+      id: conversation.id,
+      lastMessage: conversation.lastMessage,
+      messages: conversation.messages,
+      opportunityTitle: conversation.opportunityTitle,
+      participantName: conversation.participantName,
+      participantUsername: conversation.participantUsername,
+      timestamp: "2m",
+      trustScore: 86,
+      unreadCount: 0,
+    };
+  }
+
+  const dbConversation = conversation as DbConversationLike;
+  const otherParticipant = dbConversation.participants.find((participant) => participant.userId !== user.id)?.user;
+  const latestMessage = dbConversation.messages[0];
+
+  return {
+    context: dbConversation.opportunity?.title ?? "Professional conversation",
+    id: dbConversation.id,
+    lastMessage: latestMessage?.body ?? "No messages yet.",
+    messages: latestMessage
+      ? [
+          {
+            body: latestMessage.body,
+            createdAt: latestMessage.createdAt.toISOString(),
+            id: latestMessage.id,
+            senderId: latestMessage.senderId,
+            senderName: latestMessage.senderId === user.id ? user.name : otherParticipant?.name ?? "Participant",
+          },
+        ]
+      : [],
+    opportunityTitle: dbConversation.opportunity?.title ?? undefined,
+    participantName: otherParticipant?.name ?? dbConversation.opportunity?.title ?? "Conversation",
+    participantRole: "Opportunity participant",
+    participantUsername: otherParticipant?.username ?? undefined,
+    timestamp: latestMessage ? latestMessage.createdAt.toLocaleDateString() : "new",
+    trustScore: undefined,
+    unreadCount: 0,
+  };
+}
 
 export default async function ConversationPage({ params }: { params: Promise<{ conversationId: string }> }) {
+  const user = await getCurrentUser();
+  if (!user) redirect("/sign-in");
+
   const { conversationId } = await params;
+  const conversations = await getConversations(user.id);
+  const selected = conversations.find((conversation) => conversation.id === conversationId);
+  if (!selected) notFound();
+
+  const workspaceConversations: WorkspaceConversation[] = conversations.map((conversation) => toWorkspaceConversation(conversation, user));
 
   return (
-    <AppSection description="Participant authorisation is required before message data is loaded." title="Conversation">
-      <Card>
-        <p className="text-sm text-slate-600">Conversation workspace: {conversationId}</p>
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          The MVP data model supports participants, messages, attachments, read receipts, blocking, and reporting. Money movement remains in deal actions.
-        </p>
-      </Card>
-    </AppSection>
+    <MessageWorkspace
+      backHref="/app/messages"
+      conversations={workspaceConversations}
+      currentUserId={user.id}
+      defaultConversationId={conversationId}
+    />
   );
 }

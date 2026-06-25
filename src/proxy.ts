@@ -16,7 +16,7 @@ export function proxy(request: NextRequest) {
   }
 
   if (request.headers.has("x-middleware-subrequest")) {
-    response.headers.set("x-prex-blocked-header", "x-middleware-subrequest");
+    response.headers.set("x-perx-blocked-header", "x-middleware-subrequest");
   }
 
   return response;

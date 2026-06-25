@@ -28,15 +28,13 @@ export function HomeDashboard({ data }: { data: HomeDashboardData }) {
       <div className="flex min-w-0 flex-col gap-6">
         <FeatureStatusDialog featureName="Search functionality">
           <button className="flex h-12 w-full items-center gap-3 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-muted)] px-4 text-left transition-colors hover:border-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:hidden">
-            <Search size={18} className="shrink-0 text-[color:var(--px-gold-bright)]" />
+            <Search size={18} className="shrink-0 text-[color:var(--px-primary)]" />
             <span className="min-w-0 truncate text-sm font-medium text-[color:var(--px-text-muted)]">
               Search opportunities, people and startups...
             </span>
           </button>
         </FeatureStatusDialog>
 
-        <ConnectionStrip connections={data.connections} user={data.user} />
-        
         <TrustHeroCard />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -71,6 +69,8 @@ export function HomeDashboard({ data }: { data: HomeDashboardData }) {
         <RecommendedOpportunities opportunities={data.recommendedOpportunities} />
 
         <RecommendedProfiles profiles={data.recommendedProfiles} />
+
+        <ConnectionStrip connections={data.connections} user={data.user} />
 
         {/* Lower Call-to-action Cards */}
         <div className="grid gap-4 sm:grid-cols-3">

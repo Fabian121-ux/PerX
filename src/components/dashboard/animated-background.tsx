@@ -20,14 +20,14 @@ export function AnimatedBackground() {
       <div className="absolute inset-0 bg-dot-pattern opacity-[0.08]" />
 
       <div className="absolute inset-0 opacity-35">
-        <div className="absolute -left-[18%] -top-[26%] h-[54rem] w-[54rem] rounded-full bg-[color:var(--px-gold)]/18 blur-[150px] animate-blob" />
-        <div className="absolute right-[-22%] top-[18%] h-[40rem] w-[40rem] rounded-full bg-[color:var(--px-gold-bright)]/10 blur-[150px] animate-blob animation-delay-2000" />
+        <div className="absolute -left-[18%] -top-[26%] h-[54rem] w-[54rem] rounded-full bg-[color:var(--px-primary)]/12 blur-[150px] animate-blob" />
+        <div className="absolute right-[-22%] top-[18%] h-[40rem] w-[40rem] rounded-full bg-[color:var(--px-secondary)]/10 blur-[150px] animate-blob animation-delay-2000" />
       </div>
 
       <div className="absolute inset-0 opacity-25">
-        <div className="absolute left-[18%] top-[22%] h-1.5 w-1.5 rounded-full bg-[color:var(--px-gold-bright)] shadow-[0_0_10px_rgba(245,185,66,0.65)] animate-float" />
-        <div className="absolute right-[24%] top-[46%] h-2 w-2 rounded-full bg-[color:var(--px-gold)] shadow-[0_0_10px_rgba(212,160,23,0.58)] animate-float animation-delay-2000" />
-        <div className="absolute left-[34%] bottom-[24%] h-px w-[18rem] rotate-[-18deg] bg-gradient-to-r from-transparent via-[color:var(--px-gold)]/35 to-transparent animate-float animation-delay-4000" />
+        <div className="absolute left-[18%] top-[22%] h-1.5 w-1.5 rounded-full bg-[color:var(--px-primary)] shadow-[0_0_10px_rgba(37,99,235,0.45)] animate-float" />
+        <div className="absolute right-[24%] top-[46%] h-2 w-2 rounded-full bg-[color:var(--px-secondary)] shadow-[0_0_10px_rgba(91,70,242,0.42)] animate-float animation-delay-2000" />
+        <div className="absolute left-[34%] bottom-[24%] h-px w-[18rem] rotate-[-18deg] bg-gradient-to-r from-transparent via-[color:var(--px-primary)]/30 to-transparent animate-float animation-delay-4000" />
       </div>
     </div>
   );

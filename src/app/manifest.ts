@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    background_color: "#070707",
+    background_color: "#f4f7fb",
     categories: ["business", "productivity", "finance"],
     description:
       "An opportunity ecosystem for discovery, trust, structured proposals, deals, simulated escrow, and reputation.",
@@ -34,6 +34,6 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "perX",
     short_name: "perX",
     start_url: "/",
-    theme_color: "#070707",
+    theme_color: "#061936",
   };
 }

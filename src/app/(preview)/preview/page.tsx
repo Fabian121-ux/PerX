@@ -6,6 +6,7 @@ import {
   previewDeals, 
   previewProposals
 } from "@/lib/data/preview";
+import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 
 export default function PreviewDashboardPage() {
   const mockDashboardData: HomeDashboardData = {
@@ -34,24 +35,28 @@ export default function PreviewDashboardPage() {
       { id: "tunde-bello", name: "Tunde Bello", username: "tunde-bello", role: "Startup Advisor", headline: "Connecting capital and talent", trustScore: 95 },
       { id: "sofia-martins", name: "Sofia Martins", username: "sofia-martins", role: "Product Designer", headline: "Designing trust-led platforms", trustScore: 88 },
     ],
-    recommendedOpportunities: previewOpportunities.map(opp => ({
-      id: opp.id,
-      slug: opp.slug,
-      title: opp.title,
-      organisation: opp.owner.name,
-      location: opp.location,
-      remote: opp.remote,
-      budgetMinMinor: opp.budgetMinMinor,
-      budgetMaxMinor: opp.budgetMaxMinor,
-      currency: opp.currency,
-      type: opp.type,
-      postedTimeAgo: "2h ago",
-      imageUrl: opp.id === "opp-1" ? "/image_ux_ux/IMG-20260423-WA0067(1).jpg" : opp.id === "opp-2" ? "/image_ux_ux/IMG-20260427-WA0131.jpg" : undefined,
-    })),
+    recommendedOpportunities: previewOpportunities.map((opp) => {
+      const image = getTemporaryOpportunityImage(opp.slug);
+      return {
+        id: opp.id,
+        slug: opp.slug,
+        title: opp.title,
+        organisation: opp.owner.name,
+        location: opp.location,
+        remote: opp.remote,
+        budgetMinMinor: opp.budgetMinMinor,
+        budgetMaxMinor: opp.budgetMaxMinor,
+        currency: opp.currency,
+        type: opp.type,
+        postedTimeAgo: "2h ago",
+        imageAlt: image.alt,
+        imageUrl: image.src,
+      };
+    }),
     activityFeed: [
       { id: "act-1", message: "Maya Chen sent you a proposal for Product Discovery Sprint.", timeAgo: "1h ago", initials: "MC" },
       { id: "act-2", message: "David Okafor submitted milestone 2 for Marketplace MVP.", timeAgo: "3h ago", initials: "DO" },
-      { id: "act-3", message: "A saved opportunity is closing soon.", timeAgo: "5h ago", initials: "PX" },
+      { id: "act-3", message: "A saved opportunity is closing soon.", timeAgo: "5h ago", initials: "pX" },
     ],
     opportunityTrends: [
       { id: "tr-1", label: "Product design projects", percentage: "18.5%", isUp: true },

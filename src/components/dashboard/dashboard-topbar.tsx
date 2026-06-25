@@ -22,23 +22,23 @@ export function DashboardTopbar({
   const isTest = isLocalTestUser(user);
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-[color:var(--px-border)] bg-[color:var(--px-navy-2)]/95 px-3 shadow-[0_10px_30px_rgba(0,0,0,0.22)] backdrop-blur sm:px-6 lg:px-8">
+    <header className="dashboard-topbar sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b border-[color:var(--px-border)] px-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:px-6 lg:px-8">
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4 lg:gap-6">
         <button
           onClick={onMenuClick}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[color:var(--px-gold-bright)] transition-colors hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:hidden"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white transition-colors hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:hidden"
           aria-label="Open navigation menu"
           type="button"
         >
-          <BrandSymbol className="h-7 w-10" />
+          <BrandSymbol className="h-7 w-10" dark />
         </button>
 
         {isTest && !previewMode ? (
-          <span className="hidden rounded-full bg-[color:var(--px-primary-soft)] px-2.5 py-0.5 text-xs font-bold tracking-wide text-[color:var(--px-gold-soft)] ring-1 ring-[color:var(--px-primary)]/40 lg:inline-flex">
+          <span className="hidden rounded-full bg-[color:var(--px-primary-soft)] px-2.5 py-0.5 text-xs font-bold tracking-wide text-[color:var(--px-primary)] ring-1 ring-[color:var(--px-primary)]/30 lg:inline-flex">
             Test Account
           </span>
         ) : previewMode ? (
-          <span className="hidden rounded-full bg-[color:var(--px-primary-soft)] px-2.5 py-0.5 text-xs font-bold tracking-wide text-[color:var(--px-gold-soft)] ring-1 ring-[color:var(--px-primary)]/40 lg:inline-flex">
+          <span className="hidden rounded-full bg-[color:var(--px-primary-soft)] px-2.5 py-0.5 text-xs font-bold tracking-wide text-[color:var(--px-primary)] ring-1 ring-[color:var(--px-primary)]/30 lg:inline-flex">
             Preview Mode
           </span>
         ) : null}
@@ -67,7 +67,7 @@ export function DashboardTopbar({
 
           <FeatureStatusDialog featureName="Search functionality">
             <button
-              className="flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-gold-bright)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-gold-bright)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:hidden"
+              className="flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:hidden"
               aria-label="Search"
               type="button"
             >
@@ -86,7 +86,7 @@ export function DashboardTopbar({
           
           <FeatureStatusDialog featureName="Notifications">
             <button
-              className="relative flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-gold-bright)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-gold-bright)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:h-9 sm:w-9"
+              className="relative flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:h-9 sm:w-9"
               aria-label="Notifications"
             >
               <Bell size={20} />

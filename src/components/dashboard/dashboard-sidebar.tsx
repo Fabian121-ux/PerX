@@ -62,7 +62,7 @@ export function DashboardSidebar() {
               isCollapsed ? "justify-center px-0" : "gap-3 px-3"
             } ${
               isActive
-                ? "bg-[color:var(--px-primary)] text-[#070707] shadow-[0_10px_24px_rgba(212,160,23,0.22)]"
+                ? "bg-[color:var(--px-primary)] text-white shadow-[0_10px_24px_rgba(37,99,235,0.22)]"
                 : "text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-text)]"
             }`}
             href={targetHref}
@@ -101,17 +101,16 @@ export function DashboardSidebar() {
 
   return (
     <aside
-      className={`prex-sidebar hidden min-h-dvh flex-col border-r border-[color:var(--px-border)] text-[color:var(--px-text)] lg:sticky lg:left-0 lg:top-0 lg:flex transition-[width] duration-300 ease-in-out ${
-        isCollapsed ? "w-[80px]" : "w-[260px]"
-      }`}
+      className="perx-sidebar relative z-20 hidden h-dvh shrink-0 flex-col border-r border-[color:var(--px-border)] text-[color:var(--px-text)] transition-[width] duration-300 ease-in-out lg:flex"
+      style={{ width: isCollapsed ? 80 : 260 }}
     >
       <div className={`flex h-[72px] shrink-0 items-center border-b border-[color:var(--px-border)] ${isCollapsed ? "justify-center px-0" : "px-5"}`}>
         <Link href={getAppRoute("home", env)} aria-label="perX dashboard">
           <div className="overflow-hidden whitespace-nowrap">
             {isCollapsed ? (
-              <BrandSymbol className="h-8 w-12 text-[color:var(--px-gold-bright)]" />
+              <BrandSymbol className="h-8 w-14 drop-shadow-[0_2px_8px_rgba(255,255,255,0.18)]" dark />
             ) : (
-              <BrandLogo className="h-8" dark />
+              <BrandLogo className="h-9 drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]" dark />
             )}
           </div>
         </Link>
@@ -141,7 +140,7 @@ export function DashboardSidebar() {
             </p>
             <Link
               href={getAppRoute("profile", env)}
-              className="mt-3 block w-full rounded bg-[color:var(--px-gold)] px-3 py-2 text-center text-xs font-bold text-[#070707] transition-colors hover:bg-[color:var(--px-gold-bright)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              className="mt-3 block w-full rounded bg-[color:var(--px-primary)] px-3 py-2 text-center text-xs font-bold text-white transition-colors hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             >
               Improve profile
             </Link>

@@ -37,7 +37,7 @@ export function RecommendedOpportunities({ opportunities }: RecommendedOpportuni
               {opp.imageUrl ? (
                 <Image
                   src={opp.imageUrl}
-                  alt={opp.title}
+                  alt={opp.imageAlt ?? `${opp.title} opportunity preview`}
                   fill
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 640px) 300px, (max-width: 1536px) 50vw, 33vw"
@@ -73,7 +73,7 @@ export function RecommendedOpportunities({ opportunities }: RecommendedOpportuni
                   </div>
                 </div>
                 <div className="mt-3 flex items-center justify-between border-t border-[color:var(--px-border)] pt-3">
-                  <span className="font-black text-[color:var(--px-primary)]">
+                <span className="font-black text-[color:var(--px-primary)]">
                     {formatBudgetRange(opp.budgetMinMinor, opp.budgetMaxMinor, opp.currency)}
                   </span>
                 </div>
@@ -81,7 +81,7 @@ export function RecommendedOpportunities({ opportunities }: RecommendedOpportuni
             </div>
             </Link>
             <button
-              className="absolute right-3 top-3 rounded-full bg-black/55 p-2 text-[color:var(--px-gold-soft)] backdrop-blur-md transition-colors hover:bg-black/75 hover:text-[color:var(--px-gold-bright)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              className="absolute right-3 top-3 rounded-full bg-black/45 p-2 text-white backdrop-blur-md transition-colors hover:bg-black/65 hover:text-[color:var(--px-gold-bright)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
               aria-label="Save opportunity"
               type="button"
             >
@@ -99,19 +99,19 @@ function OpportunityGraphic({ title, type }: { title: string; type: string }) {
   const offset = seed % 28;
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[linear-gradient(135deg,#0a0a0a_0%,#1b1b1f_52%,#31250d_100%)]">
-      <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-[color:var(--px-gold)]/25 blur-2xl" />
-      <div className="absolute bottom-4 left-4 h-12 w-12 rounded-full border border-[color:var(--px-primary)]/40" />
+    <div className="relative h-full w-full overflow-hidden bg-[linear-gradient(135deg,#061936_0%,#123466_52%,#5b46f2_100%)]">
+      <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/20 blur-2xl" />
+      <div className="absolute bottom-4 left-4 h-12 w-12 rounded-full border border-white/40" />
       <div
         className="absolute inset-x-0 bottom-0 h-20 opacity-35"
         style={{
           backgroundImage:
-            "linear-gradient(90deg, rgba(245,185,66,.32) 1px, transparent 1px), linear-gradient(0deg, rgba(245,185,66,.22) 1px, transparent 1px)",
+            "linear-gradient(90deg, rgba(255,255,255,.28) 1px, transparent 1px), linear-gradient(0deg, rgba(255,255,255,.18) 1px, transparent 1px)",
           backgroundPosition: `${offset}px 0`,
           backgroundSize: "18px 18px",
         }}
       />
-      <div className="absolute bottom-5 right-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-[color:var(--px-primary)]/35 bg-black/25 text-[color:var(--px-gold-soft)]">
+      <div className="absolute bottom-5 right-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/30 bg-white/12 text-white">
         <ShieldCheck size={20} />
       </div>
     </div>

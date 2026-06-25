@@ -1,37 +1,47 @@
 @import "tailwindcss";
 
 :root {
-  --background: #070707;
-  --foreground: #f8f8f5;
-  --px-navy: #070707;
-  --px-navy-2: #0d0d0f;
-  --px-navy-3: #151518;
-  --px-primary: #d4a017;
-  --px-primary-strong: #f5b942;
-  --px-primary-soft: rgba(212, 160, 23, 0.16);
-  --px-purple: #f7d77b;
-  --px-purple-soft: rgba(247, 215, 123, 0.12);
-  --px-gold: #d4a017;
-  --px-gold-bright: #f5b942;
-  --px-gold-soft: #f7d77b;
-  --px-page: #070707;
-  --px-surface: #151518;
-  --px-surface-soft: #1b1b1f;
-  --px-surface-elevated: #202024;
-  --px-muted: #0d0d0f;
-  --px-text: #f8f8f5;
-  --px-text-muted: #aaa9a4;
-  --px-border: #303035;
-  --px-border-strong: #46464d;
+  --background: #f3f6fb;
+  --foreground: #10131a;
+  --px-black: #07111f;
+  --px-charcoal: #111827;
+  --px-navy: #061a3a;
+  --px-navy-2: #0b234f;
+  --px-navy-3: #123466;
+  --px-sidebar: #061936;
+  --px-header: #f8fafc;
+  --px-primary: #2563eb;
+  --px-primary-strong: #1d4ed8;
+  --px-primary-soft: rgba(37, 99, 235, 0.1);
+  --px-secondary: #5b46f2;
+  --px-secondary-strong: #4632d8;
+  --px-secondary-soft: rgba(91, 70, 242, 0.11);
+  --px-purple: #5b46f2;
+  --px-purple-soft: rgba(91, 70, 242, 0.11);
+  --px-gold: #f59e0b;
+  --px-gold-bright: #fbbf24;
+  --px-gold-soft: #fef3c7;
+  --px-page: #f4f7fb;
+  --px-surface: #ffffff;
+  --px-surface-soft: #f8fafc;
+  --px-surface-elevated: #ffffff;
+  --px-hover: #eef4ff;
+  --px-active: rgba(37, 99, 235, 0.12);
+  --px-muted: #eef3fb;
+  --px-text: #10131a;
+  --px-text-muted: #5f6879;
+  --px-border: #e0e7f1;
+  --px-border-strong: #c9d5e7;
   --px-success: #22c55e;
   --px-warning: #f59e0b;
   --px-error: #ef4444;
-  --px-info: #f7d77b;
-  --px-focus: #f5b942;
+  --px-info: #2563eb;
+  --px-focus: #2563eb;
+  --px-overlay: rgba(7, 18, 38, 0.5);
   --px-radius: 16px;
   --px-radius-sm: 10px;
-  --px-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
-  --px-shadow-strong: 0 28px 70px rgba(0, 0, 0, 0.42);
+  --px-shadow: 0 18px 44px rgba(15, 23, 42, 0.09);
+  --px-shadow-strong: 0 28px 70px rgba(15, 23, 42, 0.15);
   --px-sidebar-width: 260px;
   --mobile-nav-height: 68px;
 }
@@ -39,10 +49,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-prex-navy: var(--px-navy);
-  --color-prex-primary: var(--px-primary);
-  --color-prex-purple: var(--px-purple);
-  --color-prex-gold: var(--px-gold);
+  --color-perx-navy: var(--px-navy);
+  --color-perx-primary: var(--px-primary);
+  --color-perx-purple: var(--px-purple);
+  --color-perx-gold: var(--px-gold);
   --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
   
@@ -58,31 +68,45 @@
 }
 
 .dark {
-  --background: #070707;
-  --foreground: #f8f8f5;
-  --px-page: #070707;
-  --px-surface: #151518;
-  --px-surface-soft: #1b1b1f;
-  --px-surface-elevated: #202024;
-  --px-muted: #0d0d0f;
-  --px-text: #f8f8f5;
-  --px-text-muted: #aaa9a4;
-  --px-border: #303035;
-  --px-border-strong: #46464d;
-  --px-primary-soft: rgba(212, 160, 23, 0.16);
-  --px-purple-soft: rgba(247, 215, 123, 0.12);
-  --px-gold-soft: #f7d77b;
+  --background: #0f1726;
+  --foreground: #f8fafc;
+  --px-sidebar: #071226;
+  --px-header: #111c2f;
+  --px-navy: #071226;
+  --px-navy-2: #0d1a2e;
+  --px-navy-3: #14243d;
+  --px-page: #0f1726;
+  --px-surface: #162235;
+  --px-surface-soft: #1c2a40;
+  --px-surface-elevated: #21314a;
+  --px-hover: #263855;
+  --px-active: rgba(109, 93, 246, 0.18);
+  --px-muted: #101b2e;
+  --px-text: #f8fafc;
+  --px-text-muted: #aeb8ca;
+  --px-border: #2a3a55;
+  --px-border-strong: #3a4d6d;
+  --px-primary: #6d5df6;
+  --px-primary-strong: #8b7cf8;
+  --px-primary-soft: rgba(109, 93, 246, 0.18);
+  --px-secondary: #3b82f6;
+  --px-secondary-strong: #60a5fa;
+  --px-secondary-soft: rgba(59, 130, 246, 0.14);
+  --px-purple: #6d5df6;
+  --px-purple-soft: rgba(109, 93, 246, 0.18);
+  --px-gold-soft: #fcd34d;
+  --px-overlay: rgba(0, 0, 0, 0.68);
   --px-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
   --px-shadow-strong: 0 28px 70px rgba(0, 0, 0, 0.42);
 }
 
 ::selection {
-  background: rgba(245, 185, 66, 0.35);
+  background: rgba(37, 99, 235, 0.24);
   color: var(--px-text);
 }
 
 .dark ::selection {
-  background: rgba(245, 185, 66, 0.35);
+  background: rgba(109, 93, 246, 0.35);
   color: #f8f8f5;
 }
 
@@ -115,113 +139,147 @@ a {
 
 @layer utilities {
   .bg-dot-pattern {
-    background-image: radial-gradient(rgba(245, 185, 66, 0.22) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(37, 99, 235, 0.16) 1px, transparent 1px);
     background-size: 24px 24px;
   }
 
-  .prex-shell {
+  .perx-shell {
     background:
-      radial-gradient(circle at top left, rgba(245, 185, 66, 0.12), transparent 30rem),
-      linear-gradient(180deg, #0d0d0f 0%, var(--px-page) 100%);
+      radial-gradient(circle at 15% 0%, rgba(37, 99, 235, 0.12), transparent 30rem),
+      radial-gradient(circle at 85% 8%, rgba(91, 70, 242, 0.08), transparent 24rem),
+      linear-gradient(180deg, #f8fbff 0%, var(--px-page) 100%);
   }
 
-  .prex-sidebar {
-    background: linear-gradient(180deg, #0d0d0f 0%, #070707 100%);
+  .perx-sidebar {
+    background: linear-gradient(180deg, var(--px-sidebar) 0%, #031126 100%);
+    --px-surface: rgba(255, 255, 255, 0.1);
+    --px-surface-soft: rgba(255, 255, 255, 0.08);
+    --px-surface-elevated: rgba(255, 255, 255, 0.12);
+    --px-hover: rgba(255, 255, 255, 0.08);
+    --px-muted: rgba(255, 255, 255, 0.06);
+    --px-text: #f8f8f5;
+    --px-text-muted: #b8c3d8;
+    --px-border: rgba(255, 255, 255, 0.12);
+    color: #f8f8f5;
+  }
+
+  .dashboard-topbar {
+    background: color-mix(in srgb, var(--px-header) 94%, transparent);
     color: var(--px-text);
+    --px-surface: #ffffff;
+    --px-surface-soft: #eef4ff;
+    --px-muted: #f3f6fb;
+    --px-text: #10131a;
+    --px-text-muted: #5f6879;
+    --px-border: #e0e7f1;
   }
 
-  .prex-card {
+  @media (max-width: 1023px) {
+    .dashboard-topbar {
+      background: linear-gradient(180deg, var(--px-sidebar) 0%, #08204a 100%);
+      color: #ffffff;
+      --px-surface: rgba(255, 255, 255, 0.12);
+      --px-surface-soft: rgba(255, 255, 255, 0.1);
+      --px-muted: rgba(255, 255, 255, 0.08);
+      --px-text: #ffffff;
+      --px-text-muted: #cbd6eb;
+      --px-border: rgba(255, 255, 255, 0.12);
+    }
+  }
+
+  .perx-card {
     background: var(--px-surface);
     border: 1px solid var(--px-border);
     border-radius: var(--px-radius);
     box-shadow: var(--px-shadow);
   }
 
-  .prex-card-dark {
-    background: linear-gradient(155deg, #1b1b1f 0%, #111113 100%);
-    border: 1px solid rgba(245, 185, 66, 0.13);
+  .perx-card-dark {
+    background: linear-gradient(155deg, var(--px-surface-soft) 0%, var(--px-muted) 100%);
+    border: 1px solid var(--px-border);
     border-radius: var(--px-radius);
     box-shadow: var(--px-shadow-strong);
   }
 
-  .prex-hero {
+  .perx-hero {
     background:
-      radial-gradient(circle at 82% 16%, rgba(245, 185, 66, 0.22), transparent 18rem),
-      linear-gradient(120deg, rgba(7, 7, 7, 0.98), rgba(21, 21, 24, 0.9));
-    color: var(--px-text);
+      radial-gradient(circle at 82% 16%, rgba(37, 99, 235, 0.24), transparent 18rem),
+      radial-gradient(circle at 24% 12%, rgba(91, 70, 242, 0.18), transparent 20rem),
+      linear-gradient(120deg, #061936, #0b2556);
+    color: #ffffff;
   }
 
-  .prex-gradient-panel {
-    background: linear-gradient(135deg, #171717 0%, #221c0c 100%);
-    color: var(--px-text);
+  .perx-gradient-panel {
+    background: linear-gradient(135deg, #061936 0%, #173a78 100%);
+    color: #ffffff;
   }
 
-  .prex-hero-card {
+  .perx-hero-card {
     background:
-      radial-gradient(circle at 78% 18%, rgba(245, 185, 66, 0.28), transparent 17rem),
-      radial-gradient(circle at 30% 105%, rgba(212, 160, 23, 0.18), transparent 16rem),
-      linear-gradient(135deg, #080808 0%, #151518 58%, #221c0c 100%);
-    color: var(--px-text);
+      radial-gradient(circle at 78% 18%, rgba(37, 99, 235, 0.3), transparent 17rem),
+      radial-gradient(circle at 30% 105%, rgba(91, 70, 242, 0.18), transparent 16rem),
+      linear-gradient(135deg, #071936 0%, #0e2a5b 58%, #1d3f82 100%);
+    color: #ffffff;
   }
 
-  .prex-opportunity-band {
+  .perx-opportunity-band {
     background:
-      radial-gradient(circle at 22% 20%, rgba(245, 185, 66, 0.36), transparent 24%),
-      linear-gradient(135deg, #080808 0%, #171717 58%, #2a210c 100%);
-    color: var(--px-text);
+      radial-gradient(circle at 22% 20%, rgba(37, 99, 235, 0.28), transparent 24%),
+      linear-gradient(135deg, #071936 0%, #0f2e63 58%, #1c4ea3 100%);
+    color: #ffffff;
   }
 
-  .prex-icon-tile {
+  .perx-icon-tile {
     background: var(--px-primary-soft);
     color: var(--px-primary);
     border-radius: 16px;
   }
 
-  .prex-soft-tile {
+  .perx-soft-tile {
     background: var(--px-surface-soft);
     color: var(--px-primary);
   }
 
-  .prex-gold-soft {
+  .perx-gold-soft {
     background: var(--px-gold-soft);
     color: var(--px-navy);
   }
 
-  .prex-btn-primary {
+  .perx-btn-primary {
     background: var(--px-primary);
-    color: #070707;
-    box-shadow: 0 10px 24px rgba(212, 160, 23, 0.24);
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.2);
   }
 
-  .prex-btn-primary:hover {
+  .perx-btn-primary:hover {
     background: var(--px-primary-strong);
   }
 
-  .prex-btn-secondary {
+  .perx-btn-secondary {
     background: var(--px-surface-elevated);
     border: 1px solid var(--px-border);
     color: var(--px-text);
   }
 
-  .prex-btn-secondary:hover {
-    background: var(--px-surface-soft);
+  .perx-btn-secondary:hover {
+    background: var(--px-hover);
   }
 
-  .prex-btn-ghost {
+  .perx-btn-ghost {
     color: var(--px-text-muted);
   }
 
-  .prex-btn-ghost:hover {
-    background: var(--px-surface-soft);
+  .perx-btn-ghost:hover {
+    background: var(--px-hover);
   }
 
-  .prex-btn-warm {
+  .perx-btn-warm {
     background: var(--px-gold);
     color: #070707;
     box-shadow: 0 10px 24px rgba(212, 160, 23, 0.24);
   }
 
-  .prex-btn-warm:hover {
+  .perx-btn-warm:hover {
     background: var(--px-gold-bright);
   }
 
@@ -282,6 +340,32 @@ a {
     background-color: var(--px-navy) !important;
   }
 
+  .dark .perx-shell {
+    background:
+      radial-gradient(circle at top left, rgba(109, 93, 246, 0.16), transparent 30rem),
+      radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 26rem),
+      linear-gradient(180deg, #0f1726 0%, var(--px-page) 100%);
+  }
+
+  .dark .perx-sidebar {
+    background: linear-gradient(180deg, #071226 0%, #060d1a 100%);
+  }
+
+  .dark .dashboard-topbar {
+    background: color-mix(in srgb, var(--px-header) 94%, transparent);
+    color: var(--px-text);
+    --px-surface: #162235;
+    --px-surface-soft: #1c2a40;
+    --px-muted: #101b2e;
+    --px-text: #f8fafc;
+    --px-text-muted: #aeb8ca;
+    --px-border: #2a3a55;
+  }
+
+  .dark .perx-card-dark {
+    background: linear-gradient(155deg, #1c2a40 0%, #111c2f 100%);
+  }
+
   .text-blue-600,
   .text-blue-700,
   .text-indigo-600,
@@ -300,7 +384,7 @@ a {
   .ring-indigo-100,
   .ring-purple-100,
   .ring-emerald-100 {
-    --tw-ring-color: rgba(212, 160, 23, 0.2) !important;
+    --tw-ring-color: rgba(37, 99, 235, 0.2) !important;
   }
   
   .animation-delay-2000 {

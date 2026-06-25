@@ -1,113 +1,42 @@
-# Current State Audit
+# perX Current State Audit
 
-Audit date: 2026-06-24
+Last updated: 2026-06-25
 
-## Executive Summary
+## Repository Shape
 
-The repository is currently an image-only workspace. It does not contain an application, package manifest, source code, database schema, route tree, authentication implementation, tests, CI configuration, or git metadata.
+- Framework: Next.js App Router with TypeScript, React 19, Tailwind CSS v4 tokens in `src/app/globals.css`.
+- Routing: public routes under `src/app`, authenticated app routes under `src/app/app`, preview routes under `src/app/(preview)/preview`, admin routes under `src/app/admin`.
+- Data: Prisma 7 with PostgreSQL support, plus database-free Test Account and Preview Mode fixtures.
+- Authentication: server-side session helpers in `src/lib/auth`, proxy protection in `src/proxy.ts`, local Test Account support in `src/lib/dev/test-auth.ts`.
+- PWA: `src/app/manifest.ts`, `public/sw.js`, offline page, generated icons under `public/icons`.
+- Brand/UI source: approved UI reference images live in `public/image_ux_ux`; official logo source is `public/image_ux_ux/MAIN_LOGO.jpg`.
 
-This means there is no working architecture to preserve and no existing build error to fix. The MVP must be created as a greenfield implementation inside this repository while preserving the provided `image_ux_ux` directory.
+## Current UI Correction Pass
 
-## Repository Contents
+- The old gold-dominant dashboard theme has been replaced with the reference-led navy, off-white, blue, purple and charcoal system.
+- `MAIN_LOGO.jpg` is copied to `public/brand/source/perx-original-reference.jpg` and used by `scripts/generate-brand-icons.mjs` to create all brand/icon derivatives.
+- App and preview shells now use a fixed viewport-height layout: desktop sidebar and header remain fixed while the content region scrolls.
+- Dashboard, Discover, Messages and Landing routes have been redesigned around the approved reference patterns without inserting UI screenshots as content images.
+- Temporary content imagery is centralized in `src/lib/data/temporary-images.ts`.
 
-- Root path: workspace repository root
-- Git repository: not initialized
-- Application framework: none detected
-- Package manager: none configured
-- Database layer: none detected
-- Authentication system: none detected
-- Existing routes: none detected
-- Existing components: none detected
-- Existing tests: none detected
-- Existing CI: none detected
-- Existing docs: none detected before this audit
+## Checks Run During This Pass
 
-## Toolchain Observed
+- `npm run type-check`: passed.
+- `npm run lint`: passed.
+- `npm run test`: passed, 5 files and 13 tests.
+- `npm run test:e2e`: passed, 2 Playwright projects.
+- `npm run build`: passed.
+- `npx prisma validate`: passed.
+- `npm run brand:generate`: passed.
+- PWA manifest, icon dimensions, maskable safe-zone and service-worker cache checks: passed.
+- Visual screenshots: created and validated under `docs/visual-verification/final-correction/`.
+- Repository search for visible stale brand spelling: clean except non-visible script/env identifiers.
+- Repository search for stale SVG logo paths and legacy icon paths: clean.
+- Repository search for `USD` and `US$`: clean.
+- Repository search for dead `href="#"` style links: clean.
 
-- Node.js: `v24.15.0`
-- npm: `11.12.1`
+## Known Risks
 
-## Files Found
-
-Only the `image_ux_ux` directory was present before documentation was added. It contains 19 `.jpg` files.
-
-All image files are zero bytes and were identified by `file` as `empty`. They cannot be used as valid image assets until replaced with real image data.
-
-## Existing Commands
-
-No `package.json`, lockfile, or framework config was present, so there were no existing install, lint, type-check, test, or production-build commands to run.
-
-Attempted baseline checks:
-
-- `git status --short`
-  - Result: failed because this directory is not a git repository.
-- Package/config discovery
-  - Result: no `package.json`, lockfile, Prisma folder, Next config, or TypeScript config found.
-- Image metadata inspection
-  - Result: all `.jpg` files are empty.
-
-## Current Build Errors
-
-There is no current application build. The current blocker is absence of application source and configuration, not a build failure inside an existing app.
-
-## Architecture Preservation Notes
-
-Because no working application architecture exists, the safest path is to scaffold a production-oriented MVP using conservative, stable choices:
-
-- Next.js App Router
-- TypeScript with strict mode
-- Tailwind CSS
-- Server Components by default
-- Prisma ORM
-- PostgreSQL
-- Zod validation
-- Database-backed authentication sessions with secure cookies
-- Feature-based application organisation
-
-## Product Identity Risks
-
-The filesystem directory may use legacy casing, but the product must be displayed as `perX` everywhere in the UI. The implementation must avoid legacy names and alternate capitalization in visible product copy.
-
-## Image Asset Status
-
-The original Phase 0 audit found empty placeholder image files. Valid replacements are now available in `public/image_ux_ux`. The current asset map documents 21 decoded JPEG UI/UX references plus one ignored `.DS_Store` file. The screenshots are treated as design references for the product interface rather than stock-like content images.
-
-## Security Baseline
-
-No security controls currently exist because there is no app. The implementation must add:
-
-- Server-side authentication and session validation
-- Object-level authorisation
-- Capability checks
-- Input validation
-- Safe monetary representation
-- Audit logs
-- Admin action logs
-- Rate limiting hooks
-- Security headers
-- Environment validation
-
-## Recommended Initial Direction
-
-Proceed as a greenfield MVP build in phases. Complete the foundation first, then identity, opportunities, collaboration, deals, trust, admin, and hardening.
-
-## Post-Implementation Status
-
-The repository now contains a Next.js App Router MVP scaffold for perX with:
-
-- TypeScript strict mode.
-- Tailwind CSS.
-- Prisma 7 with PostgreSQL adapter configuration.
-- Zod validation.
-- Database-backed session architecture.
-- Role and capability mapping.
-- Public, authenticated, and admin route trees.
-- Opportunity, proposal, deal, escrow, review, trust, audit, and moderation data models.
-- PWA manifest, service worker, offline page, and local icon assets.
-- Unit, integration, and e2e tests.
-- CI workflow and deployment documentation.
-
-Remaining audit risks:
-
-- PostgreSQL must be provisioned and `DATABASE_URL` must be set before persisted workflows can run outside demo fallback rendering.
-- `npm audit` reports five moderate advisories in transitive Next/Prisma packages where the suggested fixes require breaking/downgrade-style changes.
+- The approved `MAIN_LOGO.jpg` contains legacy center text over the infinity crossing. The derivative script masks that text, which leaves visible source-artifact limitations around the crossing. The derivatives remain based only on the approved source.
+- `npm install --save-dev sharp` reported 5 moderate audit findings. No audit fix was applied because forced remediation may introduce breaking changes.
+- Full screenshot and build verification should be rerun after any further UI changes.

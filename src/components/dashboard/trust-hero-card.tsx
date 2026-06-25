@@ -10,26 +10,26 @@ export function TrustHeroCard() {
   const pathname = usePathname();
   const env = getEnvironment(pathname);
   return (
-    <div className="prex-hero-card relative overflow-hidden rounded-[24px] px-6 py-8 text-[color:var(--px-text)] shadow-lg ring-1 ring-[color:var(--px-border)] sm:px-8 sm:py-10">
+    <div className="perx-hero-card relative overflow-hidden rounded-[24px] px-6 py-8 text-white shadow-lg ring-1 ring-[color:var(--px-border)] sm:px-8 sm:py-10">
       {/* Decorative background elements constrained to right/top */}
-      <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-[color:var(--px-gold)] opacity-20 blur-[60px] sm:-right-20 sm:-top-20 sm:h-64 sm:w-64" />
-      <div className="absolute right-10 -bottom-10 h-32 w-32 rounded-full bg-[color:var(--px-gold-soft)] opacity-[0.12] blur-[50px] sm:right-20 sm:-bottom-20 sm:h-48 sm:w-48" />
+      <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/20 blur-[60px] sm:-right-20 sm:-top-20 sm:h-64 sm:w-64" />
+      <div className="absolute right-10 -bottom-10 h-32 w-32 rounded-full bg-[color:var(--px-secondary)]/20 blur-[50px] sm:right-20 sm:-bottom-20 sm:h-48 sm:w-48" />
       
       {/* Readability gradient */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#080808] via-[#111113]/86 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#061936]/92 via-[#0b2556]/78 to-transparent" />
 
       <div className="relative z-10 max-w-lg">
         <h2 className="text-3xl font-black tracking-tight sm:text-4xl">
           Build trusted deals
         </h2>
-        <p className="mt-4 text-base leading-relaxed text-[color:var(--px-text-muted)] sm:text-lg">
+        <p className="mt-4 text-base leading-relaxed text-blue-50 sm:text-lg">
           Connect, agree on milestones and complete opportunities with greater confidence through perX.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-4">
           <Link
             href={getAppRoute("discover", env)}
-            className="inline-flex h-11 items-center justify-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-6 text-sm font-bold text-[#070707] transition-colors hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            className="inline-flex h-11 items-center justify-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-6 text-sm font-bold text-white transition-colors hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             Explore opportunities
           </Link>
@@ -42,12 +42,12 @@ export function TrustHeroCard() {
           </FeatureStatusDialog>
         </div>
 
-        <div className="mt-8 flex items-center gap-2 text-sm font-medium text-[color:var(--px-text-muted)]">
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--px-gold)] text-[color:var(--px-navy)]">
+        <div className="mt-8 flex items-center gap-2 text-sm font-medium text-blue-50">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--px-success)] text-white">
             <ShieldCheck size={14} />
           </div>
           <span>Escrow-ready deal structure</span>
-          <button className="ml-1 text-[color:var(--px-text-muted)] hover:text-[color:var(--px-text)]" aria-label="More info">
+          <button className="ml-1 text-blue-100 hover:text-white" aria-label="More info">
             <Info size={14} />
           </button>
         </div>

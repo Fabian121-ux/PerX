@@ -1,5 +1,5 @@
 {
-  "name": "prex",
+  "name": "perx",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -13,6 +13,7 @@
     "test:e2e": "playwright test",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
+    "brand:generate": "node scripts/generate-brand-icons.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:dev": "prisma migrate dev",
@@ -50,6 +51,7 @@
     "jsdom": "^29.1.1",
     "prettier": "^3.8.4",
     "prisma": "^7.8.0",
+    "sharp": "^0.35.2",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
     "typescript": "^5",

@@ -24,7 +24,7 @@ export default function PreviewSavedPage() {
             const initials = opportunity.owner.name.split(" ").map(n => n[0]).join("").toUpperCase();
             return (
               <Card className="grid gap-4 overflow-hidden p-0" key={opportunity.id}>
-                <div className="prex-opportunity-band relative min-h-28 p-5">
+                <div className="perx-opportunity-band relative min-h-28 p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="grid h-12 w-12 place-items-center rounded-[var(--px-radius-sm)] bg-white/15 text-sm font-black ring-1 ring-white/20">
                       {initials}

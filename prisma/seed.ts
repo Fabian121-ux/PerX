@@ -4,7 +4,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 
 const prisma = new PrismaClient({
-  adapter: new PrismaPg(process.env.DATABASE_URL ?? "postgresql://prex:prex_password@localhost:5432/prex?schema=public"),
+  adapter: new PrismaPg(process.env.DATABASE_URL ?? "postgresql://perx:perx_password@localhost:5432/perx?schema=public"),
 });
 
 const roles = [
@@ -41,10 +41,10 @@ async function main() {
 
   const passwordHash = await bcrypt.hash("perX-demo-password", 12);
   const client = await prisma.user.upsert({
-    where: { email: "client@prex.local" },
+    where: { email: "client@perx.local" },
     update: {},
     create: {
-      email: "client@prex.local",
+      email: "client@perx.local",
       passwordHash,
       name: "Amara Okafor",
       username: "amara-okafor",
@@ -66,10 +66,10 @@ async function main() {
   });
 
   const freelancer = await prisma.user.upsert({
-    where: { email: "freelancer@prex.local" },
+    where: { email: "freelancer@perx.local" },
     update: {},
     create: {
-      email: "freelancer@prex.local",
+      email: "freelancer@perx.local",
       passwordHash,
       name: "Daniel Mensah",
       username: "daniel-mensah",
@@ -91,13 +91,13 @@ async function main() {
   });
 
   const admin = await prisma.user.upsert({
-    where: { email: "admin@prex.local" },
+    where: { email: "admin@perx.local" },
     update: {},
     create: {
-      email: "admin@prex.local",
+      email: "admin@perx.local",
       passwordHash,
       name: "perX Admin",
-      username: "prex-admin",
+      username: "perx-admin",
       verificationStatus: "VERIFIED",
       profile: {
         create: {

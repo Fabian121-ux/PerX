@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const envSchema = z.object({
   DATABASE_URL: z.string().url().optional(),
-  SESSION_COOKIE_NAME: z.string().min(1).default("prex_session"),
+  SESSION_COOKIE_NAME: z.string().min(1).default("perx_session"),
   AUTH_SESSION_DAYS: z.coerce.number().int().min(1).max(120).default(30),
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
   UPLOAD_MAX_BYTES: z.coerce.number().int().min(1).max(25 * 1024 * 1024).default(5 * 1024 * 1024),

@@ -33,7 +33,7 @@ export function ConnectionStrip({
                 </span>
               </div>
               <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--px-primary)] ring-2 ring-[color:var(--px-surface)]">
-                <Plus size={12} className="text-[#070707]" />
+                <Plus size={12} className="text-white" />
               </div>
             </div>
             <span className="text-xs font-medium text-[color:var(--px-text)]">Your profile</span>
@@ -46,7 +46,7 @@ export function ConnectionStrip({
             <button className="group flex flex-col items-center gap-2 focus:outline-none snap-start shrink-0">
             <div className="relative">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--px-surface-soft)] ring-2 ring-[color:var(--px-primary)] ring-offset-2 ring-offset-[color:var(--px-page)] transition-transform group-hover:scale-105">
-                <span className="text-xl font-bold text-[color:var(--px-gold-soft)]">
+                <span className="text-xl font-bold text-[color:var(--px-primary)]">
                   {getInitials(conn.name)}
                 </span>
               </div>
@@ -56,7 +56,7 @@ export function ConnectionStrip({
               {/* Optional verification indicator */}
               {!conn.isOnline && (
                 <div className="absolute bottom-0 right-0 flex h-4 w-4 items-center justify-center rounded-full bg-[color:var(--px-surface)] ring-1 ring-[color:var(--px-border-strong)]">
-                  <ShieldCheck size={10} className="text-[color:var(--px-gold)]" />
+                  <ShieldCheck size={10} className="text-[color:var(--px-success)]" />
                 </div>
               )}
             </div>
