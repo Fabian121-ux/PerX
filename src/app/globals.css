@@ -55,16 +55,24 @@
   --color-perx-gold: var(--px-gold);
   --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
-  
+
   --animate-blob: blob 7s infinite;
   --animate-float: float 6s ease-in-out infinite;
 }
 
 @keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
 }
 
 .dark {
@@ -132,21 +140,38 @@ a {
 }
 
 @keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-  100% { transform: translateY(0px); }
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }
 
 @layer utilities {
   .bg-dot-pattern {
-    background-image: radial-gradient(rgba(37, 99, 235, 0.16) 1px, transparent 1px);
+    background-image: radial-gradient(
+      rgba(37, 99, 235, 0.16) 1px,
+      transparent 1px
+    );
     background-size: 24px 24px;
   }
 
   .perx-shell {
     background:
-      radial-gradient(circle at 15% 0%, rgba(37, 99, 235, 0.12), transparent 30rem),
-      radial-gradient(circle at 85% 8%, rgba(91, 70, 242, 0.08), transparent 24rem),
+      radial-gradient(
+        circle at 15% 0%,
+        rgba(37, 99, 235, 0.12),
+        transparent 30rem
+      ),
+      radial-gradient(
+        circle at 85% 8%,
+        rgba(91, 70, 242, 0.08),
+        transparent 24rem
+      ),
       linear-gradient(180deg, #f8fbff 0%, var(--px-page) 100%);
   }
 
@@ -195,7 +220,11 @@ a {
   }
 
   .perx-card-dark {
-    background: linear-gradient(155deg, var(--px-surface-soft) 0%, var(--px-muted) 100%);
+    background: linear-gradient(
+      155deg,
+      var(--px-surface-soft) 0%,
+      var(--px-muted) 100%
+    );
     border: 1px solid var(--px-border);
     border-radius: var(--px-radius);
     box-shadow: var(--px-shadow-strong);
@@ -203,8 +232,16 @@ a {
 
   .perx-hero {
     background:
-      radial-gradient(circle at 82% 16%, rgba(37, 99, 235, 0.24), transparent 18rem),
-      radial-gradient(circle at 24% 12%, rgba(91, 70, 242, 0.18), transparent 20rem),
+      radial-gradient(
+        circle at 82% 16%,
+        rgba(37, 99, 235, 0.24),
+        transparent 18rem
+      ),
+      radial-gradient(
+        circle at 24% 12%,
+        rgba(91, 70, 242, 0.18),
+        transparent 20rem
+      ),
       linear-gradient(120deg, #061936, #0b2556);
     color: #ffffff;
   }
@@ -216,15 +253,27 @@ a {
 
   .perx-hero-card {
     background:
-      radial-gradient(circle at 78% 18%, rgba(37, 99, 235, 0.3), transparent 17rem),
-      radial-gradient(circle at 30% 105%, rgba(91, 70, 242, 0.18), transparent 16rem),
+      radial-gradient(
+        circle at 78% 18%,
+        rgba(37, 99, 235, 0.3),
+        transparent 17rem
+      ),
+      radial-gradient(
+        circle at 30% 105%,
+        rgba(91, 70, 242, 0.18),
+        transparent 16rem
+      ),
       linear-gradient(135deg, #071936 0%, #0e2a5b 58%, #1d3f82 100%);
     color: #ffffff;
   }
 
   .perx-opportunity-band {
     background:
-      radial-gradient(circle at 22% 20%, rgba(37, 99, 235, 0.28), transparent 24%),
+      radial-gradient(
+        circle at 22% 20%,
+        rgba(37, 99, 235, 0.28),
+        transparent 24%
+      ),
       linear-gradient(135deg, #071936 0%, #0f2e63 58%, #1c4ea3 100%);
     color: #ffffff;
   }
@@ -284,13 +333,7 @@ a {
   }
 
   .dashboard-main {
-    padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom) + 24px);
-  }
-
-  @media (min-width: 1024px) {
-    .dashboard-main {
-      padding-bottom: 2rem;
-    }
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
   }
 
   .dashboard-scroll {
@@ -342,8 +385,16 @@ a {
 
   .dark .perx-shell {
     background:
-      radial-gradient(circle at top left, rgba(109, 93, 246, 0.16), transparent 30rem),
-      radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 26rem),
+      radial-gradient(
+        circle at top left,
+        rgba(109, 93, 246, 0.16),
+        transparent 30rem
+      ),
+      radial-gradient(
+        circle at top right,
+        rgba(37, 99, 235, 0.12),
+        transparent 26rem
+      ),
       linear-gradient(180deg, #0f1726 0%, var(--px-page) 100%);
   }
 
@@ -386,11 +437,11 @@ a {
   .ring-emerald-100 {
     --tw-ring-color: rgba(37, 99, 235, 0.2) !important;
   }
-  
+
   .animation-delay-2000 {
     animation-delay: 2s;
   }
-  
+
   .animation-delay-4000 {
     animation-delay: 4s;
   }

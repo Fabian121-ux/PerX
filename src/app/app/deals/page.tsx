@@ -23,27 +23,42 @@ export default async function DealsPage() {
             <Card className="flex flex-col justify-between gap-5" key={deal.id}>
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge>{deal.status.toLowerCase().replaceAll("_", " ")}</Badge>
+                  <Badge>
+                    {deal.status.toLowerCase().replaceAll("_", " ")}
+                  </Badge>
                   <Badge>{formatMoney(deal.valueMinor, deal.currency)}</Badge>
                 </div>
                 <Link
                   className="mt-4 block text-lg font-black text-[color:var(--px-text)] hover:text-[color:var(--px-primary)]"
-                  href={`/app/deals/${deal.id}`}
+                  href={`/deals/${deal.id}`}
                 >
                   {getDealTitle(deal)}
                 </Link>
                 <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
-                  {deal.participants.length} participants with authorised deal-state tracking.
+                  {deal.participants.length} participants with authorised
+                  deal-state tracking.
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
-                <ButtonLink href={`/app/deals/${deal.id}/milestones`} size="sm" variant="secondary">
+                <ButtonLink
+                  href={`/deals/${deal.id}`}
+                  size="sm"
+                  variant="secondary"
+                >
                   Milestones
                 </ButtonLink>
-                <ButtonLink href={`/app/deals/${deal.id}/deliveries`} size="sm" variant="secondary">
+                <ButtonLink
+                  href={`/deals/${deal.id}`}
+                  size="sm"
+                  variant="secondary"
+                >
                   Deliveries
                 </ButtonLink>
-                <ButtonLink href={`/app/deals/${deal.id}/escrow`} size="sm" variant="secondary">
+                <ButtonLink
+                  href={`/deals/${deal.id}`}
+                  size="sm"
+                  variant="secondary"
+                >
                   Escrow
                 </ButtonLink>
               </div>
@@ -52,7 +67,7 @@ export default async function DealsPage() {
         </div>
       ) : (
         <EmptyState
-          action={<ButtonLink href="/app/discover">Discover opportunities</ButtonLink>}
+          action={<ButtonLink href="/market">Open market</ButtonLink>}
           body="Accepted proposals become deal workspaces here."
           title="No deals yet"
         />

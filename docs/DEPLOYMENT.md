@@ -39,7 +39,11 @@ For local hard refresh after icon changes:
 Console fallback for local testing:
 
 ```js
-navigator.serviceWorker.getRegistrations().then((registrations) => registrations.forEach((registration) => registration.unregister()));
+navigator.serviceWorker
+  .getRegistrations()
+  .then((registrations) =>
+    registrations.forEach((registration) => registration.unregister()),
+  );
 caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
 ```
 
@@ -49,6 +53,21 @@ The service worker may cache only safe public shell assets. It must not cache:
 
 - `/api`
 - `/app`
+- `/dashboard`
+- `/network`
+- `/real-estate`
+- `/logistics`
+- `/travel-stay`
+- `/services`
+- `/market`
+- `/wallet`
+- `/escrow`
+- `/service-center`
+- `/messages`
+- `/notifications`
+- `/saved`
+- `/reports`
+- `/settings`
 - `/admin`
 - messages
 - deals

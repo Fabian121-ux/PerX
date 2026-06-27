@@ -9,19 +9,26 @@ import { requireUser } from "@/lib/auth/session";
 import { isLocalTestUser } from "@/lib/dev/test-auth";
 import { profileSchema } from "@/lib/validation/auth";
 
-function completeness(input: { headline: string; biography: string; location: string; skills?: string }) {
+function completeness(input: {
+  headline: string;
+  biography: string;
+  location: string;
+  skills?: string;
+}) {
   let score = 30;
   if (input.headline.length >= 10) score += 20;
   if (input.biography.length >= 120) score += 25;
   if (input.location.length >= 2) score += 10;
-  if (input.skills && input.skills.split(",").filter(Boolean).length >= 3) score += 15;
+  if (input.skills && input.skills.split(",").filter(Boolean).length >= 3)
+    score += 15;
   return Math.min(score, 100);
 }
 
 export async function updateProfileAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/app");
-  if (!hasDatabaseUrl()) redirect("/app/profile/edit?error=database-not-configured");
+  if (isLocalTestUser(user)) redirect("/dashboard");
+  if (!hasDatabaseUrl())
+    redirect("/profile/edit?error=database-not-configured");
 
   const parsed = profileSchema.safeParse({
     biography: formData.get("biography"),
@@ -29,9 +36,13 @@ export async function updateProfileAction(formData: FormData) {
     location: formData.get("location"),
     skills: formData.get("skills"),
   });
-  if (!parsed.success) redirect("/app/profile/edit?error=check-fields");
+  if (!parsed.success) redirect("/profile/edit?error=check-fields");
 
-  const skillNames = parsed.data.skills?.split(",").map((skill) => skill.trim()).filter(Boolean) ?? [];
+  const skillNames =
+    parsed.data.skills
+      ?.split(",")
+      .map((skill) => skill.trim())
+      .filter(Boolean) ?? [];
   const profileCompleteness = completeness(parsed.data);
 
   await getPrisma().profile.upsert({
@@ -56,6 +67,11 @@ export async function updateProfileAction(formData: FormData) {
     where: { userId: user.id },
   });
 
-  await writeAuditLog({ actorId: user.id, action: "profile.update", entityId: user.id, entityType: "profile" });
-  redirect("/app");
+  await writeAuditLog({
+    actorId: user.id,
+    action: "profile.update",
+    entityId: user.id,
+    entityType: "profile",
+  });
+  redirect("/dashboard");
 }

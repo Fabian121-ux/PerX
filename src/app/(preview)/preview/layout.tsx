@@ -4,8 +4,6 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { DashboardTopbar } from "@/components/dashboard/dashboard-topbar";
-import { MobileDashboardNav } from "@/components/dashboard/mobile-dashboard-nav";
-import { SidebarProvider } from "@/components/dashboard/sidebar-context";
 import { previewUser } from "@/lib/data/preview";
 import { AnimatedBackground } from "@/components/dashboard/animated-background";
 import { MobileDashboardDrawer } from "@/components/layout/app-shell";
@@ -23,22 +21,25 @@ export default function PreviewLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <SidebarProvider>
-      <div className="perx-shell relative flex h-dvh overflow-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200">
-        <AnimatedBackground />
-        <DashboardSidebar />
-        <MobileDashboardDrawer open={mobileOpen} onClose={() => setMobileOpen(false)} />
+    <div className="perx-shell relative flex h-dvh overflow-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200">
+      <AnimatedBackground />
+      <DashboardSidebar />
+      <MobileDashboardDrawer
+        open={mobileOpen}
+        onClose={() => setMobileOpen(false)}
+      />
 
-        <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
-          <DashboardTopbar user={mockCurrentUser} previewMode onMenuClick={() => setMobileOpen(true)} />
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
+        <DashboardTopbar
+          user={mockCurrentUser}
+          previewMode
+          onMenuClick={() => setMobileOpen(true)}
+        />
 
-          <main className="dashboard-main min-h-0 flex-1 overflow-y-auto px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
-            <div className="mx-auto max-w-[1480px]">{children}</div>
-          </main>
-
-          <MobileDashboardNav />
-        </div>
+        <main className="dashboard-main min-h-0 flex-1 overflow-y-auto px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
+          <div className="mx-auto max-w-[1480px]">{children}</div>
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }

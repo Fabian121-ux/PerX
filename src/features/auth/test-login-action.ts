@@ -2,7 +2,10 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { TEST_SESSION_COOKIE_NAME, TEST_SESSION_VALUE } from "@/lib/dev/test-auth";
+import {
+  TEST_SESSION_COOKIE_NAME,
+  TEST_SESSION_VALUE,
+} from "@/lib/dev/test-auth";
 
 export async function testLoginAction() {
   if (process.env.NODE_ENV !== "development") {
@@ -18,5 +21,5 @@ export async function testLoginAction() {
     secure: false, // development only
   });
 
-  redirect("/app");
+  redirect("/dashboard");
 }

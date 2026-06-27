@@ -5,7 +5,10 @@ import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/db/prisma";
 import { hasDatabaseUrl } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
-import { assertEscrowTransition, type EscrowState } from "@/features/escrow/state-machine";
+import {
+  assertEscrowTransition,
+  type EscrowState,
+} from "@/features/escrow/state-machine";
 import { requireUser } from "@/lib/auth/session";
 import { isLocalTestUser } from "@/lib/dev/test-auth";
 
@@ -15,15 +18,16 @@ async function requireDealParticipant(dealId: string, userId: string) {
     where: { id: dealId },
   });
   if (!deal.participants.some((participant) => participant.userId === userId)) {
-    redirect("/app?error=forbidden");
+    redirect("/dashboard?error=forbidden");
   }
   return deal;
 }
 
 export async function submitDeliveryAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect(`/app/deals/${String(formData.get("dealId") ?? "")}/deliveries`);
-  if (!hasDatabaseUrl()) redirect("/app?error=database-not-configured");
+  if (isLocalTestUser(user))
+    redirect(`/deals/${String(formData.get("dealId") ?? "")}`);
+  if (!hasDatabaseUrl()) redirect("/dashboard?error=database-not-configured");
 
   const dealId = String(formData.get("dealId") ?? "");
   const title = String(formData.get("title") ?? "").slice(0, 140);
@@ -45,30 +49,50 @@ export async function submitDeliveryAction(formData: FormData) {
       data: {
         status: next,
         statusHistory: {
-          create: { actorId: user.id, fromStatus: deal.status, reason: "Milestone delivery submitted.", toStatus: next },
+          create: {
+            actorId: user.id,
+            fromStatus: deal.status,
+            reason: "Milestone delivery submitted.",
+            toStatus: next,
+          },
         },
       },
       where: { id: dealId },
     }),
   ]);
 
-  await writeAuditLog({ actorId: user.id, action: "deal.delivery.submit", entityId: dealId, entityType: "deal" });
-  redirect(`/app/deals/${dealId}/deliveries`);
+  await writeAuditLog({
+    actorId: user.id,
+    action: "deal.delivery.submit",
+    entityId: dealId,
+    entityType: "deal",
+  });
+  redirect(`/deals/${dealId}`);
 }
 
 export async function approveDeliveryAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect(`/app/deals/${String(formData.get("dealId") ?? "")}/escrow`);
-  if (!hasDatabaseUrl()) redirect("/app?error=database-not-configured");
+  if (isLocalTestUser(user))
+    redirect(`/deals/${String(formData.get("dealId") ?? "")}`);
+  if (!hasDatabaseUrl()) redirect("/dashboard?error=database-not-configured");
 
   const dealId = String(formData.get("dealId") ?? "");
   const deal = await requireDealParticipant(dealId, user.id);
-  const reviewState = assertEscrowTransition(deal.status as EscrowState, "review");
+  const reviewState = assertEscrowTransition(
+    deal.status as EscrowState,
+    "review",
+  );
   const approvedState = assertEscrowTransition(reviewState, "approve");
   const releasedState = assertEscrowTransition(approvedState, "release");
 
   await getPrisma().$transaction(async (tx) => {
-    await tx.approval.create({ data: { actorId: user.id, dealId, note: "Approved in simulated escrow flow." } });
+    await tx.approval.create({
+      data: {
+        actorId: user.id,
+        dealId,
+        note: "Approved in simulated escrow flow.",
+      },
+    });
     await tx.release.create({
       data: {
         actorId: user.id,
@@ -94,9 +118,24 @@ export async function approveDeliveryAction(formData: FormData) {
         statusHistory: {
           createMany: {
             data: [
-              { actorId: user.id, fromStatus: deal.status, reason: "Delivery moved to review.", toStatus: reviewState },
-              { actorId: user.id, fromStatus: reviewState, reason: "Delivery approved.", toStatus: approvedState },
-              { actorId: user.id, fromStatus: approvedState, reason: "Funds released in simulated escrow.", toStatus: releasedState },
+              {
+                actorId: user.id,
+                fromStatus: deal.status,
+                reason: "Delivery moved to review.",
+                toStatus: reviewState,
+              },
+              {
+                actorId: user.id,
+                fromStatus: reviewState,
+                reason: "Delivery approved.",
+                toStatus: approvedState,
+              },
+              {
+                actorId: user.id,
+                fromStatus: approvedState,
+                reason: "Funds released in simulated escrow.",
+                toStatus: releasedState,
+              },
             ],
           },
         },
@@ -105,14 +144,19 @@ export async function approveDeliveryAction(formData: FormData) {
     });
   });
 
-  await writeAuditLog({ actorId: user.id, action: "deal.delivery.approve", entityId: dealId, entityType: "deal" });
-  redirect(`/app/deals/${dealId}/escrow`);
+  await writeAuditLog({
+    actorId: user.id,
+    action: "deal.delivery.approve",
+    entityId: dealId,
+    entityType: "deal",
+  });
+  redirect(`/deals/${dealId}`);
 }
 
 export async function createReviewAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/app/reviews");
-  if (!hasDatabaseUrl()) redirect("/app/reviews?error=database-not-configured");
+  if (isLocalTestUser(user)) redirect("/reviews");
+  if (!hasDatabaseUrl()) redirect("/reviews?error=database-not-configured");
 
   const dealId = String(formData.get("dealId") ?? "");
   const subjectId = String(formData.get("subjectId") ?? "");
@@ -120,14 +164,30 @@ export async function createReviewAction(formData: FormData) {
   const title = String(formData.get("title") ?? "").slice(0, 120);
   const body = String(formData.get("body") ?? "").slice(0, 1200);
   const deal = await requireDealParticipant(dealId, user.id);
-  if (deal.status !== "RELEASED" || subjectId === user.id || !deal.participants.some((entry) => entry.userId === subjectId)) {
-    redirect("/app/reviews?error=not-eligible");
+  if (
+    deal.status !== "RELEASED" ||
+    subjectId === user.id ||
+    !deal.participants.some((entry) => entry.userId === subjectId)
+  ) {
+    redirect("/reviews?error=not-eligible");
   }
 
   await getPrisma().review.create({
-    data: { authorId: user.id, body, dealId, rating: Math.max(1, Math.min(5, rating)), subjectId, title },
+    data: {
+      authorId: user.id,
+      body,
+      dealId,
+      rating: Math.max(1, Math.min(5, rating)),
+      subjectId,
+      title,
+    },
   });
 
-  await writeAuditLog({ actorId: user.id, action: "review.create", entityId: dealId, entityType: "deal" });
-  redirect("/app/reviews");
+  await writeAuditLog({
+    actorId: user.id,
+    action: "review.create",
+    entityId: dealId,
+    entityType: "deal",
+  });
+  redirect("/reviews");
 }

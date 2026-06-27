@@ -1,6 +1,6 @@
 # perX Implementation Plan
 
-Last updated: 2026-06-25
+Last updated: 2026-06-27
 
 ## Completed In This Correction Pass
 
@@ -9,6 +9,7 @@ Last updated: 2026-06-25
 - Regenerated brand and PWA icons from `MAIN_LOGO.jpg`.
 - Centralized brand rendering in `src/components/brand-logo.tsx`.
 - Fixed app/preview shell structure so only the content region scrolls.
+- Rebuilt the app sidebar from the `IMG-20260423-WA0067.jpg` reference with one approved 15-link navigation list and clean workspace routes.
 - Redesigned the landing page, dashboard, Discover and Messages around the references.
 - Added `src/lib/data/temporary-images.ts` so temporary content imagery is controlled.
 - Removed stale SVG logo paths and legacy icon references from active code.
@@ -25,5 +26,5 @@ Last updated: 2026-06-25
 - Do not rebuild the app or replace working architecture.
 - Do not use UI screenshots as opportunity thumbnails or decorative content.
 - Keep Preview Mode and Test Account database-free.
-- Keep route shells isolated: `/app` links stay in app, `/preview` links stay in preview.
+- Keep route shells isolated: clean authenticated workspace links stay on top-level app routes, and preview links stay under `/preview`.
 - Use the Feature Under Development dialog instead of silent or dead controls.

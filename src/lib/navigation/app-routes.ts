@@ -2,6 +2,16 @@ export type AppEnvironment = "app" | "preview";
 
 export type RouteKey =
   | "home"
+  | "network"
+  | "real_estate"
+  | "logistics"
+  | "travel_stay"
+  | "services"
+  | "market"
+  | "wallet"
+  | "escrow"
+  | "service_center"
+  | "reports"
   | "discover"
   | "profile"
   | "opportunities"
@@ -14,14 +24,23 @@ export type RouteKey =
   | "reviews"
   | "notifications"
   | "settings"
-  | "startups"
-  | "network";
+  | "startups";
 
 const routeMap: Record<RouteKey, string> = {
-  home: "",
-  discover: "/discover",
+  home: "/dashboard",
+  network: "/network",
+  real_estate: "/real-estate",
+  logistics: "/logistics",
+  travel_stay: "/travel-stay",
+  services: "/services",
+  market: "/market",
+  wallet: "/wallet",
+  escrow: "/escrow",
+  service_center: "/service-center",
+  reports: "/reports",
+  discover: "/market",
   profile: "/profile/edit",
-  opportunities: "/opportunities",
+  opportunities: "/market",
   new_opportunity: "/opportunities/new",
   saved: "/saved",
   proposals_sent: "/proposals/sent",
@@ -31,8 +50,7 @@ const routeMap: Record<RouteKey, string> = {
   reviews: "/reviews",
   notifications: "/notifications",
   settings: "/settings",
-  startups: "/discover?type=STARTUP",
-  network: "/discover?type=PEOPLE",
+  startups: "/market?type=STARTUP",
 };
 
 /**
@@ -40,13 +58,20 @@ const routeMap: Record<RouteKey, string> = {
  * Prevents authenticated users from accidentally navigating to public pages (e.g. public /discover)
  * and ensures preview users stay within the /preview shell.
  */
-export function getAppRoute(key: RouteKey, environment: AppEnvironment = "app"): string {
-  if (environment === "preview" && key === "deals") {
-    return "/preview/deals/demo-deal";
+export function getAppRoute(
+  key: RouteKey,
+  environment: AppEnvironment = "app",
+): string {
+  if (environment === "preview") {
+    if (key === "home") return "/preview";
+    if (key === "deals") return "/preview/deals/demo-deal";
+    if (key === "profile") return "/preview/profile";
+
+    const path = routeMap[key];
+    return `/preview${path}`;
   }
 
-  const path = routeMap[key];
-  return `/${environment}${path}`;
+  return routeMap[key];
 }
 
 /**

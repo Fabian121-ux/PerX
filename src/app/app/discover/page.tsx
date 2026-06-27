@@ -15,7 +15,11 @@ export default async function AppDiscoverPage({
 
   const params = await searchParams;
   const [opportunities, categories] = await Promise.all([
-    getOpportunityFeed({ category: params.category, q: params.q, type: params.type }),
+    getOpportunityFeed({
+      category: params.category,
+      q: params.q,
+      type: params.type,
+    }),
     getCategories(),
   ]);
 
@@ -29,7 +33,7 @@ export default async function AppDiscoverPage({
 
   return (
     <DiscoverExperience
-      basePath="/app/discover"
+      basePath="/market"
       categories={categories}
       mode="app"
       opportunities={opportunities}

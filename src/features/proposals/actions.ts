@@ -13,9 +13,11 @@ import { proposalFormSchema } from "@/lib/validation/opportunity";
 
 export async function submitProposalAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/app/proposals/sent");
-  if (!hasCapability(user.roles, "proposal:create")) redirect("/app?error=forbidden");
-  if (!hasDatabaseUrl()) redirect("/app/proposals/sent?error=database-not-configured");
+  if (isLocalTestUser(user)) redirect("/proposals/sent");
+  if (!hasCapability(user.roles, "proposal:create"))
+    redirect("/dashboard?error=forbidden");
+  if (!hasDatabaseUrl())
+    redirect("/proposals/sent?error=database-not-configured");
 
   const parsed = proposalFormSchema.safeParse({
     amount: formData.get("amount"),
@@ -24,9 +26,11 @@ export async function submitProposalAction(formData: FormData) {
     opportunityId: formData.get("opportunityId"),
     revisions: formData.get("revisions"),
   });
-  if (!parsed.success) redirect("/app/proposals/sent?error=check-fields");
+  if (!parsed.success) redirect("/proposals/sent?error=check-fields");
 
-  const opportunity = await getPrisma().opportunity.findUniqueOrThrow({ where: { id: parsed.data.opportunityId } });
+  const opportunity = await getPrisma().opportunity.findUniqueOrThrow({
+    where: { id: parsed.data.opportunityId },
+  });
   const amount = parseMoneyToMinor(parsed.data.amount, opportunity.currency);
 
   const conversation = await getPrisma().conversation.create({
@@ -48,32 +52,52 @@ export async function submitProposalAction(formData: FormData) {
       opportunityId: opportunity.id,
       revisions: parsed.data.revisions,
       senderId: user.id,
-      statusHistory: { create: { actorId: user.id, toStatus: "SENT", note: "Proposal submitted." } },
+      statusHistory: {
+        create: {
+          actorId: user.id,
+          toStatus: "SENT",
+          note: "Proposal submitted.",
+        },
+      },
     },
   });
 
-  await writeAuditLog({ actorId: user.id, action: "proposal.submit", entityId: proposal.id, entityType: "proposal" });
-  redirect("/app/proposals/sent");
+  await writeAuditLog({
+    actorId: user.id,
+    action: "proposal.submit",
+    entityId: proposal.id,
+    entityType: "proposal",
+  });
+  redirect("/proposals/sent");
 }
 
 export async function acceptProposalAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/app/deals/deal-1");
-  if (!hasCapability(user.roles, "proposal:decide:received")) redirect("/app?error=forbidden");
-  if (!hasDatabaseUrl()) redirect("/app/proposals/received?error=database-not-configured");
+  if (isLocalTestUser(user)) redirect("/deals/deal-1");
+  if (!hasCapability(user.roles, "proposal:decide:received"))
+    redirect("/dashboard?error=forbidden");
+  if (!hasDatabaseUrl())
+    redirect("/proposals/received?error=database-not-configured");
 
   const proposalId = String(formData.get("proposalId") ?? "");
   const proposal = await getPrisma().proposal.findUniqueOrThrow({
     include: { milestones: true, opportunity: true },
     where: { id: proposalId },
   });
-  if (proposal.opportunity.ownerId !== user.id) redirect("/app?error=forbidden");
+  if (proposal.opportunity.ownerId !== user.id)
+    redirect("/dashboard?error=forbidden");
 
   const deal = await getPrisma().$transaction(async (tx) => {
     await tx.proposal.update({
       data: {
         status: "ACCEPTED",
-        statusHistory: { create: { actorId: user.id, fromStatus: proposal.status, toStatus: "ACCEPTED" } },
+        statusHistory: {
+          create: {
+            actorId: user.id,
+            fromStatus: proposal.status,
+            toStatus: "ACCEPTED",
+          },
+        },
       },
       where: { id: proposal.id },
     });
@@ -110,12 +134,21 @@ export async function acceptProposalAction(formData: FormData) {
                 ],
         },
         statusHistory: {
-          create: { actorId: user.id, reason: "Accepted proposal created deal.", toStatus: "AWAITING_FUNDING" },
+          create: {
+            actorId: user.id,
+            reason: "Accepted proposal created deal.",
+            toStatus: "AWAITING_FUNDING",
+          },
         },
       },
     });
   });
 
-  await writeAuditLog({ actorId: user.id, action: "proposal.accept", entityId: proposal.id, entityType: "proposal" });
-  redirect(`/app/deals/${deal.id}`);
+  await writeAuditLog({
+    actorId: user.id,
+    action: "proposal.accept",
+    entityId: proposal.id,
+    entityType: "proposal",
+  });
+  redirect(`/deals/${deal.id}`);
 }

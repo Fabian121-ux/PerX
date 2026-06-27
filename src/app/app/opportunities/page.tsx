@@ -10,7 +10,13 @@ export default async function MyOpportunitiesPage() {
   const opportunities = await getMyOpportunities(user!.id);
 
   return (
-    <AppSection actions={<ButtonLink href="/app/opportunities/new">New opportunity</ButtonLink>} description="Manage drafts, published opportunities, moderation status, and ownership." title="My opportunities">
+    <AppSection
+      actions={
+        <ButtonLink href="/opportunities/new">New opportunity</ButtonLink>
+      }
+      description="Manage drafts, published opportunities, moderation status, and ownership."
+      title="My opportunities"
+    >
       {opportunities.length ? (
         <div className="grid gap-5 xl:grid-cols-2">
           {opportunities.map((opportunity) => (
@@ -18,7 +24,15 @@ export default async function MyOpportunitiesPage() {
           ))}
         </div>
       ) : (
-        <EmptyState action={<ButtonLink href="/app/opportunities/new">Create opportunity</ButtonLink>} body="Your persisted opportunities will appear here after you create them." title="No opportunities yet" />
+        <EmptyState
+          action={
+            <ButtonLink href="/opportunities/new">
+              Create opportunity
+            </ButtonLink>
+          }
+          body="Your persisted opportunities will appear here after you create them."
+          title="No opportunities yet"
+        />
       )}
     </AppSection>
   );

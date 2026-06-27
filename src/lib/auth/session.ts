@@ -7,7 +7,10 @@ import type { RoleName } from "@/lib/permissions/capabilities";
 import { hasCapability, type Capability } from "@/lib/permissions/capabilities";
 import { getPrisma } from "@/lib/db/prisma";
 import { getServerEnv, hasDatabaseUrl } from "@/lib/env";
-import { TEST_SESSION_COOKIE_NAME, TEST_SESSION_VALUE } from "@/lib/dev/test-auth";
+import {
+  TEST_SESSION_COOKIE_NAME,
+  TEST_SESSION_VALUE,
+} from "@/lib/dev/test-auth";
 import { testUser } from "@/lib/data/test-account";
 
 export type CurrentUser = {
@@ -35,7 +38,9 @@ export async function createSession(userId: string) {
   const env = getServerEnv();
   const rawToken = crypto.randomBytes(32).toString("base64url");
   const tokenHash = hashToken(rawToken);
-  const expiresAt = new Date(Date.now() + env.AUTH_SESSION_DAYS * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(
+    Date.now() + env.AUTH_SESSION_DAYS * 24 * 60 * 60 * 1000,
+  );
   const headerStore = await headers();
 
   await getPrisma().session.create({
@@ -61,7 +66,9 @@ export async function destroySession() {
   const cookieStore = await cookies();
   const token = cookieStore.get(sessionCookieName())?.value;
   if (token && hasDatabaseUrl()) {
-    await getPrisma().session.deleteMany({ where: { tokenHash: hashToken(token) } });
+    await getPrisma().session.deleteMany({
+      where: { tokenHash: hashToken(token) },
+    });
   }
   cookieStore.delete(sessionCookieName());
 }
@@ -115,12 +122,13 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 
 export async function requireUser() {
   const user = await getCurrentUser();
-  if (!user) redirect("/sign-in?next=/app");
+  if (!user) redirect("/sign-in?next=/dashboard");
   return user;
 }
 
 export async function requireCapability(capability: Capability) {
   const user = await requireUser();
-  if (!hasCapability(user.roles, capability)) redirect("/app?error=forbidden");
+  if (!hasCapability(user.roles, capability))
+    redirect("/dashboard?error=forbidden");
   return user;
 }

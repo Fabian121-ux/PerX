@@ -8,6 +8,10 @@ The complete per-image mapping is maintained in:
 
 - `docs/UI_REFERENCE_PAGE_MAP.md`
 
+Current sidebar reference:
+
+- `public/image_ux_ux/IMG-20260423-WA0067.jpg` guides the desktop/mobile sidebar width, dark navy navigation rail, icon alignment, spacing, active state and grouping.
+
 ## Official Logo Source
 
 - Source: `public/image_ux_ux/MAIN_LOGO.jpg`

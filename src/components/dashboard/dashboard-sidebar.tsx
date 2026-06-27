@@ -1,163 +1,130 @@
 "use client";
 
-import {
-  Bell,
-  BriefcaseBusiness,
-  Building2,
-  FileText,
-  Home,
-  MessageSquare,
-  Network,
-  Settings,
-  ShieldCheck,
-  Star,
-  PanelLeftClose,
-  PanelLeftOpen,
-} from "lucide-react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import * as Tooltip from "@radix-ui/react-tooltip";
 
-import { BrandLogo, BrandSymbol } from "@/components/brand-logo";
-import { useSidebar } from "./sidebar-context";
-import { getAppRoute, getEnvironment, RouteKey } from "@/lib/navigation/app-routes";
-import { ElementType } from "react";
+import { BrandLogo } from "@/components/brand-logo";
+import {
+  isSidebarItemActive,
+  sidebarGroups,
+  sidebarItems,
+  type SidebarItem,
+} from "@/lib/navigation/sidebar-items";
 
-const primaryLinks: Array<{ key: RouteKey, icon: ElementType, label: string }> = [
-  { key: "home", icon: Home, label: "Home" },
-  { key: "discover", icon: Network, label: "Discover" },
-];
-
-const workspaceLinks: Array<{ key: RouteKey, icon: ElementType, label: string }> = [
-  { key: "opportunities", icon: BriefcaseBusiness, label: "Opportunities" },
-  { key: "startups", icon: Building2, label: "Startups" },
-  { key: "proposals_sent", icon: FileText, label: "Proposals" },
-  { key: "messages", icon: MessageSquare, label: "Messages" },
-  { key: "deals", icon: ShieldCheck, label: "Deals" },
-  { key: "saved", icon: Star, label: "Saved" },
-];
-
-const accountLinks: Array<{ key: RouteKey, icon: ElementType, label: string }> = [
-  { key: "notifications", icon: Bell, label: "Notifications" },
-  { key: "settings", icon: Settings, label: "Settings" },
-];
-
-export function DashboardSidebar() {
+function SidebarLink({
+  item,
+  onNavigate,
+}: {
+  item: SidebarItem;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
-  const env = getEnvironment(pathname);
-  const { isCollapsed, toggleCollapse } = useSidebar();
+  const href = getRenderedHref(item.href, pathname);
+  const active = isSidebarItemActive(pathname, { ...item, href });
+  const Icon = item.icon;
 
-  const renderLinks = (links: typeof primaryLinks) => (
-    <nav className="grid gap-1">
-      {links.map((item) => {
-        const targetHref = getAppRoute(item.key, env);
-        const isActive =
-          targetHref === "/app" || targetHref === "/preview"
-            ? pathname === targetHref
-            : pathname.startsWith(targetHref);
+  return (
+    <Link
+      aria-current={active ? "page" : undefined}
+      aria-label={item.label}
+      className={`group flex min-h-10 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-[13px] font-semibold leading-tight transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--px-sidebar)] ${
+        active
+          ? "bg-[color:var(--px-primary)] text-white shadow-[0_10px_22px_rgba(37,99,235,0.32)]"
+          : "text-[color:var(--px-text-muted)] hover:bg-white/10 hover:text-white"
+      }`}
+      href={href}
+      onClick={onNavigate}
+    >
+      <Icon
+        aria-hidden
+        className={`h-[18px] w-[18px] shrink-0 stroke-[2.15] transition-colors ${
+          active
+            ? "text-white"
+            : "text-[color:var(--px-text-muted)] group-hover:text-white"
+        }`}
+      />
+      <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
+    </Link>
+  );
+}
 
-        const linkContent = (
-          <Link
-            className={`flex h-11 items-center rounded-[var(--px-radius-sm)] py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${
-              isCollapsed ? "justify-center px-0" : "gap-3 px-3"
-            } ${
-              isActive
-                ? "bg-[color:var(--px-primary)] text-white shadow-[0_10px_24px_rgba(37,99,235,0.22)]"
-                : "text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-text)]"
-            }`}
-            href={targetHref}
-            key={item.key}
-            aria-label={isCollapsed ? item.label : undefined}
-          >
-            <item.icon aria-hidden size={18} />
-            {!isCollapsed && <span>{item.label}</span>}
-          </Link>
+function getRenderedHref(href: string, pathname: string) {
+  if (!pathname.startsWith("/preview")) {
+    return href;
+  }
+
+  if (href === "/dashboard") return "/preview";
+  if (href === "/messages") return "/preview/messages";
+  if (href === "/notifications") return "/preview/notifications";
+  if (href === "/saved") return "/preview/saved";
+  if (href === "/settings") return "/preview/settings";
+
+  return `/preview${href}`;
+}
+
+export function SidebarNavigation({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <nav aria-label="Sidebar navigation" className="grid gap-5">
+      {sidebarGroups.map((group) => {
+        const items = sidebarItems.filter((item) => item.group === group.key);
+
+        return (
+          <section className="grid gap-1.5" key={group.key}>
+            <h2 className="px-3 text-[10px] font-black uppercase tracking-[0.12em] text-white/45">
+              {group.label}
+            </h2>
+            <div className="grid gap-1">
+              {items.map((item) => (
+                <SidebarLink
+                  item={item}
+                  key={item.href}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </div>
+          </section>
         );
-
-        if (isCollapsed) {
-          return (
-            <Tooltip.Provider key={item.key} delayDuration={100}>
-              <Tooltip.Root>
-                <Tooltip.Trigger asChild>{linkContent}</Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content
-                    side="right"
-                    sideOffset={14}
-                    className="z-50 rounded-md border border-[color:var(--px-border)] bg-[color:var(--px-surface-elevated)] px-3 py-1.5 text-xs font-medium text-[color:var(--px-text)] shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
-                  >
-                    {item.label}
-                    <Tooltip.Arrow className="fill-[color:var(--px-surface-elevated)]" />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
-            </Tooltip.Provider>
-          );
-        }
-
-        return linkContent;
       })}
     </nav>
   );
+}
+
+export function DashboardSidebar() {
+  const isDesktop = useIsDesktop();
+
+  if (!isDesktop) {
+    return null;
+  }
 
   return (
-    <aside
-      className="perx-sidebar relative z-20 hidden h-dvh shrink-0 flex-col border-r border-[color:var(--px-border)] text-[color:var(--px-text)] transition-[width] duration-300 ease-in-out lg:flex"
-      style={{ width: isCollapsed ? 80 : 260 }}
-    >
-      <div className={`flex h-[72px] shrink-0 items-center border-b border-[color:var(--px-border)] ${isCollapsed ? "justify-center px-0" : "px-5"}`}>
-        <Link href={getAppRoute("home", env)} aria-label="perX dashboard">
-          <div className="overflow-hidden whitespace-nowrap">
-            {isCollapsed ? (
-              <BrandSymbol className="h-8 w-14 drop-shadow-[0_2px_8px_rgba(255,255,255,0.18)]" dark />
-            ) : (
-              <BrandLogo className="h-9 drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]" dark />
-            )}
-          </div>
-        </Link>
+    <aside className="perx-sidebar relative z-20 flex h-dvh w-[224px] shrink-0 flex-col border-r border-white/10 text-white shadow-[18px_0_44px_rgba(2,10,26,0.22)]">
+      <div className="flex h-[86px] shrink-0 items-center px-5">
+        <BrandLogo
+          className="h-10 max-w-[152px] drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]"
+          dark
+        />
       </div>
 
-      <div className={`flex-1 space-y-8 overflow-y-auto py-6 scrollbar-hide ${isCollapsed ? "px-3" : "px-4"}`}>
-        <div>
-          {!isCollapsed && <h3 className="mb-2 px-3 text-xs font-bold uppercase tracking-wider text-[color:var(--px-text-muted)]">Menu</h3>}
-          {renderLinks(primaryLinks)}
-        </div>
-        <div>
-          {!isCollapsed && <h3 className="mb-2 px-3 text-xs font-bold uppercase tracking-wider text-[color:var(--px-text-muted)]">Workspace</h3>}
-          {renderLinks(workspaceLinks)}
-        </div>
-        <div>
-          {!isCollapsed && <h3 className="mb-2 px-3 text-xs font-bold uppercase tracking-wider text-[color:var(--px-text-muted)]">Account</h3>}
-          {renderLinks(accountLinks)}
-        </div>
-      </div>
-
-      <div className={`shrink-0 border-t border-[color:var(--px-border)] ${isCollapsed ? "p-3" : "p-4"}`}>
-        {!isCollapsed && (
-          <div className="mb-4 rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface-soft)] p-4 ring-1 ring-[color:var(--px-border)]">
-            <h4 className="text-sm font-bold text-[color:var(--px-text)]">Build your reputation</h4>
-            <p className="mt-1 text-xs leading-relaxed text-[color:var(--px-text-muted)]">
-              Complete your profile, verify your identity and unlock more trusted opportunities.
-            </p>
-            <Link
-              href={getAppRoute("profile", env)}
-              className="mt-3 block w-full rounded bg-[color:var(--px-primary)] px-3 py-2 text-center text-xs font-bold text-white transition-colors hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-            >
-              Improve profile
-            </Link>
-          </div>
-        )}
-        <button
-          onClick={toggleCollapse}
-          className={`flex h-11 w-full items-center rounded-[var(--px-radius-sm)] py-2 text-sm font-semibold text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${
-            isCollapsed ? "justify-center px-0" : "gap-3 px-3"
-          }`}
-          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          aria-expanded={!isCollapsed}
-        >
-          {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-          {!isCollapsed && <span>Collapse sidebar</span>}
-        </button>
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-5 pt-1">
+        <SidebarNavigation />
       </div>
     </aside>
   );
+}
+
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(query.matches);
+
+    update();
+    query.addEventListener("change", update);
+
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  return isDesktop;
 }

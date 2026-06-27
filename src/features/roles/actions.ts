@@ -23,23 +23,30 @@ async function ensureRole(role: RoleName) {
 
 export async function updateRolesAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/app");
-  if (!hasDatabaseUrl()) redirect("/app/roles?error=database-not-configured");
+  if (isLocalTestUser(user)) redirect("/dashboard");
+  if (!hasDatabaseUrl()) redirect("/roles?error=database-not-configured");
 
   const roles = formData
     .getAll("roles")
     .map((role) => normalizeRole(role))
     .filter((role): role is RoleName => Boolean(role) && role !== "ADMIN");
-  if (roles.length === 0) redirect("/app/roles?error=choose-role");
+  if (roles.length === 0) redirect("/roles?error=choose-role");
 
   await getPrisma().$transaction(async (tx) => {
-    await tx.userRole.deleteMany({ where: { userId: user.id, role: { name: { not: "ADMIN" } } } });
+    await tx.userRole.deleteMany({
+      where: { userId: user.id, role: { name: { not: "ADMIN" } } },
+    });
     for (const roleName of roles) {
       const role = await ensureRole(roleName);
       await tx.userRole.create({ data: { roleId: role.id, userId: user.id } });
     }
   });
 
-  await writeAuditLog({ actorId: user.id, action: "roles.update", entityId: user.id, entityType: "user" });
-  redirect("/app");
+  await writeAuditLog({
+    actorId: user.id,
+    action: "roles.update",
+    entityId: user.id,
+    entityType: "user",
+  });
+  redirect("/dashboard");
 }

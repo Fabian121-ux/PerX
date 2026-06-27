@@ -1,12 +1,21 @@
 "use client";
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Plus, Briefcase, FileSignature, Handshake, FolderPlus } from "lucide-react";
+import {
+  Plus,
+  Briefcase,
+  FileSignature,
+  Handshake,
+  FolderPlus,
+} from "lucide-react";
 import Link from "next/link";
 import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
 
 export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
-  const getHref = (href: string) => (previewMode ? href.replace("/app", "/preview") : href);
+  const getHref = (href: string) =>
+    previewMode
+      ? href.replace("/opportunities", "/preview/opportunities")
+      : href;
 
   return (
     <DropdownMenu.Root>
@@ -19,7 +28,7 @@ export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
           Create
         </button>
       </DropdownMenu.Trigger>
-      
+
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="z-[100] w-56 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-1 shadow-lg animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
@@ -28,10 +37,13 @@ export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
         >
           <DropdownMenu.Item asChild>
             <Link
-              href={getHref("/app/opportunities/new")}
+              href={getHref("/opportunities/new")}
               className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
             >
-              <Briefcase size={16} className="text-[color:var(--px-text-muted)]" />
+              <Briefcase
+                size={16}
+                className="text-[color:var(--px-text-muted)]"
+              />
               Post an opportunity
             </Link>
           </DropdownMenu.Item>
@@ -39,7 +51,10 @@ export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
           <FeatureStatusDialog featureName="Create a project">
             <DropdownMenu.Item asChild onSelect={(e) => e.preventDefault()}>
               <button className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
-                <FileSignature size={16} className="text-[color:var(--px-text-muted)]" />
+                <FileSignature
+                  size={16}
+                  className="text-[color:var(--px-text-muted)]"
+                />
                 Create a project
               </button>
             </DropdownMenu.Item>
@@ -48,7 +63,10 @@ export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
           <FeatureStatusDialog featureName="Start a deal">
             <DropdownMenu.Item asChild onSelect={(e) => e.preventDefault()}>
               <button className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
-                <Handshake size={16} className="text-[color:var(--px-text-muted)]" />
+                <Handshake
+                  size={16}
+                  className="text-[color:var(--px-text-muted)]"
+                />
                 Start a deal
               </button>
             </DropdownMenu.Item>
@@ -59,7 +77,10 @@ export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
           <FeatureStatusDialog featureName="Add portfolio work">
             <DropdownMenu.Item asChild onSelect={(e) => e.preventDefault()}>
               <button className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
-                <FolderPlus size={16} className="text-[color:var(--px-text-muted)]" />
+                <FolderPlus
+                  size={16}
+                  className="text-[color:var(--px-text-muted)]"
+                />
                 Add portfolio work
               </button>
             </DropdownMenu.Item>

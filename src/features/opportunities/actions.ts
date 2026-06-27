@@ -21,9 +21,11 @@ function slugify(value: string) {
 
 export async function createOpportunityAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/app/opportunities");
-  if (!hasCapability(user.roles, "opportunity:create")) redirect("/app?error=forbidden");
-  if (!hasDatabaseUrl()) redirect("/app/opportunities/new?error=database-not-configured");
+  if (isLocalTestUser(user)) redirect("/market");
+  if (!hasCapability(user.roles, "opportunity:create"))
+    redirect("/dashboard?error=forbidden");
+  if (!hasDatabaseUrl())
+    redirect("/opportunities/new?error=database-not-configured");
 
   const parsed = opportunityFormSchema.safeParse({
     budgetMax: formData.get("budgetMax"),
@@ -40,7 +42,7 @@ export async function createOpportunityAction(formData: FormData) {
     type: formData.get("type"),
   });
 
-  if (!parsed.success) redirect("/app/opportunities/new?error=check-fields");
+  if (!parsed.success) redirect("/opportunities/new?error=check-fields");
 
   const categorySlug = slugify(parsed.data.category);
   const category = await getPrisma().opportunityCategory.upsert({
@@ -54,8 +56,12 @@ export async function createOpportunityAction(formData: FormData) {
   });
 
   const currency = parsed.data.currency.toUpperCase();
-  const budgetMin = parsed.data.budgetMin ? parseMoneyToMinor(parsed.data.budgetMin, currency) : null;
-  const budgetMax = parsed.data.budgetMax ? parseMoneyToMinor(parsed.data.budgetMax, currency) : null;
+  const budgetMin = parsed.data.budgetMin
+    ? parseMoneyToMinor(parsed.data.budgetMin, currency)
+    : null;
+  const budgetMax = parsed.data.budgetMax
+    ? parseMoneyToMinor(parsed.data.budgetMax, currency)
+    : null;
   const status = parsed.data.intent === "publish" ? "PUBLISHED" : "DRAFT";
   const slug = `${slugify(parsed.data.title)}-${Date.now().toString(36)}`;
 
@@ -71,7 +77,11 @@ export async function createOpportunityAction(formData: FormData) {
       ownerId: user.id,
       publishedAt: status === "PUBLISHED" ? new Date() : null,
       remote: parsed.data.remote,
-      skills: parsed.data.skills?.split(",").map((skill) => skill.trim()).filter(Boolean) ?? [],
+      skills:
+        parsed.data.skills
+          ?.split(",")
+          .map((skill) => skill.trim())
+          .filter(Boolean) ?? [],
       slug,
       status,
       summary: parsed.data.summary,
@@ -94,13 +104,13 @@ export async function createOpportunityAction(formData: FormData) {
     entityType: "opportunity",
   });
 
-  redirect("/app/opportunities");
+  redirect("/market");
 }
 
 export async function bookmarkOpportunityAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/app/saved");
-  if (!hasDatabaseUrl()) redirect("/app/saved?error=database-not-configured");
+  if (isLocalTestUser(user)) redirect("/saved");
+  if (!hasDatabaseUrl()) redirect("/saved?error=database-not-configured");
 
   const opportunityId = String(formData.get("opportunityId") ?? "");
   await getPrisma().opportunityBookmark.upsert({
@@ -109,7 +119,7 @@ export async function bookmarkOpportunityAction(formData: FormData) {
     where: { userId_opportunityId: { opportunityId, userId: user.id } },
   });
 
-  redirect("/app/saved");
+  redirect("/saved");
 }
 
 export async function reportOpportunityAction(formData: FormData) {
@@ -118,8 +128,18 @@ export async function reportOpportunityAction(formData: FormData) {
   if (!hasDatabaseUrl()) redirect("/discover?error=database-not-configured");
 
   const opportunityId = String(formData.get("opportunityId") ?? "");
-  const reason = String(formData.get("reason") ?? "Safety concern").slice(0, 240);
-  await getPrisma().opportunityReport.create({ data: { opportunityId, reason, reporterId: user.id } });
-  await writeAuditLog({ actorId: user.id, action: "opportunity.report", entityId: opportunityId, entityType: "opportunity" });
+  const reason = String(formData.get("reason") ?? "Safety concern").slice(
+    0,
+    240,
+  );
+  await getPrisma().opportunityReport.create({
+    data: { opportunityId, reason, reporterId: user.id },
+  });
+  await writeAuditLog({
+    actorId: user.id,
+    action: "opportunity.report",
+    entityId: opportunityId,
+    entityType: "opportunity",
+  });
   redirect("/discover?status=reported");
 }
