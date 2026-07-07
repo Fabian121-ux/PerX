@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
 
 import { AppSection } from "@/components/app-section";
@@ -19,7 +20,7 @@ export default async function DealsPage() {
     >
       {deals.length ? (
         <div className="grid gap-5 xl:grid-cols-2">
-          {deals.map((deal) => (
+          {deals.map((deal: any) => (
             <Card className="flex flex-col justify-between gap-5" key={deal.id}>
               <div>
                 <div className="flex flex-wrap items-center gap-2">

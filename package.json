@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:mock": "cross-env PERX_DATA_MODE=mock next dev",
+    "dev:database": "cross-env PERX_DATA_MODE=database next dev",
+    "dev:webpack": "cross-env PERX_DATA_MODE=mock next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -46,6 +49,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "jsdom": "^29.1.1",

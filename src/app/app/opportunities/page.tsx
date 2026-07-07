@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppSection } from "@/components/app-section";
 import { OpportunityCard } from "@/components/opportunity-card";
 import { ButtonLink } from "@/components/ui/button";
@@ -19,7 +20,7 @@ export default async function MyOpportunitiesPage() {
     >
       {opportunities.length ? (
         <div className="grid gap-5 xl:grid-cols-2">
-          {opportunities.map((opportunity) => (
+          {opportunities.map((opportunity: any) => (
             <OpportunityCard key={opportunity.slug} opportunity={opportunity} />
           ))}
         </div>

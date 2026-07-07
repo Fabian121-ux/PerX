@@ -1,5 +1,6 @@
 import { Prisma } from "@/generated/prisma/client";
 import { getPrisma } from "@/lib/db/prisma";
+import { getResolvedDataMode } from "@/lib/env";
 
 type AuditInput = {
   actorId?: string | null;
@@ -10,6 +11,8 @@ type AuditInput = {
 };
 
 export async function writeAuditLog(input: AuditInput) {
+  if (getResolvedDataMode() === "mock") return;
+
   try {
     await getPrisma().auditLog.create({
       data: {

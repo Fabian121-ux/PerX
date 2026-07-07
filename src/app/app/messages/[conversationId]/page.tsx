@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { notFound, redirect } from "next/navigation";
 
 import {
@@ -53,7 +54,7 @@ function toWorkspaceConversation(
       context: conversation.opportunityTitle,
       id: conversation.id,
       lastMessage: conversation.lastMessage,
-      messages: conversation.messages,
+      messages: conversation.messages.map((message: any) => message),
       opportunityTitle: conversation.opportunityTitle,
       participantName: conversation.participantName,
       participantUsername: conversation.participantUsername,
@@ -64,7 +65,7 @@ function toWorkspaceConversation(
   }
 
   const dbConversation = conversation as DbConversationLike;
-  const otherParticipant = dbConversation.participants.find(
+  const otherParticipant = dbConversation.participants.map((participant: any) => participant).find(
     (participant) => participant.userId !== user.id,
   )?.user;
   const latestMessage = dbConversation.messages[0];

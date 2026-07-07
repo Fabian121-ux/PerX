@@ -1,13 +1,18 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 
-import { hasDatabaseUrl } from "@/lib/env";
+import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 
 declare global {
   var __perxPrisma: PrismaClient | undefined;
 }
 
 export function getPrisma() {
+  const mode = getResolvedDataMode();
+  if (mode === "mock") {
+    throw new Error("Prisma cannot be initialized or used when PERX_DATA_MODE is 'mock'.");
+  }
+
   if (!hasDatabaseUrl()) {
     throw new Error("DATABASE_URL is not configured.");
   }

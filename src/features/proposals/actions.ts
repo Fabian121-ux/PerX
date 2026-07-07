@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { getPrisma } from "@/lib/db/prisma";
-import { hasDatabaseUrl } from "@/lib/env";
+import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { parseMoneyToMinor } from "@/lib/money";
 import { hasCapability } from "@/lib/permissions/capabilities";
@@ -16,6 +16,7 @@ export async function submitProposalAction(formData: FormData) {
   if (isLocalTestUser(user)) redirect("/proposals/sent");
   if (!hasCapability(user.roles, "proposal:create"))
     redirect("/dashboard?error=forbidden");
+  if (getResolvedDataMode() === "mock") redirect("/proposals/sent?mock=true");
   if (!hasDatabaseUrl())
     redirect("/proposals/sent?error=database-not-configured");
 
@@ -76,6 +77,7 @@ export async function acceptProposalAction(formData: FormData) {
   if (isLocalTestUser(user)) redirect("/deals/deal-1");
   if (!hasCapability(user.roles, "proposal:decide:received"))
     redirect("/dashboard?error=forbidden");
+  if (getResolvedDataMode() === "mock") redirect("/deals/mock-deal-1?mock=true");
   if (!hasDatabaseUrl())
     redirect("/proposals/received?error=database-not-configured");
 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   ArrowRight,
   BadgeCheck,
@@ -53,13 +54,13 @@ export default function Home() {
             <div className="flex flex-col justify-center">
               <p className="inline-flex w-fit items-center gap-2 rounded-full bg-[color:var(--px-primary-soft)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[color:var(--px-primary)] ring-1 ring-[color:var(--px-primary)]/20">
                 <Sparkles aria-hidden size={14} />
-                Opportunity ecosystem
+                Building Trust. Enabling Value.
               </p>
               <h1 className="mt-5 max-w-4xl text-5xl font-black leading-[1.02] tracking-normal text-[color:var(--px-text)] sm:text-6xl">
-                One ecosystem. More opportunities.
+                A global trust-based commerce ecosystem.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-[color:var(--px-text-muted)]">
-                Discover work, talent, startups, partnerships and trusted deals through one professional platform built around the path from opportunity to reputation.
+                Improve how value is exchanged across industries, markets and borders through trusted, transparent, accountable and reliable systems.
               </p>
 
               <form action="/discover" className="mt-8 grid gap-3 rounded-[22px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-2 shadow-[var(--px-shadow)] sm:grid-cols-[1fr_auto]">
@@ -219,7 +220,7 @@ async function FeaturedOpportunities() {
         </ButtonLink>
       </div>
       <div className="grid gap-5 lg:grid-cols-3">
-        {opportunities.map((opportunity) => (
+        {opportunities.map((opportunity: any) => (
           <OpportunityCard key={opportunity.slug} opportunity={opportunity} />
         ))}
       </div>

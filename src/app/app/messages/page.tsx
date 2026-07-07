@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { redirect } from "next/navigation";
 
 import { MessageWorkspace, type WorkspaceConversation } from "@/components/messages/message-workspace";
@@ -79,7 +80,7 @@ export default async function MessagesPage() {
   if (!user) redirect("/sign-in");
 
   const conversations = await getConversations(user.id);
-  const workspaceConversations = conversations.map((conversation) => toWorkspaceConversation(conversation, user));
+  const workspaceConversations = conversations.map((conversation: any) => toWorkspaceConversation(conversation, user));
 
   return <MessageWorkspace conversations={workspaceConversations} currentUserId={user.id} />;
 }

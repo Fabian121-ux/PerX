@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { getPrisma } from "@/lib/db/prisma";
-import { hasDatabaseUrl } from "@/lib/env";
+import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { requireUser } from "@/lib/auth/session";
 import { isLocalTestUser } from "@/lib/dev/test-auth";
@@ -27,6 +27,7 @@ function completeness(input: {
 export async function updateProfileAction(formData: FormData) {
   const user = await requireUser();
   if (isLocalTestUser(user)) redirect("/dashboard");
+  if (getResolvedDataMode() === "mock") redirect("/dashboard?mock=true");
   if (!hasDatabaseUrl())
     redirect("/profile/edit?error=database-not-configured");
 

@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { getPrisma } from "@/lib/db/prisma";
-import { hasDatabaseUrl } from "@/lib/env";
+import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import {
   assertEscrowTransition,
@@ -27,6 +27,7 @@ export async function submitDeliveryAction(formData: FormData) {
   const user = await requireUser();
   if (isLocalTestUser(user))
     redirect(`/deals/${String(formData.get("dealId") ?? "")}`);
+  if (getResolvedDataMode() === "mock") redirect(`/deals/${String(formData.get("dealId") ?? "")}?mock=true`);
   if (!hasDatabaseUrl()) redirect("/dashboard?error=database-not-configured");
 
   const dealId = String(formData.get("dealId") ?? "");
@@ -74,6 +75,7 @@ export async function approveDeliveryAction(formData: FormData) {
   const user = await requireUser();
   if (isLocalTestUser(user))
     redirect(`/deals/${String(formData.get("dealId") ?? "")}`);
+  if (getResolvedDataMode() === "mock") redirect(`/deals/${String(formData.get("dealId") ?? "")}?mock=true`);
   if (!hasDatabaseUrl()) redirect("/dashboard?error=database-not-configured");
 
   const dealId = String(formData.get("dealId") ?? "");
@@ -156,6 +158,7 @@ export async function approveDeliveryAction(formData: FormData) {
 export async function createReviewAction(formData: FormData) {
   const user = await requireUser();
   if (isLocalTestUser(user)) redirect("/reviews");
+  if (getResolvedDataMode() === "mock") redirect("/reviews?mock=true");
   if (!hasDatabaseUrl()) redirect("/reviews?error=database-not-configured");
 
   const dealId = String(formData.get("dealId") ?? "");

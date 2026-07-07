@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDashboardMetrics } from "@/lib/data/app";
@@ -48,7 +49,7 @@ export default async function DashboardPage() {
       { id: "tunde-bello", name: "Tunde Bello", username: "tunde-bello", role: "Startup Advisor", headline: "Connecting capital and talent", trustScore: 95 },
       { id: "sofia-martins", name: "Sofia Martins", username: "sofia-martins", role: "Product Designer", headline: "Designing trust-led platforms", trustScore: 88 },
     ],
-    recommendedOpportunities: topOpps.map((opp) => {
+    recommendedOpportunities: topOpps.map((opp: any) => {
       const image = getTemporaryOpportunityImage(opp.slug);
       return {
         id: opp.id,

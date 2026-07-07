@@ -7,7 +7,7 @@ import { writeAuditLog } from "@/lib/logging/audit";
 import { createSession, destroySession } from "@/lib/auth/session";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import { normalizeRole, type RoleName } from "@/lib/permissions/capabilities";
-import { hasDatabaseUrl } from "@/lib/env";
+import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 
 function usernameFromEmail(email: string) {
@@ -37,6 +37,7 @@ async function ensureRole(role: RoleName) {
 }
 
 export async function signUpAction(formData: FormData) {
+  if (getResolvedDataMode() === "mock") redirect("/profile/setup?mock=true");
   if (!hasDatabaseUrl()) redirect("/sign-up?error=database-not-configured");
 
   const roles = formData
@@ -95,6 +96,7 @@ export async function signUpAction(formData: FormData) {
 }
 
 export async function signInAction(formData: FormData) {
+  if (getResolvedDataMode() === "mock") redirect("/dashboard?mock=true");
   if (!hasDatabaseUrl()) redirect("/sign-in?error=database-not-configured");
 
   const parsed = signInSchema.safeParse({

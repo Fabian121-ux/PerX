@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
+import { MockModeIndicator } from "@/components/dev/mock-mode-indicator";
 
 import "./globals.css";
 
@@ -66,6 +67,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <ServiceWorkerRegister />
           {children}
+          <MockModeIndicator />
         </ThemeProvider>
       </body>
     </html>

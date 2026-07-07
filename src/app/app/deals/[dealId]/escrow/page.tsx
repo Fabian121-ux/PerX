@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { notFound } from "next/navigation";
 
 import { AppSection } from "@/components/app-section";
@@ -24,7 +25,7 @@ export default async function EscrowPage({ params }: { params: Promise<{ dealId:
         <Card>
           <h2 className="font-semibold text-slate-950">Status history</h2>
           <div className="mt-4 grid gap-3">
-            {deal.statusHistory.map((entry) => (
+            {deal.statusHistory.map((entry: any) => (
               <div className="flex flex-wrap items-center gap-2 rounded-md bg-slate-50 p-3 text-sm" key={entry.id}>
                 <Badge>{entry.toStatus.toLowerCase()}</Badge>
                 <span className="text-slate-600">{entry.reason ?? "State changed"}</span>

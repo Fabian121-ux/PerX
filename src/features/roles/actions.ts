@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { getPrisma } from "@/lib/db/prisma";
-import { hasDatabaseUrl } from "@/lib/env";
+import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { normalizeRole, type RoleName } from "@/lib/permissions/capabilities";
 import { requireUser } from "@/lib/auth/session";
@@ -24,6 +24,7 @@ async function ensureRole(role: RoleName) {
 export async function updateRolesAction(formData: FormData) {
   const user = await requireUser();
   if (isLocalTestUser(user)) redirect("/dashboard");
+  if (getResolvedDataMode() === "mock") redirect("/dashboard?mock=true");
   if (!hasDatabaseUrl()) redirect("/roles?error=database-not-configured");
 
   const roles = formData

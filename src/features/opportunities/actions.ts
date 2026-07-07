@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { getPrisma } from "@/lib/db/prisma";
-import { hasDatabaseUrl } from "@/lib/env";
+import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { parseMoneyToMinor } from "@/lib/money";
 import { hasCapability } from "@/lib/permissions/capabilities";
@@ -24,6 +24,8 @@ export async function createOpportunityAction(formData: FormData) {
   if (isLocalTestUser(user)) redirect("/market");
   if (!hasCapability(user.roles, "opportunity:create"))
     redirect("/dashboard?error=forbidden");
+
+  if (getResolvedDataMode() === "mock") redirect("/market?mock=true");
   if (!hasDatabaseUrl())
     redirect("/opportunities/new?error=database-not-configured");
 
@@ -110,6 +112,8 @@ export async function createOpportunityAction(formData: FormData) {
 export async function bookmarkOpportunityAction(formData: FormData) {
   const user = await requireUser();
   if (isLocalTestUser(user)) redirect("/saved");
+  
+  if (getResolvedDataMode() === "mock") redirect("/saved?mock=true");
   if (!hasDatabaseUrl()) redirect("/saved?error=database-not-configured");
 
   const opportunityId = String(formData.get("opportunityId") ?? "");
@@ -125,6 +129,8 @@ export async function bookmarkOpportunityAction(formData: FormData) {
 export async function reportOpportunityAction(formData: FormData) {
   const user = await requireUser();
   if (isLocalTestUser(user)) redirect("/discover?status=reported");
+
+  if (getResolvedDataMode() === "mock") redirect("/discover?status=reported&mock=true");
   if (!hasDatabaseUrl()) redirect("/discover?error=database-not-configured");
 
   const opportunityId = String(formData.get("opportunityId") ?? "");
@@ -143,3 +149,4 @@ export async function reportOpportunityAction(formData: FormData) {
   });
   redirect("/discover?status=reported");
 }
+
