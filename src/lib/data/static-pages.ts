@@ -3,11 +3,11 @@ export const staticPages = {
     eyebrow: "About",
     sections: [
       {
-        body: "perX brings discovery, communication, proposals, deal structure, simulated escrow, and reputation into one ecosystem so opportunity is not separated from trust.",
-        heading: "Opportunity with structure",
+        body: "perX is a global trust-based commerce ecosystem. Its purpose is to improve how value is exchanged across industries, markets and borders through trusted, transparent, accountable and reliable systems.",
+        heading: "Building Trust. Enabling Value. Connecting Opportunity.",
       },
       {
-        body: "The MVP starts with jobs and freelance projects while the core model remains ready for founders, investors, property owners, services, and partnerships later.",
+        body: "The ecosystem starts with jobs and freelance projects while establishing a foundation capable of supporting founders, property, services, logistics, and trade progressively. Opportunity is never separated from trust.",
         heading: "Built to expand carefully",
       },
     ],
@@ -31,12 +31,12 @@ export const staticPages = {
     eyebrow: "Workflow",
     sections: [
       {
-        body: "Users discover opportunities, start conversations, submit proposals, negotiate scope, and convert accepted proposals into deals.",
-        heading: "From discovery to deal",
+        body: "Identity → Opportunity → Connection → Proposal → Agreement → Deal → Transaction → Delivery → Review → Reputation → New Opportunity",
+        heading: "The Ecosystem Flow",
       },
       {
-        body: "Milestones, deliveries, approvals, simulated escrow releases, reviews, and trust signals create a reputation loop after the work is complete.",
-        heading: "From delivery to reputation",
+        body: "Trust surrounds every stage of the ecosystem, rather than appearing only at payment. Milestones, approvals, simulated escrow releases, and trust signals create a reliable reputation loop.",
+        heading: "From discovery to reputation",
       },
     ],
     title: "How perX works",
@@ -73,11 +73,11 @@ export const staticPages = {
     eyebrow: "Safety",
     sections: [
       {
-        body: "Protected operations verify authentication, object-level access, roles, capabilities, and current state on the server.",
+        body: "Trust protection takes priority over short-term growth. Protected operations verify authentication, object-level access, roles, capabilities, and current state on the server.",
         heading: "Defence in depth",
       },
       {
-        body: "Trust scores are shown with signal breakdowns such as verification, profile completeness, completed deals, ratings, disputes, and moderation history.",
+        body: "Trust signals must be explainable. Trust scores are shown with signal breakdowns such as verification, profile completeness, completed deals, ratings, disputes, and moderation history.",
         heading: "Explainable trust",
       },
     ],

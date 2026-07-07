@@ -1,12 +1,12 @@
 # perX MVP Architecture
 
-This file keeps the original required filename while documenting the current official product spelling: `perX`.
+This file documents the official product architecture.
 
 ## Product Backbone
 
-perX is structured around:
+perX is a global trust-based commerce ecosystem structured around:
 
-Users -> Opportunities -> Chat -> Proposals -> Deals -> Trust -> Escrow -> Reputation
+Identity -> Opportunity -> Connection -> Proposal -> Agreement -> Deal -> Transaction -> Delivery -> Review -> Reputation -> New Opportunity
 
 Each major route should reinforce this workflow rather than becoming a disconnected page.
 

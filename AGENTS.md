@@ -56,7 +56,7 @@ If a check cannot run or fails, report it directly.
 Keep these files updated as the implementation changes:
 
 - `docs/CURRENT_STATE_AUDIT.md`
-- `docs/PREX_MVP_ARCHITECTURE.md`
+- `docs/PERX_MVP_ARCHITECTURE.md`
 - `docs/IMPLEMENTATION_PLAN.md`
 - `docs/IMAGE_ASSET_MAP.md`
 - `docs/DEPLOYMENT.md`

@@ -1,8 +1,8 @@
 # perX
 
-perX is an opportunity ecosystem built around:
+perX is a global trust-based commerce ecosystem built around:
 
-Users -> Opportunities -> Chat -> Proposals -> Deals -> Trust -> Escrow -> Reputation
+Identity -> Opportunity -> Connection -> Proposal -> Agreement -> Deal -> Transaction -> Delivery -> Review -> Reputation -> New Opportunity
 
 This repository contains a production-oriented MVP scaffold using Next.js App Router, TypeScript, Tailwind CSS, Prisma, PostgreSQL, Zod, database-backed sessions, a PWA foundation, tests, and CI.
 
@@ -50,7 +50,7 @@ npm run test:e2e
 ## Docs
 
 - `docs/CURRENT_STATE_AUDIT.md`
-- `docs/PREX_MVP_ARCHITECTURE.md`
+- `docs/PERX_MVP_ARCHITECTURE.md`
 - `docs/IMPLEMENTATION_PLAN.md`
 - `docs/IMAGE_ASSET_MAP.md`
 - `docs/DEPLOYMENT.md`
