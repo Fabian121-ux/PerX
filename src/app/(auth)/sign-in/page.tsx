@@ -8,6 +8,7 @@ import { Field, Input } from "@/components/ui/form";
 import { DemoPreviewButton } from "@/components/demo-preview-button";
 import { TestAccountButton } from "@/components/test-account-button";
 import { signInAction } from "@/features/auth/actions";
+import { getResolvedDataMode } from "@/lib/env";
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const params = await searchParams;
@@ -66,7 +67,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
               Demo Preview: explore static sample screens
             </p>
           </div>
-          {process.env.NODE_ENV === "development" ? <TestAccountButton /> : null}
+          {getResolvedDataMode() === "mock" ? <TestAccountButton /> : null}
           <div className="mt-5 flex items-center justify-between text-sm">
             <Link className="font-medium text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]" href="/password-recovery">
               Recover password

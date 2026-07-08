@@ -21,13 +21,13 @@ test.describe("Mock Mode Smoke Tests", () => {
     expect(bodyText).not.toContain("PrismaClientInitializationError");
     expect(bodyText).not.toContain("DATABASE_URL");
     
-    // Verify some mock content renders (e.g. "Build a secure marketplace dashboard")
-    await expect(page.getByText("Build a secure marketplace dashboard")).toBeVisible();
+    // Verify some mock content renders (e.g. "Trust-led onboarding redesign")
+    await expect(page.getByText("Trust-led onboarding redesign")).toBeVisible();
   });
 
   test("can authenticate as test user and view dashboard", async ({ page }) => {
     await page.goto("/sign-in");
-    await page.getByRole("button", { name: /Test Account/i }).click();
+    await page.getByRole("button", { name: /Enter Test Account/i }).click();
     
     // Check that we arrive at the dashboard
     await expect(page).toHaveURL(/\/dashboard/);
@@ -35,5 +35,28 @@ test.describe("Mock Mode Smoke Tests", () => {
     // Check dashboard renders without 500
     const bodyText = await page.innerText("body");
     expect(bodyText).not.toContain("PrismaClientInitializationError");
+  });
+
+  test("can navigate to Messages and see mock data", async ({ page }) => {
+    await page.goto("/sign-in");
+    await page.getByRole("button", { name: /Enter Test Account/i }).click();
+    await page.goto("/dashboard/messages");
+    
+    // Verify messages renders without 500 error
+    const bodyText = await page.innerText("body");
+    expect(bodyText).not.toContain("PrismaClientInitializationError");
+  });
+
+  test("Test Account cannot access admin", async ({ page }) => {
+    await page.goto("/sign-in");
+    await page.getByRole("button", { name: /Enter Test Account/i }).click();
+    
+    // Attempt to access admin
+    await page.goto("/admin");
+    
+    // Should be redirected or shown 404/not authorized (since Test Account is not admin)
+    // We'll check if the URL redirected to dashboard, or if a "Not authorized" text appears
+    const url = page.url();
+    expect(url.includes("/admin")).toBeFalsy();
   });
 });

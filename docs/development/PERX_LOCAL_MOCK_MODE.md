@@ -34,3 +34,16 @@ When `PERX_DATA_MODE` resolves to `mock`:
 ## Adding Mock Data
 
 Mock data is seeded from `src/lib/data/mock/preview.ts` and `src/lib/data/mock/demo.ts`. To add new scenarios, update the arrays in these files.
+
+## Troubleshooting
+
+### Multiple Next.js Servers
+
+Only one development server should run for the repository at any time. If you encounter errors about ports being in use or stale data:
+
+```bash
+lsof -i :3000
+kill <PID>
+rm -rf .next
+npm run dev:mock
+```

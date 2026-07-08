@@ -8,6 +8,8 @@
     "dev:database": "cross-env PERX_DATA_MODE=database next dev",
     "dev:webpack": "cross-env PERX_DATA_MODE=mock next dev --webpack",
     "build": "next build",
+    "build:mock": "cross-env PERX_DATA_MODE=mock next build",
+    "build:database": "cross-env PERX_DATA_MODE=database next build",
     "start": "next start",
     "lint": "eslint",
     "type-check": "tsc --noEmit",

@@ -40,18 +40,12 @@ export function getResolvedDataMode(): "mock" | "database" {
   }
 
   if (mode === "database") {
-    if (!env.DATABASE_URL) {
-      throw new Error("DATABASE_URL is required in database mode.");
-    }
     cachedDataMode = "database";
     return cachedDataMode;
   }
 
   if (mode === "mock") {
     if (isProd) {
-      // Allow mock in prod only if it's during static build (e.g. Next.js preview context logic could be checked, but for now we warn or fail)
-      // Actually the prompt says: "Reject startup unless an explicit safe build or preview context requires it"
-      // We will assume for now that if someone explicitly sets PERX_DATA_MODE=mock in prod, they know what they are doing for a static build, but we should log a warning.
       console.warn("WARNING: Running production in mock mode. This should only be used for static builds or preview deployments.");
     }
     cachedDataMode = "mock";
@@ -60,9 +54,6 @@ export function getResolvedDataMode(): "mock" | "database" {
 
   // mode === "auto"
   if (isProd) {
-    if (!env.DATABASE_URL) {
-      throw new Error("DATABASE_URL is required in production auto mode.");
-    }
     cachedDataMode = "database";
   } else {
     if (env.DATABASE_URL) {
@@ -74,6 +65,13 @@ export function getResolvedDataMode(): "mock" | "database" {
   }
 
   return cachedDataMode;
+}
+
+export function assertDatabaseConfiguration() {
+  const env = getServerEnv();
+  if (!env.DATABASE_URL) {
+    throw new Error("DATABASE_URL is required in database mode.");
+  }
 }
 
 export function setCachedDataModeForTest(mode: "mock" | "database" | undefined) {

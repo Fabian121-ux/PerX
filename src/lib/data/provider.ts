@@ -4,8 +4,12 @@ import { mockProvider } from "./providers/mock-provider";
 
 let prismaProviderInstance: PerXDataProvider | null = null;
 
-export async function getPerXDataProvider(): Promise<PerXDataProvider> {
-  const mode = getResolvedDataMode();
+export async function getPerXDataProvider(context?: { mode?: "preview" | "mock" | "database" | "auto" }): Promise<PerXDataProvider> {
+  if (context?.mode === "preview") {
+    return mockProvider;
+  }
+
+  const mode = context?.mode ?? getResolvedDataMode();
   
   if (mode === "mock") {
     return mockProvider;
