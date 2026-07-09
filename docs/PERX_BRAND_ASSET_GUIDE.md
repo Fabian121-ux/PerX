@@ -8,7 +8,8 @@ Do not display `preX`, `PreX`, `PerX`, `PERX`, `PER`, `Prime Nest` or `PrimeNest
 
 ## Source Files
 
-- Official logo source: `public/image_ux_ux/MAIN_LOGO.jpg`
+- Official brand/wordmark source: `public/image_ux_ux/MAIN_LOGO.jpg`
+- Official app icon/favicon source: `public/main_app_logo.png`
 - Source archive copy: `public/brand/source/perx-original-reference.jpg`
 - Desktop UI reference: `public/image_ux_ux/IMG-20260423-WA0067.jpg`
 - Mobile/light reference: `public/image_ux_ux/IMG-20260502-WA0073.jpg`
@@ -64,7 +65,7 @@ Generated icons:
 ## Usage
 
 - Full/horizontal logo: public header, expanded app sidebar, admin sidebar, auth pages, offline page and footer.
-- Symbol only: collapsed sidebar, mobile menu trigger, favicon, PWA icons and small app markers.
+- Symbol only: collapsed sidebar, mobile menu trigger, favicon, PWA icons and small app markers. Uses `main_app_logo.png` or its derivatives.
 - Wordmark only: constrained horizontal spaces where the symbol would be visually redundant.
 
 All React rendering should go through `src/components/brand-logo.tsx`.

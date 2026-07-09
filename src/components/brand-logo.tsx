@@ -15,8 +15,8 @@ const assetMap: Record<BrandVariant, Record<BrandTheme, string>> = {
     dark: "/brand/perx-logo-horizontal-dark.png",
   },
   symbol: {
-    light: "/brand/perx-symbol-light.png",
-    dark: "/brand/perx-symbol-dark.png",
+    light: "/main_app_logo.png",
+    dark: "/main_app_logo.png",
   },
   wordmark: {
     light: "/brand/perx-wordmark-light.png",
@@ -27,7 +27,7 @@ const assetMap: Record<BrandVariant, Record<BrandTheme, string>> = {
 const defaultDimensions: Record<BrandVariant, { width: number; height: number; className: string }> = {
   logo: { width: 420, height: 116, className: "h-10 w-auto" },
   horizontal: { width: 420, height: 116, className: "h-10 w-auto" },
-  symbol: { width: 914, height: 273, className: "h-8 w-auto" },
+  symbol: { width: 1024, height: 1536, className: "h-8 w-auto" },
   wordmark: { width: 176, height: 96, className: "h-8 w-auto" },
 };
 

@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const root = process.cwd();
 const sourceLogo = resolve(root, "public/image_ux_ux/MAIN_LOGO.jpg");
+const mainAppLogo = resolve(root, "public/main_app_logo.png");
 const brandDir = resolve(root, "public/brand");
 const sourceDir = resolve(brandDir, "source");
 const iconsDir = resolve(root, "public/icons");
@@ -130,23 +131,27 @@ async function makeIcon({
   file,
   maskable,
   size,
-  symbol,
+  sourceImagePath,
 }) {
   const padding = maskable ? Math.round(size * 0.24) : Math.round(size * 0.16);
-  const iconSymbol = await sharp(symbol)
-    .resize(size - padding * 2, size - padding * 2, { background: { alpha: 0, b: 0, g: 0, r: 0 }, fit: "contain" })
-    .png()
-    .toBuffer();
-
-  await sharp({
+  
+  // Create the base canvas with the background
+  const canvas = sharp({
     create: {
       background: { alpha: 1, b: 252, g: 250, r: 248 },
       channels: 4,
       height: size,
       width: size,
     },
-  })
-    .composite([{ input: iconSymbol, gravity: "center" }])
+  });
+
+  const iconBuffer = await sharp(sourceImagePath)
+    .resize(size - padding * 2, size - padding * 2, { fit: "contain", background: { alpha: 0, r: 0, g: 0, b: 0 } })
+    .png()
+    .toBuffer();
+
+  await canvas
+    .composite([{ input: iconBuffer, gravity: "center" }])
     .png()
     .toFile(resolve(iconsDir, file));
 }
@@ -190,11 +195,12 @@ const iconSpecs = [
 ];
 
 for (const [file, size, maskable] of iconSpecs) {
-  await makeIcon({ file, maskable, size, symbol });
+  await makeIcon({ file, maskable, size, sourceImagePath: mainAppLogo });
 }
 
 const ico16 = await readFile(resolve(iconsDir, "favicon-16x16.png"));
 const ico32 = await readFile(resolve(iconsDir, "favicon-32x32.png"));
 await writeFile(resolve(root, "public/favicon.ico"), makeIco([{ size: 16, buffer: ico16 }, { size: 32, buffer: ico32 }]));
 
-console.log("Generated perX brand and icon derivatives from public/image_ux_ux/MAIN_LOGO.jpg");
+console.log("Generated perX brand derivatives from public/image_ux_ux/MAIN_LOGO.jpg");
+console.log("Generated app icons and favicon from public/main_app_logo.png");

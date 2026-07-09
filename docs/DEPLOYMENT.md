@@ -13,7 +13,7 @@ npm run build
 npx prisma validate
 ```
 
-Regenerate brand assets after changing `public/image_ux_ux/MAIN_LOGO.jpg`:
+Regenerate brand assets after changing `public/image_ux_ux/MAIN_LOGO.jpg` or `public/main_app_logo.png`:
 
 ```bash
 npm run brand:generate
@@ -27,7 +27,7 @@ npm run brand:generate
 
 ## PWA Cache Reset
 
-The service-worker cache is versioned in `public/sw.js` as `perx-public-shell-v3`. Increment it whenever icons, offline shell assets or public cached assets change.
+The service-worker cache is versioned in `public/sw.js` as `perx-public-shell-v4`. Increment it whenever icons, offline shell assets or public cached assets change.
 
 For local hard refresh after icon changes:
 
@@ -76,4 +76,4 @@ The service worker may cache only safe public shell assets. It must not cache:
 
 ## Logo/Icon Source
 
-All browser and app icons are generated from `public/image_ux_ux/MAIN_LOGO.jpg`. Do not replace them with generic icons or legacy SVG marks.
+All browser and app icons are generated from `public/main_app_logo.png`. Brand text derivatives are generated from `public/image_ux_ux/MAIN_LOGO.jpg`. Do not replace them with generic icons or legacy SVG marks.

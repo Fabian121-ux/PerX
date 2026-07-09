@@ -1,11 +1,11 @@
-const CACHE_NAME = "perx-public-shell-v3";
+const CACHE_NAME = "perx-public-shell-v4";
 const PUBLIC_ASSETS = [
   "/",
   "/offline",
   "/favicon.ico",
   "/brand/perx-logo-horizontal-light.png",
   "/brand/perx-logo-horizontal-dark.png",
-  "/brand/perx-symbol.png",
+  "/main_app_logo.png",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/maskable-icon-192.png",
