@@ -8,14 +8,12 @@ import { writeAuditLog } from "@/lib/logging/audit";
 import { parseMoneyToMinor } from "@/lib/money";
 import { hasCapability } from "@/lib/permissions/capabilities";
 import { requireUser } from "@/lib/auth/session";
-import { isLocalTestUser } from "@/lib/dev/test-auth";
 import { proposalFormSchema } from "@/lib/validation/opportunity";
 
 export async function submitProposalAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/proposals/sent");
   if (!hasCapability(user.roles, "proposal:create"))
-    redirect("/dashboard?error=forbidden");
+    redirect("/app?error=forbidden");
   if (getResolvedDataMode() === "mock") redirect("/proposals/sent?mock=true");
   if (!hasDatabaseUrl())
     redirect("/proposals/sent?error=database-not-configured");
@@ -74,9 +72,8 @@ export async function submitProposalAction(formData: FormData) {
 
 export async function acceptProposalAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/deals/deal-1");
   if (!hasCapability(user.roles, "proposal:decide:received"))
-    redirect("/dashboard?error=forbidden");
+    redirect("/app?error=forbidden");
   if (getResolvedDataMode() === "mock") redirect("/deals/mock-deal-1?mock=true");
   if (!hasDatabaseUrl())
     redirect("/proposals/received?error=database-not-configured");
@@ -87,7 +84,7 @@ export async function acceptProposalAction(formData: FormData) {
     where: { id: proposalId },
   });
   if (proposal.opportunity.ownerId !== user.id)
-    redirect("/dashboard?error=forbidden");
+    redirect("/app?error=forbidden");
 
   const deal = await getPrisma().$transaction(async (tx) => {
     await tx.proposal.update({

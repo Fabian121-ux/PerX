@@ -82,9 +82,6 @@ export default function Home() {
                 <ButtonLink href="/sign-up" variant="secondary">
                   Post an opportunity
                 </ButtonLink>
-                <ButtonLink href="/preview" variant="ghost">
-                  Explore perX
-                </ButtonLink>
               </div>
 
               <div className="mt-7 flex flex-wrap gap-2">

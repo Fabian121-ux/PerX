@@ -1,4 +1,5 @@
 import { BrandLogo } from "@/components/brand-logo";
+import Link from "next/link";
 import { PublicPageShell } from "@/components/standard-page";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,8 +14,16 @@ const roleOptions = [
   ["PROPERTY_OWNER", "Property Owner"],
 ];
 
+const errors: Record<string, string> = {
+  "database-not-configured": "Database configuration is missing.",
+  "email-taken": "An account with this email already exists.",
+  "username-taken": "This username is already taken. Please try again.",
+  "server-error": "An unexpected server error occurred. Please try again.",
+};
+
 export default async function SignUpPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const params = await searchParams;
+  const error = params.error ? errors[params.error] || "An unexpected error occurred." : null;
 
   return (
     <PublicPageShell>
@@ -32,9 +41,15 @@ export default async function SignUpPage({ searchParams }: { searchParams: Promi
           <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--px-primary)]">Sign up</p>
           <h1 className="mt-2 text-3xl font-bold text-[color:var(--px-text)]">Create one account for your roles</h1>
           <p className="mt-3 text-sm leading-6 text-[color:var(--px-text-muted)]">Select every role you hold. perX uses capabilities behind the scenes, not separate accounts.</p>
-          {params.error ? <p className="mt-3 rounded-md bg-red-50 p-3 text-sm text-red-700">Create account failed. Check the fields.</p> : null}
+          
           <form action={signUpAction} className="mt-6 grid gap-4">
-            <Field label="Name">
+            {error && <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+            
+            <div className="text-sm text-right text-slate-500">
+              Already have an account? <Link href="/sign-in" className="text-emerald-600 hover:underline">Sign in</Link>
+            </div>
+            
+            <Field label="Full name">
               <Input autoComplete="name" name="name" required />
             </Field>
             <Field label="Email">

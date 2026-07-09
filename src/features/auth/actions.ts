@@ -36,8 +36,10 @@ async function ensureRole(role: RoleName) {
   });
 }
 
+import { Prisma } from "@prisma/client/extension";
+
 export async function signUpAction(formData: FormData) {
-  if (getResolvedDataMode() === "mock") redirect("/profile/setup?mock=true");
+  if (getResolvedDataMode() === "mock") redirect("/app/profile/setup?mock=true");
   if (!hasDatabaseUrl()) redirect("/sign-up?error=database-not-configured");
 
   const roles = formData
@@ -61,28 +63,48 @@ export async function signUpAction(formData: FormData) {
   });
   const username = existing ? `${baseUsername}-${existing + 1}` : baseUsername;
 
-  const user = await getPrisma().user.create({
-    data: {
-      email: parsed.data.email,
-      name: parsed.data.name,
-      passwordHash,
-      username,
-      profile: {
-        create: {
-          biography: "Profile setup is in progress.",
-          headline: "New perX member",
-          location: "Remote",
-          profileCompleteness: 30,
+  let user;
+  try {
+    user = await getPrisma().user.create({
+      data: {
+        email: parsed.data.email,
+        name: parsed.data.name,
+        passwordHash,
+        username,
+        profile: {
+          create: {
+            biography: "Profile setup is in progress.",
+            headline: "New perX member",
+            location: "Remote",
+            profileCompleteness: 30,
+          },
         },
       },
-    },
-  });
-
-  for (const roleName of parsed.data.roles) {
-    const role = await ensureRole(roleName);
-    await getPrisma().userRole.create({
-      data: { roleId: role.id, userId: user.id },
     });
+  } catch (error: any) {
+    if (error.code === "P2002") {
+      const target = error.meta?.target;
+      if (Array.isArray(target)) {
+        if (target.includes("email")) redirect("/sign-up?error=email-taken");
+        if (target.includes("username")) redirect("/sign-up?error=username-taken");
+      } else if (typeof target === "string") {
+        if (target.includes("email")) redirect("/sign-up?error=email-taken");
+        if (target.includes("username")) redirect("/sign-up?error=username-taken");
+      }
+    }
+    console.error("Sign-up error:", error);
+    redirect("/sign-up?error=server-error");
+  }
+
+  try {
+    for (const roleName of parsed.data.roles) {
+      const role = await ensureRole(roleName);
+      await getPrisma().userRole.create({
+        data: { roleId: role.id, userId: user.id },
+      });
+    }
+  } catch (error) {
+    console.error("Role creation error:", error);
   }
 
   await createSession(user.id);
@@ -92,11 +114,11 @@ export async function signUpAction(formData: FormData) {
     entityId: user.id,
     entityType: "user",
   });
-  redirect("/profile/setup");
+  redirect("/app/profile/setup");
 }
 
 export async function signInAction(formData: FormData) {
-  if (getResolvedDataMode() === "mock") redirect("/dashboard?mock=true");
+  if (getResolvedDataMode() === "mock") redirect("/app?mock=true");
   if (!hasDatabaseUrl()) redirect("/sign-in?error=database-not-configured");
 
   const parsed = signInSchema.safeParse({
@@ -106,14 +128,25 @@ export async function signInAction(formData: FormData) {
 
   if (!parsed.success) redirect("/sign-in?error=invalid-credentials");
 
-  const user = await getPrisma().user.findUnique({
-    where: { email: parsed.data.email },
-  });
+  let user;
+  try {
+    user = await getPrisma().user.findUnique({
+      where: { email: parsed.data.email },
+    });
+  } catch (error: any) {
+    console.error("Sign-in DB error:", error);
+    redirect("/sign-in?error=unavailable");
+  }
+
   if (
     !user ||
     !(await verifyPassword(parsed.data.password, user.passwordHash))
   ) {
     redirect("/sign-in?error=invalid-credentials");
+  }
+  
+  if (!user.isActive) {
+    redirect("/sign-in?error=account-deactivated");
   }
 
   await createSession(user.id);
@@ -123,7 +156,7 @@ export async function signInAction(formData: FormData) {
     entityId: user.id,
     entityType: "user",
   });
-  redirect("/dashboard");
+  redirect("/app");
 }
 
 export async function signOutAction() {

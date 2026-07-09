@@ -10,7 +10,6 @@ import {
   type EscrowState,
 } from "@/features/escrow/state-machine";
 import { requireUser } from "@/lib/auth/session";
-import { isLocalTestUser } from "@/lib/dev/test-auth";
 
 async function requireDealParticipant(dealId: string, userId: string) {
   const deal = await getPrisma().deal.findUniqueOrThrow({
@@ -18,17 +17,15 @@ async function requireDealParticipant(dealId: string, userId: string) {
     where: { id: dealId },
   });
   if (!deal.participants.some((participant) => participant.userId === userId)) {
-    redirect("/dashboard?error=forbidden");
+    redirect("/app?error=forbidden");
   }
   return deal;
 }
 
 export async function submitDeliveryAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user))
-    redirect(`/deals/${String(formData.get("dealId") ?? "")}`);
   if (getResolvedDataMode() === "mock") redirect(`/deals/${String(formData.get("dealId") ?? "")}?mock=true`);
-  if (!hasDatabaseUrl()) redirect("/dashboard?error=database-not-configured");
+  if (!hasDatabaseUrl()) redirect("/app?error=database-not-configured");
 
   const dealId = String(formData.get("dealId") ?? "");
   const title = String(formData.get("title") ?? "").slice(0, 140);
@@ -73,10 +70,8 @@ export async function submitDeliveryAction(formData: FormData) {
 
 export async function approveDeliveryAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user))
-    redirect(`/deals/${String(formData.get("dealId") ?? "")}`);
   if (getResolvedDataMode() === "mock") redirect(`/deals/${String(formData.get("dealId") ?? "")}?mock=true`);
-  if (!hasDatabaseUrl()) redirect("/dashboard?error=database-not-configured");
+  if (!hasDatabaseUrl()) redirect("/app?error=database-not-configured");
 
   const dealId = String(formData.get("dealId") ?? "");
   const deal = await requireDealParticipant(dealId, user.id);
@@ -157,7 +152,6 @@ export async function approveDeliveryAction(formData: FormData) {
 
 export async function createReviewAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/reviews");
   if (getResolvedDataMode() === "mock") redirect("/reviews?mock=true");
   if (!hasDatabaseUrl()) redirect("/reviews?error=database-not-configured");
 

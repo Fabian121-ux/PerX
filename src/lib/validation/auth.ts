@@ -20,3 +20,15 @@ export const profileSchema = z.object({
   location: z.string().trim().min(2).max(120),
   skills: z.string().trim().max(400).optional(),
 });
+
+export const profileSetupSchema = profileSchema.extend({
+  name: z.string().trim().min(2).max(120),
+  username: z
+    .string()
+    .trim()
+    .min(3)
+    .max(30)
+    .regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, underscores, and hyphens.")
+    .toLowerCase(),
+});
+

@@ -5,13 +5,19 @@ import { PublicPageShell } from "@/components/standard-page";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/form";
-import { DemoPreviewButton } from "@/components/demo-preview-button";
-import { TestAccountButton } from "@/components/test-account-button";
 import { signInAction } from "@/features/auth/actions";
-import { getResolvedDataMode } from "@/lib/env";
+
+const errors: Record<string, string> = {
+  "database-not-configured": "Database configuration is missing.",
+  "invalid-credentials": "The email or password you entered is incorrect.",
+  "account-deactivated": "Your account has been deactivated.",
+  "unavailable": "The authentication service is temporarily unavailable. Please try again.",
+  "server-error": "An unexpected server error occurred. Please try again.",
+};
 
 export default async function SignInPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const params = await searchParams;
+  const error = params.error ? errors[params.error] || "An unexpected error occurred." : null;
 
   return (
     <PublicPageShell>
@@ -20,7 +26,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           <div>
             <BrandLogo className="h-12" dark />
             <div className="mt-10 max-w-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-100">Secure preview</p>
+              <p className="text-sm font-semibold uppercase tracking-wide text-blue-100">Secure access</p>
               <h2 className="mt-3 text-4xl font-black">Deals start with verified access.</h2>
               <p className="mt-4 text-sm leading-7 text-blue-50">
                 Sign in to manage opportunities, proposals, messages, milestones, simulated escrow and reputation from one connected workspace.
@@ -40,13 +46,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
           <Card className="w-full max-w-md">
           <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--px-primary)]">Sign in</p>
           <h1 className="mt-2 text-3xl font-bold text-[color:var(--px-text)]">Welcome back to perX</h1>
-          {params.error ? (
-            <p className="mt-3 rounded-[var(--px-radius-sm)] bg-red-50 p-3 text-sm text-red-700">
-              {params.error === "database-not-configured"
-                ? "Database configuration is required before sign-in can continue."
-                : "Sign in failed. Check your details."}
-            </p>
-          ) : null}
+          {error && <div className="mt-3 rounded-[var(--px-radius-sm)] bg-red-50 p-3 text-sm text-red-700">{error}</div>}
           <form action={signInAction} className="mt-6 grid gap-4">
             <Field label="Email">
               <Input autoComplete="email" name="email" required type="email" />
@@ -56,18 +56,6 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
             </Field>
             <Button type="submit">Sign in</Button>
           </form>
-          <div className="my-6 flex items-center gap-3">
-            <span className="h-px flex-1 bg-slate-200" />
-            <span className="text-xs font-semibold uppercase tracking-wide text-[color:var(--px-text-muted)]">or explore perX</span>
-            <span className="h-px flex-1 bg-slate-200" />
-          </div>
-          <div className="grid gap-2">
-            <DemoPreviewButton />
-            <p className="text-center text-xs text-slate-500 mb-2">
-              Demo Preview: explore static sample screens
-            </p>
-          </div>
-          {getResolvedDataMode() === "mock" ? <TestAccountButton /> : null}
           <div className="mt-5 flex items-center justify-between text-sm">
             <Link className="font-medium text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]" href="/password-recovery">
               Recover password

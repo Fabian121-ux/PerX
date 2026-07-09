@@ -7,11 +7,6 @@ import type { RoleName } from "@/lib/permissions/capabilities";
 import { hasCapability, type Capability } from "@/lib/permissions/capabilities";
 import { getPrisma } from "@/lib/db/prisma";
 import { getServerEnv, hasDatabaseUrl } from "@/lib/env";
-import {
-  TEST_SESSION_COOKIE_NAME,
-  TEST_SESSION_VALUE,
-} from "@/lib/dev/test-auth";
-import { testUser } from "@/lib/data/test-account";
 
 export type CurrentUser = {
   id: string;
@@ -74,17 +69,9 @@ export async function destroySession() {
 }
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
-  const cookieStore = await cookies();
-
-  if (process.env.NODE_ENV === "development") {
-    const testSession = cookieStore.get(TEST_SESSION_COOKIE_NAME)?.value;
-    if (testSession === TEST_SESSION_VALUE) {
-      return testUser;
-    }
-  }
-
   if (!hasDatabaseUrl()) return null;
 
+  const cookieStore = await cookies();
   const token = cookieStore.get(sessionCookieName())?.value;
   if (!token) return null;
 
@@ -120,15 +107,16 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   };
 }
 
-export async function requireUser() {
+export async function requireUser(): Promise<NonNullable<CurrentUser>> {
   const user = await getCurrentUser();
-  if (!user) redirect("/sign-in?next=/dashboard");
+  if (!user) redirect("/sign-in?next=/app");
   return user;
 }
 
 export async function requireCapability(capability: Capability) {
   const user = await requireUser();
-  if (!hasCapability(user.roles, capability))
-    redirect("/dashboard?error=forbidden");
+  if (!hasCapability(user.roles, capability)) {
+    redirect("/app?error=forbidden");
+  }
   return user;
 }

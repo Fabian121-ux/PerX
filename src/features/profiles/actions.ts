@@ -6,7 +6,6 @@ import { getPrisma } from "@/lib/db/prisma";
 import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { requireUser } from "@/lib/auth/session";
-import { isLocalTestUser } from "@/lib/dev/test-auth";
 import { profileSchema } from "@/lib/validation/auth";
 
 function completeness(input: {
@@ -26,10 +25,9 @@ function completeness(input: {
 
 export async function updateProfileAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/dashboard");
-  if (getResolvedDataMode() === "mock") redirect("/dashboard?mock=true");
+  if (getResolvedDataMode() === "mock") redirect("/app?mock=true");
   if (!hasDatabaseUrl())
-    redirect("/profile/edit?error=database-not-configured");
+    redirect("/app/profile/edit?error=database-not-configured");
 
   const parsed = profileSchema.safeParse({
     biography: formData.get("biography"),
@@ -37,42 +35,60 @@ export async function updateProfileAction(formData: FormData) {
     location: formData.get("location"),
     skills: formData.get("skills"),
   });
-  if (!parsed.success) redirect("/profile/edit?error=check-fields");
+  if (!parsed.success) redirect("/app/profile/edit?error=check-fields");
 
-  const skillNames =
+  const skillList =
     parsed.data.skills
       ?.split(",")
       .map((skill) => skill.trim())
-      .filter(Boolean) ?? [];
+      .filter((skill) => skill.length > 0) ?? [];
+
   const profileCompleteness = completeness(parsed.data);
 
-  await getPrisma().profile.upsert({
-    create: {
-      biography: parsed.data.biography,
-      headline: parsed.data.headline,
-      location: parsed.data.location,
-      profileCompleteness,
-      skills: { create: skillNames.map((name) => ({ name })) },
-      userId: user.id,
-    },
-    update: {
-      biography: parsed.data.biography,
-      headline: parsed.data.headline,
-      location: parsed.data.location,
-      profileCompleteness,
-      skills: {
-        deleteMany: {},
-        create: skillNames.map((name) => ({ name })),
-      },
-    },
-    where: { userId: user.id },
-  });
+  try {
+    await getPrisma().$transaction(async (tx) => {
+      await tx.profile.upsert({
+        create: {
+          biography: parsed.data.biography,
+          headline: parsed.data.headline,
+          location: parsed.data.location,
+          profileCompleteness: profileCompleteness,
+          userId: user.id,
+        },
+        update: {
+          biography: parsed.data.biography,
+          headline: parsed.data.headline,
+          location: parsed.data.location,
+          profileCompleteness: profileCompleteness,
+        },
+        where: { userId: user.id },
+      });
+
+      const profile = await tx.profile.findUnique({
+        where: { userId: user.id },
+      });
+      if (profile) {
+        await tx.profileSkill.deleteMany({
+          where: { profileId: profile.id },
+        });
+
+        for (const skill of skillList) {
+          await tx.profileSkill.create({
+            data: { name: skill, profileId: profile.id },
+          });
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Profile edit error:", error);
+    redirect("/app/profile/edit?error=server-error");
+  }
 
   await writeAuditLog({
-    actorId: user.id,
     action: "profile.update",
+    actorId: user.id,
     entityId: user.id,
     entityType: "profile",
   });
-  redirect("/dashboard");
+  redirect("/app/profile/edit?success=true");
 }

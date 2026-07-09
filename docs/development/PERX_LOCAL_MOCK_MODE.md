@@ -2,48 +2,45 @@
 
 ## Overview
 
-The `PERX_DATA_MODE` environment variable controls whether the PerX application runs using real database connections or in-memory mock data. This enables local development, UI prototyping, and testing even when a PostgreSQL instance is unavailable or difficult to provision.
+PerX supports a **local mock mode** designed for rapid UI prototyping, offline development, and completely static deployments.
 
-## Modes
+In mock mode, the application runs entirely without a database. It bypasses Prisma initialization and instead relies on static data generators defined in `src/lib/data/providers/mock-provider.ts`.
 
-- `mock`: Forces the application to use the in-memory mock provider. Prisma is completely isolated and never instantiated. `DATABASE_URL` is not required.
-- `database`: Forces the application to use the PostgreSQL database via Prisma. If `DATABASE_URL` is missing or invalid, the application fails fast.
-- `auto` (Default): Attempts to use the database provider. If `DATABASE_URL` is absent, it gracefully falls back to the mock provider with a console warning.
+## Configuration
 
-## Running in Mock Mode
+Mock mode is enabled via the environment variable `PERX_DATA_MODE`.
 
-Use the designated `package.json` scripts to run the application in mock mode:
+```env
+PERX_DATA_MODE=mock
+```
+
+To run a development server in mock mode without requiring `DATABASE_URL`, use the built-in script:
 
 ```bash
-# Run the development server in mock mode
 npm run dev:mock
+```
 
-# Build the production application in mock mode
+To build a fully static version of the application using mock data:
+
+```bash
 npm run build:mock
 ```
 
-## How It Works
+## Key Differences from Database Mode
 
-When `PERX_DATA_MODE` resolves to `mock`:
+| Feature | Mock Mode | Database Mode |
+|---------|-----------|---------------|
+| **Data Source** | Hardcoded static generators. | PostgreSQL / Prisma. |
+| **Authentication** | Simulated via a local test session. | Real JWT / Database-backed sessions. |
+| **State Persistence** | Session-only (resets on reload). | Persistent in the database. |
+| **DATABASE_URL** | Ignored and not required. | Strictly required and validated. |
 
-1.  **Provider Resolution**: `src/lib/data/provider.ts` returns the `mockProvider`.
-2.  **Prisma Isolation**: `src/lib/db/prisma.ts` throws a strict runtime error if any code attempts to invoke `getPrisma()`.
-3.  **UI Feedback**: A visual indicator ("Local Mock Data") appears at the bottom of the screen to prevent confusion regarding data persistence.
-4.  **Mock Writes**: In-memory arrays (like `dealsStore`, `proposalsStore`) accept writes during the application process lifecycle, allowing you to test complete workflows (e.g., sending a proposal). These resets upon server restart.
+## Why Demo/Test Buttons Were Removed
 
-## Adding Mock Data
+Previously, PerX exposed "Test Account" and "Demo Preview" buttons directly on the public landing and sign-in pages. While useful for early prototypes, this bypassed authentication entirely and created a severe security vulnerability in production (Database Mode).
 
-Mock data is seeded from `src/lib/data/mock/preview.ts` and `src/lib/data/mock/demo.ts`. To add new scenarios, update the arrays in these files.
+Now, test features are correctly isolated.
 
-## Troubleshooting
-
-### Multiple Next.js Servers
-
-Only one development server should run for the repository at any time. If you encounter errors about ports being in use or stale data:
-
-```bash
-lsof -i :3000
-kill <PID>
-rm -rf .next
-npm run dev:mock
-```
+* **Database Mode**: Demands real credentials and standard sign-in workflows.
+* **Mock Mode**: Automatically simulates the test session under the hood but does not expose it as a public "skip login" button. 
+* **Preview Routes**: Are explicitly gated behind `PERX_ENABLE_PREVIEW=true` to prevent unauthorized discovery.

@@ -1,7 +1,4 @@
 import { getPerXDataProvider } from "./provider";
-import { isLocalTestUser } from "@/lib/dev/test-auth";
-import { getTestMyOpportunities } from "@/lib/data/test-data-adapter";
-import { getCurrentUser } from "@/lib/auth/session";
 
 export async function getOpportunityFeed(filters?: { category?: string; q?: string; type?: string }) {
   const provider = await getPerXDataProvider();
@@ -19,9 +16,6 @@ export async function getCategories() {
 }
 
 export async function getMyOpportunities(userId: string) {
-  const user = await getCurrentUser();
-  if (isLocalTestUser(user)) return getTestMyOpportunities() as never;
-
   const provider = await getPerXDataProvider();
   return provider.opportunities.getMyOpportunities(userId);
 }

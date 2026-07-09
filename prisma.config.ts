@@ -1,12 +1,18 @@
+import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+const databaseUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error("DIRECT_URL or DATABASE_URL is required for Prisma CLI commands.");
+}
+
 export default defineConfig({
-  datasource: {
-    url: process.env.DATABASE_URL ?? "postgresql://prex:prex_password@localhost:5432/prex?schema=public",
-  },
+  schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
-    seed: "tsx prisma/seed.ts",
   },
-  schema: "prisma/schema.prisma",
+  datasource: {
+    url: databaseUrl,
+  },
 });

@@ -7,7 +7,6 @@ import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { normalizeRole, type RoleName } from "@/lib/permissions/capabilities";
 import { requireUser } from "@/lib/auth/session";
-import { isLocalTestUser } from "@/lib/dev/test-auth";
 
 async function ensureRole(role: RoleName) {
   return getPrisma().role.upsert({
@@ -23,25 +22,29 @@ async function ensureRole(role: RoleName) {
 
 export async function updateRolesAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/dashboard");
-  if (getResolvedDataMode() === "mock") redirect("/dashboard?mock=true");
-  if (!hasDatabaseUrl()) redirect("/roles?error=database-not-configured");
+  if (getResolvedDataMode() === "mock") redirect("/app?mock=true");
+  if (!hasDatabaseUrl()) redirect("/app/roles?error=database-not-configured");
 
   const roles = formData
     .getAll("roles")
     .map((role) => normalizeRole(role))
     .filter((role): role is RoleName => Boolean(role) && role !== "ADMIN");
-  if (roles.length === 0) redirect("/roles?error=choose-role");
+  if (roles.length === 0) redirect("/app/roles?error=choose-role");
 
-  await getPrisma().$transaction(async (tx) => {
-    await tx.userRole.deleteMany({
-      where: { userId: user.id, role: { name: { not: "ADMIN" } } },
+  try {
+    await getPrisma().$transaction(async (tx) => {
+      await tx.userRole.deleteMany({
+        where: { userId: user.id, role: { name: { not: "ADMIN" } } },
+      });
+      for (const roleName of roles) {
+        const role = await ensureRole(roleName);
+        await tx.userRole.create({ data: { roleId: role.id, userId: user.id } });
+      }
     });
-    for (const roleName of roles) {
-      const role = await ensureRole(roleName);
-      await tx.userRole.create({ data: { roleId: role.id, userId: user.id } });
-    }
-  });
+  } catch (error) {
+    console.error("Failed to update roles:", error);
+    redirect("/app/roles?error=server-error");
+  }
 
   await writeAuditLog({
     actorId: user.id,
@@ -49,5 +52,5 @@ export async function updateRolesAction(formData: FormData) {
     entityId: user.id,
     entityType: "user",
   });
-  redirect("/dashboard");
+  redirect("/app?success=roles-updated");
 }

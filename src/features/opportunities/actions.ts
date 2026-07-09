@@ -8,7 +8,6 @@ import { writeAuditLog } from "@/lib/logging/audit";
 import { parseMoneyToMinor } from "@/lib/money";
 import { hasCapability } from "@/lib/permissions/capabilities";
 import { requireUser } from "@/lib/auth/session";
-import { isLocalTestUser } from "@/lib/dev/test-auth";
 import { opportunityFormSchema } from "@/lib/validation/opportunity";
 
 function slugify(value: string) {
@@ -21,9 +20,8 @@ function slugify(value: string) {
 
 export async function createOpportunityAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/market");
   if (!hasCapability(user.roles, "opportunity:create"))
-    redirect("/dashboard?error=forbidden");
+    redirect("/app?error=forbidden");
 
   if (getResolvedDataMode() === "mock") redirect("/market?mock=true");
   if (!hasDatabaseUrl())
@@ -111,7 +109,6 @@ export async function createOpportunityAction(formData: FormData) {
 
 export async function bookmarkOpportunityAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/saved");
   
   if (getResolvedDataMode() === "mock") redirect("/saved?mock=true");
   if (!hasDatabaseUrl()) redirect("/saved?error=database-not-configured");
@@ -128,7 +125,6 @@ export async function bookmarkOpportunityAction(formData: FormData) {
 
 export async function reportOpportunityAction(formData: FormData) {
   const user = await requireUser();
-  if (isLocalTestUser(user)) redirect("/discover?status=reported");
 
   if (getResolvedDataMode() === "mock") redirect("/discover?status=reported&mock=true");
   if (!hasDatabaseUrl()) redirect("/discover?error=database-not-configured");

@@ -6,8 +6,6 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
 import { signOutAction } from "@/features/auth/actions";
-import { testLogoutAction } from "@/features/auth/test-logout-action";
-import { isLocalTestUser } from "@/lib/dev/test-auth";
 import type { CurrentUser } from "@/lib/auth/session";
 
 interface AccountMenuProps {
@@ -26,7 +24,6 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
       .substring(0, 2)
       .toUpperCase();
   
-  const isTest = isLocalTestUser(user);
 
   return (
     <DropdownMenu.Root>
@@ -48,11 +45,6 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
           <div className="flex flex-col px-3 py-2">
             <span className="text-sm font-bold text-[color:var(--px-text)]">{user.name}</span>
             <span className="text-xs text-[color:var(--px-text-muted)] truncate">{user.email}</span>
-            {isTest && (
-              <span className="mt-1 w-max rounded-full bg-[color:var(--px-primary-soft)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--px-primary)] ring-1 ring-[color:var(--px-primary)]/35">
-                Test Account
-              </span>
-            )}
             {previewMode && (
               <span className="mt-1 w-max rounded-full bg-[color:var(--px-primary-soft)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--px-primary)] ring-1 ring-[color:var(--px-primary)]/35">
                 Preview Mode
@@ -131,13 +123,13 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
             </DropdownMenu.Item>
           ) : (
             <DropdownMenu.Item asChild>
-              <form action={isTest ? testLogoutAction : signOutAction} className="w-full">
+              <form action={signOutAction} className="w-full">
                 <button
                   type="submit"
                   className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 outline-none transition-colors hover:bg-red-50 focus:bg-red-50 dark:hover:bg-red-950/30 dark:focus:bg-red-950/30"
                 >
                   <LogOut size={16} />
-                  {isTest ? "Exit Test Account" : "Sign out"}
+                  Sign out
                 </button>
               </form>
             </DropdownMenu.Item>

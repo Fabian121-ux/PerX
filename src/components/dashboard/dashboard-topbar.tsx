@@ -3,7 +3,6 @@
 import { Bell, MessageSquare, Search, ShieldCheck } from "lucide-react";
 
 import type { CurrentUser } from "@/lib/auth/session";
-import { isLocalTestUser } from "@/lib/dev/test-auth";
 import { CreateMenu } from "./create-menu";
 import { AccountMenu } from "./account-menu";
 import { ThemeToggle } from "./theme-toggle";
@@ -19,7 +18,6 @@ export function DashboardTopbar({
   previewMode?: boolean;
   onMenuClick?: () => void;
 }) {
-  const isTest = isLocalTestUser(user);
 
   return (
     <header className="dashboard-topbar sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b border-[color:var(--px-border)] px-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:px-6 lg:px-8">
@@ -33,11 +31,7 @@ export function DashboardTopbar({
           <BrandSymbol className="h-7 w-10" dark />
         </button>
 
-        {isTest && !previewMode ? (
-          <span className="hidden rounded-full bg-[color:var(--px-primary-soft)] px-2.5 py-0.5 text-xs font-bold tracking-wide text-[color:var(--px-primary)] ring-1 ring-[color:var(--px-primary)]/30 lg:inline-flex">
-            Test Account
-          </span>
-        ) : previewMode ? (
+        {previewMode ? (
           <span className="hidden rounded-full bg-[color:var(--px-primary-soft)] px-2.5 py-0.5 text-xs font-bold tracking-wide text-[color:var(--px-primary)] ring-1 ring-[color:var(--px-primary)]/30 lg:inline-flex">
             Preview Mode
           </span>
