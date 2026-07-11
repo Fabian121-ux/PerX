@@ -23,13 +23,30 @@ describe("Preview Mode and Sign-in page without Database Connection", () => {
     expect(process.env.DATABASE_URL).toBeUndefined();
   });
 
-  it("renders the sign-in page component successfully without database access", async () => {
+  it("renders the sign-in page component successfully and contains no bypass buttons", async () => {
     // Call the server component page function
     const pagePromise = SignInPage({ searchParams: Promise.resolve({}) });
     await expect(pagePromise).resolves.toBeDefined();
     
     const result = await pagePromise;
     expect(result).toHaveProperty("type"); // It should return a React element tree
+    
+    // Convert to string safely handling circular references and ensure bypass text is absent
+    const getCircularReplacer = () => {
+      const seen = new WeakSet();
+      return (key: string, value: any) => {
+        if (typeof value === "object" && value !== null) {
+          if (seen.has(value)) return;
+          seen.add(value);
+        }
+        return value;
+      };
+    };
+    const treeString = JSON.stringify(result, getCircularReplacer());
+    expect(treeString).not.toContain("Demo Preview");
+    expect(treeString).not.toContain("Test Account");
+    expect(treeString).not.toContain("Skip Sign In");
+    expect(treeString).not.toContain("Continue as Demo");
   });
 
   it("renders the preview dashboard page component successfully without database access", () => {
