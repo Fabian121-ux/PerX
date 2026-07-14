@@ -68,26 +68,24 @@ function toWorkspaceConversation(
   const otherParticipant = dbConversation.participants.map((participant: any) => participant).find(
     (participant) => participant.userId !== user.id,
   )?.user;
-  const latestMessage = dbConversation.messages[0];
+  const latestMessage = dbConversation.messages.length > 1 
+    ? dbConversation.messages[dbConversation.messages.length - 1] // ascending full messages
+    : dbConversation.messages[0]; // descending single message
 
   return {
     context: dbConversation.opportunity?.title ?? "Professional conversation",
     id: dbConversation.id,
     lastMessage: latestMessage?.body ?? "No messages yet.",
-    messages: latestMessage
-      ? [
-          {
-            body: latestMessage.body,
-            createdAt: latestMessage.createdAt.toISOString(),
-            id: latestMessage.id,
-            senderId: latestMessage.senderId,
-            senderName:
-              latestMessage.senderId === user.id
-                ? user.name
-                : (otherParticipant?.name ?? "Participant"),
-          },
-        ]
-      : [],
+    messages: dbConversation.messages.map(msg => ({
+      body: msg.body,
+      createdAt: msg.createdAt.toISOString(),
+      id: msg.id,
+      senderId: msg.senderId,
+      senderName:
+        msg.senderId === user.id
+          ? user.name
+          : (otherParticipant?.name ?? "Participant"),
+    })),
     opportunityTitle: dbConversation.opportunity?.title ?? undefined,
     participantName:
       otherParticipant?.name ??
@@ -117,6 +115,11 @@ export default async function ConversationPage({
     (conversation) => conversation.id === conversationId,
   );
   if (!selected) notFound();
+
+  // Load the full message history for the active conversation
+  const { getConversationMessages } = await import("@/lib/data/app");
+  const fullMessages = await getConversationMessages(conversationId);
+  (selected as DbConversationLike).messages = fullMessages;
 
   const workspaceConversations: WorkspaceConversation[] = conversations.map(
     (conversation) => toWorkspaceConversation(conversation, user),

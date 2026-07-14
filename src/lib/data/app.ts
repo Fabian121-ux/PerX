@@ -24,3 +24,8 @@ export async function getConversations(userId: string) {
   const provider = await getPerXDataProvider();
   return provider.app.getConversations(userId);
 }
+
+export async function getConversationMessages(conversationId: string) {
+  const provider = await getPerXDataProvider();
+  return provider.app.getConversationMessages(conversationId);
+}

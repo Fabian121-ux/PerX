@@ -1,10 +1,10 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
-const databaseUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
+const databaseUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL ?? "";
 
 if (!databaseUrl) {
-  throw new Error("DIRECT_URL or DATABASE_URL is required for Prisma CLI commands.");
+  console.warn("WARNING: DIRECT_URL or DATABASE_URL is not set. Prisma CLI commands may fail if they require a database connection.");
 }
 
 export default defineConfig({

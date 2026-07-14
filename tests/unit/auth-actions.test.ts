@@ -55,7 +55,7 @@ describe("Auth Actions", () => {
           create: vi.fn().mockRejectedValue({ code: "P2002", meta: { target: ["email"] } }),
           count: vi.fn().mockResolvedValue(0),
         },
-      } as any);
+      } as never);
 
       const formData = new FormData();
       formData.set("email", "test@test.com");
@@ -72,7 +72,7 @@ describe("Auth Actions", () => {
           create: vi.fn().mockRejectedValue({ code: "P2002", meta: { target: ["username"] } }),
           count: vi.fn().mockResolvedValue(0),
         },
-      } as any);
+      } as never);
 
       const formData = new FormData();
       formData.set("email", "test@test.com");
@@ -96,7 +96,7 @@ describe("Auth Actions", () => {
         userRole: {
           create: vi.fn().mockResolvedValue({}),
         },
-      } as any);
+      } as never);
 
       const formData = new FormData();
       formData.set("email", "test@test.com");
@@ -115,7 +115,7 @@ describe("Auth Actions", () => {
         user: {
           findUnique: vi.fn().mockResolvedValue({ id: "user_1", passwordHash: "hashed_wrongpass", isActive: true }),
         },
-      } as any);
+      } as never);
 
       const formData = new FormData();
       formData.set("email", "test@test.com");
@@ -129,7 +129,7 @@ describe("Auth Actions", () => {
         user: {
           findUnique: vi.fn().mockResolvedValue({ id: "user_1", passwordHash: "hashed_validpass", isActive: false }),
         },
-      } as any);
+      } as never);
 
       const formData = new FormData();
       formData.set("email", "test@test.com");
@@ -143,7 +143,7 @@ describe("Auth Actions", () => {
         user: {
           findUnique: vi.fn().mockResolvedValue({ id: "user_1", passwordHash: "hashed_validpass", isActive: true }),
         },
-      } as any);
+      } as never);
 
       const formData = new FormData();
       formData.set("email", "test@test.com");

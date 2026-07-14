@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { getPerXDataProvider } from "../../src/lib/data/provider";
-import { mockProvider } from "../../src/lib/data/providers/mock-provider";
 
 describe("Data Provider Resolution", () => {
   it("resolves to mock provider when mode is mock", async () => {

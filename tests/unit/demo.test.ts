@@ -34,7 +34,7 @@ describe("Preview Mode and Sign-in page without Database Connection", () => {
     // Convert to string safely handling circular references and ensure bypass text is absent
     const getCircularReplacer = () => {
       const seen = new WeakSet();
-      return (key: string, value: any) => {
+      return (key: string, value: unknown) => {
         if (typeof value === "object" && value !== null) {
           if (seen.has(value)) return;
           seen.add(value);

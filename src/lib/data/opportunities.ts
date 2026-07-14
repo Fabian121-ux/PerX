@@ -2,7 +2,12 @@ import { getPerXDataProvider } from "./provider";
 
 export async function getOpportunityFeed(filters?: { category?: string; q?: string; type?: string }) {
   const provider = await getPerXDataProvider();
-  return provider.opportunities.getOpportunityFeed(filters);
+  try {
+    return await provider.opportunities.getOpportunityFeed(filters);
+  } catch (error) {
+    console.error("Failed to load opportunity feed:", error);
+    return []; // Return empty feed instead of crashing the public page
+  }
 }
 
 export async function getOpportunityBySlug(slug: string) {

@@ -36,7 +36,6 @@ async function ensureRole(role: RoleName) {
   });
 }
 
-import { Prisma } from "@prisma/client/extension";
 
 export async function signUpAction(formData: FormData) {
   if (getResolvedDataMode() === "mock") redirect("/app/profile/setup?mock=true");
@@ -81,9 +80,10 @@ export async function signUpAction(formData: FormData) {
         },
       },
     });
-  } catch (error: any) {
-    if (error.code === "P2002") {
-      const target = error.meta?.target;
+  } catch (error: unknown) {
+    const err = error as Error & { code?: string; meta?: { target?: string | string[] } };
+    if (err.code === "P2002") {
+      const target = err.meta?.target;
       if (Array.isArray(target)) {
         if (target.includes("email")) redirect("/sign-up?error=email-taken");
         if (target.includes("username")) redirect("/sign-up?error=username-taken");
@@ -133,7 +133,7 @@ export async function signInAction(formData: FormData) {
     user = await getPrisma().user.findUnique({
       where: { email: parsed.data.email },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Sign-in DB error:", error);
     redirect("/sign-in?error=unavailable");
   }

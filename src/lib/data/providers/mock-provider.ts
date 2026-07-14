@@ -6,7 +6,6 @@ import {
   previewProposals, 
   previewConversations,
   previewUser,
-  previewTrustBreakdown,
   previewReviews
 } from "../preview";
 import { demoCategories, demoOpportunities, demoProfiles } from "../demo";
@@ -46,7 +45,7 @@ export const mockProvider: PerXDataProvider = {
     },
   },
   app: {
-    getDashboardMetrics: async (userId: string) => {
+    getDashboardMetrics: async (_userId: string) => {
       return {
         deals: dealsStore.length,
         notifications: 3,
@@ -69,8 +68,12 @@ export const mockProvider: PerXDataProvider = {
         d.id === dealId && d.participants?.some((p: any) => p.username === userId || p.id === userId)
       ) || null;
     },
-    getConversations: async (userId: string) => {
+    getConversations: async (_userId: string) => {
       return conversationsStore;
+    },
+    getConversationMessages: async (conversationId: string) => {
+      const conv = conversationsStore.find(c => c.id === conversationId);
+      return conv?.messages || [];
     },
   },
   profiles: {
@@ -81,7 +84,7 @@ export const mockProvider: PerXDataProvider = {
           profile: {
             skills: previewUser.skills.map((s, i) => ({ id: String(i), name: s })),
           },
-          roles: previewUser.roles.map((r, i) => ({ role: { name: r } })),
+          roles: previewUser.roles.map((r) => ({ role: { name: r } })),
           reviewsReceived: previewReviews,
         };
       }

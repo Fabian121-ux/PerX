@@ -1,9 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { getPrisma } from "@/lib/db/prisma";
 import { requireUser, requireCapability, getCurrentUser } from "@/lib/auth/session";
 import { setCachedDataModeForTest } from "@/lib/env";
-import { updateRolesAction } from "@/features/roles/actions";
-import { getPerXDataProvider } from "@/lib/data/provider";
 import PreviewGateLayout from "@/app/(preview)/layout";
 import { notFound } from "next/navigation";
 
@@ -56,7 +53,7 @@ describe("Authentication and Route Protection", () => {
     });
 
     it("accepts dev admin user to access /admin", async () => {
-      vi.mocked(requireCapability).mockResolvedValueOnce({ id: "admin-id", roles: ["ADMIN"] } as any);
+      vi.mocked(requireCapability).mockResolvedValueOnce({ id: "admin-id", roles: ["ADMIN"] } as never);
       const user = await requireCapability("admin:access");
       expect(user.roles).toContain("ADMIN");
     });
@@ -64,7 +61,7 @@ describe("Authentication and Route Protection", () => {
 
   describe("Role Self-Granting", () => {
     it("strips ADMIN role if submitted by normal user", async () => {
-      vi.mocked(requireUser).mockResolvedValueOnce({ id: "user-id", roles: ["FREELANCER"] } as any);
+      vi.mocked(requireUser).mockResolvedValueOnce({ id: "user-id", roles: ["FREELANCER"] } as never);
       
       const formData = new FormData();
       formData.append("roles", "FREELANCER");

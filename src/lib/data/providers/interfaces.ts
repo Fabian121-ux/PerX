@@ -12,6 +12,7 @@ export interface PerXAppProvider {
   getUserDeals(userId: string): Promise<any[]>;
   getDealForUser(dealId: string, userId: string): Promise<any>;
   getConversations(userId: string): Promise<any[]>;
+  getConversationMessages(conversationId: string): Promise<any[]>;
 }
 
 export interface PerXProfileProvider {

@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { ArrowLeft, FileText, Paperclip, Phone, Search, Send, ShieldCheck, Video } from "lucide-react";
+import { useMemo, useState, useTransition, type FormEvent, type ReactNode } from "react";
+import { ArrowLeft, FileText, Paperclip, Phone, Search, Send, ShieldCheck, Video, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
+import { sendMessageAction } from "@/features/messages/actions";
 
 export type WorkspaceMessage = {
   body: string;
@@ -45,6 +46,7 @@ export function MessageWorkspace({
   const [mobileDetailOpen, setMobileDetailOpen] = useState(Boolean(defaultConversationId));
   const [draft, setDraft] = useState("");
   const [localMessages, setLocalMessages] = useState<Record<string, WorkspaceMessage[]>>({});
+  const [isPending, startTransition] = useTransition();
 
   const activeConversation = conversations.find((conversation) => conversation.id === activeId) ?? conversations[0];
   const messages = useMemo(() => {
@@ -54,21 +56,37 @@ export function MessageWorkspace({
 
   const sendMessage = (event: FormEvent) => {
     event.preventDefault();
-    if (!draft.trim() || !activeConversation) return;
+    if (!draft.trim() || !activeConversation || isPending) return;
+
+    const body = draft.trim();
+    const conversationId = activeConversation.id;
+    const messageId = `local-${Date.now()}`;
 
     const message: WorkspaceMessage = {
-      body: draft.trim(),
+      body,
       createdAt: new Date().toISOString(),
-      id: `local-${Date.now()}`,
+      id: messageId,
       senderId: currentUserId,
       senderName: "You",
     };
 
     setLocalMessages((value) => ({
       ...value,
-      [activeConversation.id]: [...(value[activeConversation.id] ?? []), message],
+      [conversationId]: [...(value[conversationId] ?? []), message],
     }));
     setDraft("");
+
+    startTransition(async () => {
+      const result = await sendMessageAction(conversationId, body);
+      if (result.error) {
+        // Rollback optimistic update
+        setLocalMessages((value) => ({
+          ...value,
+          [conversationId]: (value[conversationId] ?? []).filter((m) => m.id !== messageId),
+        }));
+        alert(result.error);
+      }
+    });
   };
 
   if (!conversations.length) {
@@ -211,8 +229,8 @@ export function MessageWorkspace({
                 placeholder="Type a message..."
                 value={draft}
               />
-              <button className="grid h-10 w-10 place-items-center rounded-xl bg-[color:var(--px-primary)] text-white transition hover:bg-[color:var(--px-primary-strong)] disabled:opacity-50" disabled={!draft.trim()} type="submit" aria-label="Send message">
-                <Send size={18} />
+              <button className="grid h-10 w-10 place-items-center rounded-xl bg-[color:var(--px-primary)] text-white transition hover:bg-[color:var(--px-primary-strong)] disabled:opacity-50" disabled={!draft.trim() || isPending} type="submit" aria-label="Send message">
+                {isPending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
               </button>
             </div>
           </form>

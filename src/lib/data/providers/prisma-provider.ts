@@ -107,6 +107,13 @@ export const prismaProvider: PerXDataProvider = {
         where: { participants: { some: { userId } } },
       });
     },
+    getConversationMessages: async (conversationId: string) => {
+      return getPrisma().message.findMany({
+        where: { conversationId },
+        orderBy: { createdAt: "asc" },
+        include: { sender: true },
+      });
+    },
   },
   profiles: {
     getPublicProfile: async (username: string) => {

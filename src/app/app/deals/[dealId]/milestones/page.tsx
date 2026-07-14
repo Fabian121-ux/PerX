@@ -17,7 +17,7 @@ export default async function MilestonesPage({ params }: { params: Promise<{ dea
   return (
     <AppSection description="Milestones define the work units that deliveries and approvals are attached to." title="Milestones">
       <div className="grid gap-4">
-        {deal.proposal.opportunity.milestones?.map((milestone: any, index: number) => (
+        {deal.proposal.opportunity.milestones?.map((milestone: any) => (
           <Card key={milestone.id}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>

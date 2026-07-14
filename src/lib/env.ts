@@ -31,39 +31,25 @@ export function getResolvedDataMode(): "mock" | "database" {
   
   let mode = env.PERX_DATA_MODE;
 
-  if (!mode) {
-    if (isProd) {
-      mode = "database";
-    } else {
-      mode = env.DATABASE_URL ? "auto" : "mock";
+  if (isProd) {
+    if (mode === "mock") {
+      throw new Error("PERX_DATA_MODE=mock is strictly prohibited in production.");
     }
+    mode = "database";
+  } else if (!mode || mode === "auto") {
+    mode = env.DATABASE_URL ? "database" : "mock";
   }
 
   if (mode === "database") {
+    if (!env.DATABASE_URL) {
+      throw new Error("DATABASE_URL is required in database mode.");
+    }
     cachedDataMode = "database";
     return cachedDataMode;
   }
 
-  if (mode === "mock") {
-    if (isProd) {
-      console.warn("WARNING: Running production in mock mode. This should only be used for static builds or preview deployments.");
-    }
-    cachedDataMode = "mock";
-    return cachedDataMode;
-  }
-
-  // mode === "auto"
-  if (isProd) {
-    cachedDataMode = "database";
-  } else {
-    if (env.DATABASE_URL) {
-      cachedDataMode = "database";
-    } else {
-      console.warn("PerX database is unavailable. Development mock data is active.");
-      cachedDataMode = "mock";
-    }
-  }
-
+  console.warn("WARNING: Running in mock mode. No database connection will be used.");
+  cachedDataMode = "mock";
   return cachedDataMode;
 }
 
