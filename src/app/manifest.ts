@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#f4f7fb",
     categories: ["business", "productivity", "finance"],
     description:
-      "An opportunity ecosystem for discovery, trust, structured proposals, deals, simulated escrow, and reputation.",
+      "An opportunity ecosystem for discovery, trust, structured proposals, deals, beta-stage simulated payment states, and reputation.",
     display: "standalone",
     icons: [
       {

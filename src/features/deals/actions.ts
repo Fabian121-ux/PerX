@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/db/prisma";
 import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
+import { getDeliveryApprovalDecision } from "@/features/deals/authorization";
 import {
   assertEscrowTransition,
   type EscrowState,
@@ -13,7 +14,7 @@ import { requireUser } from "@/lib/auth/session";
 
 async function requireDealParticipant(dealId: string, userId: string) {
   const deal = await getPrisma().deal.findUniqueOrThrow({
-    include: { participants: true, milestones: true },
+    include: { approvals: true, participants: true, milestones: true, releases: true },
     where: { id: dealId },
   });
   if (!deal.participants.some((participant) => participant.userId === userId)) {
@@ -75,6 +76,18 @@ export async function approveDeliveryAction(formData: FormData) {
 
   const dealId = String(formData.get("dealId") ?? "");
   const deal = await requireDealParticipant(dealId, user.id);
+  const approvalDecision = getDeliveryApprovalDecision(deal, user.id);
+  if (!approvalDecision.allowed) {
+    await writeAuditLog({
+      actorId: user.id,
+      action: "deal.delivery.approve.denied",
+      entityId: dealId,
+      entityType: "deal",
+      metadata: { reason: approvalDecision.reason },
+    });
+    redirect(`/app/deals/${dealId}/deliveries?error=${approvalDecision.reason}`);
+  }
+
   const reviewState = assertEscrowTransition(
     deal.status as EscrowState,
     "review",
@@ -87,7 +100,7 @@ export async function approveDeliveryAction(formData: FormData) {
       data: {
         actorId: user.id,
         dealId,
-        note: "Approved in simulated escrow flow.",
+        note: "Approved in simulated release flow. No real funds are collected or held by perX.",
       },
     });
     await tx.release.create({
@@ -105,7 +118,7 @@ export async function approveDeliveryAction(formData: FormData) {
         currency: deal.currency,
         dealId,
         idempotencyKey: `ledger:release:${dealId}`,
-        note: "Simulated provider-independent escrow release.",
+        note: "Simulated release state only. No real funds are collected, held, transferred, or released by perX.",
         type: "RELEASE",
       },
     });
@@ -130,7 +143,7 @@ export async function approveDeliveryAction(formData: FormData) {
               {
                 actorId: user.id,
                 fromStatus: approvedState,
-                reason: "Funds released in simulated escrow.",
+                reason: "Simulated release state recorded. No real funds were released.",
                 toStatus: releasedState,
               },
             ],

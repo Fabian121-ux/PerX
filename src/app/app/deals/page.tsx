@@ -15,7 +15,7 @@ export default async function DealsPage() {
 
   return (
     <AppSection
-      description="Track accepted proposals, milestones, deliveries, approvals, and simulated escrow state."
+      description="Track accepted proposals, milestones, deliveries, approvals, and simulated deal states. No real funds are collected or held by perX during beta."
       title="Deals"
     >
       {deals.length ? (

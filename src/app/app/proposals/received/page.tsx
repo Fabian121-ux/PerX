@@ -13,7 +13,7 @@ export default async function ProposalsReceivedPage() {
   const proposals = await getUserProposals(user!.id, "received");
 
   return (
-    <AppSection description="Accepting a proposal creates a deal workspace with milestones and escrow state tracking." title="Proposals received">
+    <AppSection description="Accepting a proposal creates a deal workspace with milestones and simulated deal-state tracking. No payment or escrow custody is active during beta." title="Proposals received">
       {proposals.length ? (
         <div className="grid gap-4">
           {proposals.map((proposal: any) => (

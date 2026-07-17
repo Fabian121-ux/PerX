@@ -23,17 +23,17 @@ export const dynamic = "force-dynamic";
 const pillars = [
   { icon: BadgeCheck, label: "Discover opportunities", text: "Search jobs, projects, collaborators, startups and partnerships through one professional graph." },
   { icon: MessageSquareText, label: "Move through trust", text: "Start with conversations, then move into structured proposals with clear ownership and terms." },
-  { icon: WalletCards, label: "Create deal records", text: "Track milestones, delivery, simulated escrow states, approvals and release readiness." },
+  { icon: WalletCards, label: "Create deal records", text: "Track milestones, delivery, approvals and simulated release-state readiness." },
   { icon: ShieldCheck, label: "Build reputation", text: "Reviews and trust signals are tied to completed eligible deals, not arbitrary badges." },
 ];
 
-const categories = ["Product design", "Software", "Startup support", "Operations", "Marketing", "Partnerships", "Remote jobs", "Escrow-ready projects"];
+const categories = ["Product design", "Software", "Startup support", "Operations", "Marketing", "Partnerships", "Remote jobs", "Deal-state projects"];
 
 const steps = [
   ["Discover", "Find opportunities and trusted people with filters that match your role."],
   ["Connect", "Open conversations around the opportunity, not scattered inbox noise."],
   ["Propose", "Turn intent into scope, price, milestones, revisions and decision history."],
-  ["Deal", "Track delivery, approvals, simulated escrow states, reviews and reputation."],
+  ["Deal", "Track delivery, approvals, simulated release states, reviews and reputation."],
 ];
 
 export default function Home() {
@@ -107,7 +107,7 @@ export default function Home() {
                   <span className="rounded-full bg-white/14 px-3 py-1 text-xs font-bold text-white ring-1 ring-white/20">Verified path</span>
                 </div>
                 <div className="mt-6 grid gap-3">
-                  {["Opportunity", "Conversation", "Proposal", "Deal", "Escrow state", "Review"].map((item, index) => (
+                  {["Opportunity", "Conversation", "Proposal", "Deal", "Simulated state", "Review"].map((item, index) => (
                     <div className="flex items-center justify-between rounded-2xl bg-white/11 px-4 py-3 text-white ring-1 ring-white/14" key={item}>
                       <span className="text-sm font-bold">{item}</span>
                       <span className="rounded-full bg-white/15 px-2.5 py-1 font-mono text-xs">{String(index + 1).padStart(2, "0")}</span>
@@ -156,7 +156,7 @@ export default function Home() {
               <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--px-primary)]">How perX works</p>
               <h2 className="mt-3 text-3xl font-black text-[color:var(--px-text)]">Built around the real workflow</h2>
               <p className="mt-3 text-sm leading-6 text-[color:var(--px-text-muted)]">
-                perX keeps communication, proposal terms, deal milestones, escrow states and reputation connected instead of scattering them across disconnected tools.
+                perX keeps communication, proposal terms, deal milestones, simulated release states and reputation connected instead of scattering them across disconnected tools.
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -176,10 +176,10 @@ export default function Home() {
         <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
           <div className="perx-hero-card grid gap-6 rounded-[28px] p-8 sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
-              <p className="text-sm font-bold uppercase tracking-wide text-blue-100">Trust and transaction layer</p>
+              <p className="text-sm font-bold uppercase tracking-wide text-blue-100">Trust and deal workflow layer</p>
               <h2 className="mt-3 text-3xl font-black text-white">Create opportunity relationships that can mature into real deals.</h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50">
-                Start with discovery, then use structured proposals, deal workspaces, milestone tracking and simulated escrow states before live payments are connected.
+                Start with discovery, then use structured proposals, deal workspaces, milestone tracking and simulated release states. Payment and escrow functionality is not active during this beta, and no real funds are collected or held by perX.
               </p>
             </div>
             <ButtonLink href="/how-it-works" variant="secondary">

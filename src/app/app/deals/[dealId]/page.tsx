@@ -22,7 +22,7 @@ export default async function DealWorkspacePage({
 
   return (
     <AppSection
-      description="Deal state is controlled by authorised server actions and escrow transitions."
+      description="Deal state is controlled by authorised server actions and simulated release-state transitions. No real funds are collected or held by perX during beta."
       title={deal.proposal.opportunity.title}
     >
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">

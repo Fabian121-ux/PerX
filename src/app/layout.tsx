@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   },
   applicationName: "perX",
   description:
-    "perX is an opportunity ecosystem for discovering opportunities, building trust, creating structured deals, and transacting securely.",
+    "perX is an opportunity ecosystem for discovering opportunities, building trust, creating structured deals, and tracking beta-stage simulated payment states.",
   icons: {
     apple: "/icons/apple-touch-icon.png",
     icon: [

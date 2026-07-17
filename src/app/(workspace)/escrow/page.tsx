@@ -3,9 +3,9 @@ import { WorkspaceEmptyPage } from "@/components/dashboard/workspace-empty-page"
 export default function EscrowPage() {
   return (
     <WorkspaceEmptyPage
-      description="Monitor protected funds and release states for eligible deals."
-      emptyBody="Escrow records will appear here when a deal reaches a funded or release-ready state."
-      emptyTitle="No escrow records yet"
+      description="Payment and escrow functionality is not active during this beta."
+      emptyBody="No real funds are collected or held by perX. Simulated deal states will appear here only for workflow testing."
+      emptyTitle="No simulated state records yet"
       title="Escrow"
     />
   );

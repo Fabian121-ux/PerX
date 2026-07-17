@@ -10,7 +10,7 @@ export default function PreviewDealWorkspacePage() {
   const deal = previewActiveDeal;
 
   return (
-    <AppSection description="Preview Mode: Deal state is controlled by simulated independent escrow transitions." title={deal.title}>
+    <AppSection description="Preview Mode: Deal state is controlled by simulated deal-state transitions. No real funds are collected or held by perX." title={deal.title}>
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <div className="grid gap-6">
           <Card>

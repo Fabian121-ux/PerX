@@ -29,7 +29,7 @@ export default async function SignInPage({ searchParams }: { searchParams: Promi
               <p className="text-sm font-semibold uppercase tracking-wide text-blue-100">Secure access</p>
               <h2 className="mt-3 text-4xl font-black">Deals start with verified access.</h2>
               <p className="mt-4 text-sm leading-7 text-blue-50">
-                Sign in to manage opportunities, proposals, messages, milestones, simulated escrow and reputation from one connected workspace.
+                Sign in to manage opportunities, proposals, messages, milestones, simulated deal states and reputation from one connected workspace.
               </p>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { DiscoverExperience } from "@/components/discover/discover-experience";
 import { PublicPageShell } from "@/components/standard-page";
 import { demoProfiles } from "@/lib/data/demo";
-import { getCategories, getOpportunityFeed } from "@/lib/data/opportunities";
+import { getPublicDiscoveryData } from "@/lib/data/opportunities";
 
 export default async function DiscoverPage({
   searchParams,
@@ -9,10 +9,11 @@ export default async function DiscoverPage({
   searchParams: Promise<{ category?: string; q?: string; type?: string }>;
 }) {
   const params = await searchParams;
-  const [opportunities, categories] = await Promise.all([
-    getOpportunityFeed({ category: params.category, q: params.q, type: params.type }),
-    getCategories(),
-  ]);
+  const { categories, opportunities, unavailable } = await getPublicDiscoveryData({
+    category: params.category,
+    q: params.q,
+    type: params.type,
+  });
 
   const profiles = demoProfiles.map((profile) => ({
     headline: profile.headline,
@@ -28,6 +29,7 @@ export default async function DiscoverPage({
         <DiscoverExperience
           basePath="/discover"
           categories={categories}
+          dataUnavailable={unavailable}
           mode="public"
           opportunities={opportunities}
           params={params}

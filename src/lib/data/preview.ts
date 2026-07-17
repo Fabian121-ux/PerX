@@ -155,8 +155,8 @@ export const previewOpportunities: PreviewOpportunity[] = [
     id: "opp-2",
     slug: "demo-secure-deal-dashboard",
     title: "Secure deal dashboard",
-    summary: "Build a dashboard for proposals, milestones, deliveries, and escrow state.",
-    description: "Fictional demo project for a secure deal dashboard with proposals, milestones, delivery review, simulated escrow, reviews, and audit trails.",
+    summary: "Build a dashboard for proposals, milestones, deliveries, and simulated deal states.",
+    description: "Fictional demo project for a secure deal dashboard with proposals, milestones, delivery review, simulated release states, reviews, and audit trails.",
     type: "FREELANCE_PROJECT",
     status: "PUBLISHED",
     moderationStatus: "APPROVED",
@@ -224,12 +224,12 @@ export const previewProposals: PreviewProposal[] = [
     amountMinor: 93000000,
     currency: "NGN",
     deliveryDays: 35,
-    description: "Implementation proposal for secure proposal, deal, and escrow dashboard workflows.",
+    description: "Implementation proposal for secure proposal, deal, and simulated deal-state dashboard workflows.",
     status: "SENT",
     revisions: 1,
     createdAt: "2026-06-24T08:00:00Z",
     milestones: [
-      { id: "prop-m-4", title: "Escrow backend mapping", description: "Design database schemas and secure status machines.", amountMinor: 43000000, currency: "NGN", dueInDays: 15 },
+      { id: "prop-m-4", title: "Deal-state backend mapping", description: "Design database schemas and secure status machines.", amountMinor: 43000000, currency: "NGN", dueInDays: 15 },
       { id: "prop-m-5", title: "Dashboard frontend screens", description: "Connect server components with clean CSS layout shells.", amountMinor: 50000000, currency: "NGN", dueInDays: 35 },
     ],
   },
@@ -272,17 +272,17 @@ export const previewActiveDeal: PreviewDeal = {
     { id: "del-1", title: "Discovery delivery", notes: "Uploaded fictional onboarding flow map and trust surface notes.", status: "APPROVED", submitterId: "alex-demo" },
   ],
   ledgerEntries: [
-    { id: "led-1", amountMinor: 64000000, currency: "NGN", note: "Fictional funds held in simulated escrow.", type: "FUNDING_HELD", createdAt: "2026-06-23T15:00:00Z" },
-    { id: "led-2", amountMinor: 44000000, currency: "NGN", note: "Fictional escrow release after approval.", type: "RELEASE", createdAt: "2026-06-24T10:00:00Z" },
+    { id: "led-1", amountMinor: 64000000, currency: "NGN", note: "Fictional simulated funding state. No real funds are collected or held by perX.", type: "FUNDING_HELD", createdAt: "2026-06-23T15:00:00Z" },
+    { id: "led-2", amountMinor: 44000000, currency: "NGN", note: "Fictional simulated release state after approval. No real funds were released.", type: "RELEASE", createdAt: "2026-06-24T10:00:00Z" },
   ],
   statusHistory: [
     { id: "sh-1", toStatus: "AWAITING_FUNDING", reason: "Demo deal created.", createdAt: "2026-06-23T14:05:00Z" },
-    { id: "sh-2", toStatus: "FUNDED", reason: "Fictional funds reserved.", createdAt: "2026-06-23T15:00:00Z" },
+    { id: "sh-2", toStatus: "FUNDED", reason: "Fictional simulated funding state recorded.", createdAt: "2026-06-23T15:00:00Z" },
     { id: "sh-3", toStatus: "IN_PROGRESS", reason: "Work started.", createdAt: "2026-06-23T16:00:00Z" },
     { id: "sh-4", toStatus: "SUBMITTED", reason: "Delivery submitted.", createdAt: "2026-06-24T09:00:00Z" },
     { id: "sh-5", toStatus: "UNDER_REVIEW", reason: "Client review started.", createdAt: "2026-06-24T09:15:00Z" },
     { id: "sh-6", toStatus: "APPROVED", reason: "Delivery approved.", createdAt: "2026-06-24T09:45:00Z" },
-    { id: "sh-7", toStatus: "RELEASED", reason: "Simulated escrow released.", createdAt: "2026-06-24T10:00:00Z" },
+    { id: "sh-7", toStatus: "RELEASED", reason: "Simulated release state recorded. No real funds were released.", createdAt: "2026-06-24T10:00:00Z" },
   ],
 };
 
@@ -291,7 +291,7 @@ export const previewDeals: PreviewDeal[] = [
 ];
 
 export const previewNotifications = [
-  { id: "notif-1", title: "Escrow released", body: "Maya approved the discovery milestone and released simulated escrow.", type: "DEAL", read: false },
+  { id: "notif-1", title: "Simulated release recorded", body: "Maya approved the discovery milestone and recorded a simulated release state.", type: "DEAL", read: false },
   { id: "notif-2", title: "Proposal received", body: "Riley submitted a proposal for Secure deal dashboard.", type: "PROPOSAL", read: false },
   { id: "notif-3", title: "Trust score updated", body: "Your trust score improved after a completed demo deal.", type: "REVIEW", read: true },
 ];

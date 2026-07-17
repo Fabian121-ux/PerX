@@ -32,6 +32,7 @@ type DiscoverProfile = {
 export function DiscoverExperience({
   basePath,
   categories,
+  dataUnavailable = false,
   mode = "public",
   opportunities,
   params = {},
@@ -39,6 +40,7 @@ export function DiscoverExperience({
 }: {
   basePath: "/discover" | "/app/discover" | "/market" | "/preview/discover";
   categories: DiscoverCategory[];
+  dataUnavailable?: boolean;
   mode?: "public" | "app" | "preview";
   opportunities: DiscoverOpportunity[];
   params?: { category?: string; q?: string; type?: string };
@@ -183,6 +185,15 @@ export function DiscoverExperience({
         </aside>
 
         <section className="min-w-0">
+          {dataUnavailable ? (
+            <Card className="mb-4 border-amber-200 bg-amber-50 text-amber-950">
+              <h2 className="text-sm font-bold">Discovery is temporarily unavailable</h2>
+              <p className="mt-2 text-sm leading-6 text-amber-900">
+                Opportunity search could not reach the database. Please try again shortly.
+              </p>
+            </Card>
+          ) : null}
+
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[20px] bg-[color:var(--px-surface)] px-4 py-3 shadow-sm ring-1 ring-[color:var(--px-border)]">
             <div>
               <p className="text-sm font-bold text-[color:var(--px-text)]">
@@ -222,8 +233,12 @@ export function DiscoverExperience({
             </div>
           ) : (
             <EmptyState
-              body="Try a broader search or clear one filter to see more ecosystem opportunities."
-              title="No matching opportunities"
+              body={
+                dataUnavailable
+                  ? "The database-backed discovery feed is unavailable. No mock results were substituted."
+                  : "Try a broader search or clear one filter to see more ecosystem opportunities."
+              }
+              title={dataUnavailable ? "Discovery unavailable" : "No matching opportunities"}
             />
           )}
 

@@ -46,7 +46,7 @@ export function TrustHeroCard() {
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--px-success)] text-white">
             <ShieldCheck size={14} />
           </div>
-          <span>Escrow-ready deal structure</span>
+          <span>Beta simulated deal-state structure</span>
           <button className="ml-1 text-blue-100 hover:text-white" aria-label="More info">
             <Info size={14} />
           </button>

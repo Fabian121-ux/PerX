@@ -17,11 +17,11 @@ export const staticPages = {
     eyebrow: "Help",
     sections: [
       {
-        body: "Create one account, select the roles you hold, complete your profile, then discover or publish opportunities based on your capabilities.",
+        body: "Create one account, complete your profile, then discover or publish opportunities based on the activities you actually complete on perX.",
         heading: "Getting started",
       },
       {
-        body: "Use conversations for communication, proposals for structured offers, and deals for milestones, deliveries, approvals, and escrow state tracking.",
+        body: "Use conversations for communication, proposals for structured offers, and deals for milestones, deliveries, approvals, and simulated release-state tracking.",
         heading: "Working safely",
       },
     ],
@@ -31,11 +31,11 @@ export const staticPages = {
     eyebrow: "Workflow",
     sections: [
       {
-        body: "Identity → Opportunity → Connection → Proposal → Agreement → Deal → Transaction → Delivery → Review → Reputation → New Opportunity",
+        body: "Identity -> Activity -> Ecosystem Role -> Connection -> Agreement -> Delivery or Exchange -> Trust Signal -> Reputation",
         heading: "The Ecosystem Flow",
       },
       {
-        body: "Trust surrounds every stage of the ecosystem, rather than appearing only at payment. Milestones, approvals, simulated escrow releases, and trust signals create a reliable reputation loop.",
+        body: "Trust surrounds every stage of the ecosystem, rather than appearing only at payment. Milestones, approvals, simulated release states, and trust signals create a reliable reputation loop. Payment and escrow functionality is not active during this beta.",
         heading: "From discovery to reputation",
       },
     ],
@@ -59,7 +59,7 @@ export const staticPages = {
     eyebrow: "Terms",
     sections: [
       {
-        body: "perX provides software for opportunity discovery, structured collaboration, reputation, and simulated escrow state tracking. Live regulated payments are not enabled in the MVP.",
+        body: "perX provides software for opportunity discovery, structured collaboration, reputation, and simulated release-state tracking. Live regulated payments and escrow are not enabled during this beta, and no real funds are collected or held by perX.",
         heading: "Service scope",
       },
       {

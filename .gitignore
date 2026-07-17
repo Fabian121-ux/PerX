@@ -40,9 +40,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# ai agents
+# ai agent local instructions
 AGENTS.md
 CLAUDE.md
+**/AGENTS.md
+**/CLAUDE.md
+*.agent.md
+*.agents.md
+agent-notes.md
+agents-notes.md
 
 
 # Keep .env.example

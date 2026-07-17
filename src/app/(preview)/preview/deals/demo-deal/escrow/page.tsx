@@ -17,8 +17,8 @@ export default function PreviewEscrowPage() {
           Back to Deal
         </Link>
       }
-      description="Preview Mode: Independent simulated escrow records funding, approvals, releases, and disputes."
-      title="Escrow status"
+      description="Preview Mode: simulated deal-state records only. No real funds are collected, held, transferred, or released by perX."
+      title="Simulated deal-state status"
     >
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <div className="grid gap-6 self-start">
@@ -30,14 +30,14 @@ export default function PreviewEscrowPage() {
           </Card>
 
           <Card className="p-5 grid gap-3">
-            <h3 className="font-bold text-slate-950 text-sm">Ledger balance</h3>
+            <h3 className="font-bold text-slate-950 text-sm">Simulated state summary</h3>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-[color:var(--px-text-muted)]">Held in Escrow:</span>
+                <span className="text-[color:var(--px-text-muted)]">Simulated funding state:</span>
                 <span className="font-bold text-slate-900">{formatMoney(20000000, deal.currency)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[color:var(--px-text-muted)]">Released to Pro:</span>
+                <span className="text-[color:var(--px-text-muted)]">Simulated release state:</span>
                 <span className="font-bold text-green-700">{formatMoney(44000000, deal.currency)}</span>
               </div>
             </div>
@@ -47,7 +47,7 @@ export default function PreviewEscrowPage() {
         <div className="grid gap-6">
           {/* Ledger Entries */}
           <Card>
-            <h2 className="text-lg font-bold text-slate-950 mb-3">Escrow Ledger History</h2>
+            <h2 className="text-lg font-bold text-slate-950 mb-3">Simulated Ledger History</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
