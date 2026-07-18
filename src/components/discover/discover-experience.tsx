@@ -1,8 +1,13 @@
 import {
+  Building2,
+  BriefcaseBusiness,
   Grid2X2,
+  Handshake,
   Search,
   ShieldCheck,
+  ShoppingBag,
   SlidersHorizontal,
+  UserRound,
   Users,
 } from "lucide-react";
 
@@ -42,18 +47,42 @@ export function DiscoverExperience({
   dataUnavailable?: boolean;
   mode?: "public" | "app" | "preview";
   opportunities: DiscoverOpportunity[];
-  params?: { category?: string; q?: string; type?: string };
+  params?: { category?: string; q?: string; sort?: string; type?: string };
   profiles?: DiscoverProfile[];
 }) {
   const typeTabs = [
-    ["", "All listings"],
-    ["JOB", "Jobs"],
-    ["FREELANCE_PROJECT", "Projects"],
-    ["STARTUP", "Startups"],
-    ["COFOUNDER", "Co-founders"],
-    ["PARTNERSHIP", "Partnerships"],
-    ["SERVICE", "Services"],
+    { icon: Grid2X2, label: "All", value: "" },
+    { icon: BriefcaseBusiness, label: "Opportunities", value: "OPPORTUNITY" },
+    { icon: UserRound, label: "People", value: "PEOPLE" },
+    { icon: BriefcaseBusiness, label: "Work", value: "JOB" },
+    { icon: UserRound, label: "Services", value: "SERVICE" },
+    { icon: Handshake, label: "Partnerships", value: "PARTNERSHIP" },
+    { icon: Building2, label: "Businesses", value: "BUSINESS" },
+    { icon: ShoppingBag, label: "Marketplace", value: "MARKETPLACE" },
   ];
+  const activeType = params.type ?? "";
+  const showPeople = activeType === "PEOPLE";
+  const unavailableView =
+    activeType === "BUSINESS"
+      ? "Businesses"
+      : activeType === "MARKETPLACE"
+        ? "Marketplace"
+        : null;
+  const resultCount = showPeople
+    ? profiles.length
+    : unavailableView
+      ? 0
+      : opportunities.length;
+
+  const tabHref = (value: string) => {
+    const searchParams = new URLSearchParams();
+    if (value) searchParams.set("type", value);
+    if (params.q) searchParams.set("q", params.q);
+    if (params.category) searchParams.set("category", params.category);
+    if (params.sort) searchParams.set("sort", params.sort);
+    const query = searchParams.toString();
+    return query ? `${basePath}?${query}` : basePath;
+  };
 
   const shellHref = (slug: string) => {
     if (mode === "public") return `/opportunities/${slug}`;
@@ -111,9 +140,9 @@ export function DiscoverExperience({
           </Field>
           <Field label="Type">
             <Select defaultValue={params.type ?? ""} name="type">
-              {typeTabs.map(([value, label]) => (
-                <option key={value || "all"} value={value}>
-                  {label}
+              {typeTabs.map((tab) => (
+                <option key={tab.value || "all"} value={tab.value}>
+                  {tab.label}
                 </option>
               ))}
             </Select>
@@ -136,20 +165,21 @@ export function DiscoverExperience({
       </section>
 
       <div className="dashboard-scroll -mx-4 flex gap-2 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
-        {typeTabs.map(([value, label]) => {
-          const active = (params.type ?? "") === value;
-          const href = value ? `${basePath}?type=${value}` : basePath;
+        {typeTabs.map((tab) => {
+          const active = activeType === tab.value;
+          const Icon = tab.icon;
           return (
             <a
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold ring-1 transition ${
+              className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-bold ring-1 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${
                 active
                   ? "bg-[color:var(--px-primary)] text-white ring-[color:var(--px-primary)]"
                   : "bg-[color:var(--px-surface)] text-[color:var(--px-text-muted)] ring-[color:var(--px-border)] hover:text-[color:var(--px-primary)]"
               }`}
-              href={href}
-              key={label}
+              href={tabHref(tab.value)}
+              key={tab.label}
             >
-              {label}
+              <Icon aria-hidden size={15} />
+              {tab.label}
             </a>
           );
         })}
@@ -174,9 +204,9 @@ export function DiscoverExperience({
             </Field>
             <Field label="Type">
               <Select defaultValue={params.type ?? ""} name="type">
-                {typeTabs.map(([value, label]) => (
-                  <option key={value || "all"} value={value}>
-                    {label}
+                {typeTabs.map((tab) => (
+                  <option key={tab.value || "all"} value={tab.value}>
+                    {tab.label}
                   </option>
                 ))}
               </Select>
@@ -200,23 +230,60 @@ export function DiscoverExperience({
         <section className="min-w-0">
           {dataUnavailable ? (
             <Card className="mb-4 border-amber-200 bg-amber-50 text-amber-950">
-              <h2 className="text-sm font-bold">Discovery is temporarily unavailable</h2>
+              <h2 className="text-sm font-bold">
+                Discovery is temporarily unavailable
+              </h2>
               <p className="mt-2 text-sm leading-6 text-amber-900">
-                Opportunity search could not reach the database. Please try again shortly.
+                Opportunity search could not reach the database. Please try
+                again shortly.
               </p>
             </Card>
           ) : null}
 
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[20px] bg-[color:var(--px-surface)] px-4 py-3 shadow-sm ring-1 ring-[color:var(--px-border)]">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-[var(--px-radius)] bg-[color:var(--px-surface)] px-4 py-3 shadow-sm ring-1 ring-[color:var(--px-border)]">
             <div>
               <p className="text-sm font-bold text-[color:var(--px-text)]">
-                {opportunities.length} results
+                {resultCount} results
               </p>
               <p className="text-xs text-[color:var(--px-text-muted)]">
                 Sorted by trust, relevance and recent activity
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <form
+                action={basePath}
+                className="hidden items-center gap-2 sm:flex"
+              >
+                {params.q ? (
+                  <input name="q" type="hidden" value={params.q} />
+                ) : null}
+                {params.type ? (
+                  <input name="type" type="hidden" value={params.type} />
+                ) : null}
+                {params.category ? (
+                  <input
+                    name="category"
+                    type="hidden"
+                    value={params.category}
+                  />
+                ) : null}
+                <label className="sr-only" htmlFor="discover-sort">
+                  Sort results
+                </label>
+                <Select
+                  className="min-h-10"
+                  defaultValue={params.sort ?? "relevance"}
+                  id="discover-sort"
+                  name="sort"
+                >
+                  <option value="relevance">Relevant</option>
+                  <option value="recent">Recent</option>
+                  <option value="trust">Trust</option>
+                </Select>
+                <Button size="sm" type="submit" variant="secondary">
+                  Sort
+                </Button>
+              </form>
               <MobileFilterDrawer
                 basePath={basePath}
                 categories={categories}
@@ -232,7 +299,26 @@ export function DiscoverExperience({
             </div>
           </div>
 
-          {opportunities.length ? (
+          {showPeople ? (
+            profiles.length ? (
+              <div className="grid gap-5 md:grid-cols-2 2xl:grid-cols-3">
+                {profiles.map((profile) => (
+                  <PersonDiscoveryCard
+                    key={profile.username}
+                    mode={mode}
+                    profile={profile}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                body="People results will appear after members complete searchable profiles."
+                title="No matching people"
+              />
+            )
+          ) : unavailableView ? (
+            <UnavailableDiscoveryState view={unavailableView} />
+          ) : opportunities.length ? (
             <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
               {opportunities.map((opportunity) => (
                 <OpportunityCard
@@ -249,7 +335,11 @@ export function DiscoverExperience({
                   ? "The database-backed discovery feed is unavailable. No mock results were substituted."
                   : "Try a broader search or clear one filter to see more ecosystem opportunities."
               }
-              title={dataUnavailable ? "Discovery unavailable" : "No matching opportunities"}
+              title={
+                dataUnavailable
+                  ? "Discovery unavailable"
+                  : "No matching opportunities"
+              }
             />
           )}
 
@@ -369,5 +459,81 @@ export function DiscoverExperience({
         </aside>
       </div>
     </div>
+  );
+}
+
+function PersonDiscoveryCard({
+  mode,
+  profile,
+}: {
+  mode: "public" | "app" | "preview";
+  profile: DiscoverProfile;
+}) {
+  const initials = profile.name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const href =
+    mode === "preview" ? "/preview/profile" : `/u/${profile.username}`;
+
+  return (
+    <Card className="flex min-h-[230px] flex-col justify-between gap-5">
+      <div>
+        <div className="flex items-start gap-3">
+          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-[color:var(--px-primary)] text-base font-black text-white">
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-lg font-black text-[color:var(--px-text)]">
+              {profile.name}
+            </h2>
+            <p className="mt-1 line-clamp-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
+              {profile.headline}
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Badge>{profile.role}</Badge>
+          <Badge className="border-green-200 bg-green-50 text-green-800">
+            <ShieldCheck aria-hidden className="mr-1" size={13} />
+            Trust {profile.trustScore}
+          </Badge>
+        </div>
+      </div>
+      <a
+        className="inline-flex min-h-11 items-center justify-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white transition hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+        href={href}
+      >
+        View profile
+      </a>
+    </Card>
+  );
+}
+
+function UnavailableDiscoveryState({ view }: { view: string }) {
+  const marketplace = view === "Marketplace";
+
+  return (
+    <Card className="grid gap-4 border-dashed text-center">
+      <div className="mx-auto grid h-12 w-12 place-items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)]">
+        {marketplace ? (
+          <ShoppingBag aria-hidden size={22} />
+        ) : (
+          <Building2 aria-hidden size={22} />
+        )}
+      </div>
+      <div>
+        <h2 className="text-lg font-black text-[color:var(--px-text)]">
+          {view} discovery is coming later
+        </h2>
+        <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[color:var(--px-text-muted)]">
+          {marketplace
+            ? "PerX commercial listings remain enquiry-based during beta. Checkout, payment, escrow and settlement are not active."
+            : "Business discovery is being prepared as a dedicated beta surface. No fixture businesses were substituted for live data."}
+        </p>
+      </div>
+    </Card>
   );
 }

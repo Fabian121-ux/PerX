@@ -10,7 +10,8 @@ import { profileSetupSchema } from "@/lib/validation/auth";
 export async function setupProfileAction(formData: FormData) {
   const user = await requireUser();
   if (getResolvedDataMode() === "mock") redirect("/app?mock=true");
-  if (!hasDatabaseUrl()) redirect("/app/profile/setup?error=database-not-configured");
+  if (!hasDatabaseUrl())
+    redirect("/app/profile/setup?error=database-not-configured");
 
   const rawData = {
     name: String(formData.get("name") || ""),
@@ -18,7 +19,9 @@ export async function setupProfileAction(formData: FormData) {
     headline: String(formData.get("headline") || ""),
     biography: String(formData.get("biography") || ""),
     location: String(formData.get("location") || ""),
+    profileImageUrl: String(formData.get("profileImageUrl") || ""),
     skills: String(formData.get("skills") || ""),
+    websiteUrl: String(formData.get("websiteUrl") || ""),
   };
 
   const parsed = profileSetupSchema.safeParse(rawData);
@@ -26,7 +29,16 @@ export async function setupProfileAction(formData: FormData) {
     redirect("/app/profile/setup?error=check-fields");
   }
 
-  const { name, username, headline, biography, location, skills } = parsed.data;
+  const {
+    name,
+    username,
+    headline,
+    biography,
+    location,
+    profileImageUrl,
+    skills,
+    websiteUrl,
+  } = parsed.data;
 
   // Check if username is taken by another user
   const existingUsername = await getPrisma().user.findUnique({
@@ -45,7 +57,12 @@ export async function setupProfileAction(formData: FormData) {
         .filter(Boolean)
     : [];
 
-  const completeness = 30 + (headline ? 10 : 0) + (biography.length > 50 ? 20 : 0) + (location ? 10 : 0) + (skillList.length > 0 ? 10 : 0);
+  const completeness =
+    30 +
+    (headline ? 10 : 0) +
+    (biography.length > 50 ? 20 : 0) +
+    (location ? 10 : 0) +
+    (skillList.length > 0 ? 10 : 0);
 
   try {
     await getPrisma().$transaction(async (tx) => {
@@ -55,24 +72,33 @@ export async function setupProfileAction(formData: FormData) {
         data: { name, username },
       });
 
+      const profileData = {
+        biography,
+        headline,
+        location,
+        profileCompleteness: completeness,
+        profileImageUrl: profileImageUrl || null,
+        websiteUrl: websiteUrl || null,
+      };
+
       // Update Profile
       await tx.profile.upsert({
         where: { userId: user.id },
-        update: { headline, biography, location, profileCompleteness: completeness },
-        create: { userId: user.id, headline, biography, location, profileCompleteness: completeness },
+        update: profileData,
+        create: { userId: user.id, ...profileData },
       });
 
-      // Update Skills
-      await tx.profileSkill.deleteMany({ where: { profileId: user.id } }); // Note: Profile ID equals User ID in our schema since it's 1-1, actually let's get the profile ID first.
-      
-      const profile = await tx.profile.findUnique({ where: { userId: user.id }, select: { id: true } });
+      const profile = await tx.profile.findUnique({
+        where: { userId: user.id },
+        select: { id: true },
+      });
       if (profile) {
-          await tx.profileSkill.deleteMany({ where: { profileId: profile.id } });
-          for (const skill of skillList) {
-            await tx.profileSkill.create({
-              data: { name: skill, profileId: profile.id },
-            });
-          }
+        await tx.profileSkill.deleteMany({ where: { profileId: profile.id } });
+        for (const skill of skillList) {
+          await tx.profileSkill.create({
+            data: { name: skill, profileId: profile.id },
+          });
+        }
       }
     });
   } catch (error) {
@@ -86,6 +112,6 @@ export async function setupProfileAction(formData: FormData) {
     entityId: user.id,
     entityType: "profile",
   });
-  
+
   redirect("/app");
 }

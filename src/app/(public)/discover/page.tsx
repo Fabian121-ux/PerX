@@ -6,14 +6,21 @@ import { getPublicDiscoveryData } from "@/lib/data/opportunities";
 export default async function DiscoverPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; q?: string; type?: string }>;
+  searchParams: Promise<{
+    category?: string;
+    q?: string;
+    sort?: string;
+    type?: string;
+  }>;
 }) {
   const params = await searchParams;
-  const { categories, opportunities, unavailable } = await getPublicDiscoveryData({
-    category: params.category,
-    q: params.q,
-    type: params.type,
-  });
+  const opportunityType = getOpportunityFilterType(params.type);
+  const { categories, opportunities, unavailable } =
+    await getPublicDiscoveryData({
+      category: params.category,
+      q: params.q,
+      type: opportunityType,
+    });
 
   const profiles = demoProfiles.map((profile) => ({
     headline: profile.headline,
@@ -38,4 +45,17 @@ export default async function DiscoverPage({
       </main>
     </PublicPageShell>
   );
+}
+
+function getOpportunityFilterType(type?: string) {
+  return [
+    "JOB",
+    "FREELANCE_PROJECT",
+    "STARTUP",
+    "COFOUNDER",
+    "PARTNERSHIP",
+    "SERVICE",
+  ].includes(type ?? "")
+    ? type
+    : undefined;
 }

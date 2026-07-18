@@ -1,8 +1,12 @@
-const CACHE_NAME = "perx-public-shell-v4";
+const CACHE_NAME = "perx-public-shell-v5";
 const PUBLIC_ASSETS = [
   "/",
   "/offline",
   "/favicon.ico",
+  "/icons/favicon-16x16.png",
+  "/icons/favicon-32x32.png",
+  "/icons/favicon-48x48.png",
+  "/icons/apple-touch-icon.png",
   "/brand/perx-logo-horizontal-light.png",
   "/brand/perx-logo-horizontal-dark.png",
   "/main_app_logo.png",
@@ -13,14 +17,22 @@ const PUBLIC_ASSETS = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PUBLIC_ASSETS)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PUBLIC_ASSETS)),
+  );
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key)),
+        ),
+      )
       .then(() => self.clients.claim()),
   );
 });
@@ -56,6 +68,10 @@ self.addEventListener("fetch", (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(request).then((cached) => cached || caches.match("/offline"))),
+      .catch(() =>
+        caches
+          .match(request)
+          .then((cached) => cached || caches.match("/offline")),
+      ),
   );
 });

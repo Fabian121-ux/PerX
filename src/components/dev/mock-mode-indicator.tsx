@@ -1,8 +1,6 @@
-import { getResolvedDataMode } from "@/lib/env";
-
 export function MockModeIndicator() {
-  const mode = getResolvedDataMode();
-  
+  const mode = process.env.PERX_DATA_MODE;
+
   if (mode !== "mock") return null;
 
   return (

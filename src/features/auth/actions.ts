@@ -6,7 +6,6 @@ import { getPrisma } from "@/lib/db/prisma";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { createSession, destroySession } from "@/lib/auth/session";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
-import { normalizeRole, type RoleName } from "@/lib/permissions/capabilities";
 import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 
@@ -20,37 +19,15 @@ function usernameFromEmail(email: string) {
   );
 }
 
-async function ensureRole(role: RoleName) {
-  return getPrisma().role.upsert({
-    where: { name: role },
-    update: {},
-    create: {
-      name: role,
-      label: role
-        .toLowerCase()
-        .split("_")
-        .map((part) => part[0].toUpperCase() + part.slice(1))
-        .join(" "),
-      description: `${role} capability set`,
-    },
-  });
-}
-
-
 export async function signUpAction(formData: FormData) {
-  if (getResolvedDataMode() === "mock") redirect("/app/profile/setup?mock=true");
+  if (getResolvedDataMode() === "mock")
+    redirect("/app/profile/setup?mock=true");
   if (!hasDatabaseUrl()) redirect("/sign-up?error=database-not-configured");
-
-  const roles = formData
-    .getAll("roles")
-    .map((role) => normalizeRole(role))
-    .filter(Boolean) as RoleName[];
 
   const parsed = signUpSchema.safeParse({
     email: formData.get("email"),
     name: formData.get("name"),
     password: formData.get("password"),
-    roles,
   });
 
   if (!parsed.success) redirect("/sign-up?error=check-fields");
@@ -81,30 +58,24 @@ export async function signUpAction(formData: FormData) {
       },
     });
   } catch (error: unknown) {
-    const err = error as Error & { code?: string; meta?: { target?: string | string[] } };
+    const err = error as Error & {
+      code?: string;
+      meta?: { target?: string | string[] };
+    };
     if (err.code === "P2002") {
       const target = err.meta?.target;
       if (Array.isArray(target)) {
         if (target.includes("email")) redirect("/sign-up?error=email-taken");
-        if (target.includes("username")) redirect("/sign-up?error=username-taken");
+        if (target.includes("username"))
+          redirect("/sign-up?error=username-taken");
       } else if (typeof target === "string") {
         if (target.includes("email")) redirect("/sign-up?error=email-taken");
-        if (target.includes("username")) redirect("/sign-up?error=username-taken");
+        if (target.includes("username"))
+          redirect("/sign-up?error=username-taken");
       }
     }
     console.error("Sign-up error:", error);
     redirect("/sign-up?error=server-error");
-  }
-
-  try {
-    for (const roleName of parsed.data.roles) {
-      const role = await ensureRole(roleName);
-      await getPrisma().userRole.create({
-        data: { roleId: role.id, userId: user.id },
-      });
-    }
-  } catch (error) {
-    console.error("Role creation error:", error);
   }
 
   await createSession(user.id);
@@ -144,7 +115,7 @@ export async function signInAction(formData: FormData) {
   ) {
     redirect("/sign-in?error=invalid-credentials");
   }
-  
+
   if (!user.isActive) {
     redirect("/sign-in?error=account-deactivated");
   }

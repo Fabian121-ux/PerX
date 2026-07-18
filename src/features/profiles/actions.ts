@@ -12,14 +12,18 @@ function completeness(input: {
   headline: string;
   biography: string;
   location: string;
+  profileImageUrl?: string;
   skills?: string;
+  websiteUrl?: string;
 }) {
   let score = 30;
   if (input.headline.length >= 10) score += 20;
   if (input.biography.length >= 120) score += 25;
   if (input.location.length >= 2) score += 10;
   if (input.skills && input.skills.split(",").filter(Boolean).length >= 3)
-    score += 15;
+    score += 10;
+  if (input.profileImageUrl) score += 5;
+  if (input.websiteUrl) score += 5;
   return Math.min(score, 100);
 }
 
@@ -33,7 +37,9 @@ export async function updateProfileAction(formData: FormData) {
     biography: formData.get("biography"),
     headline: formData.get("headline"),
     location: formData.get("location"),
+    profileImageUrl: formData.get("profileImageUrl"),
     skills: formData.get("skills"),
+    websiteUrl: formData.get("websiteUrl"),
   });
   if (!parsed.success) redirect("/app/profile/edit?error=check-fields");
 
@@ -53,13 +59,17 @@ export async function updateProfileAction(formData: FormData) {
           headline: parsed.data.headline,
           location: parsed.data.location,
           profileCompleteness: profileCompleteness,
+          profileImageUrl: parsed.data.profileImageUrl || null,
           userId: user.id,
+          websiteUrl: parsed.data.websiteUrl || null,
         },
         update: {
           biography: parsed.data.biography,
           headline: parsed.data.headline,
           location: parsed.data.location,
           profileCompleteness: profileCompleteness,
+          profileImageUrl: parsed.data.profileImageUrl || null,
+          websiteUrl: parsed.data.websiteUrl || null,
         },
         where: { userId: user.id },
       });

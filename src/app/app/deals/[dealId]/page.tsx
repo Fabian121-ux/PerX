@@ -32,33 +32,52 @@ export default async function DealWorkspacePage({
             <Badge>{formatMoney(deal.valueMinor, deal.currency)}</Badge>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <ButtonLink href={`/app/deals/${deal.id}/milestones`} variant="secondary">
+            <ButtonLink
+              href={`/app/deals/${deal.id}/milestones`}
+              variant="secondary"
+            >
               Milestones
             </ButtonLink>
-            <ButtonLink href={`/app/deals/${deal.id}/deliveries`} variant="secondary">
+            <ButtonLink
+              href={`/app/deals/${deal.id}/deliveries`}
+              variant="secondary"
+            >
               Deliveries
             </ButtonLink>
-            <ButtonLink href={`/app/deals/${deal.id}/escrow`} variant="secondary">
+            <ButtonLink
+              href={`/app/deals/${deal.id}/escrow`}
+              variant="secondary"
+            >
               Simulated State
             </ButtonLink>
           </div>
-          <div className="mt-6 border-t border-slate-100 pt-4">
-            <h3 className="text-sm font-semibold text-slate-900">Step-by-step progress</h3>
+          <div className="mt-6 border-t border-[color:var(--px-border)] pt-4">
+            <h3 className="text-sm font-semibold text-[color:var(--px-text)]">
+              Step-by-step progress
+            </h3>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">Proposal accepted</span>
-              <span className="text-slate-300">/</span>
-              <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">Simulated funding recorded</span>
-              <span className="text-slate-300">/</span>
-              <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">In progress</span>
+              <span className="rounded-full bg-green-500/10 px-2 py-1 text-xs font-medium text-[color:var(--px-success)]">
+                Proposal accepted
+              </span>
+              <span className="text-[color:var(--px-text-muted)]">/</span>
+              <span className="rounded-full bg-green-500/10 px-2 py-1 text-xs font-medium text-[color:var(--px-success)]">
+                Simulated funding recorded
+              </span>
+              <span className="text-[color:var(--px-text-muted)]">/</span>
+              <span className="rounded-full bg-[color:var(--px-muted)] px-2 py-1 text-xs font-medium text-[color:var(--px-text-muted)]">
+                In progress
+              </span>
             </div>
           </div>
         </Card>
         <Card>
-          <h2 className="font-semibold text-slate-950">Participants</h2>
+          <h2 className="font-semibold text-[color:var(--px-text)]">
+            Participants
+          </h2>
           <div className="mt-3 grid gap-2">
             {deal.participants.map((participant: any) => (
               <Link
-                className="text-sm text-emerald-700 hover:text-emerald-800"
+                className="text-sm font-semibold text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"
                 href={`/u/${participant.user.username}`}
                 key={participant.id}
               >

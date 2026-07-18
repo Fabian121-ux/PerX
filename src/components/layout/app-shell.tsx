@@ -1,5 +1,6 @@
 "use client";
 
+import * as Dialog from "@radix-ui/react-dialog";
 import { useState, type ReactNode } from "react";
 import { X } from "lucide-react";
 import type { CurrentUser } from "@/lib/auth/session";
@@ -48,40 +49,37 @@ export function MobileDashboardDrawer({
   open: boolean;
   onClose: () => void;
 }) {
-  if (!open) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-50 lg:hidden"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Navigation menu"
+    <Dialog.Root
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
     >
-      <button
-        className="absolute inset-0 bg-black/70"
-        onClick={onClose}
-        aria-label="Close navigation menu"
-        type="button"
-      />
-      <div className="perx-sidebar relative flex h-full w-[min(20rem,calc(100vw-2rem))] flex-col border-r border-white/10 p-4 shadow-2xl">
-        <div className="flex h-14 shrink-0 items-center justify-between">
-          <BrandLogo
-            className="h-9 drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]"
-            dark
-          />
-          <button
-            className="flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-            onClick={onClose}
-            aria-label="Close navigation menu"
-            type="button"
-          >
-            <X size={20} />
-          </button>
-        </div>
-        <div className="min-h-0 flex-1 overflow-y-auto pb-4 pt-4">
-          <SidebarNavigation onNavigate={onClose} />
-        </div>
-      </div>
-    </div>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70 lg:hidden" />
+        <Dialog.Content className="perx-sidebar fixed inset-y-0 left-0 z-50 flex h-full w-[min(20rem,calc(100vw-2rem))] flex-col border-r border-white/10 p-4 shadow-2xl focus:outline-none lg:hidden">
+          <Dialog.Title className="sr-only">Navigation menu</Dialog.Title>
+          <div className="flex h-14 shrink-0 items-center justify-between">
+            <BrandLogo
+              className="h-9 drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]"
+              dark
+            />
+            <Dialog.Close asChild>
+              <button
+                className="flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                aria-label="Close navigation menu"
+                type="button"
+              >
+                <X aria-hidden size={20} />
+              </button>
+            </Dialog.Close>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto pb-4 pt-4">
+            <SidebarNavigation onNavigate={onClose} />
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }

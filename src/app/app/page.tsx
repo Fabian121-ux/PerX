@@ -31,24 +31,13 @@ export default async function DashboardPage() {
 
   const mockDashboardData: HomeDashboardData = {
     user,
-    connections: [
-      { id: "maya-client", name: "Maya Chen", username: "maya-client", role: "Product Founder", headline: "Building cross-border services", isOnline: true },
-      { id: "david-okafor", name: "David Okafor", username: "david-okafor", role: "Full-stack Developer", headline: "Scaling marketplace MVPs", isOnline: false },
-      { id: "amara-nwosu", name: "Amara Nwosu", username: "amara-nwosu", role: "Brand Strategist", headline: "Positioning health startups", isOnline: true },
-      { id: "tunde-bello", name: "Tunde Bello", username: "tunde-bello", role: "Startup Advisor", headline: "Connecting capital and talent", isOnline: false },
-    ],
+    connections: [],
     trustScore: user.profile?.trustScore ?? 0,
     activeDealsCount: metrics.deals,
     activeDealsDetail: "In progress",
     openProposalsCount: metrics.proposals,
     openProposalsDetail: "Awaiting response",
-    recommendedProfiles: [
-      { id: "maya-client", name: "Maya Chen", username: "maya-client", role: "Startup Founder", headline: "Building cross-border services", trustScore: 86 },
-      { id: "david-okafor", name: "David Okafor", username: "david-okafor", role: "Full-stack Developer", headline: "Scaling marketplace MVPs", trustScore: 92 },
-      { id: "amara-nwosu", name: "Amara Nwosu", username: "amara-nwosu", role: "Brand Strategist", headline: "Positioning health startups", trustScore: 78 },
-      { id: "tunde-bello", name: "Tunde Bello", username: "tunde-bello", role: "Startup Advisor", headline: "Connecting capital and talent", trustScore: 95 },
-      { id: "sofia-martins", name: "Sofia Martins", username: "sofia-martins", role: "Product Designer", headline: "Designing trust-led platforms", trustScore: 88 },
-    ],
+    recommendedProfiles: [],
     recommendedOpportunities: topOpps.map((opp: any) => {
       const image = getTemporaryOpportunityImage(opp.slug);
       return {
@@ -67,17 +56,8 @@ export default async function DashboardPage() {
         imageUrl: image.src,
       };
     }),
-    activityFeed: [
-      { id: "act-1", message: "Maya Chen sent you a proposal for Product Discovery Sprint.", timeAgo: "1h ago", initials: "MC" },
-      { id: "act-2", message: "David Okafor submitted milestone 2 for Marketplace MVP.", timeAgo: "3h ago", initials: "DO" },
-      { id: "act-3", message: "A saved opportunity is closing soon.", timeAgo: "5h ago", initials: "pX" },
-    ],
-    opportunityTrends: [
-      { id: "tr-1", label: "Product design projects", percentage: "18.5%", isUp: true },
-      { id: "tr-2", label: "Software opportunities", percentage: "24.2%", isUp: true },
-      { id: "tr-3", label: "Founder collaborations", percentage: "12.0%", isUp: true },
-      { id: "tr-4", label: "Marketing roles", percentage: "4.1%", isUp: false },
-    ],
+    activityFeed: [],
+    opportunityTrends: [],
   };
 
   return <HomeDashboard data={mockDashboardData} />;

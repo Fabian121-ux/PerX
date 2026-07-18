@@ -37,42 +37,49 @@ export function RecommendedProfiles({
         </Link>
       </div>
 
-      <div className="dashboard-scroll relative -mx-6 mt-6 flex gap-4 overflow-x-auto px-6 pb-4 scrollbar-hide">
-        {profiles.map((profile) => (
-          <div
-            key={profile.id}
-            className="flex w-[240px] shrink-0 snap-start flex-col items-center justify-center rounded-2xl bg-[color:var(--px-surface-soft)] p-5 text-center backdrop-blur-sm ring-1 ring-[color:var(--px-border)] transition-colors hover:ring-[color:var(--px-primary)]/55"
-          >
-            <div className="relative mb-3">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--px-primary)] text-xl font-bold text-white ring-2 ring-[color:var(--px-primary)]/35">
-                {getInitials(profile.name)}
-              </div>
-              {profile.trustScore > 80 && (
-                <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--px-surface)] ring-2 ring-[color:var(--px-primary)]">
-                  <ShieldCheck
-                    size={12}
-                    className="text-[color:var(--px-success)]"
-                  />
+      {profiles.length ? (
+        <div className="dashboard-scroll relative -mx-6 mt-6 flex gap-4 overflow-x-auto px-6 pb-4 scrollbar-hide">
+          {profiles.map((profile) => (
+            <div
+              key={profile.id}
+              className="flex w-[240px] shrink-0 snap-start flex-col items-center justify-center rounded-2xl bg-[color:var(--px-surface-soft)] p-5 text-center backdrop-blur-sm ring-1 ring-[color:var(--px-border)] transition-colors hover:ring-[color:var(--px-primary)]/55"
+            >
+              <div className="relative mb-3">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--px-primary)] text-xl font-bold text-white ring-2 ring-[color:var(--px-primary)]/35">
+                  {getInitials(profile.name)}
                 </div>
-              )}
+                {profile.trustScore > 80 && (
+                  <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--px-surface)] ring-2 ring-[color:var(--px-primary)]">
+                    <ShieldCheck
+                      size={12}
+                      className="text-[color:var(--px-success)]"
+                    />
+                  </div>
+                )}
+              </div>
+              <h3 className="text-sm font-bold text-[color:var(--px-text)]">
+                {profile.name}
+              </h3>
+              <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-[color:var(--px-text-muted)]">
+                {profile.role}
+              </p>
+              <p className="mt-2 line-clamp-2 text-xs text-[color:var(--px-text-muted)]">
+                {profile.headline}
+              </p>
+              <FeatureStatusDialog featureName={`Connect with ${profile.name}`}>
+                <button className="mt-4 w-full rounded-full bg-[color:var(--px-primary)] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]">
+                  Connect
+                </button>
+              </FeatureStatusDialog>
             </div>
-            <h3 className="text-sm font-bold text-[color:var(--px-text)]">
-              {profile.name}
-            </h3>
-            <p className="mt-1 text-[10px] font-medium uppercase tracking-wide text-[color:var(--px-text-muted)]">
-              {profile.role}
-            </p>
-            <p className="mt-2 line-clamp-2 text-xs text-[color:var(--px-text-muted)]">
-              {profile.headline}
-            </p>
-            <FeatureStatusDialog featureName={`Connect with ${profile.name}`}>
-              <button className="mt-4 w-full rounded-full bg-[color:var(--px-primary)] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]">
-                Connect
-              </button>
-            </FeatureStatusDialog>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-5 rounded-[var(--px-radius)] border border-dashed border-[color:var(--px-border-strong)] bg-[color:var(--px-surface-soft)] p-5 text-sm leading-6 text-[color:var(--px-text-muted)]">
+          Recommended people will appear after profile and discovery signals are
+          available.
+        </div>
+      )}
     </div>
   );
 }

@@ -32,8 +32,10 @@ function setNodeEnv(value: "development" | "production" | "test") {
 
 function setDatabaseEnvironment() {
   process.env.PERX_DATA_MODE = "database";
-  process.env.DATABASE_URL = "postgresql://runtime:pass@pooler.example.com:5432/postgres";
-  process.env.DIRECT_URL = "postgresql://direct:pass@db.example.supabase.co:5432/postgres";
+  process.env.DATABASE_URL =
+    "postgresql://runtime:pass@pooler.example.com:5432/postgres";
+  process.env.DIRECT_URL =
+    "postgresql://direct:pass@db.example.supabase.co:5432/postgres";
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "publishable-key";
 }
@@ -78,7 +80,8 @@ describe("Data Mode Resolution", () => {
   it("requires complete database configuration in database mode", () => {
     setNodeEnv("development");
     process.env.PERX_DATA_MODE = "database";
-    process.env.DATABASE_URL = "postgresql://runtime:pass@pooler.example.com:5432/postgres";
+    process.env.DATABASE_URL =
+      "postgresql://runtime:pass@pooler.example.com:5432/postgres";
 
     expect(() => assertDatabaseConfiguration()).toThrow(
       "Missing required environment variable(s): DIRECT_URL, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.",
@@ -103,13 +106,31 @@ describe("Data Mode Resolution", () => {
     );
   });
 
-  it("requires strict environment variables for production", () => {
+  it("allows production without an error monitoring DSN", () => {
     setDatabaseEnvironment();
     process.env.VERCEL_ENV = "production";
     process.env.NEXT_PUBLIC_APP_URL = "https://perx.example";
 
+    expect(getServerEnv().ERROR_MONITORING_DSN).toBeUndefined();
+  });
+
+  it("validates a configured error monitoring DSN", () => {
+    setDatabaseEnvironment();
+    process.env.VERCEL_ENV = "production";
+    process.env.NEXT_PUBLIC_APP_URL = "https://perx.example";
+    process.env.ERROR_MONITORING_DSN = "not-a-url";
+
+    expect(() => getServerEnv()).toThrow();
+  });
+
+  it("still requires PERX_DATA_MODE for strict deployments", () => {
+    setDatabaseEnvironment();
+    process.env.VERCEL_ENV = "production";
+    process.env.NEXT_PUBLIC_APP_URL = "https://perx.example";
+    delete process.env.PERX_DATA_MODE;
+
     expect(() => getServerEnv()).toThrow(
-      "Missing required environment variable(s): ERROR_MONITORING_DSN.",
+      "Missing required environment variable(s): PERX_DATA_MODE.",
     );
   });
 

@@ -14,7 +14,12 @@ const envSchema = z.object({
   SESSION_COOKIE_NAME: z.string().min(1).default("perx_session"),
   AUTH_SESSION_DAYS: z.coerce.number().int().min(1).max(120).default(30),
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
-  UPLOAD_MAX_BYTES: z.coerce.number().int().min(1).max(25 * 1024 * 1024).default(5 * 1024 * 1024),
+  UPLOAD_MAX_BYTES: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(25 * 1024 * 1024)
+    .default(5 * 1024 * 1024),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   ERROR_MONITORING_DSN: z.string().url().or(z.literal("")).optional(),
   PERX_ENABLE_PREVIEW: booleanEnv,
@@ -34,13 +39,15 @@ const strictRequiredVariables = [
   "AUTH_SESSION_DAYS",
   "UPLOAD_MAX_BYTES",
   "LOG_LEVEL",
-  "ERROR_MONITORING_DSN",
   "PERX_ENABLE_PREVIEW",
 ] as const;
 
 type RawServerEnv = z.infer<typeof envSchema>;
 
-export type ServerEnv = Omit<RawServerEnv, "NEXT_PUBLIC_APP_URL" | "ERROR_MONITORING_DSN"> & {
+export type ServerEnv = Omit<
+  RawServerEnv,
+  "NEXT_PUBLIC_APP_URL" | "ERROR_MONITORING_DSN"
+> & {
   ERROR_MONITORING_DSN?: string;
   NEXT_PUBLIC_APP_URL: string;
 };
@@ -92,7 +99,9 @@ export function getServerEnv(): ServerEnv {
   const strict = isStrictDeploymentEnvironment(process.env);
 
   if (isProductionRuntime(process.env) && parsed.PERX_DATA_MODE === "mock") {
-    throw new Error("PERX_DATA_MODE=mock is strictly prohibited in production.");
+    throw new Error(
+      "PERX_DATA_MODE=mock is strictly prohibited in production.",
+    );
   }
 
   if (strict) {
@@ -133,12 +142,14 @@ export function getResolvedDataMode(): "mock" | "database" {
 
   const env = getServerEnv();
   const isProd = process.env.NODE_ENV === "production";
-  
+
   let mode = env.PERX_DATA_MODE;
 
   if (isProd) {
     if (mode === "mock") {
-      throw new Error("PERX_DATA_MODE=mock is strictly prohibited in production.");
+      throw new Error(
+        "PERX_DATA_MODE=mock is strictly prohibited in production.",
+      );
     }
     mode = "database";
   } else if (!mode || mode === "auto") {
@@ -151,7 +162,9 @@ export function getResolvedDataMode(): "mock" | "database" {
     return cachedDataMode;
   }
 
-  console.warn("WARNING: Running in mock mode. No database connection will be used.");
+  console.warn(
+    "WARNING: Running in mock mode. No database connection will be used.",
+  );
   cachedDataMode = "mock";
   return cachedDataMode;
 }
@@ -161,6 +174,8 @@ export function assertDatabaseConfiguration() {
   assertPresent(env, databaseRequiredVariables);
 }
 
-export function setCachedDataModeForTest(mode: "mock" | "database" | undefined) {
+export function setCachedDataModeForTest(
+  mode: "mock" | "database" | undefined,
+) {
   cachedDataMode = mode;
 }

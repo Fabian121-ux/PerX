@@ -8,17 +8,23 @@ import { getCategories, getOpportunityFeed } from "@/lib/data/opportunities";
 export default async function AppDiscoverPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; q?: string; type?: string }>;
+  searchParams: Promise<{
+    category?: string;
+    q?: string;
+    sort?: string;
+    type?: string;
+  }>;
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
   const params = await searchParams;
+  const opportunityType = getOpportunityFilterType(params.type);
   const [opportunities, categories] = await Promise.all([
     getOpportunityFeed({
       category: params.category,
       q: params.q,
-      type: params.type,
+      type: opportunityType,
     }),
     getCategories(),
   ]);
@@ -41,4 +47,17 @@ export default async function AppDiscoverPage({
       profiles={profiles}
     />
   );
+}
+
+function getOpportunityFilterType(type?: string) {
+  return [
+    "JOB",
+    "FREELANCE_PROJECT",
+    "STARTUP",
+    "COFOUNDER",
+    "PARTNERSHIP",
+    "SERVICE",
+  ].includes(type ?? "")
+    ? type
+    : undefined;
 }

@@ -1,5 +1,9 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { signUpAction, signInAction, signOutAction } from "@/features/auth/actions";
+import {
+  signUpAction,
+  signInAction,
+  signOutAction,
+} from "@/features/auth/actions";
 import { getResolvedDataMode, hasDatabaseUrl } from "@/lib/env";
 import { getPrisma } from "@/lib/db/prisma";
 import * as session from "@/lib/auth/session";
@@ -25,7 +29,9 @@ vi.mock("@/lib/auth/session", () => ({
 }));
 
 vi.mock("@/lib/auth/password", () => ({
-  verifyPassword: vi.fn((pass, hash) => pass === "validpass" && hash === "hashed_validpass"),
+  verifyPassword: vi.fn(
+    (pass, hash) => pass === "validpass" && hash === "hashed_validpass",
+  ),
   hashPassword: vi.fn(() => "hashed_password"),
 }));
 
@@ -44,15 +50,19 @@ describe("Auth Actions", () => {
     it("redirects to profile setup on mock mode without hitting DB", async () => {
       vi.mocked(getResolvedDataMode).mockReturnValue("mock");
       const formData = new FormData();
-      
-      await expect(signUpAction(formData)).rejects.toThrow("REDIRECT:/app/profile/setup?mock=true");
+
+      await expect(signUpAction(formData)).rejects.toThrow(
+        "REDIRECT:/app/profile/setup?mock=true",
+      );
       expect(getPrisma).not.toHaveBeenCalled();
     });
 
     it("redirects with email-taken on P2002 error", async () => {
       vi.mocked(getPrisma).mockReturnValue({
         user: {
-          create: vi.fn().mockRejectedValue({ code: "P2002", meta: { target: ["email"] } }),
+          create: vi
+            .fn()
+            .mockRejectedValue({ code: "P2002", meta: { target: ["email"] } }),
           count: vi.fn().mockResolvedValue(0),
         },
       } as never);
@@ -61,15 +71,21 @@ describe("Auth Actions", () => {
       formData.set("email", "test@test.com");
       formData.set("name", "Test User");
       formData.set("password", "validpassword");
-      formData.append("roles", "CLIENT");
 
-      await expect(signUpAction(formData)).rejects.toThrow("REDIRECT:/sign-up?error=email-taken");
+      await expect(signUpAction(formData)).rejects.toThrow(
+        "REDIRECT:/sign-up?error=email-taken",
+      );
     });
-    
+
     it("redirects with username-taken on P2002 error", async () => {
       vi.mocked(getPrisma).mockReturnValue({
         user: {
-          create: vi.fn().mockRejectedValue({ code: "P2002", meta: { target: ["username"] } }),
+          create: vi
+            .fn()
+            .mockRejectedValue({
+              code: "P2002",
+              meta: { target: ["username"] },
+            }),
           count: vi.fn().mockResolvedValue(0),
         },
       } as never);
@@ -78,23 +94,24 @@ describe("Auth Actions", () => {
       formData.set("email", "test@test.com");
       formData.set("name", "Test User");
       formData.set("password", "validpassword");
-      formData.append("roles", "CLIENT");
 
-      await expect(signUpAction(formData)).rejects.toThrow("REDIRECT:/sign-up?error=username-taken");
+      await expect(signUpAction(formData)).rejects.toThrow(
+        "REDIRECT:/sign-up?error=username-taken",
+      );
     });
 
     it("creates user and redirects to setup on success", async () => {
       vi.mocked(getPrisma).mockReturnValue({
         user: {
-          create: vi.fn().mockResolvedValue({ id: "user_1", email: "test@test.com", username: "test" }),
+          create: vi
+            .fn()
+            .mockResolvedValue({
+              id: "user_1",
+              email: "test@test.com",
+              username: "test",
+            }),
           findUnique: vi.fn().mockResolvedValue(null),
           count: vi.fn().mockResolvedValue(0),
-        },
-        role: {
-          upsert: vi.fn().mockResolvedValue({ id: "role_1" }),
-        },
-        userRole: {
-          create: vi.fn().mockResolvedValue({}),
         },
       } as never);
 
@@ -102,10 +119,12 @@ describe("Auth Actions", () => {
       formData.set("email", "test@test.com");
       formData.set("name", "Test User");
       formData.set("password", "validpassword");
-      formData.append("roles", "CLIENT");
 
-      await expect(signUpAction(formData)).rejects.toThrow("REDIRECT:/app/profile/setup");
+      await expect(signUpAction(formData)).rejects.toThrow(
+        "REDIRECT:/app/profile/setup",
+      );
       expect(session.createSession).toHaveBeenCalledWith("user_1");
+      expect(getPrisma().role).toBeUndefined();
     });
   });
 
@@ -113,7 +132,13 @@ describe("Auth Actions", () => {
     it("redirects to invalid-credentials on incorrect password", async () => {
       vi.mocked(getPrisma).mockReturnValue({
         user: {
-          findUnique: vi.fn().mockResolvedValue({ id: "user_1", passwordHash: "hashed_wrongpass", isActive: true }),
+          findUnique: vi
+            .fn()
+            .mockResolvedValue({
+              id: "user_1",
+              passwordHash: "hashed_wrongpass",
+              isActive: true,
+            }),
         },
       } as never);
 
@@ -121,13 +146,21 @@ describe("Auth Actions", () => {
       formData.set("email", "test@test.com");
       formData.set("password", "wrongpass");
 
-      await expect(signInAction(formData)).rejects.toThrow("REDIRECT:/sign-in?error=invalid-credentials");
+      await expect(signInAction(formData)).rejects.toThrow(
+        "REDIRECT:/sign-in?error=invalid-credentials",
+      );
     });
 
     it("redirects to account-deactivated if user is not active", async () => {
       vi.mocked(getPrisma).mockReturnValue({
         user: {
-          findUnique: vi.fn().mockResolvedValue({ id: "user_1", passwordHash: "hashed_validpass", isActive: false }),
+          findUnique: vi
+            .fn()
+            .mockResolvedValue({
+              id: "user_1",
+              passwordHash: "hashed_validpass",
+              isActive: false,
+            }),
         },
       } as never);
 
@@ -135,13 +168,21 @@ describe("Auth Actions", () => {
       formData.set("email", "test@test.com");
       formData.set("password", "validpass");
 
-      await expect(signInAction(formData)).rejects.toThrow("REDIRECT:/sign-in?error=account-deactivated");
+      await expect(signInAction(formData)).rejects.toThrow(
+        "REDIRECT:/sign-in?error=account-deactivated",
+      );
     });
 
     it("creates session and redirects to /app on success", async () => {
       vi.mocked(getPrisma).mockReturnValue({
         user: {
-          findUnique: vi.fn().mockResolvedValue({ id: "user_1", passwordHash: "hashed_validpass", isActive: true }),
+          findUnique: vi
+            .fn()
+            .mockResolvedValue({
+              id: "user_1",
+              passwordHash: "hashed_validpass",
+              isActive: true,
+            }),
         },
       } as never);
 

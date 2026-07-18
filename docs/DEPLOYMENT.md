@@ -27,7 +27,7 @@ npm run brand:generate
 
 ## PWA Cache Reset
 
-The service-worker cache is versioned in `public/sw.js` as `perx-public-shell-v4`. Increment it whenever icons, offline shell assets or public cached assets change.
+The service-worker cache is versioned in `public/sw.js` as `perx-public-shell-v5`. Increment it whenever icons, offline shell assets or public cached assets change.
 
 For local hard refresh after icon changes:
 

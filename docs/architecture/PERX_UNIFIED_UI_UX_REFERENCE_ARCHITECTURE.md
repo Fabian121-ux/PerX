@@ -614,3 +614,39 @@ Not implemented pending review:
 - Fixed-role onboarding removal.
 - New listing taxonomy migration.
 - Business/marketplace/people page build-out.
+
+## 18. 2026-07-18 Enhancement Status
+
+This follow-up pass implemented the approved reference-led enhancement without replacing the existing perX architecture.
+
+Implemented:
+
+- Homepage hero now communicates: "Discover trusted people, businesses and opportunities."
+- Homepage now includes search, main activity paths, featured opportunities, people preview, partnership discovery, marketplace/business beta boundary, how it works, trust and final CTA sections.
+- Discover now uses the requested category model: All, Opportunities, People, Work, Services, Partnerships, Businesses and Marketplace.
+- Discover has a real mobile filter drawer with focus trapping, Escape-to-close and accessible labels.
+- Businesses and Marketplace use controlled unavailable states instead of fake production data.
+- Sign-up no longer asks users to permanently self-select Founder, Investor, Freelancer, Client, Worker or Business identities.
+- Profile setup now focuses on name, username, profile photograph URL, location, introduction, website/portfolio and skills.
+- Profile setup includes "What would you like to do?" navigation choices only; these choices do not grant roles or capabilities.
+- Signed-in home no longer fabricates activity, trend analytics, balances, earnings or transaction totals.
+- Workspace search now submits to signed-in or preview discovery instead of opening a placeholder dialog.
+- Mobile public and workspace navigation drawers now use dialog focus handling.
+- Public profile rendering supports profile photographs while preserving initials fallback.
+- Agreement detail styling is consolidated under PerX tokens.
+- App icons and favicon are regenerated from `public/main_app_logo.png` after visible-artwork cropping.
+- `favicon.ico` now includes 16px, 32px and 48px entries.
+- Manifest normal icons use `purpose: "any"` and maskable icons use `purpose: "maskable"`.
+- Service-worker cache was incremented to `perx-public-shell-v5`.
+- Root layout no longer depends on remote Google font downloads during build.
+- `/preview/admin` no longer imports strict data-mode validation through the root mock-mode indicator during prerender.
+- `ERROR_MONITORING_DSN` is optional until a provider is configured; non-empty values remain URL-validated.
+- `PERX_DATA_MODE=mock` is explicitly rejected in production build/config and runtime data-mode resolution.
+
+Still deferred:
+
+- Full route alias consolidation from legacy workspace aliases into canonical `/app/**` redirects.
+- Dedicated database-backed business profiles and business discovery routes.
+- Dedicated service/provider listings separate from opportunity types.
+- Real marketplace checkout, payment, escrow, wallet, custody, settlement and protected-funds claims.
+- Activity-derived ecosystem roles to replace capability roles after authorization design is approved.

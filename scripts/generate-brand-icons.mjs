@@ -11,7 +11,12 @@ const iconsDir = resolve(root, "public/icons");
 
 const sourceReference = resolve(sourceDir, "perx-original-reference.jpg");
 
-function rgbaSvgText({ color = "#0b1020", gold = "#f59e0b", height = 96, width = 166 }) {
+function rgbaSvgText({
+  color = "#0b1020",
+  gold = "#f59e0b",
+  height = 96,
+  width = 166,
+}) {
   return Buffer.from(`
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
       <text x="0" y="63" font-family="Inter, Arial, Helvetica, sans-serif" font-size="54" font-weight="900" letter-spacing="-1" fill="${color}">per</text>
@@ -43,12 +48,21 @@ function makeIco(entries) {
     return dir;
   });
 
-  return Buffer.concat([header, ...dirs, ...entries.map((entry) => entry.buffer)]);
+  return Buffer.concat([
+    header,
+    ...dirs,
+    ...entries.map((entry) => entry.buffer),
+  ]);
 }
 
 async function cleanedSymbolBuffer() {
-  const trimmed = sharp(sourceLogo).rotate().trim({ background: "#ffffff", threshold: 20 });
-  const { data, info } = await trimmed.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const trimmed = sharp(sourceLogo)
+    .rotate()
+    .trim({ background: "#ffffff", threshold: 20 });
+  const { data, info } = await trimmed
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
   const out = Buffer.from(data);
 
   for (let y = 0; y < info.height; y += 1) {
@@ -83,17 +97,16 @@ async function cleanedSymbolBuffer() {
     .toBuffer();
 }
 
-async function makeLogo({
-  file,
-  textColor,
-  symbol,
-}) {
+async function makeLogo({ file, textColor, symbol }) {
   const canvasWidth = 420;
   const canvasHeight = 116;
   const symbolWidth = 230;
   const symbolHeight = 70;
   const symbolBuffer = await sharp(symbol)
-    .resize(symbolWidth, symbolHeight, { background: { alpha: 0, b: 0, g: 0, r: 0 }, fit: "contain" })
+    .resize(symbolWidth, symbolHeight, {
+      background: { alpha: 0, b: 0, g: 0, r: 0 },
+      fit: "contain",
+    })
     .png()
     .toBuffer();
 
@@ -127,26 +140,27 @@ async function makeWordmark({ file, textColor }) {
     .toFile(resolve(brandDir, file));
 }
 
-async function makeIcon({
-  file,
-  maskable,
-  size,
-  sourceImagePath,
-}) {
-  const padding = maskable ? Math.round(size * 0.24) : Math.round(size * 0.16);
-  
-  // Create the base canvas with the background
+async function makeIcon({ file, maskable, size, sourceImagePath }) {
+  const artwork = await cropVisibleArtwork(sourceImagePath);
+  const targetSize = Math.round(
+    size * (maskable ? 0.74 : size <= 32 ? 0.92 : 0.9),
+  );
+
   const canvas = sharp({
     create: {
-      background: { alpha: 1, b: 252, g: 250, r: 248 },
+      background: { alpha: 1, b: 255, g: 255, r: 255 },
       channels: 4,
       height: size,
       width: size,
     },
   });
 
-  const iconBuffer = await sharp(sourceImagePath)
-    .resize(size - padding * 2, size - padding * 2, { fit: "contain", background: { alpha: 0, r: 0, g: 0, b: 0 } })
+  const iconBuffer = await sharp(artwork)
+    .resize(targetSize, targetSize, {
+      background: { alpha: 0, b: 0, g: 0, r: 0 },
+      fit: "contain",
+    })
+    .sharpen({ sigma: size <= 32 ? 0.55 : 0.32 })
     .png()
     .toBuffer();
 
@@ -154,6 +168,58 @@ async function makeIcon({
     .composite([{ input: iconBuffer, gravity: "center" }])
     .png()
     .toFile(resolve(iconsDir, file));
+}
+
+async function cropVisibleArtwork(sourceImagePath) {
+  const image = sharp(sourceImagePath).rotate().ensureAlpha();
+  const { data, info } = await image
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  let minX = info.width;
+  let minY = info.height;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < info.height; y += 1) {
+    for (let x = 0; x < info.width; x += 1) {
+      const i = (y * info.width + x) * 4;
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const alpha = data[i + 3];
+      const isWhitePadding = r >= 246 && g >= 246 && b >= 246;
+
+      if (alpha > 16 && !isWhitePadding) {
+        if (x < minX) minX = x;
+        if (y < minY) minY = y;
+        if (x > maxX) maxX = x;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+
+  if (maxX < minX || maxY < minY) {
+    throw new Error(`Could not find visible artwork in ${sourceImagePath}`);
+  }
+
+  const width = maxX - minX + 1;
+  const height = maxY - minY + 1;
+  const margin = Math.ceil(Math.max(width, height) * 0.015);
+  const left = Math.max(0, minX - margin);
+  const top = Math.max(0, minY - margin);
+  const right = Math.min(info.width, maxX + margin + 1);
+  const bottom = Math.min(info.height, maxY + margin + 1);
+
+  return sharp(sourceImagePath)
+    .rotate()
+    .extract({
+      height: bottom - top,
+      left,
+      top,
+      width: right - left,
+    })
+    .png()
+    .toBuffer();
 }
 
 await mkdir(brandDir, { recursive: true });
@@ -176,10 +242,22 @@ for (const file of symbolFiles) {
 
 await makeLogo({ file: "perx-logo.png", symbol, textColor: "#0b1020" });
 await makeLogo({ file: "perx-logo-light.png", symbol, textColor: "#0b1020" });
-await makeLogo({ file: "perx-logo-horizontal.png", symbol, textColor: "#0b1020" });
-await makeLogo({ file: "perx-logo-horizontal-light.png", symbol, textColor: "#0b1020" });
+await makeLogo({
+  file: "perx-logo-horizontal.png",
+  symbol,
+  textColor: "#0b1020",
+});
+await makeLogo({
+  file: "perx-logo-horizontal-light.png",
+  symbol,
+  textColor: "#0b1020",
+});
 await makeLogo({ file: "perx-logo-dark.png", symbol, textColor: "#f8fafc" });
-await makeLogo({ file: "perx-logo-horizontal-dark.png", symbol, textColor: "#f8fafc" });
+await makeLogo({
+  file: "perx-logo-horizontal-dark.png",
+  symbol,
+  textColor: "#f8fafc",
+});
 await makeWordmark({ file: "perx-wordmark.png", textColor: "#0b1020" });
 await makeWordmark({ file: "perx-wordmark-light.png", textColor: "#0b1020" });
 await makeWordmark({ file: "perx-wordmark-dark.png", textColor: "#f8fafc" });
@@ -187,6 +265,7 @@ await makeWordmark({ file: "perx-wordmark-dark.png", textColor: "#f8fafc" });
 const iconSpecs = [
   ["favicon-16x16.png", 16, false],
   ["favicon-32x32.png", 32, false],
+  ["favicon-48x48.png", 48, false],
   ["apple-touch-icon.png", 180, false],
   ["icon-192.png", 192, false],
   ["icon-512.png", 512, false],
@@ -200,7 +279,17 @@ for (const [file, size, maskable] of iconSpecs) {
 
 const ico16 = await readFile(resolve(iconsDir, "favicon-16x16.png"));
 const ico32 = await readFile(resolve(iconsDir, "favicon-32x32.png"));
-await writeFile(resolve(root, "public/favicon.ico"), makeIco([{ size: 16, buffer: ico16 }, { size: 32, buffer: ico32 }]));
+const ico48 = await readFile(resolve(iconsDir, "favicon-48x48.png"));
+await writeFile(
+  resolve(root, "public/favicon.ico"),
+  makeIco([
+    { size: 16, buffer: ico16 },
+    { size: 32, buffer: ico32 },
+    { size: 48, buffer: ico48 },
+  ]),
+);
 
-console.log("Generated perX brand derivatives from public/image_ux_ux/MAIN_LOGO.jpg");
+console.log(
+  "Generated perX brand derivatives from public/image_ux_ux/MAIN_LOGO.jpg",
+);
 console.log("Generated app icons and favicon from public/main_app_logo.png");

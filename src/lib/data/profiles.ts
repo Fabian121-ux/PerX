@@ -24,6 +24,8 @@ export async function getProfileForEdit(userId: string) {
     headline: user.profile.headline,
     biography: user.profile.biography,
     location: user.profile.location,
+    profileImageUrl: user.profile.profileImageUrl ?? "",
     skills: user.profile.skills.map((s) => s.name).join(", "),
+    websiteUrl: user.profile.websiteUrl ?? "",
   };
 }
