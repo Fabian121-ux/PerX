@@ -54,6 +54,11 @@ function getRenderedHref(href: string, pathname: string) {
     return href;
   }
 
+  if (href === "/app") return "/preview";
+  if (href === "/app/deals") return "/preview/deals/demo-deal";
+  if (href === "/app/profile/edit") return "/preview/profile";
+  if (href.startsWith("/app/")) return `/preview${href.slice(4)}`;
+
   if (href === "/dashboard") return "/preview";
   if (href === "/messages") return "/preview/messages";
   if (href === "/notifications") return "/preview/notifications";

@@ -26,14 +26,14 @@ export default async function AppDiscoverPage({
   const profiles = demoProfiles.map((profile) => ({
     headline: profile.headline,
     name: profile.name,
-    role: profile.roles.join(" · "),
+    role: profile.roles.join(" / "),
     trustScore: profile.trustScore,
     username: profile.username,
   }));
 
   return (
     <DiscoverExperience
-      basePath="/market"
+      basePath="/app/discover"
       categories={categories}
       mode="app"
       opportunities={opportunities}

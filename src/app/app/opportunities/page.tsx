@@ -13,10 +13,10 @@ export default async function MyOpportunitiesPage() {
   return (
     <AppSection
       actions={
-        <ButtonLink href="/opportunities/new">New opportunity</ButtonLink>
+        <ButtonLink href="/app/opportunities/new">New opportunity</ButtonLink>
       }
       description="Manage drafts, published opportunities, moderation status, and ownership."
-      title="My opportunities"
+      title="My listings"
     >
       {opportunities.length ? (
         <div className="grid gap-5 xl:grid-cols-2">
@@ -27,7 +27,7 @@ export default async function MyOpportunitiesPage() {
       ) : (
         <EmptyState
           action={
-            <ButtonLink href="/opportunities/new">
+            <ButtonLink href="/app/opportunities/new">
               Create opportunity
             </ButtonLink>
           }

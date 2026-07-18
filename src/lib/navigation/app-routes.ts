@@ -27,7 +27,7 @@ export type RouteKey =
   | "startups";
 
 const routeMap: Record<RouteKey, string> = {
-  home: "/dashboard",
+  home: "/app",
   network: "/network",
   real_estate: "/real-estate",
   logistics: "/logistics",
@@ -38,19 +38,19 @@ const routeMap: Record<RouteKey, string> = {
   escrow: "/escrow",
   service_center: "/service-center",
   reports: "/reports",
-  discover: "/market",
-  profile: "/profile/edit",
-  opportunities: "/market",
-  new_opportunity: "/opportunities/new",
-  saved: "/saved",
-  proposals_sent: "/proposals/sent",
-  proposals_received: "/proposals/received",
-  messages: "/messages",
-  deals: "/deals",
-  reviews: "/reviews",
-  notifications: "/notifications",
-  settings: "/settings",
-  startups: "/market?type=STARTUP",
+  discover: "/app/discover",
+  profile: "/app/profile/edit",
+  opportunities: "/app/opportunities",
+  new_opportunity: "/app/opportunities/new",
+  saved: "/app/saved",
+  proposals_sent: "/app/proposals/sent",
+  proposals_received: "/app/proposals/received",
+  messages: "/app/messages",
+  deals: "/app/deals",
+  reviews: "/app/reviews",
+  notifications: "/app/notifications",
+  settings: "/app/settings",
+  startups: "/app/discover?type=STARTUP",
 };
 
 /**
@@ -68,7 +68,7 @@ export function getAppRoute(
     if (key === "profile") return "/preview/profile";
 
     const path = routeMap[key];
-    return `/preview${path}`;
+    return `/preview${path.startsWith("/app/") ? path.slice(4) : path}`;
   }
 
   return routeMap[key];

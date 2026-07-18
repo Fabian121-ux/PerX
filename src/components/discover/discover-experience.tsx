@@ -1,13 +1,12 @@
 import {
   Grid2X2,
-  ListFilter,
   Search,
   ShieldCheck,
   SlidersHorizontal,
   Users,
 } from "lucide-react";
-import type { ReactNode } from "react";
 
+import { MobileFilterDrawer } from "@/components/discover/filter-drawer";
 import { OpportunityCard } from "@/components/opportunity-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,11 +46,11 @@ export function DiscoverExperience({
   profiles?: DiscoverProfile[];
 }) {
   const typeTabs = [
-    ["", "All"],
+    ["", "All listings"],
     ["JOB", "Jobs"],
     ["FREELANCE_PROJECT", "Projects"],
-    ["COFOUNDER", "Co-founders"],
     ["STARTUP", "Startups"],
+    ["COFOUNDER", "Co-founders"],
     ["PARTNERSHIP", "Partnerships"],
     ["SERVICE", "Services"],
   ];
@@ -63,33 +62,35 @@ export function DiscoverExperience({
 
   return (
     <div className="grid gap-6">
-      <section className="perx-hero-card overflow-hidden rounded-[28px] p-6 shadow-[var(--px-shadow)] sm:p-8">
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+      <section className="overflow-hidden rounded-[24px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-5 shadow-[var(--px-shadow)] sm:p-6">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-blue-100">
-              Discover
+            <p className="text-sm font-bold uppercase tracking-wide text-[color:var(--px-primary)]">
+              Discovery
             </p>
-            <h1 className="mt-2 text-3xl font-black text-white sm:text-4xl">
-              Find opportunities, people and startup collaborators.
+            <h1 className="mt-2 text-3xl font-black text-[color:var(--px-text)] sm:text-4xl">
+              Find trusted people, work and business opportunities.
             </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-blue-50">
-              Search the perX ecosystem across jobs, freelance projects,
-              founders, services, partnerships and future investment
-              opportunities.
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-[color:var(--px-text-muted)]">
+              Search across active perX listings with simple filters, clear
+              trust indicators and enquiry-first marketplace behavior during
+              beta.
             </p>
           </div>
-          <div className="grid grid-cols-3 gap-3 text-center">
+          <div className="grid grid-cols-3 gap-2 text-center">
             {[
-              ["2.8k", "Open"],
-              ["91%", "Verified"],
-              ["₦1.2B", "Deal flow"],
+              ["People", "Profiles"],
+              ["Work", "Listings"],
+              ["Trust", "Signals"],
             ].map(([value, label]) => (
               <div
-                className="rounded-2xl bg-white/12 px-4 py-3 ring-1 ring-white/15"
+                className="rounded-2xl bg-[color:var(--px-surface-soft)] px-3 py-3 ring-1 ring-[color:var(--px-border)]"
                 key={label}
               >
-                <p className="text-xl font-black text-white">{value}</p>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-blue-100">
+                <p className="text-sm font-black text-[color:var(--px-text)]">
+                  {value}
+                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[color:var(--px-text-muted)]">
                   {label}
                 </p>
               </div>
@@ -99,7 +100,7 @@ export function DiscoverExperience({
 
         <form
           action={basePath}
-          className="mt-6 grid gap-3 rounded-[22px] bg-white p-4 shadow-[0_18px_44px_rgba(15,23,42,0.16)] ring-1 ring-white/30 md:grid-cols-[minmax(0,1fr)_180px_180px_auto]"
+          className="mt-5 grid gap-3 rounded-[18px] border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] p-3 md:grid-cols-[minmax(0,1fr)_180px_180px_auto]"
         >
           <Field label="Search">
             <Input
@@ -110,11 +111,11 @@ export function DiscoverExperience({
           </Field>
           <Field label="Type">
             <Select defaultValue={params.type ?? ""} name="type">
-              <option value="">All types</option>
-              <option value="JOB">Jobs</option>
-              <option value="FREELANCE_PROJECT">Freelance projects</option>
-              <option value="STARTUP">Startups</option>
-              <option value="PARTNERSHIP">Partnerships</option>
+              {typeTabs.map(([value, label]) => (
+                <option key={value || "all"} value={value}>
+                  {label}
+                </option>
+              ))}
             </Select>
           </Field>
           <Field label="Category">
@@ -157,31 +158,43 @@ export function DiscoverExperience({
       <div className="grid gap-6 xl:grid-cols-[280px_minmax(0,1fr)_320px]">
         <aside className="hidden self-start rounded-[24px] bg-[color:var(--px-surface)] p-5 shadow-sm ring-1 ring-[color:var(--px-border)] xl:block">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-[color:var(--px-text)]">Filters</h2>
+            <h2 className="font-bold text-[color:var(--px-text)]">Refine</h2>
             <SlidersHorizontal
               size={18}
               className="text-[color:var(--px-text-muted)]"
             />
           </div>
-          <div className="mt-5 grid gap-5">
-            <FilterGroup title="Location">
-              {["Remote", "Lagos", "Abuja", "Global"].map((item) => (
-                <FilterCheck key={item} label={item} />
-              ))}
-            </FilterGroup>
-            <FilterGroup title="Budget">
-              {["₦250k+", "₦1m+", "₦3m+", "Flexible"].map((item) => (
-                <FilterCheck key={item} label={item} />
-              ))}
-            </FilterGroup>
-            <FilterGroup title="Experience">
-              {["Entry", "Intermediate", "Expert", "Verified only"].map(
-                (item) => (
-                  <FilterCheck key={item} label={item} />
-                ),
-              )}
-            </FilterGroup>
-          </div>
+          <form action={basePath} className="mt-5 grid gap-4">
+            <Field label="Search">
+              <Input
+                defaultValue={params.q}
+                name="q"
+                placeholder="Skill, role or company"
+              />
+            </Field>
+            <Field label="Type">
+              <Select defaultValue={params.type ?? ""} name="type">
+                {typeTabs.map(([value, label]) => (
+                  <option key={value || "all"} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Category">
+              <Select defaultValue={params.category ?? ""} name="category">
+                <option value="">All categories</option>
+                {categories.map((category) => (
+                  <option key={category.slug} value={category.slug}>
+                    {category.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Button type="submit" variant="secondary">
+              Apply filters
+            </Button>
+          </form>
         </aside>
 
         <section className="min-w-0">
@@ -204,13 +217,11 @@ export function DiscoverExperience({
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <button
-                className="inline-flex h-10 items-center gap-2 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] px-3 text-sm font-semibold text-[color:var(--px-text)] xl:hidden"
-                type="button"
-              >
-                <ListFilter size={16} />
-                Filters
-              </button>
+              <MobileFilterDrawer
+                basePath={basePath}
+                categories={categories}
+                params={params}
+              />
               <button
                 className="grid h-10 w-10 place-items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)]"
                 aria-label="Grid view"
@@ -274,7 +285,7 @@ export function DiscoverExperience({
               {[
                 "Verified profiles first",
                 "Proposal-ready opportunities",
-                "Escrow state supported",
+                "Agreement-state supported",
                 "Moderation reviewed",
               ].map((item) => (
                 <div
@@ -333,13 +344,13 @@ export function DiscoverExperience({
 
           <Card>
             <h2 className="font-bold text-[color:var(--px-text)]">
-              Ecosystem trends
+              Discovery guide
             </h2>
             <div className="mt-4 grid gap-3">
               {[
-                ["Startup collaboration", "+18%"],
-                ["Design systems", "+12%"],
-                ["Secure dashboards", "+24%"],
+                ["Startups", "Profiles and collaboration"],
+                ["Services", "Worker-led offers"],
+                ["Marketplace", "Enquiry only in beta"],
               ].map(([label, value]) => (
                 <div
                   className="flex items-center justify-between rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface-soft)] p-3"
@@ -348,7 +359,7 @@ export function DiscoverExperience({
                   <span className="text-sm font-semibold text-[color:var(--px-text-muted)]">
                     {label}
                   </span>
-                  <span className="text-sm font-black text-[color:var(--px-success)]">
+                  <span className="text-right text-xs font-black uppercase tracking-wide text-[color:var(--px-primary)]">
                     {value}
                   </span>
                 </div>
@@ -358,34 +369,5 @@ export function DiscoverExperience({
         </aside>
       </div>
     </div>
-  );
-}
-
-function FilterGroup({
-  children,
-  title,
-}: {
-  children: ReactNode;
-  title: string;
-}) {
-  return (
-    <fieldset className="grid gap-2">
-      <legend className="text-xs font-black uppercase tracking-wide text-[color:var(--px-text)]">
-        {title}
-      </legend>
-      {children}
-    </fieldset>
-  );
-}
-
-function FilterCheck({ label }: { label: string }) {
-  return (
-    <label className="flex items-center gap-2 text-sm font-semibold text-[color:var(--px-text-muted)]">
-      <input
-        className="size-4 accent-[color:var(--px-primary)]"
-        type="checkbox"
-      />
-      {label}
-    </label>
   );
 }

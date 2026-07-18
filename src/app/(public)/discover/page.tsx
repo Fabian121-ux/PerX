@@ -18,7 +18,7 @@ export default async function DiscoverPage({
   const profiles = demoProfiles.map((profile) => ({
     headline: profile.headline,
     name: profile.name,
-    role: profile.roles.join(" · "),
+    role: profile.roles.join(" / "),
     trustScore: profile.trustScore,
     username: profile.username,
   }));

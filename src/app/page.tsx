@@ -42,14 +42,6 @@ export default function Home() {
       <SiteHeader />
       <main className="overflow-hidden">
         <section className="relative bg-[color:var(--px-surface)]">
-          <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-            <div className="absolute left-[-8rem] top-[-10rem] h-96 w-96 rounded-full bg-[color:var(--px-primary-soft)] blur-3xl" />
-            <div className="absolute right-[-8rem] top-20 h-96 w-96 rounded-full bg-[color:var(--px-secondary-soft)] blur-3xl" />
-            <div className="bg-dot-pattern absolute inset-x-0 top-0 h-full opacity-40" />
-            <div className="absolute left-[18%] top-28 h-px w-[42%] origin-left rotate-[16deg] bg-gradient-to-r from-transparent via-[color:var(--px-primary)]/30 to-transparent motion-safe:animate-pulse" />
-            <div className="absolute right-[14%] top-64 h-px w-[32%] origin-right -rotate-[12deg] bg-gradient-to-r from-transparent via-[color:var(--px-secondary)]/30 to-transparent motion-safe:animate-pulse" />
-          </div>
-
           <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(420px,0.88fr)] lg:px-8 lg:py-16">
             <div className="flex flex-col justify-center">
               <p className="inline-flex w-fit items-center gap-2 rounded-full bg-[color:var(--px-primary-soft)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[color:var(--px-primary)] ring-1 ring-[color:var(--px-primary)]/20">
@@ -118,10 +110,10 @@ export default function Home() {
 
               <div className="grid gap-3 sm:grid-cols-2">
                 {[
-                  { icon: BriefcaseBusiness, label: "Open opportunities", value: "2.8k" },
-                  { icon: Handshake, label: "Structured proposals", value: "940" },
-                  { icon: WalletCards, label: "Deal milestones", value: "1.2k" },
-                  { icon: ShieldCheck, label: "Trusted profiles", value: "86%" },
+                  { icon: BriefcaseBusiness, label: "Find work", value: "Listings" },
+                  { icon: Handshake, label: "Start with clarity", value: "Proposals" },
+                  { icon: WalletCards, label: "Track delivery", value: "Agreements" },
+                  { icon: ShieldCheck, label: "Build reputation", value: "Trust" },
                 ].map((item) => (
                   <div className="rounded-[18px] bg-[color:var(--px-surface-soft)] p-4 ring-1 ring-[color:var(--px-border)]" key={item.label}>
                     <div className="flex items-center justify-between gap-3">
@@ -130,7 +122,7 @@ export default function Home() {
                         <item.icon aria-hidden size={17} />
                       </span>
                     </div>
-                    <p className="mt-3 text-3xl font-black text-[color:var(--px-text)]">{item.value}</p>
+                    <p className="mt-3 text-lg font-black text-[color:var(--px-text)]">{item.value}</p>
                   </div>
                 ))}
               </div>

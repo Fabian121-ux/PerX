@@ -25,14 +25,6 @@ export function RecommendedProfiles({
 
   return (
     <div className="relative overflow-hidden rounded-[24px] bg-[color:var(--px-surface)] p-6 shadow-[var(--px-shadow)] ring-1 ring-[color:var(--px-border)] transition-colors duration-200">
-      <div
-        className="pointer-events-none absolute -right-16 -top-20 h-52 w-52 rounded-full bg-[color:var(--px-primary)]/14 blur-3xl"
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[color:var(--px-primary-soft)] to-transparent"
-        aria-hidden="true"
-      />
       <div className="flex items-center justify-between">
         <h2 className="relative text-lg font-bold text-[color:var(--px-text)]">
           People to connect with

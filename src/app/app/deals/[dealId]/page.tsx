@@ -22,7 +22,7 @@ export default async function DealWorkspacePage({
 
   return (
     <AppSection
-      description="Deal state is controlled by authorised server actions and simulated release-state transitions. No real funds are collected or held by perX during beta."
+      description="Agreement state is controlled by authorised server actions and simulated release-state transitions. No real funds are collected or held by perX during beta."
       title={deal.proposal.opportunity.title}
     >
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
@@ -39,16 +39,16 @@ export default async function DealWorkspacePage({
               Deliveries
             </ButtonLink>
             <ButtonLink href={`/app/deals/${deal.id}/escrow`} variant="secondary">
-              Simulated Escrow Status
+              Simulated State
             </ButtonLink>
           </div>
           <div className="mt-6 border-t border-slate-100 pt-4">
             <h3 className="text-sm font-semibold text-slate-900">Step-by-step progress</h3>
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">Proposal accepted</span>
-              <span className="text-slate-300">→</span>
-              <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">Escrow funded</span>
-              <span className="text-slate-300">→</span>
+              <span className="text-slate-300">/</span>
+              <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-800">Simulated funding recorded</span>
+              <span className="text-slate-300">/</span>
               <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">In progress</span>
             </div>
           </div>
@@ -62,7 +62,7 @@ export default async function DealWorkspacePage({
                 href={`/u/${participant.user.username}`}
                 key={participant.id}
               >
-                {participant.user.name} · {participant.role}
+                {participant.user.name} / {participant.role}
               </Link>
             ))}
           </div>

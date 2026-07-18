@@ -14,7 +14,7 @@ import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
 export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
   const getHref = (href: string) =>
     previewMode
-      ? href.replace("/opportunities", "/preview/opportunities")
+      ? href.replace("/app/opportunities", "/preview/opportunities")
       : href;
 
   return (
@@ -37,7 +37,7 @@ export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
         >
           <DropdownMenu.Item asChild>
             <Link
-              href={getHref("/opportunities/new")}
+              href={getHref("/app/opportunities/new")}
               className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
             >
               <Briefcase

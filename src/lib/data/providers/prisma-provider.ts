@@ -1,6 +1,31 @@
 import { getPrisma } from "@/lib/db/prisma";
 import { PerXDataProvider } from "./interfaces";
 
+type OpportunityTypeValue =
+  | "JOB"
+  | "FREELANCE_PROJECT"
+  | "STARTUP"
+  | "COFOUNDER"
+  | "INVESTMENT"
+  | "PROPERTY"
+  | "SERVICE"
+  | "PARTNERSHIP";
+
+const opportunityTypes = new Set<OpportunityTypeValue>([
+  "JOB",
+  "FREELANCE_PROJECT",
+  "STARTUP",
+  "COFOUNDER",
+  "INVESTMENT",
+  "PROPERTY",
+  "SERVICE",
+  "PARTNERSHIP",
+]);
+
+function isOpportunityType(value?: string): value is OpportunityTypeValue {
+  return Boolean(value && opportunityTypes.has(value as OpportunityTypeValue));
+}
+
 export const prismaProvider: PerXDataProvider = {
   opportunities: {
     getOpportunityFeed: async ({ category, q, type } = {}) => {
@@ -15,7 +40,7 @@ export const prismaProvider: PerXDataProvider = {
           moderationStatus: "APPROVED",
           status: "PUBLISHED",
           ...(category ? { category: { slug: category } } : {}),
-          ...(type === "JOB" || type === "FREELANCE_PROJECT" ? { type } : {}),
+          ...(isOpportunityType(type) ? { type } : {}),
           ...(q
             ? {
                 OR: [

@@ -15,8 +15,8 @@ export default async function DealsPage() {
 
   return (
     <AppSection
-      description="Track accepted proposals, milestones, deliveries, approvals, and simulated deal states. No real funds are collected or held by perX during beta."
-      title="Deals"
+      description="Track accepted proposals, milestones, deliveries, approvals, and simulated agreement states. No real funds are collected or held by perX during beta."
+      title="Agreements"
     >
       {deals.length ? (
         <div className="grid gap-5 xl:grid-cols-2">
@@ -31,7 +31,7 @@ export default async function DealsPage() {
                 </div>
                 <Link
                   className="mt-4 block text-lg font-black text-[color:var(--px-text)] hover:text-[color:var(--px-primary)]"
-                  href={`/deals/${deal.id}`}
+                  href={`/app/deals/${deal.id}`}
                 >
                   {getDealTitle(deal)}
                 </Link>
@@ -42,25 +42,25 @@ export default async function DealsPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <ButtonLink
-                  href={`/deals/${deal.id}`}
+                  href={`/app/deals/${deal.id}/milestones`}
                   size="sm"
                   variant="secondary"
                 >
                   Milestones
                 </ButtonLink>
                 <ButtonLink
-                  href={`/deals/${deal.id}`}
+                  href={`/app/deals/${deal.id}/deliveries`}
                   size="sm"
                   variant="secondary"
                 >
                   Deliveries
                 </ButtonLink>
                 <ButtonLink
-                  href={`/deals/${deal.id}`}
+                  href={`/app/deals/${deal.id}/escrow`}
                   size="sm"
                   variant="secondary"
                 >
-                  Escrow
+                  State
                 </ButtonLink>
               </div>
             </Card>
@@ -68,9 +68,9 @@ export default async function DealsPage() {
         </div>
       ) : (
         <EmptyState
-          action={<ButtonLink href="/market">Open market</ButtonLink>}
-          body="Accepted proposals become deal workspaces here."
-          title="No deals yet"
+          action={<ButtonLink href="/app/discover">Open discovery</ButtonLink>}
+          body="Accepted proposals become agreement workspaces here."
+          title="No agreements yet"
         />
       )}
     </AppSection>

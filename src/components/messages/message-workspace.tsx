@@ -106,7 +106,7 @@ export function MessageWorkspace({
   }
 
   return (
-    <section className="grid h-[calc(100dvh-7.5rem)] min-h-[640px] overflow-hidden rounded-[28px] bg-[color:var(--px-surface)] shadow-[var(--px-shadow)] ring-1 ring-[color:var(--px-border)] lg:grid-cols-[320px_minmax(0,1fr)_300px]">
+    <section className="grid h-[min(720px,calc(100dvh-6rem))] min-h-[520px] overflow-hidden rounded-[24px] bg-[color:var(--px-surface)] shadow-[var(--px-shadow)] ring-1 ring-[color:var(--px-border)] lg:grid-cols-[320px_minmax(0,1fr)_300px]">
       <aside className={`${mobileDetailOpen ? "hidden lg:flex" : "flex"} min-h-0 flex-col border-r border-[color:var(--px-border)] bg-[color:var(--px-surface)]`}>
         <div className="border-b border-[color:var(--px-border)] p-4">
           <div className="flex items-center justify-between gap-3">

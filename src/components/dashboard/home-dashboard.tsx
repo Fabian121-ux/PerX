@@ -1,6 +1,6 @@
 "use client";
 
-import { Wallet, ShieldCheck, FileText, Search } from "lucide-react";
+import { Handshake, ShieldCheck, FileText, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { HomeDashboardData } from "./types";
@@ -47,12 +47,12 @@ export function HomeDashboard({ data }: { data: HomeDashboardData }) {
             icon={<ShieldCheck size={20} className="text-[color:var(--px-gold)]" />}
           />
           <DashboardMetricCard
-            title="Active Deals"
+            title="Agreements"
             value={data.activeDealsCount}
             detail={data.activeDealsDetail || "In progress"}
-            actionLabel="View deals"
+            actionLabel="View agreements"
             href={getHref("deals")}
-            icon={<Wallet size={20} />}
+            icon={<Handshake size={20} />}
           />
           <DashboardMetricCard
             title="Open Proposals"
