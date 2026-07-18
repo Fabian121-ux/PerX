@@ -14,8 +14,8 @@ import {
 import { PublicPageShell } from "@/components/standard-page";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { getPublicProfile } from "@/lib/data/profiles";
+import { Card, EmptyState } from "@/components/ui/card";
+import { getPublicProfileResult } from "@/lib/data/profiles";
 
 export default async function PublicProfilePage({
   params,
@@ -23,7 +23,20 @@ export default async function PublicProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const profile = await getPublicProfile(username);
+  const { profile, unavailable } = await getPublicProfileResult(username);
+  if (unavailable) {
+    return (
+      <PublicPageShell>
+        <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+          <EmptyState
+            action={<ButtonLink href="/discover?type=PEOPLE">Find people</ButtonLink>}
+            body="Please try again shortly."
+            title="This section is temporarily unavailable."
+          />
+        </main>
+      </PublicPageShell>
+    );
+  }
   if (!profile) notFound();
 
   const normalized = normalizeProfile(profile);

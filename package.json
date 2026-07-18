@@ -19,6 +19,7 @@
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "brand:generate": "node scripts/generate-brand-icons.mjs",
+    "route:inventory": "node scripts/audit-route-inventory.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:dev": "prisma migrate dev",

@@ -174,6 +174,13 @@ export function assertDatabaseConfiguration() {
   assertPresent(env, databaseRequiredVariables);
 }
 
+export function isProductionMockModeError(error: unknown) {
+  return (
+    error instanceof Error &&
+    error.message.includes("PERX_DATA_MODE=mock is strictly prohibited")
+  );
+}
+
 export function setCachedDataModeForTest(
   mode: "mock" | "database" | undefined,
 ) {

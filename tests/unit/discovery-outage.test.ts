@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getPerXDataProvider } from "@/lib/data/provider";
-import { getCategories, getOpportunityBySlug, getPublicDiscoveryData } from "@/lib/data/opportunities";
+import {
+  getCategories,
+  getOpportunityBySlug,
+  getOpportunityFeedResult,
+  getPublicDiscoveryData,
+} from "@/lib/data/opportunities";
+import { getPublicProfileResult } from "@/lib/data/profiles";
 
 vi.mock("@/lib/data/provider", () => ({
   getPerXDataProvider: vi.fn(),
@@ -43,5 +49,27 @@ describe("public discovery outage handling", () => {
   it("keeps public category and detail helpers controlled", async () => {
     await expect(getCategories()).resolves.toEqual([]);
     await expect(getOpportunityBySlug("missing")).resolves.toBeNull();
+  });
+
+  it("handles provider resolution failures before a query runs", async () => {
+    vi.mocked(getPerXDataProvider).mockRejectedValueOnce(
+      new Error("Missing required environment variable(s): PERX_DATA_MODE."),
+    );
+
+    await expect(getOpportunityFeedResult()).resolves.toEqual({
+      opportunities: [],
+      unavailable: true,
+    });
+  });
+
+  it("keeps public profile lookup controlled when provider resolution fails", async () => {
+    vi.mocked(getPerXDataProvider).mockRejectedValueOnce(
+      new Error("database unavailable"),
+    );
+
+    await expect(getPublicProfileResult("member")).resolves.toEqual({
+      profile: null,
+      unavailable: true,
+    });
   });
 });

@@ -29,16 +29,28 @@ function sessionCookieName() {
   return getServerEnv().SESSION_COOKIE_NAME;
 }
 
-export async function createSession(userId: string) {
+type SessionCookie = {
+  maxAge: number;
+  name: string;
+  value: string;
+};
+
+type SessionWriter = Pick<ReturnType<typeof getPrisma>, "session">;
+
+export async function createSessionRecord(
+  userId: string,
+  client: SessionWriter = getPrisma(),
+): Promise<SessionCookie> {
   const env = getServerEnv();
   const rawToken = crypto.randomBytes(32).toString("base64url");
   const tokenHash = hashToken(rawToken);
+  const maxAge = env.AUTH_SESSION_DAYS * 24 * 60 * 60;
   const expiresAt = new Date(
-    Date.now() + env.AUTH_SESSION_DAYS * 24 * 60 * 60 * 1000,
+    Date.now() + maxAge * 1000,
   );
   const headerStore = await headers();
 
-  await getPrisma().session.create({
+  await client.session.create({
     data: {
       expiresAt,
       tokenHash,
@@ -47,14 +59,27 @@ export async function createSession(userId: string) {
     },
   });
 
+  return {
+    maxAge,
+    name: sessionCookieName(),
+    value: rawToken,
+  };
+}
+
+export async function setSessionCookie(sessionCookie: SessionCookie) {
   const cookieStore = await cookies();
-  cookieStore.set(sessionCookieName(), rawToken, {
+  cookieStore.set(sessionCookie.name, sessionCookie.value, {
     httpOnly: true,
-    maxAge: env.AUTH_SESSION_DAYS * 24 * 60 * 60,
+    maxAge: sessionCookie.maxAge,
     path: "/",
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
   });
+}
+
+export async function createSession(userId: string) {
+  const sessionCookie = await createSessionRecord(userId);
+  await setSessionCookie(sessionCookie);
 }
 
 export async function destroySession() {

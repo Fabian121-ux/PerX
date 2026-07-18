@@ -16,14 +16,14 @@ import {
 import { PublicPageShell } from "@/components/standard-page";
 import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, EmptyState } from "@/components/ui/card";
 import { Field, Input, Textarea } from "@/components/ui/form";
 import {
   bookmarkOpportunityAction,
   reportOpportunityAction,
 } from "@/features/opportunities/actions";
 import { submitProposalAction } from "@/features/proposals/actions";
-import { getOpportunityBySlug } from "@/lib/data/opportunities";
+import { getOpportunityBySlugResult } from "@/lib/data/opportunities";
 import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { formatBudgetRange } from "@/lib/money";
 
@@ -33,7 +33,20 @@ export default async function OpportunityDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const opportunity = await getOpportunityBySlug(slug);
+  const { opportunity, unavailable } = await getOpportunityBySlugResult(slug);
+  if (unavailable) {
+    return (
+      <PublicPageShell>
+        <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+          <EmptyState
+            action={<ButtonLink href="/discover">Return to discovery</ButtonLink>}
+            body="Please try again shortly."
+            title="This section is temporarily unavailable."
+          />
+        </main>
+      </PublicPageShell>
+    );
+  }
   if (!opportunity) notFound();
 
   const image = getTemporaryOpportunityImage(opportunity.slug);

@@ -1,9 +1,28 @@
 import { getPrisma } from "@/lib/db/prisma";
+import { isProductionMockModeError } from "@/lib/env";
+import { logServerDataError } from "@/lib/logging/runtime";
 import { getPerXDataProvider } from "./provider";
 
+export async function getPublicProfileResult(username: string) {
+  try {
+    const provider = await getPerXDataProvider();
+    const profile = await provider.profiles.getPublicProfile(username);
+    return { profile, unavailable: false };
+  } catch (error) {
+    if (isProductionMockModeError(error)) throw error;
+
+    logServerDataError({
+      error,
+      operation: "public profile",
+      route: `/u/${username}`,
+    });
+    return { profile: null, unavailable: true };
+  }
+}
+
 export async function getPublicProfile(username: string) {
-  const provider = await getPerXDataProvider();
-  return provider.profiles.getPublicProfile(username);
+  const result = await getPublicProfileResult(username);
+  return result.profile;
 }
 
 export async function getProfileForEdit(userId: string) {

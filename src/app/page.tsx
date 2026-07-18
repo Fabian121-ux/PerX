@@ -20,7 +20,7 @@ import { Card, EmptyState } from "@/components/ui/card";
 import { Input } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { demoProfiles } from "@/lib/data/demo";
-import { getOpportunityFeed } from "@/lib/data/opportunities";
+import { getOpportunityFeedResult } from "@/lib/data/opportunities";
 
 export const dynamic = "force-dynamic";
 
@@ -390,7 +390,8 @@ export default function Home() {
 }
 
 async function FeaturedOpportunities() {
-  const opportunities = (await getOpportunityFeed()).slice(0, 3);
+  const { opportunities, unavailable } = await getOpportunityFeedResult();
+  const featuredOpportunities = opportunities.slice(0, 3);
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
@@ -408,8 +409,15 @@ async function FeaturedOpportunities() {
         </ButtonLink>
       </div>
       <div className="grid gap-5 lg:grid-cols-3">
-        {opportunities.length ? (
-          opportunities.map((opportunity: any) => (
+        {unavailable ? (
+          <div className="lg:col-span-3">
+            <EmptyState
+              body="Please try again shortly."
+              title="This section is temporarily unavailable."
+            />
+          </div>
+        ) : featuredOpportunities.length ? (
+          featuredOpportunities.map((opportunity: any) => (
             <OpportunityCard key={opportunity.slug} opportunity={opportunity} />
           ))
         ) : (

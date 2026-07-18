@@ -1,10 +1,9 @@
 import { BrandLogo } from "@/components/brand-logo";
 import Link from "next/link";
+import { SignUpForm } from "@/components/auth/sign-up-form";
 import { PublicPageShell } from "@/components/standard-page";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Field, Input } from "@/components/ui/form";
-import { signUpAction } from "@/features/auth/actions";
+import type { AuthFormState } from "@/features/auth/actions";
 
 const errors: Record<string, string> = {
   "database-not-configured": "Database configuration is missing.",
@@ -23,6 +22,9 @@ export default async function SignUpPage({
   const error = params.error
     ? errors[params.error] || "An unexpected error occurred."
     : null;
+  const initialState: AuthFormState | undefined = error
+    ? { message: error, status: "error" }
+    : undefined;
 
   return (
     <PublicPageShell>
@@ -56,45 +58,17 @@ export default async function SignUpPage({
               profile is ready.
             </p>
 
-            <form action={signUpAction} className="mt-6 grid gap-4">
-              {error && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
-                  {error}
-                </div>
-              )}
+            <div className="mt-5 text-right text-sm text-[color:var(--px-text-muted)]">
+              Already have an account?{" "}
+              <Link
+                className="font-semibold text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"
+                href="/sign-in"
+              >
+                Sign in
+              </Link>
+            </div>
 
-              <div className="text-sm text-right text-slate-500">
-                Already have an account?{" "}
-                <Link
-                  href="/sign-in"
-                  className="text-emerald-600 hover:underline"
-                >
-                  Sign in
-                </Link>
-              </div>
-
-              <Field label="Full name">
-                <Input autoComplete="name" name="name" required />
-              </Field>
-              <Field label="Email">
-                <Input
-                  autoComplete="email"
-                  name="email"
-                  required
-                  type="email"
-                />
-              </Field>
-              <Field hint="Use at least 10 characters." label="Password">
-                <Input
-                  autoComplete="new-password"
-                  minLength={10}
-                  name="password"
-                  required
-                  type="password"
-                />
-              </Field>
-              <Button type="submit">Create account</Button>
-            </form>
+            <SignUpForm initialState={initialState} />
           </Card>
         </section>
       </main>

@@ -25,7 +25,9 @@ vi.mock("@/lib/db/prisma", () => ({
 
 vi.mock("@/lib/auth/session", () => ({
   createSession: vi.fn(),
+  createSessionRecord: vi.fn(),
   destroySession: vi.fn(),
+  setSessionCookie: vi.fn(),
 }));
 
 vi.mock("@/lib/auth/password", () => ({
@@ -40,6 +42,8 @@ vi.mock("@/lib/logging/audit", () => ({
 }));
 
 describe("Auth Actions", () => {
+  const idleState = { status: "idle" } as const;
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(hasDatabaseUrl).mockReturnValue(true);
@@ -51,80 +55,126 @@ describe("Auth Actions", () => {
       vi.mocked(getResolvedDataMode).mockReturnValue("mock");
       const formData = new FormData();
 
-      await expect(signUpAction(formData)).rejects.toThrow(
+      await expect(signUpAction(idleState, formData)).rejects.toThrow(
         "REDIRECT:/app/profile/setup?mock=true",
       );
       expect(getPrisma).not.toHaveBeenCalled();
     });
 
-    it("redirects with email-taken on P2002 error", async () => {
+    it("returns a field error when email is already used", async () => {
       vi.mocked(getPrisma).mockReturnValue({
         user: {
-          create: vi
-            .fn()
-            .mockRejectedValue({ code: "P2002", meta: { target: ["email"] } }),
-          count: vi.fn().mockResolvedValue(0),
+          findFirst: vi.fn().mockResolvedValue({
+            email: "test@test.com",
+            username: "other",
+          }),
         },
       } as never);
 
       const formData = new FormData();
       formData.set("email", "test@test.com");
       formData.set("name", "Test User");
-      formData.set("password", "validpassword");
+      formData.set("username", "test");
+      formData.set("password", "validpassword1");
+      formData.set("confirmPassword", "validpassword1");
+      formData.set("terms", "on");
 
-      await expect(signUpAction(formData)).rejects.toThrow(
-        "REDIRECT:/sign-up?error=email-taken",
-      );
+      await expect(signUpAction(idleState, formData)).resolves.toMatchObject({
+        fieldErrors: { email: "An account with this email already exists." },
+        status: "error",
+      });
     });
 
-    it("redirects with username-taken on P2002 error", async () => {
+    it("returns a field error when username is already used", async () => {
       vi.mocked(getPrisma).mockReturnValue({
         user: {
-          create: vi
-            .fn()
-            .mockRejectedValue({
-              code: "P2002",
-              meta: { target: ["username"] },
-            }),
-          count: vi.fn().mockResolvedValue(0),
+          findFirst: vi.fn().mockResolvedValue({
+            email: "other@test.com",
+            username: "test",
+          }),
         },
       } as never);
 
       const formData = new FormData();
       formData.set("email", "test@test.com");
       formData.set("name", "Test User");
-      formData.set("password", "validpassword");
+      formData.set("username", "test");
+      formData.set("password", "validpassword1");
+      formData.set("confirmPassword", "validpassword1");
+      formData.set("terms", "on");
 
-      await expect(signUpAction(formData)).rejects.toThrow(
-        "REDIRECT:/sign-up?error=username-taken",
-      );
+      await expect(signUpAction(idleState, formData)).resolves.toMatchObject({
+        fieldErrors: { username: "This username is already taken." },
+        status: "error",
+      });
     });
 
     it("creates user and redirects to setup on success", async () => {
+      const tx = {
+        role: {
+          upsert: vi
+            .fn()
+            .mockResolvedValueOnce({ id: "role_client" })
+            .mockResolvedValueOnce({ id: "role_freelancer" }),
+        },
+        user: {
+          create: vi.fn().mockResolvedValue({
+            id: "user_1",
+          }),
+        },
+      };
       vi.mocked(getPrisma).mockReturnValue({
         user: {
-          create: vi
-            .fn()
-            .mockResolvedValue({
-              id: "user_1",
-              email: "test@test.com",
-              username: "test",
-            }),
           findUnique: vi.fn().mockResolvedValue(null),
-          count: vi.fn().mockResolvedValue(0),
+          findFirst: vi.fn().mockResolvedValue(null),
         },
+        $transaction: vi.fn((callback) => callback(tx)),
       } as never);
+      vi.mocked(session.createSessionRecord).mockResolvedValue({
+        maxAge: 60,
+        name: "perx_session",
+        value: "session-token",
+      });
 
       const formData = new FormData();
       formData.set("email", "test@test.com");
       formData.set("name", "Test User");
-      formData.set("password", "validpassword");
+      formData.set("username", "test");
+      formData.set("password", "validpassword1");
+      formData.set("confirmPassword", "validpassword1");
+      formData.set("terms", "on");
 
-      await expect(signUpAction(formData)).rejects.toThrow(
+      await expect(signUpAction(idleState, formData)).rejects.toThrow(
         "REDIRECT:/app/profile/setup",
       );
-      expect(session.createSession).toHaveBeenCalledWith("user_1");
-      expect(getPrisma().role).toBeUndefined();
+      expect(session.createSessionRecord).toHaveBeenCalledWith("user_1", tx);
+      expect(session.setSessionCookie).toHaveBeenCalledWith({
+        maxAge: 60,
+        name: "perx_session",
+        value: "session-token",
+      });
+      expect(tx.role.upsert).toHaveBeenCalledTimes(2);
+    });
+
+    it("returns an inline error when confirmation does not match", async () => {
+      const formData = new FormData();
+      formData.set("email", "test@test.com");
+      formData.set("name", "Test User");
+      formData.set("username", "test");
+      formData.set("password", "validpassword1");
+      formData.set("confirmPassword", "differentpassword1");
+      formData.set("terms", "on");
+
+      await expect(signUpAction(idleState, formData)).resolves.toMatchObject({
+        fieldErrors: { confirmPassword: "Passwords do not match." },
+        status: "error",
+        values: {
+          email: "test@test.com",
+          name: "Test User",
+          username: "test",
+        },
+      });
+      expect(getPrisma).not.toHaveBeenCalled();
     });
   });
 
@@ -146,9 +196,10 @@ describe("Auth Actions", () => {
       formData.set("email", "test@test.com");
       formData.set("password", "wrongpass");
 
-      await expect(signInAction(formData)).rejects.toThrow(
-        "REDIRECT:/sign-in?error=invalid-credentials",
-      );
+      await expect(signInAction(idleState, formData)).resolves.toMatchObject({
+        message: "The email or password you entered is incorrect.",
+        status: "error",
+      });
     });
 
     it("redirects to account-deactivated if user is not active", async () => {
@@ -168,9 +219,11 @@ describe("Auth Actions", () => {
       formData.set("email", "test@test.com");
       formData.set("password", "validpass");
 
-      await expect(signInAction(formData)).rejects.toThrow(
-        "REDIRECT:/sign-in?error=account-deactivated",
-      );
+      await expect(signInAction(idleState, formData)).resolves.toMatchObject({
+        message:
+          "This account is deactivated. Contact support if you believe this is a mistake.",
+        status: "error",
+      });
     });
 
     it("creates session and redirects to /app on success", async () => {
@@ -190,7 +243,9 @@ describe("Auth Actions", () => {
       formData.set("email", "test@test.com");
       formData.set("password", "validpass");
 
-      await expect(signInAction(formData)).rejects.toThrow("REDIRECT:/app");
+      await expect(signInAction(idleState, formData)).rejects.toThrow(
+        "REDIRECT:/app",
+      );
       expect(session.createSession).toHaveBeenCalledWith("user_1");
     });
   });

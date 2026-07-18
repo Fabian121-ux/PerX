@@ -14,6 +14,7 @@ describe("seed safety guardrails", () => {
   it("requires explicit flags for development users and sample marketplace data", () => {
     expect(seedSource).toContain('PERX_ALLOW_DEV_SEED === "true"');
     expect(seedSource).toContain('PERX_ALLOW_SAMPLE_DATA === "true"');
+    expect(seedSource).toContain("PERX_SEED_DATABASE_LABEL");
     expect(seedSource).toContain("Refusing to seed");
   });
 
@@ -25,5 +26,12 @@ describe("seed safety guardrails", () => {
   it("keeps baseline role and category seed idempotent without overwriting existing labels", () => {
     expect(seedSource).toContain("seedBaseline");
     expect(seedSource).toContain("update: {}");
+  });
+
+  it("keeps normal and admin test accounts separate", () => {
+    expect(seedSource).toContain("DEV_TEST_USER_EMAIL");
+    expect(seedSource).toContain("DEV_ADMIN_EMAIL");
+    expect(seedSource).toContain('roles: ["ADMIN"]');
+    expect(seedSource).toContain('roles: ["FREELANCER", "CLIENT", "FOUNDER"]');
   });
 });

@@ -20,9 +20,12 @@ const categories = [
   ["operations", "Operations", "Business operations, growth, and process work."],
 ] as const;
 
+type SeedRoleName = (typeof roles)[number][0];
+
 const allowDevSeed = process.env.PERX_ALLOW_DEV_SEED === "true";
 const allowSampleData = process.env.PERX_ALLOW_SAMPLE_DATA === "true";
 const dryRun = process.env.PERX_SEED_DRY_RUN === "true";
+const seedDatabaseLabel = process.env.PERX_SEED_DATABASE_LABEL;
 
 function getSeedDatabaseUrl() {
   const databaseUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
@@ -34,18 +37,24 @@ function getSeedDatabaseUrl() {
 
 function isClearlyNonProductionSeedTarget() {
   const deployEnv = process.env.PERX_DEPLOY_ENV;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
   const databaseUrl = process.env.DIRECT_URL ?? process.env.DATABASE_URL ?? "";
 
   if (process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production") {
     return false;
   }
 
-  if (deployEnv === "development" || deployEnv === "staging" || deployEnv === "audit") {
+  if (databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1")) {
     return true;
   }
 
-  return appUrl.includes("localhost") || databaseUrl.includes("localhost") || databaseUrl.includes("127.0.0.1");
+  if (
+    seedDatabaseLabel &&
+    (deployEnv === "development" || deployEnv === "staging" || deployEnv === "audit")
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
 function assertOptionalSeedAllowed(kind: "development users" | "sample data") {
@@ -63,6 +72,7 @@ function printSeedSummary() {
   console.log(`- Development users enabled: ${allowDevSeed}`);
   console.log(`- Sample marketplace data enabled: ${allowSampleData}`);
   console.log(`- Dry run: ${dryRun}`);
+  console.log(`- Remote seed target label present: ${Boolean(seedDatabaseLabel)}`);
 }
 
 async function seedBaseline(prisma: PrismaClient) {
@@ -85,6 +95,98 @@ async function seedBaseline(prisma: PrismaClient) {
   console.log("Baseline roles and categories seeded.");
 }
 
+type SeedAccountConfig = {
+  biography: string;
+  email: string;
+  headline: string;
+  location: string;
+  name: string;
+  password: string;
+  profileCompleteness: number;
+  roles: readonly SeedRoleName[];
+  trustScore: number;
+  username: string;
+};
+
+function readSeedAccount(
+  kind: "normal test user" | "admin test user",
+  fields: {
+    email: string | undefined;
+    password: string | undefined;
+    username: string | undefined;
+  },
+  details: Omit<SeedAccountConfig, "email" | "password" | "username">,
+) {
+  const present = [fields.email, fields.username, fields.password].filter(Boolean).length;
+  if (present === 0) return null;
+  if (present !== 3) {
+    throw new Error(
+      `Refusing to create ${kind}: email, username, and password must all be provided.`,
+    );
+  }
+
+  return {
+    ...details,
+    email: fields.email!.trim().toLowerCase(),
+    password: fields.password!,
+    username: fields.username!.trim().toLowerCase(),
+  };
+}
+
+async function createSeedAccount(prisma: PrismaClient, config: SeedAccountConfig) {
+  const existingByEmail = await prisma.user.findUnique({ where: { email: config.email } });
+  const existingByUsername = await prisma.user.findUnique({ where: { username: config.username } });
+
+  if (existingByEmail && existingByEmail.username !== config.username) {
+    throw new Error(
+      `Refusing to reuse ${config.email}: existing account username does not match DEV seed username.`,
+    );
+  }
+
+  if (existingByUsername && existingByUsername.email !== config.email) {
+    throw new Error(
+      `Refusing to reuse ${config.username}: username already belongs to another account.`,
+    );
+  }
+
+  let user = existingByEmail ?? existingByUsername;
+  if (user) {
+    console.log(`${config.name} already exists; password hash was not changed.`);
+  } else {
+    const passwordHash = await bcrypt.hash(config.password, 12);
+    user = await prisma.user.create({
+      data: {
+        email: config.email,
+        name: config.name,
+        passwordHash,
+        username: config.username,
+        verificationStatus: config.roles.includes("ADMIN") ? "VERIFIED" : "UNVERIFIED",
+        profile: {
+          create: {
+            biography: config.biography,
+            headline: config.headline,
+            location: config.location,
+            profileCompleteness: config.profileCompleteness,
+            trustScore: config.trustScore,
+          },
+        },
+      },
+    });
+    console.log(`${config.name} created.`);
+  }
+
+  const roleRecords = await prisma.role.findMany({
+    where: { name: { in: [...config.roles] } },
+  });
+  await prisma.userRole.createMany({
+    data: roleRecords.map((role) => ({ roleId: role.id, userId: user.id })),
+    skipDuplicates: true,
+  });
+  console.log(`${config.name} roles verified.`);
+
+  return user;
+}
+
 async function seedDevelopmentUsers(prisma: PrismaClient) {
   if (!allowDevSeed) {
     console.log("Development users skipped. Set PERX_ALLOW_DEV_SEED=true to enable.");
@@ -93,90 +195,56 @@ async function seedDevelopmentUsers(prisma: PrismaClient) {
 
   assertOptionalSeedAllowed("development users");
 
-  const devEmail = process.env.DEV_TEST_USER_EMAIL;
-  const devUsername = process.env.DEV_TEST_USER_USERNAME;
-  const devPassword = process.env.DEV_TEST_USER_PASSWORD;
+  const normalAccount = readSeedAccount(
+    "normal test user",
+    {
+      email: process.env.DEV_TEST_USER_EMAIL,
+      password: process.env.DEV_TEST_USER_PASSWORD,
+      username: process.env.DEV_TEST_USER_USERNAME,
+    },
+    {
+      biography: "This is a development test account for normal perX authenticated workflows.",
+      headline: "Development test account",
+      location: "Development",
+      name: "Dev Test User",
+      profileCompleteness: 60,
+      roles: ["FREELANCER", "CLIENT", "FOUNDER"],
+      trustScore: 0,
+    },
+  );
 
-  if (!devEmail || !devUsername || !devPassword) {
-    console.log("Development test user skipped. DEV_TEST_USER_EMAIL, DEV_TEST_USER_USERNAME, and DEV_TEST_USER_PASSWORD are required.");
-    return null;
+  const adminAccount = readSeedAccount(
+    "admin test user",
+    {
+      email: process.env.DEV_ADMIN_EMAIL,
+      password: process.env.DEV_ADMIN_PASSWORD,
+      username: process.env.DEV_ADMIN_USERNAME,
+    },
+    {
+      biography: "This development account uses the real ADMIN role for admin-route testing.",
+      headline: "Platform operations",
+      location: "Development",
+      name: "perX Admin",
+      profileCompleteness: 100,
+      roles: ["ADMIN"],
+      trustScore: 100,
+    },
+  );
+
+  const normalUser = normalAccount
+    ? await createSeedAccount(prisma, normalAccount)
+    : null;
+  if (!normalAccount) {
+    console.log("Normal test user skipped. DEV_TEST_USER_EMAIL, DEV_TEST_USER_USERNAME, and DEV_TEST_USER_PASSWORD are required.");
   }
 
-  let devUser = await prisma.user.findUnique({ where: { email: devEmail } });
-  if (devUser) {
-    console.log("Development test user already exists; password hash was not changed.");
+  if (adminAccount) {
+    await createSeedAccount(prisma, adminAccount);
   } else {
-    const passwordHash = await bcrypt.hash(devPassword, 12);
-    devUser = await prisma.user.create({
-      data: {
-        email: devEmail,
-        name: "Dev Test User",
-        passwordHash,
-        username: devUsername,
-        verificationStatus: "UNVERIFIED",
-        profile: {
-          create: {
-            biography: "This is a local development test account for the perX platform.",
-            headline: "Development test account",
-            location: "Local Development",
-            profileCompleteness: 50,
-            trustScore: 0,
-          },
-        },
-      },
-    });
-    console.log("Development test user created.");
+    console.log("Admin test user skipped. DEV_ADMIN_EMAIL, DEV_ADMIN_USERNAME, and DEV_ADMIN_PASSWORD are required.");
   }
 
-  const roleRecords = await prisma.role.findMany({
-    where: { name: { in: ["FREELANCER", "CLIENT", "FOUNDER"] } },
-  });
-  await prisma.userRole.createMany({
-    data: roleRecords.map((role) => ({ roleId: role.id, userId: devUser.id })),
-    skipDuplicates: true,
-  });
-
-  const adminEmail = process.env.DEV_ADMIN_EMAIL;
-  const adminUsername = process.env.DEV_ADMIN_USERNAME;
-  const adminPassword = process.env.DEV_ADMIN_PASSWORD;
-
-  if (adminEmail && adminUsername && adminPassword) {
-    let adminUser = await prisma.user.findUnique({ where: { email: adminEmail } });
-    if (adminUser) {
-      console.log("Admin seed user already exists; password hash was not changed.");
-    } else {
-      const passwordHash = await bcrypt.hash(adminPassword, 12);
-      adminUser = await prisma.user.create({
-        data: {
-          email: adminEmail,
-          name: "perX Admin",
-          passwordHash,
-          username: adminUsername,
-          verificationStatus: "VERIFIED",
-          profile: {
-            create: {
-              biography: "Moderates opportunities, disputes, reports, and verification requests.",
-              headline: "Platform operations",
-              location: "Remote",
-              profileCompleteness: 100,
-              trustScore: 100,
-            },
-          },
-        },
-      });
-      console.log("Admin seed user created.");
-    }
-
-    const adminRole = await prisma.role.findUniqueOrThrow({ where: { name: "ADMIN" } });
-    await prisma.userRole.createMany({
-      data: [{ roleId: adminRole.id, userId: adminUser.id }],
-      skipDuplicates: true,
-    });
-  } else {
-    console.log("Admin seed user skipped. DEV_ADMIN_EMAIL, DEV_ADMIN_USERNAME, and DEV_ADMIN_PASSWORD are required.");
-  }
-
-  return devUser;
+  return normalUser;
 }
 
 async function seedSampleData(prisma: PrismaClient, ownerId: string | null) {
