@@ -31,7 +31,10 @@ describe("seed safety guardrails", () => {
   it("keeps normal and admin test accounts separate", () => {
     expect(seedSource).toContain("DEV_TEST_USER_EMAIL");
     expect(seedSource).toContain("DEV_ADMIN_EMAIL");
+    expect(seedSource).toContain("INTERNAL_TEST_USER");
+    expect(seedSource).toContain("INTERNAL_ADMIN");
     expect(seedSource).toContain('roles: ["ADMIN"]');
-    expect(seedSource).toContain('roles: ["FREELANCER", "CLIENT", "FOUNDER"]');
+    expect(seedSource).toContain('roles: ["MEMBER", "FREELANCER", "CLIENT", "FOUNDER"]');
+    expect(seedSource).toContain("account classification verified");
   });
 });

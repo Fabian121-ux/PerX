@@ -11,4 +11,10 @@ describe("capabilities", () => {
   it("does not grant admin capabilities to ordinary roles", () => {
     expect(hasCapability(["CLIENT"], "admin:access")).toBe(false);
   });
+
+  it("keeps MEMBER as non-privileged account membership", () => {
+    expect(hasCapability(["MEMBER"], "admin:access")).toBe(false);
+    expect(hasCapability(["MEMBER"], "opportunity:create")).toBe(false);
+    expect(hasCapability(["MEMBER"], "proposal:create")).toBe(false);
+  });
 });

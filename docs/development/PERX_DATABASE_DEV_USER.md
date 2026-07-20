@@ -9,6 +9,8 @@ To test the application locally in database mode, you must seed a **development 
 Open your local `.env` file and define the development user credentials:
 
 ```env
+PERX_ALLOW_DEV_SEED=true
+PERX_DEPLOY_ENV=development
 DEV_TEST_USER_EMAIL="devtest@perx.local"
 DEV_TEST_USER_USERNAME="devtest"
 DEV_TEST_USER_PASSWORD="a-secure-local-password"
@@ -24,7 +26,7 @@ Run the Prisma seed command to generate the user and sample opportunities:
 npm run db:seed
 ```
 
-This script will safely upsert the development user with the specified credentials and explicitly grant them standard roles (`FREELANCER`, `CLIENT`, `FOUNDER`). 
+This script will safely upsert the development user with the specified credentials, classify the account as `INTERNAL_TEST_USER`, and explicitly grant non-admin testing roles (`MEMBER`, `FREELANCER`, `CLIENT`, `FOUNDER`).
 
 **Important:** The standard seed script *never* grants the `ADMIN` role to this user for safety reasons.
 
@@ -47,9 +49,13 @@ If you need to test the `/admin` dashboard locally, you must explicitly configur
 Add the following to your `.env`:
 
 ```env
+PERX_ALLOW_DEV_SEED=true
+PERX_DEPLOY_ENV=development
 DEV_ADMIN_EMAIL="admin@perx.local"
 DEV_ADMIN_USERNAME="admin"
 DEV_ADMIN_PASSWORD="a-secure-admin-password"
 ```
 
-Re-run the seed script. The `ADMIN` role will be assigned strictly to this user. Normal dev test users will be blocked from accessing `/admin` routes.
+Re-run the seed script. The user is classified as `INTERNAL_ADMIN`, and the `ADMIN` role is assigned through the normal database-backed `UserRole` relationship. Normal dev test users will be blocked from accessing `/admin` routes.
+
+For remote non-production databases, also set `PERX_SEED_DATABASE_LABEL` to a human-confirmed development or staging database label before running the seed. Never run development seeding in Vercel Production.

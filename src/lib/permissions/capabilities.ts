@@ -4,6 +4,7 @@ export const roleLabels = {
   FOUNDER: "Founder",
   FREELANCER: "Freelancer",
   INVESTOR: "Investor",
+  MEMBER: "Member",
   PROPERTY_OWNER: "Property Owner",
 } as const;
 
@@ -54,6 +55,7 @@ const capabilitiesByRole: Record<RoleName, Capability[]> = {
     "review:create:eligible",
   ],
   INVESTOR: ["conversation:read:participant", "proposal:create"],
+  MEMBER: [],
   PROPERTY_OWNER: ["opportunity:create", "opportunity:update:own", "conversation:read:participant"],
 };
 

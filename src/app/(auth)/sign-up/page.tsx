@@ -4,6 +4,12 @@ import { SignUpForm } from "@/components/auth/sign-up-form";
 import { PublicPageShell } from "@/components/standard-page";
 import { Card } from "@/components/ui/card";
 import type { AuthFormState } from "@/features/auth/actions";
+import {
+  BETA_FULL_MESSAGE,
+  OPEN_BETA_NOTICE,
+  REGISTRATION_CLOSED_MESSAGE,
+  getSafeRegistrationStatus,
+} from "@/lib/registration/status";
 
 const errors: Record<string, string> = {
   "database-not-configured": "Database configuration is missing.",
@@ -25,6 +31,16 @@ export default async function SignUpPage({
   const initialState: AuthFormState | undefined = error
     ? { message: error, status: "error" }
     : undefined;
+  const registrationStatus = await getSafeRegistrationStatus("/sign-up");
+  const registrationClosedMessage =
+    registrationStatus.statusUnavailable
+      ? "Account creation is temporarily unavailable. Please try again shortly."
+      : registrationStatus.mode === "closed"
+        ? REGISTRATION_CLOSED_MESSAGE
+        : registrationStatus.mode === "open_beta" &&
+            !registrationStatus.registrationOpen
+          ? BETA_FULL_MESSAGE
+          : null;
 
   return (
     <PublicPageShell>
@@ -57,6 +73,12 @@ export default async function SignUpPage({
               to find work, hire, post, partner or explore after your basic
               profile is ready.
             </p>
+            {registrationStatus.mode === "open_beta" &&
+            registrationStatus.registrationOpen ? (
+              <p className="mt-4 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] px-3 py-2 text-sm font-semibold text-[color:var(--px-text)]">
+                {OPEN_BETA_NOTICE}
+              </p>
+            ) : null}
 
             <div className="mt-5 text-right text-sm text-[color:var(--px-text-muted)]">
               Already have an account?{" "}
@@ -68,7 +90,16 @@ export default async function SignUpPage({
               </Link>
             </div>
 
-            <SignUpForm initialState={initialState} />
+            {registrationClosedMessage ? (
+              <div
+                className="mt-6 rounded-[var(--px-radius-sm)] bg-amber-50 p-3 text-sm font-semibold text-amber-900"
+                role="alert"
+              >
+                {registrationClosedMessage}
+              </div>
+            ) : (
+              <SignUpForm initialState={initialState} />
+            )}
           </Card>
         </section>
       </main>

@@ -30,6 +30,7 @@ export type UserMinAggregateOutputType = {
   passwordHash: string | null
   name: string | null
   username: string | null
+  accountClassification: $Enums.AccountClassification | null
   imageUrl: string | null
   emailVerifiedAt: Date | null
   verificationStatus: $Enums.VerificationStatus | null
@@ -44,6 +45,7 @@ export type UserMaxAggregateOutputType = {
   passwordHash: string | null
   name: string | null
   username: string | null
+  accountClassification: $Enums.AccountClassification | null
   imageUrl: string | null
   emailVerifiedAt: Date | null
   verificationStatus: $Enums.VerificationStatus | null
@@ -58,6 +60,7 @@ export type UserCountAggregateOutputType = {
   passwordHash: number
   name: number
   username: number
+  accountClassification: number
   imageUrl: number
   emailVerifiedAt: number
   verificationStatus: number
@@ -74,6 +77,7 @@ export type UserMinAggregateInputType = {
   passwordHash?: true
   name?: true
   username?: true
+  accountClassification?: true
   imageUrl?: true
   emailVerifiedAt?: true
   verificationStatus?: true
@@ -88,6 +92,7 @@ export type UserMaxAggregateInputType = {
   passwordHash?: true
   name?: true
   username?: true
+  accountClassification?: true
   imageUrl?: true
   emailVerifiedAt?: true
   verificationStatus?: true
@@ -102,6 +107,7 @@ export type UserCountAggregateInputType = {
   passwordHash?: true
   name?: true
   username?: true
+  accountClassification?: true
   imageUrl?: true
   emailVerifiedAt?: true
   verificationStatus?: true
@@ -189,6 +195,7 @@ export type UserGroupByOutputType = {
   passwordHash: string
   name: string
   username: string
+  accountClassification: $Enums.AccountClassification
   imageUrl: string | null
   emailVerifiedAt: Date | null
   verificationStatus: $Enums.VerificationStatus
@@ -224,6 +231,7 @@ export type UserWhereInput = {
   passwordHash?: Prisma.StringFilter<"User"> | string
   name?: Prisma.StringFilter<"User"> | string
   username?: Prisma.StringFilter<"User"> | string
+  accountClassification?: Prisma.EnumAccountClassificationFilter<"User"> | $Enums.AccountClassification
   imageUrl?: Prisma.StringNullableFilter<"User"> | string | null
   emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFilter<"User"> | $Enums.VerificationStatus
@@ -258,6 +266,7 @@ export type UserOrderByWithRelationInput = {
   passwordHash?: Prisma.SortOrder
   name?: Prisma.SortOrder
   username?: Prisma.SortOrder
+  accountClassification?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
@@ -295,6 +304,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   passwordHash?: Prisma.StringFilter<"User"> | string
   name?: Prisma.StringFilter<"User"> | string
+  accountClassification?: Prisma.EnumAccountClassificationFilter<"User"> | $Enums.AccountClassification
   imageUrl?: Prisma.StringNullableFilter<"User"> | string | null
   emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFilter<"User"> | $Enums.VerificationStatus
@@ -329,6 +339,7 @@ export type UserOrderByWithAggregationInput = {
   passwordHash?: Prisma.SortOrder
   name?: Prisma.SortOrder
   username?: Prisma.SortOrder
+  accountClassification?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
@@ -349,6 +360,7 @@ export type UserScalarWhereWithAggregatesInput = {
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
   name?: Prisma.StringWithAggregatesFilter<"User"> | string
   username?: Prisma.StringWithAggregatesFilter<"User"> | string
+  accountClassification?: Prisma.EnumAccountClassificationWithAggregatesFilter<"User"> | $Enums.AccountClassification
   imageUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   emailVerifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusWithAggregatesFilter<"User"> | $Enums.VerificationStatus
@@ -363,6 +375,7 @@ export type UserCreateInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -397,6 +410,7 @@ export type UserUncheckedCreateInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -431,6 +445,7 @@ export type UserUpdateInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -465,6 +480,7 @@ export type UserUncheckedUpdateInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -499,6 +515,7 @@ export type UserCreateManyInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -513,6 +530,7 @@ export type UserUpdateManyMutationInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -527,6 +545,7 @@ export type UserUncheckedUpdateManyInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -541,6 +560,7 @@ export type UserCountOrderByAggregateInput = {
   passwordHash?: Prisma.SortOrder
   name?: Prisma.SortOrder
   username?: Prisma.SortOrder
+  accountClassification?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
@@ -555,6 +575,7 @@ export type UserMaxOrderByAggregateInput = {
   passwordHash?: Prisma.SortOrder
   name?: Prisma.SortOrder
   username?: Prisma.SortOrder
+  accountClassification?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
@@ -569,6 +590,7 @@ export type UserMinOrderByAggregateInput = {
   passwordHash?: Prisma.SortOrder
   name?: Prisma.SortOrder
   username?: Prisma.SortOrder
+  accountClassification?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
@@ -589,6 +611,10 @@ export type UserNullableScalarRelationFilter = {
 
 export type StringFieldUpdateOperationsInput = {
   set?: string
+}
+
+export type EnumAccountClassificationFieldUpdateOperationsInput = {
+  set?: $Enums.AccountClassification
 }
 
 export type NullableStringFieldUpdateOperationsInput = {
@@ -899,6 +925,7 @@ export type UserCreateWithoutSessionsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -932,6 +959,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -981,6 +1009,7 @@ export type UserUpdateWithoutSessionsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1014,6 +1043,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1047,6 +1077,7 @@ export type UserCreateWithoutRolesInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -1080,6 +1111,7 @@ export type UserUncheckedCreateWithoutRolesInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -1129,6 +1161,7 @@ export type UserUpdateWithoutRolesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1162,6 +1195,7 @@ export type UserUncheckedUpdateWithoutRolesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1195,6 +1229,7 @@ export type UserCreateWithoutProfileInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -1228,6 +1263,7 @@ export type UserUncheckedCreateWithoutProfileInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -1277,6 +1313,7 @@ export type UserUpdateWithoutProfileInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1310,6 +1347,7 @@ export type UserUncheckedUpdateWithoutProfileInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1343,6 +1381,7 @@ export type UserCreateWithoutOpportunitiesInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -1376,6 +1415,7 @@ export type UserUncheckedCreateWithoutOpportunitiesInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -1425,6 +1465,7 @@ export type UserUpdateWithoutOpportunitiesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1458,6 +1499,7 @@ export type UserUncheckedUpdateWithoutOpportunitiesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1491,6 +1533,7 @@ export type UserCreateWithoutBookmarksInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -1524,6 +1567,7 @@ export type UserUncheckedCreateWithoutBookmarksInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -1573,6 +1617,7 @@ export type UserUpdateWithoutBookmarksInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1606,6 +1651,7 @@ export type UserUncheckedUpdateWithoutBookmarksInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1639,6 +1685,7 @@ export type UserCreateWithoutReportsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -1672,6 +1719,7 @@ export type UserUncheckedCreateWithoutReportsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -1721,6 +1769,7 @@ export type UserUpdateWithoutReportsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1754,6 +1803,7 @@ export type UserUncheckedUpdateWithoutReportsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1787,6 +1837,7 @@ export type UserCreateWithoutConversationsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -1820,6 +1871,7 @@ export type UserUncheckedCreateWithoutConversationsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -1869,6 +1921,7 @@ export type UserUpdateWithoutConversationsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1902,6 +1955,7 @@ export type UserUncheckedUpdateWithoutConversationsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -1935,6 +1989,7 @@ export type UserCreateWithoutMessagesInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -1968,6 +2023,7 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -2017,6 +2073,7 @@ export type UserUpdateWithoutMessagesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2050,6 +2107,7 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2083,6 +2141,7 @@ export type UserCreateWithoutProposalsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -2116,6 +2175,7 @@ export type UserUncheckedCreateWithoutProposalsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -2165,6 +2225,7 @@ export type UserUpdateWithoutProposalsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2198,6 +2259,7 @@ export type UserUncheckedUpdateWithoutProposalsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2231,6 +2293,7 @@ export type UserCreateWithoutDealsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -2264,6 +2327,7 @@ export type UserUncheckedCreateWithoutDealsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -2313,6 +2377,7 @@ export type UserUpdateWithoutDealsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2346,6 +2411,7 @@ export type UserUncheckedUpdateWithoutDealsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2379,6 +2445,7 @@ export type UserCreateWithoutDeliveriesInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -2412,6 +2479,7 @@ export type UserUncheckedCreateWithoutDeliveriesInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -2461,6 +2529,7 @@ export type UserUpdateWithoutDeliveriesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2494,6 +2563,7 @@ export type UserUncheckedUpdateWithoutDeliveriesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2527,6 +2597,7 @@ export type UserCreateWithoutApprovalsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -2560,6 +2631,7 @@ export type UserUncheckedCreateWithoutApprovalsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -2609,6 +2681,7 @@ export type UserUpdateWithoutApprovalsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2642,6 +2715,7 @@ export type UserUncheckedUpdateWithoutApprovalsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2675,6 +2749,7 @@ export type UserCreateWithoutReleasesInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -2708,6 +2783,7 @@ export type UserUncheckedCreateWithoutReleasesInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -2757,6 +2833,7 @@ export type UserUpdateWithoutReleasesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2790,6 +2867,7 @@ export type UserUncheckedUpdateWithoutReleasesInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2823,6 +2901,7 @@ export type UserCreateWithoutRefundsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -2856,6 +2935,7 @@ export type UserUncheckedCreateWithoutRefundsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -2905,6 +2985,7 @@ export type UserUpdateWithoutRefundsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2938,6 +3019,7 @@ export type UserUncheckedUpdateWithoutRefundsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -2971,6 +3053,7 @@ export type UserCreateWithoutDisputesOpenedInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -3004,6 +3087,7 @@ export type UserUncheckedCreateWithoutDisputesOpenedInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -3053,6 +3137,7 @@ export type UserUpdateWithoutDisputesOpenedInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -3086,6 +3171,7 @@ export type UserUncheckedUpdateWithoutDisputesOpenedInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -3119,6 +3205,7 @@ export type UserCreateWithoutReviewsGivenInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -3152,6 +3239,7 @@ export type UserUncheckedCreateWithoutReviewsGivenInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -3190,6 +3278,7 @@ export type UserCreateWithoutReviewsReceivedInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -3223,6 +3312,7 @@ export type UserUncheckedCreateWithoutReviewsReceivedInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -3272,6 +3362,7 @@ export type UserUpdateWithoutReviewsGivenInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -3305,6 +3396,7 @@ export type UserUncheckedUpdateWithoutReviewsGivenInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -3349,6 +3441,7 @@ export type UserUpdateWithoutReviewsReceivedInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -3382,6 +3475,7 @@ export type UserUncheckedUpdateWithoutReviewsReceivedInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -3415,6 +3509,7 @@ export type UserCreateWithoutNotificationsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -3448,6 +3543,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -3497,6 +3593,7 @@ export type UserUpdateWithoutNotificationsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -3530,6 +3627,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -3563,6 +3661,7 @@ export type UserCreateWithoutAuditLogsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -3596,6 +3695,7 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -3645,6 +3745,7 @@ export type UserUpdateWithoutAuditLogsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -3678,6 +3779,7 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -3711,6 +3813,7 @@ export type UserCreateWithoutModerationActionsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -3744,6 +3847,7 @@ export type UserUncheckedCreateWithoutModerationActionsInput = {
   passwordHash: string
   name: string
   username: string
+  accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
@@ -3793,6 +3897,7 @@ export type UserUpdateWithoutModerationActionsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -3826,6 +3931,7 @@ export type UserUncheckedUpdateWithoutModerationActionsInput = {
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
@@ -4052,6 +4158,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   passwordHash?: boolean
   name?: boolean
   username?: boolean
+  accountClassification?: boolean
   imageUrl?: boolean
   emailVerifiedAt?: boolean
   verificationStatus?: boolean
@@ -4087,6 +4194,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   passwordHash?: boolean
   name?: boolean
   username?: boolean
+  accountClassification?: boolean
   imageUrl?: boolean
   emailVerifiedAt?: boolean
   verificationStatus?: boolean
@@ -4101,6 +4209,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   passwordHash?: boolean
   name?: boolean
   username?: boolean
+  accountClassification?: boolean
   imageUrl?: boolean
   emailVerifiedAt?: boolean
   verificationStatus?: boolean
@@ -4115,6 +4224,7 @@ export type UserSelectScalar = {
   passwordHash?: boolean
   name?: boolean
   username?: boolean
+  accountClassification?: boolean
   imageUrl?: boolean
   emailVerifiedAt?: boolean
   verificationStatus?: boolean
@@ -4123,7 +4233,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "name" | "username" | "imageUrl" | "emailVerifiedAt" | "verificationStatus" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "name" | "username" | "accountClassification" | "imageUrl" | "emailVerifiedAt" | "verificationStatus" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   roles?: boolean | Prisma.User$rolesArgs<ExtArgs>
@@ -4180,6 +4290,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     passwordHash: string
     name: string
     username: string
+    accountClassification: $Enums.AccountClassification
     imageUrl: string | null
     emailVerifiedAt: Date | null
     verificationStatus: $Enums.VerificationStatus
@@ -4634,6 +4745,7 @@ export interface UserFieldRefs {
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly name: Prisma.FieldRef<"User", 'String'>
   readonly username: Prisma.FieldRef<"User", 'String'>
+  readonly accountClassification: Prisma.FieldRef<"User", 'AccountClassification'>
   readonly imageUrl: Prisma.FieldRef<"User", 'String'>
   readonly emailVerifiedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly verificationStatus: Prisma.FieldRef<"User", 'VerificationStatus'>

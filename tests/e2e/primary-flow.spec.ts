@@ -30,3 +30,18 @@ test("primary public journey loads core routes", async ({ page }) => {
     page.getByRole("heading", { name: "Create your PerX account" }),
   ).toBeVisible();
 });
+
+test("not-found page gives users safe recovery links", async ({ page }) => {
+  await page.goto("/definitely-not-a-perx-route");
+
+  await expect(
+    page.getByRole("heading", { name: "This PerX page is not available" }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Go home" })).toHaveAttribute(
+    "href",
+    "/",
+  );
+  await expect(
+    page.getByRole("link", { name: "Explore discover" }),
+  ).toHaveAttribute("href", "/discover");
+});

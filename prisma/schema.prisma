@@ -8,12 +8,20 @@ datasource db {
 }
 
 enum RoleName {
+  MEMBER
   FREELANCER
   CLIENT
   FOUNDER
   INVESTOR
   PROPERTY_OWNER
   ADMIN
+}
+
+enum AccountClassification {
+  PUBLIC_BETA_USER
+  INTERNAL_TEST_USER
+  INTERNAL_ADMIN
+  SYSTEM_ACCOUNT
 }
 
 enum VerificationStatus {
@@ -140,6 +148,7 @@ model User {
   passwordHash       String
   name               String
   username           String                @unique
+  accountClassification AccountClassification @default(PUBLIC_BETA_USER)
   imageUrl           String?
   emailVerifiedAt    DateTime?
   verificationStatus VerificationStatus    @default(UNVERIFIED)
@@ -168,6 +177,7 @@ model User {
   moderationActions  ModerationAction[]    @relation("ModerationActor")
 
   @@index([createdAt])
+  @@index([accountClassification])
 }
 
 model Session {

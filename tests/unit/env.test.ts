@@ -4,6 +4,7 @@ import {
   assertDatabaseConfiguration,
   getResolvedDataMode,
   getServerEnv,
+  getSignupConfig,
   hasDatabaseUrl,
   setCachedDataModeForTest,
 } from "../../src/lib/env";
@@ -21,7 +22,9 @@ function resetEnv() {
   delete process.env.NEXT_PUBLIC_SUPABASE_URL;
   delete process.env.PERX_DATA_MODE;
   delete process.env.PERX_DEPLOY_ENV;
+  delete process.env.PERX_BETA_MAX_USERS;
   delete process.env.PERX_ENABLE_PREVIEW;
+  delete process.env.PERX_SIGNUP_MODE;
   delete process.env.VERCEL_ENV;
   setNodeEnv("test");
 }
@@ -138,6 +141,36 @@ describe("Data Mode Resolution", () => {
     setNodeEnv("development");
     const env = getServerEnv();
     expect(env.PERX_ENABLE_PREVIEW).toBe(false);
+  });
+
+  it("defaults missing signup mode safely to closed", () => {
+    expect(getSignupConfig()).toEqual({
+      maximumUsers: null,
+      mode: "closed",
+    });
+  });
+
+  it("requires a positive beta capacity for open beta signup", () => {
+    process.env.PERX_SIGNUP_MODE = "open_beta";
+
+    expect(() => getSignupConfig()).toThrow(
+      "PERX_SIGNUP_MODE=open_beta requires PERX_BETA_MAX_USERS to be a positive integer.",
+    );
+
+    process.env.PERX_BETA_MAX_USERS = "10";
+    expect(getSignupConfig()).toEqual({
+      maximumUsers: 10,
+      mode: "open_beta",
+    });
+  });
+
+  it("allows explicit public signup mode without a beta capacity", () => {
+    process.env.PERX_SIGNUP_MODE = "public";
+
+    expect(getSignupConfig()).toEqual({
+      maximumUsers: null,
+      mode: "public",
+    });
   });
 
   it("throws error when getPrisma is called in mock mode", () => {

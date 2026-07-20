@@ -29,6 +29,13 @@ export type StringFilter<$PrismaModel = never> = {
   not?: Prisma.NestedStringFilter<$PrismaModel> | string
 }
 
+export type EnumAccountClassificationFilter<$PrismaModel = never> = {
+  equals?: $Enums.AccountClassification | Prisma.EnumAccountClassificationFieldRefInput<$PrismaModel>
+  in?: $Enums.AccountClassification[] | Prisma.ListEnumAccountClassificationFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AccountClassification[] | Prisma.ListEnumAccountClassificationFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAccountClassificationFilter<$PrismaModel> | $Enums.AccountClassification
+}
+
 export type StringNullableFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
@@ -99,6 +106,16 @@ export type StringWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedStringFilter<$PrismaModel>
   _max?: Prisma.NestedStringFilter<$PrismaModel>
+}
+
+export type EnumAccountClassificationWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AccountClassification | Prisma.EnumAccountClassificationFieldRefInput<$PrismaModel>
+  in?: $Enums.AccountClassification[] | Prisma.ListEnumAccountClassificationFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AccountClassification[] | Prisma.ListEnumAccountClassificationFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAccountClassificationWithAggregatesFilter<$PrismaModel> | $Enums.AccountClassification
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAccountClassificationFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAccountClassificationFilter<$PrismaModel>
 }
 
 export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -627,6 +644,13 @@ export type NestedStringFilter<$PrismaModel = never> = {
   not?: Prisma.NestedStringFilter<$PrismaModel> | string
 }
 
+export type NestedEnumAccountClassificationFilter<$PrismaModel = never> = {
+  equals?: $Enums.AccountClassification | Prisma.EnumAccountClassificationFieldRefInput<$PrismaModel>
+  in?: $Enums.AccountClassification[] | Prisma.ListEnumAccountClassificationFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AccountClassification[] | Prisma.ListEnumAccountClassificationFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAccountClassificationFilter<$PrismaModel> | $Enums.AccountClassification
+}
+
 export type NestedStringNullableFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
@@ -701,6 +725,16 @@ export type NestedIntFilter<$PrismaModel = never> = {
   gt?: number | Prisma.IntFieldRefInput<$PrismaModel>
   gte?: number | Prisma.IntFieldRefInput<$PrismaModel>
   not?: Prisma.NestedIntFilter<$PrismaModel> | number
+}
+
+export type NestedEnumAccountClassificationWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.AccountClassification | Prisma.EnumAccountClassificationFieldRefInput<$PrismaModel>
+  in?: $Enums.AccountClassification[] | Prisma.ListEnumAccountClassificationFieldRefInput<$PrismaModel>
+  notIn?: $Enums.AccountClassification[] | Prisma.ListEnumAccountClassificationFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumAccountClassificationWithAggregatesFilter<$PrismaModel> | $Enums.AccountClassification
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumAccountClassificationFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumAccountClassificationFilter<$PrismaModel>
 }
 
 export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {

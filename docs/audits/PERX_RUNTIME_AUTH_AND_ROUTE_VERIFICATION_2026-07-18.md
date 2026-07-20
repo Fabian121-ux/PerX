@@ -73,6 +73,17 @@ command -v vercel -> no Vercel CLI found
 ls .vercel -> .vercel does not exist
 ```
 
+Follow-up remote status check on 2026-07-20:
+
+```text
+GitHub HEAD: e305fdfa8c0ac2133275caebd21952056fbd5536
+GitHub status context: Vercel -> success
+Vercel status target: https://vercel.com/fabiansazzy1214-gmailcoms-projects/per-x/FBhBkWyG8jXo95xDhN8gujKZwcMJ
+GitHub Actions workflow runs for the commit: none returned by the connector
+```
+
+This confirms that Vercel reported a successful build for the latest pushed commit, but it still does not provide the public deployment URL, runtime logs, environment assignment, error digest or live route responses.
+
 Therefore the exact Vercel runtime digest, deployed stack trace, deployment ID and root request log could not be retrieved here. The deployed homepage must still be checked by the project owner after pushing/deploying these changes.
 
 ## 4. Environment variables checked
@@ -436,9 +447,9 @@ Blocked by missing Vercel access from this workspace:
 ```text
 Exact deployed Vercel error digest.
 Exact deployed stack trace.
-Confirming deployment used the latest commit.
 Confirming Vercel environment variable assignment.
-Confirming a new deployment occurred after env changes.
+Confirming the successful Vercel build is the active Production alias.
+Confirming a new deployment occurred after any Vercel env changes.
 Opening Vercel Runtime Logs.
 Verifying deployed /, /api/health, /discover, /sign-up and /sign-in after deployment.
 Confirming production runtime logs contain no unhandled Server Component error.
@@ -456,4 +467,154 @@ Cross-user database-backed ownership and participant checks in a live environmen
 
 Local code/build/runtime verification passed.
 
-Deployment repair is not yet confirmed because the workspace has no Vercel CLI/project linkage or runtime-log access. The owner must push/deploy this code, ensure Vercel env vars are configured for the correct environment, then verify runtime logs and the deployed public/auth routes.
+GitHub reports a successful Vercel build for `e305fdfa8c0ac2133275caebd21952056fbd5536`.
+
+Deployment repair is not yet confirmed because the workspace has no Vercel CLI/project linkage, public deployment URL or runtime-log access. The owner must confirm the active Production alias points at this deployment, ensure Vercel env vars are configured for the correct environment, then verify runtime logs and the deployed public/auth routes.
+
+## 21. Open beta registration activation
+
+Implemented on 2026-07-20.
+
+Registration mode is now controlled by server-only environment variables:
+
+```text
+PERX_SIGNUP_MODE=closed | open_beta | public
+PERX_BETA_MAX_USERS=<positive integer required for open_beta>
+```
+
+Missing `PERX_SIGNUP_MODE` defaults safely to `closed`. `public` mode is only enabled when explicitly configured. No `NEXT_PUBLIC_` registration variables were added.
+
+Invitation and allowlist requirements:
+
+```text
+No invitation-code requirement exists in /sign-up.
+No approved-email requirement exists in /sign-up.
+No beta email allowlist variable was introduced.
+```
+
+Open beta capacity:
+
+```text
+Capacity is read from PERX_BETA_MAX_USERS.
+The signup transaction takes a PostgreSQL advisory transaction lock before counting users.
+Only PUBLIC_BETA_USER accounts without ADMIN role membership count toward the beta cap.
+INTERNAL_TEST_USER, INTERNAL_ADMIN and SYSTEM_ACCOUNT users are excluded from the public beta count.
+The eleventh user is rejected when PERX_BETA_MAX_USERS=10.
+Increasing PERX_BETA_MAX_USERS allows additional registrations without deleting existing users.
+```
+
+Transaction behavior:
+
+```text
+The signup transaction covers registration gate enforcement, beta-capacity check, duplicate email/username checks, user creation, base profile creation, minimal role assignment and session-row creation.
+The HTTP-only session cookie is set only after the transaction succeeds.
+Failed or rolled-back signup attempts do not consume capacity.
+```
+
+Signup UI changes:
+
+```text
+/sign-up remains public.
+Open beta mode displays: PerX is currently open to a limited number of beta users.
+Closed mode displays: Registration is currently closed.
+Full beta mode displays the controlled full-capacity message.
+The form still collects full name, username, email address, password, confirm password and terms acceptance.
+Password fields are not repopulated after server errors.
+```
+
+Role and classification changes:
+
+```text
+RoleName now includes MEMBER.
+New public signups receive only MEMBER, not CLIENT, FREELANCER, FOUNDER, INVESTOR, WORKER, BUSINESS, SELLER or BUYER.
+User now has accountClassification with PUBLIC_BETA_USER, INTERNAL_TEST_USER, INTERNAL_ADMIN and SYSTEM_ACCOUNT.
+Public signup cannot request or set internal/admin classification.
+Admin access still requires the real database-backed ADMIN role.
+```
+
+Safe status endpoint:
+
+```text
+GET /api/registration/status
+```
+
+The endpoint returns mode, registrationOpen, maximumUsers and remainingPlaces only. It does not expose emails, identities, passwords, sessions, database details or admin-account information.
+
+Internal account seed updates:
+
+```text
+Seeded normal test users are classified INTERNAL_TEST_USER.
+Seeded development admins are classified INTERNAL_ADMIN.
+PERX_ALLOW_DEV_SEED=true is still required.
+Remote internal-account seeding requires PERX_DEPLOY_ENV=development or staging plus PERX_SEED_DATABASE_LABEL.
+Existing matching seeded users keep their passwords.
+No public beta users are created by the seed.
+```
+
+Files added or modified for open beta:
+
+```text
+.env.example
+docs/DEPLOYMENT.md
+docs/audits/PERX_RUNTIME_AUTH_AND_ROUTE_VERIFICATION_2026-07-18.md
+docs/development/PERX_DATABASE_DEV_USER.md
+docs/implementation/PERX_UI_UX_IMPLEMENTATION_2026-07-18.md
+docs/operations/PERX_OPEN_BETA_REGISTRATION.md
+playwright.config.ts
+prisma/migrations/0002_open_beta_registration/migration.sql
+prisma/schema.prisma
+prisma/seed.ts
+src/app/(auth)/sign-up/page.tsx
+src/app/api/registration/status/route.ts
+src/app/not-found.tsx
+src/features/auth/actions.ts
+src/generated/prisma/**
+src/lib/env.ts
+src/lib/permissions/capabilities.ts
+src/lib/registration/status.ts
+tests/e2e/auth-forms.spec.ts
+tests/e2e/primary-flow.spec.ts
+tests/integration/permissions.test.ts
+tests/unit/auth-actions.test.ts
+tests/unit/env.test.ts
+tests/unit/registration-status.test.ts
+tests/unit/seed-safety.test.ts
+```
+
+Validation status:
+
+```text
+npm run lint -> PASS, 0 errors, 5 existing warnings.
+npm run type-check -> PASS.
+npm run test -> PASS, 16 files, 86 tests.
+npm run test:e2e -> PASS, 20 tests.
+npx prisma validate -> PASS.
+npx prisma generate -> PASS.
+npm run build -> PASS.
+npx next build --debug-prerender -> PASS.
+npx cross-env NODE_ENV=production PERX_DATA_MODE=mock npm run build -> FAILED AS EXPECTED with "PERX_DATA_MODE=mock is strictly prohibited in production."
+```
+
+Validation notes:
+
+```text
+The first sandboxed npm run test:e2e failed because a pre-existing ssh process occupied 127.0.0.1:3000 and the sandbox denied starting a dev server.
+playwright.config.ts now uses 127.0.0.1:3100 by default for local E2E runs.
+The approved rerun on port 3100 passed.
+Sandboxed Next/Turbopack builds failed with an internal port-binding EPERM; approved reruns passed.
+```
+
+Remaining deployment steps:
+
+```text
+Set PERX_SIGNUP_MODE=open_beta and PERX_BETA_MAX_USERS=10 in Vercel for the intended environment.
+Apply the 0002_open_beta_registration migration.
+Confirm DATABASE_URL and DIRECT_URL are configured correctly.
+Redeploy after env changes.
+Verify /api/health.
+Verify /api/registration/status.
+Register one real user through deployed /sign-up.
+Confirm the new user reaches /app/profile/setup.
+Confirm the user is PUBLIC_BETA_USER with MEMBER only.
+Confirm normal users are denied from /admin/**.
+```

@@ -21,9 +21,23 @@ npm run brand:generate
 
 ## Environment
 
-- `DATABASE_URL`: required for production Prisma/PostgreSQL.
-- `NEXT_PUBLIC_APP_URL`: public canonical URL for metadata.
+- `PERX_DATA_MODE`: set to `database` for Preview and Production.
+- `PERX_SIGNUP_MODE`: set to `closed`, `open_beta`, or `public`. Missing values default safely to `closed`.
+- `PERX_BETA_MAX_USERS`: required positive integer when `PERX_SIGNUP_MODE=open_beta`; use `10` for the first controlled beta.
+- `DATABASE_URL`: required runtime PostgreSQL connection.
+- `DIRECT_URL`: required direct PostgreSQL connection for Prisma operations.
+- `NEXT_PUBLIC_SUPABASE_URL`: required public Supabase project URL.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: required public Supabase publishable key.
+- `SESSION_COOKIE_NAME`: required session cookie name.
+- `AUTH_SESSION_DAYS`: required session duration.
+- `NEXT_PUBLIC_APP_URL`: public canonical URL for metadata; must not be localhost in staging or production.
+- `UPLOAD_MAX_BYTES`: required upload limit.
+- `LOG_LEVEL`: required logging level.
+- `PERX_ENABLE_PREVIEW`: set to `false` unless deliberately enabling static preview routes outside production.
+- `ERROR_MONITORING_DSN`: optional until an error-monitoring provider is configured.
 - Demo/Test flags should remain disabled in production unless deliberately enabled.
+
+Open beta registration operations are documented in `docs/operations/PERX_OPEN_BETA_REGISTRATION.md`.
 
 ## PWA Cache Reset
 

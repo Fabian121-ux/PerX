@@ -13,11 +13,16 @@ import {
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import {
   getResolvedDataMode,
+  getSignupConfig,
   hasDatabaseUrl,
   isProductionMockModeError,
 } from "@/lib/env";
 import { getSafeAuthRedirect } from "@/lib/auth/redirects";
 import { logServerDataError } from "@/lib/logging/runtime";
+import {
+  checkRegistrationGate,
+  REGISTRATION_CLOSED_MESSAGE,
+} from "@/lib/registration/status";
 import { signInSchema, signUpSchema } from "@/lib/validation/auth";
 
 export type AuthFormState = {
@@ -27,14 +32,10 @@ export type AuthFormState = {
   values?: Record<string, string>;
 };
 
-const baselineRoleDetails = {
-  CLIENT: {
-    description: "Publishes opportunities and accepts proposals.",
-    label: "Client",
-  },
-  FREELANCER: {
-    description: "Sells skilled delivery capacity.",
-    label: "Freelancer",
+const minimumMembershipRole = {
+  MEMBER: {
+    description: "Basic PerX account membership.",
+    label: "Member",
   },
 } as const;
 
@@ -102,10 +103,21 @@ export async function signUpAction(
   formData: FormData,
 ): Promise<AuthFormState> {
   const values = getSignUpValues(formData);
-  const mode = getAuthDataMode("/sign-up");
 
-  if (mode === "mock") redirect("/app/profile/setup?mock=true");
-  if (mode === "unavailable" || !hasDatabaseUrl()) {
+  try {
+    if (getSignupConfig().mode === "closed") {
+      return {
+        message: REGISTRATION_CLOSED_MESSAGE,
+        status: "error",
+        values,
+      };
+    }
+  } catch (error) {
+    logServerDataError({
+      error,
+      operation: "auth.signup_config",
+      route: "/sign-up",
+    });
     return {
       message: "Account creation is temporarily unavailable. Please try again shortly.",
       status: "error",
@@ -131,58 +143,73 @@ export async function signUpAction(
     };
   }
 
+  const mode = getAuthDataMode("/sign-up");
+
+  if (mode === "mock") redirect("/app/profile/setup?mock=true");
+  if (mode === "unavailable" || !hasDatabaseUrl()) {
+    return {
+      message: "Account creation is temporarily unavailable. Please try again shortly.",
+      status: "error",
+      values,
+    };
+  }
+
   const passwordHash = await hashPassword(parsed.data.password);
 
   let createdUserId: string;
   let sessionCookie: Awaited<ReturnType<typeof createSessionRecord>>;
   try {
     const prisma = getPrisma();
-    const existing = await prisma.user.findFirst({
-      select: { email: true, username: true },
-      where: {
-        OR: [
-          { email: parsed.data.email },
-          { username: parsed.data.username },
-        ],
-      },
-    });
-
-    if (existing?.email === parsed.data.email) {
-      return {
-        fieldErrors: { email: "An account with this email already exists." },
-        message: "Please use another email or sign in.",
-        status: "error",
-        values,
-      };
-    }
-
-    if (existing?.username === parsed.data.username) {
-      return {
-        fieldErrors: { username: "This username is already taken." },
-        message: "Please choose another username.",
-        status: "error",
-        values,
-      };
-    }
-
     const transactionResult = await prisma.$transaction(async (tx) => {
-      const baselineRoles = await Promise.all(
-        Object.entries(baselineRoleDetails).map(
-          ([name, details]) =>
-            tx.role.upsert({
-              create: {
-                description: details.description,
-                label: details.label,
-                name: name as keyof typeof baselineRoleDetails,
-              },
-              update: {},
-              where: { name: name as keyof typeof baselineRoleDetails },
-            }),
-        ),
+      const registrationGate = await checkRegistrationGate(
+        tx as unknown as Parameters<typeof checkRegistrationGate>[0],
       );
+      if (!registrationGate.allowed) {
+        return {
+          message: registrationGate.message,
+          status: "registration-error" as const,
+        };
+      }
+
+      const existing = await tx.user.findFirst({
+        select: { email: true, username: true },
+        where: {
+          OR: [
+            { email: parsed.data.email },
+            { username: parsed.data.username },
+          ],
+        },
+      });
+
+      if (existing?.email === parsed.data.email) {
+        return {
+          fieldErrors: { email: "An account with this email already exists." },
+          message: "Please use another email or sign in.",
+          status: "field-error" as const,
+        };
+      }
+
+      if (existing?.username === parsed.data.username) {
+        return {
+          fieldErrors: { username: "This username is already taken." },
+          message: "Please choose another username.",
+          status: "field-error" as const,
+        };
+      }
+
+      const memberRole = await tx.role.upsert({
+        create: {
+          description: minimumMembershipRole.MEMBER.description,
+          label: minimumMembershipRole.MEMBER.label,
+          name: "MEMBER",
+        },
+        update: {},
+        where: { name: "MEMBER" },
+      });
 
       const user = await tx.user.create({
         data: {
+          accountClassification: "PUBLIC_BETA_USER",
           email: parsed.data.email,
           name: parsed.data.name,
           passwordHash,
@@ -196,15 +223,39 @@ export async function signUpAction(
             },
           },
           roles: {
-            create: baselineRoles.map((role) => ({ roleId: role.id })),
+            create: [{ roleId: memberRole.id }],
           },
         },
         select: { id: true },
       });
 
       const nextSessionCookie = await createSessionRecord(user.id, tx);
-      return { sessionCookie: nextSessionCookie, userId: user.id };
+      return {
+        sessionCookie: nextSessionCookie,
+        status: "created" as const,
+        userId: user.id,
+      };
     });
+
+    if (transactionResult.status === "registration-error") {
+      return {
+        message: transactionResult.message,
+        status: "error",
+        values,
+      };
+    }
+
+    if (transactionResult.status === "field-error") {
+      return {
+        fieldErrors: transactionResult.fieldErrors as unknown as Record<
+          string,
+          string
+        >,
+        message: transactionResult.message,
+        status: "error",
+        values,
+      };
+    }
 
     createdUserId = transactionResult.userId;
     sessionCookie = transactionResult.sessionCookie;

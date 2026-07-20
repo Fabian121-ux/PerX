@@ -180,6 +180,8 @@ Fixes:
 | Variable | Local development | Vercel Preview | Vercel Production | Visibility | Timing |
 | --- | --- | --- | --- | --- | --- |
 | `PERX_DATA_MODE` | Required for selected mode; `mock` allowed locally | Required, set `database` | Required, set `database` | Server-only | Build-time and runtime |
+| `PERX_SIGNUP_MODE` | Optional locally; missing defaults `closed`; set `open_beta` or `public` deliberately | Required for beta, usually `open_beta` or `closed` | Required for beta, usually `open_beta` or `closed` | Server-only | Build-time and runtime |
+| `PERX_BETA_MAX_USERS` | Required only when `PERX_SIGNUP_MODE=open_beta`; initial beta value `10` | Required when `PERX_SIGNUP_MODE=open_beta` | Required when `PERX_SIGNUP_MODE=open_beta` | Server-only | Build-time and runtime |
 | `DATABASE_URL` | Required for database mode | Required | Required | Server-only secret | Build-time and runtime |
 | `DIRECT_URL` | Required for database mode and Prisma | Required | Required | Server-only secret | Build-time and runtime |
 | `NEXT_PUBLIC_SUPABASE_URL` | Required for database mode | Required | Required | Public | Build-time and runtime |
@@ -196,6 +198,8 @@ Fixes:
 Configure these exact names in Vercel Project -> Settings -> Environment Variables for Preview and Production:
 
 - `PERX_DATA_MODE=database`
+- `PERX_SIGNUP_MODE=open_beta`
+- `PERX_BETA_MAX_USERS=10`
 - `DATABASE_URL`
 - `DIRECT_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`

@@ -10,6 +10,7 @@
 */
 
 export const RoleName = {
+  MEMBER: 'MEMBER',
   FREELANCER: 'FREELANCER',
   CLIENT: 'CLIENT',
   FOUNDER: 'FOUNDER',
@@ -19,6 +20,16 @@ export const RoleName = {
 } as const
 
 export type RoleName = (typeof RoleName)[keyof typeof RoleName]
+
+
+export const AccountClassification = {
+  PUBLIC_BETA_USER: 'PUBLIC_BETA_USER',
+  INTERNAL_TEST_USER: 'INTERNAL_TEST_USER',
+  INTERNAL_ADMIN: 'INTERNAL_ADMIN',
+  SYSTEM_ACCOUNT: 'SYSTEM_ACCOUNT'
+} as const
+
+export type AccountClassification = (typeof AccountClassification)[keyof typeof AccountClassification]
 
 
 export const VerificationStatus = {

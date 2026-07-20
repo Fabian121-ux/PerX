@@ -6,6 +6,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 
 const roles = [
+  ["MEMBER", "Member", "Basic PerX account membership."],
   ["FREELANCER", "Freelancer", "Sells skilled delivery capacity."],
   ["CLIENT", "Client", "Publishes opportunities and accepts proposals."],
   ["FOUNDER", "Founder", "Builds venture and partnership opportunities."],
@@ -49,7 +50,7 @@ function isClearlyNonProductionSeedTarget() {
 
   if (
     seedDatabaseLabel &&
-    (deployEnv === "development" || deployEnv === "staging" || deployEnv === "audit")
+    (deployEnv === "development" || deployEnv === "staging")
   ) {
     return true;
   }
@@ -60,7 +61,7 @@ function isClearlyNonProductionSeedTarget() {
 function assertOptionalSeedAllowed(kind: "development users" | "sample data") {
   if (!isClearlyNonProductionSeedTarget()) {
     throw new Error(
-      `Refusing to seed ${kind}: set PERX_DEPLOY_ENV=development, staging, or audit and verify the database is non-production.`,
+      `Refusing to seed ${kind}: set PERX_DEPLOY_ENV=development or staging and verify the database is non-production.`,
     );
   }
 }
@@ -96,6 +97,7 @@ async function seedBaseline(prisma: PrismaClient) {
 }
 
 type SeedAccountConfig = {
+  accountClassification: "INTERNAL_ADMIN" | "INTERNAL_TEST_USER";
   biography: string;
   email: string;
   headline: string;
@@ -157,6 +159,7 @@ async function createSeedAccount(prisma: PrismaClient, config: SeedAccountConfig
     user = await prisma.user.create({
       data: {
         email: config.email,
+        accountClassification: config.accountClassification,
         name: config.name,
         passwordHash,
         username: config.username,
@@ -173,6 +176,14 @@ async function createSeedAccount(prisma: PrismaClient, config: SeedAccountConfig
       },
     });
     console.log(`${config.name} created.`);
+  }
+
+  if (user.accountClassification !== config.accountClassification) {
+    user = await prisma.user.update({
+      data: { accountClassification: config.accountClassification },
+      where: { id: user.id },
+    });
+    console.log(`${config.name} account classification verified.`);
   }
 
   const roleRecords = await prisma.role.findMany({
@@ -203,12 +214,13 @@ async function seedDevelopmentUsers(prisma: PrismaClient) {
       username: process.env.DEV_TEST_USER_USERNAME,
     },
     {
+      accountClassification: "INTERNAL_TEST_USER",
       biography: "This is a development test account for normal perX authenticated workflows.",
       headline: "Development test account",
       location: "Development",
       name: "Dev Test User",
       profileCompleteness: 60,
-      roles: ["FREELANCER", "CLIENT", "FOUNDER"],
+      roles: ["MEMBER", "FREELANCER", "CLIENT", "FOUNDER"],
       trustScore: 0,
     },
   );
@@ -221,6 +233,7 @@ async function seedDevelopmentUsers(prisma: PrismaClient) {
       username: process.env.DEV_ADMIN_USERNAME,
     },
     {
+      accountClassification: "INTERNAL_ADMIN",
       biography: "This development account uses the real ADMIN role for admin-route testing.",
       headline: "Platform operations",
       location: "Development",
