@@ -1,6 +1,7 @@
 import { BrandLogo } from "@/components/brand-logo";
 import Link from "next/link";
 import { SignUpForm } from "@/components/auth/sign-up-form";
+import { RetryButton } from "@/components/auth/retry-button";
 import { PublicPageShell } from "@/components/standard-page";
 import { Card } from "@/components/ui/card";
 import type { AuthFormState } from "@/features/auth/actions";
@@ -96,6 +97,7 @@ export default async function SignUpPage({
                 role="alert"
               >
                 {registrationClosedMessage}
+                {registrationStatus.statusUnavailable && <RetryButton />}
               </div>
             ) : (
               <SignUpForm initialState={initialState} />

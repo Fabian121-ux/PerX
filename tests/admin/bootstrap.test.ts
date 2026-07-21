@@ -52,9 +52,10 @@ describe("bootstrapProductionAdmin", () => {
     
     mockPrismaClient.$executeRaw.mockResolvedValue(1);
     
-    mockPrismaClient.$queryRaw.mockImplementation(async (query: { strings?: string[] } | string[] | string) => {
+    mockPrismaClient.$queryRaw.mockImplementation(async (query: unknown) => {
       let q = "";
-      if (query && query.strings) q = query.strings[0];
+      const queryObj = query as { strings?: string[] };
+      if (queryObj && queryObj.strings) q = queryObj.strings[0];
       else if (Array.isArray(query)) q = query[0];
       else q = String(query);
 
@@ -81,9 +82,10 @@ describe("bootstrapProductionAdmin", () => {
   });
 
   it("fails on pending or missing migration", async () => {
-    mockPrismaClient.$queryRaw.mockImplementation(async (query: { strings?: string[] } | string[] | string) => {
+    mockPrismaClient.$queryRaw.mockImplementation(async (query: unknown) => {
       let q = "";
-      if (query && query.strings) q = query.strings[0];
+      const queryObj = query as { strings?: string[] };
+      if (queryObj && queryObj.strings) q = queryObj.strings[0];
       else if (Array.isArray(query)) q = query[0];
       else q = String(query);
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Pool } from "pg";
+import { getPrisma } from "@/lib/db/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export async function GET() {
         path: parsed.pathname,
         pgbouncer: parsed.searchParams.get("pgbouncer")
       };
-    } catch (e) {
+    } catch {
       info = { error: "URL parse failed" };
     }
   }
@@ -32,14 +33,30 @@ export async function GET() {
       await pool.query("SELECT 1");
       await pool.end();
       dbSuccess = true;
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const err = e as Error & { code?: string };
       dbError = {
-        name: e.name,
-        message: e.message,
-        code: e.code
+        name: err.name,
+        message: err.message,
+        code: err.code
       };
     }
   }
+
+  let prismaError = null;
+  let prismaSuccess = false;
+  try {
+    const prisma = getPrisma();
+    await prisma.$queryRaw`SELECT 1`;
+    prismaSuccess = true;
+  } catch (e: unknown) {
+    const err = e as Error & { code?: string };
+    prismaError = {
+      name: err.name,
+      message: err.message,
+      code: err.code
+    };
+  }
   
-  return NextResponse.json({ info, dbSuccess, dbError });
+  return NextResponse.json({ info, dbSuccess, dbError, prismaSuccess, prismaError });
 }

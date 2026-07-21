@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { InputHTMLAttributes } from "react";
 import { useActionState, useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
@@ -8,6 +8,7 @@ import { useFormStatus } from "react-dom";
 import { signUpAction, type AuthFormState } from "@/features/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form";
+import { PasswordInput } from "@/components/ui/password-input";
 
 type SignUpFormProps = {
   initialState?: AuthFormState;
@@ -21,8 +22,6 @@ export function SignUpForm({ initialState }: SignUpFormProps) {
   );
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const clientPasswordMismatch = Boolean(
     confirmPassword && password && confirmPassword !== password,
@@ -86,8 +85,6 @@ export function SignUpForm({ initialState }: SignUpFormProps) {
         label="Password"
         name="password"
         onChange={setPassword}
-        show={showPassword}
-        toggle={() => setShowPassword((value) => !value)}
         value={password}
       />
       <PasswordField
@@ -96,8 +93,6 @@ export function SignUpForm({ initialState }: SignUpFormProps) {
         label="Confirm password"
         name="confirmPassword"
         onChange={setConfirmPassword}
-        show={showConfirmPassword}
-        toggle={() => setShowConfirmPassword((value) => !value)}
         value={confirmPassword}
       />
 
@@ -179,8 +174,6 @@ function PasswordField({
   label,
   name,
   onChange,
-  show,
-  toggle,
   value,
   ...props
 }: Omit<InputHTMLAttributes<HTMLInputElement>, "onChange" | "type" | "value"> & {
@@ -188,8 +181,6 @@ function PasswordField({
   hint?: string;
   label: string;
   onChange: (value: string) => void;
-  show: boolean;
-  toggle: () => void;
   value: string;
 }) {
   const errorId = `${name}-error`;
@@ -199,29 +190,17 @@ function PasswordField({
   return (
     <div className="grid gap-2 text-sm font-medium text-[color:var(--px-text)]">
       <label htmlFor={inputId}>{label}</label>
-      <span className="relative block">
-        <Input
+        <PasswordInput
           aria-describedby={`${hint ? hintId : ""} ${error ? errorId : ""}`.trim() || undefined}
           aria-invalid={Boolean(error)}
-          className="w-full pr-12"
           id={inputId}
           minLength={10}
           name={name}
           onChange={(event) => onChange(event.currentTarget.value)}
           required
-          type={show ? "text" : "password"}
           value={value}
           {...props}
         />
-        <button
-          aria-label={show ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
-          className="absolute right-1.5 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-[var(--px-radius-sm)] text-[color:var(--px-text-muted)] transition hover:bg-[color:var(--px-muted)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-          onClick={toggle}
-          type="button"
-        >
-          {show ? <EyeOff aria-hidden size={17} /> : <Eye aria-hidden size={17} />}
-        </button>
-      </span>
       {hint ? (
         <span
           className="text-xs font-normal leading-5 text-[color:var(--px-text-muted)]"
