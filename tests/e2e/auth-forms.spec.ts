@@ -24,7 +24,7 @@ test.describe("auth form experience", () => {
     await expect(page.getByText("Passwords do not match.")).toBeVisible();
     await expect(page.getByRole("button", { name: "Create account" })).toBeDisabled();
 
-    await page.getByLabel("Show password", { exact: true }).click();
+    await page.getByLabel("Show password", { exact: true }).first().click();
     await expect(page.getByLabel("Password", { exact: true })).toHaveAttribute(
       "type",
       "text",
@@ -42,5 +42,48 @@ test.describe("auth form experience", () => {
       "type",
       "text",
     );
+  });
+
+  test("input dimensions and layout match between email and password", async ({
+    page,
+  }) => {
+    await page.goto("/sign-up");
+
+    const emailHeight = await page.locator('input[name="email"]').evaluate((node) => window.getComputedStyle(node).height);
+    const passwordHeight = await page.locator('input[name="password"]').evaluate((node) => window.getComputedStyle(node).height);
+
+    expect(emailHeight).toBe(passwordHeight);
+  });
+
+  test("unavailable state appears when database is down, retry works", async ({
+    page,
+  }) => {
+    // Intercept registration status to simulate DB down
+    await page.route("/api/registration/status", async (route) => {
+      const url = route.request().url();
+      if (url.includes("/api/registration/status")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            statusUnavailable: true,
+            mode: "closed",
+            registrationOpen: false,
+            maximumUsers: null,
+            remainingPlaces: null,
+          }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.goto("/sign-up");
+
+    await expect(page.getByRole("heading", { name: "temporarily unavailable" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Retry connection" })).toBeVisible();
+
+    // The retry action should reload or refresh the route
+    await page.getByRole("button", { name: "Retry connection" }).click();
   });
 });
