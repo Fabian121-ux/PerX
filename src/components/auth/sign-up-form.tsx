@@ -62,7 +62,7 @@ export function SignUpForm({ initialState }: SignUpFormProps) {
         inputMode="text"
         label="Username"
         name="username"
-        pattern="[a-zA-Z0-9_-]+"
+        pattern="[A-Za-z0-9_\-]+"
         required
         value={state.values?.username}
       />

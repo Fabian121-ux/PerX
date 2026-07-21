@@ -1,4 +1,4 @@
-const CACHE_NAME = "perx-public-shell-v5";
+const CACHE_NAME = "perx-public-shell-v6";
 const PUBLIC_ASSETS = [
   "/",
   "/offline",
@@ -53,6 +53,9 @@ self.addEventListener("fetch", (event) => {
     url.pathname.startsWith("/api") ||
     url.pathname.startsWith("/app") ||
     url.pathname.startsWith("/admin") ||
+    url.pathname.startsWith("/sign-in") ||
+    url.pathname.startsWith("/sign-up") ||
+    url.pathname.startsWith("/password-recovery") ||
     url.pathname.includes("/messages") ||
     url.pathname.includes("/deals")
   ) {

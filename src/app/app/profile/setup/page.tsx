@@ -100,7 +100,7 @@ export default async function ProfileSetupPage({
                   defaultValue={profile?.username}
                   name="username"
                   required
-                  pattern="[a-zA-Z0-9_-]+"
+                  pattern="[A-Za-z0-9_\-]+"
                   title="Only letters, numbers, underscores, and hyphens"
                 />
               </Field>
