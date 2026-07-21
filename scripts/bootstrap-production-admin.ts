@@ -123,31 +123,31 @@ export async function bootstrapProductionAdmin() {
 
   try {
     await prisma.$executeRaw`SELECT 1`;
-  } catch (err) {
+  } catch {
     logError("Database connectivity check failed.");
     return false;
   }
 
   try {
-    const migrations: any[] = await prisma.$queryRaw`SELECT migration_name FROM _prisma_migrations WHERE migration_name LIKE '%0002_open_beta_registration%' AND finished_at IS NOT NULL`;
+    const migrations: { migration_name: string }[] = await prisma.$queryRaw`SELECT migration_name FROM _prisma_migrations WHERE migration_name LIKE '%0002_open_beta_registration%' AND finished_at IS NOT NULL`;
     if (!migrations || migrations.length === 0) {
       logError("Migration 0002_open_beta_registration is not applied. Script refuses to run.");
       return false;
     }
-  } catch (err) {
+  } catch {
     logError("Failed to check migration status. Script refuses to run.");
     return false;
   }
 
   try {
-    const classifications: any[] = await prisma.$queryRaw`
+    const classifications: { value: string }[] = await prisma.$queryRaw`
       SELECT unnest(enum_range(NULL::"AccountClassification"))::text AS value
     `;
     if (!classifications.some(c => c.value === 'INTERNAL_ADMIN' || c.value === 'PUBLIC_BETA_USER')) {
       logError("Required account classification structure does not exist.");
       return false;
     }
-  } catch (err) {
+  } catch {
     logError("Failed to check account classification structure.");
     return false;
   }
