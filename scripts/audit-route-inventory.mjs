@@ -49,12 +49,8 @@ function classify(route) {
   }
   if (
     [
-      "/app/notifications",
       "/app/reviews",
-      "/app/saved",
-      "/notifications",
       "/reviews",
-      "/saved",
     ].includes(path)
   ) {
     return "COMING_LATER";

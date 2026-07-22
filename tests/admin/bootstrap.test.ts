@@ -48,7 +48,12 @@ describe("bootstrapProductionAdmin", () => {
     process.env.PERX_ADMIN_FULL_NAME = "System Admin";
     process.env.PERX_ADMIN_BOOTSTRAP_MODE = "promote_existing";
 
-    mockPrismaClient.role.upsert.mockResolvedValue({ id: "role_admin", name: "ADMIN" });
+    mockPrismaClient.role.upsert.mockImplementation(async (args) => {
+      if (args.where.name === "ADMIN") return { id: "role_admin", name: "ADMIN" };
+      if (args.where.name === "MEMBER") return { id: "role_member", name: "MEMBER" };
+      if (args.where.name === "INTERNAL_TESTER") return { id: "role_tester", name: "INTERNAL_TESTER" };
+      return { id: "role_other", name: args.where.name };
+    });
     
     mockPrismaClient.$executeRaw.mockResolvedValue(1);
     
@@ -141,7 +146,7 @@ describe("bootstrapProductionAdmin", () => {
         data: { accountClassification: "INTERNAL_ADMIN" },
       })
     );
-    expect(mockPrismaClient.userRole.create).toHaveBeenCalled();
+    expect(mockPrismaClient.userRole.create).toHaveBeenCalledTimes(3);
     // Verify session revocation
     expect(mockPrismaClient.session.deleteMany).toHaveBeenCalledWith({ where: { userId: "user_123" } });
   });
@@ -150,13 +155,13 @@ describe("bootstrapProductionAdmin", () => {
     mockPrismaClient.user.findUnique.mockResolvedValue({
       id: "user_123",
       email: "admin@example.com",
-      roles: [{ roleId: "role_admin" }], // Already has role
+      roles: [{ roleId: "role_admin" }, { roleId: "role_member" }, { roleId: "role_tester" }], // Already has roles
     });
 
     mockPrismaClient.user.update.mockResolvedValueOnce({
       id: "user_123",
       email: "admin@example.com",
-      roles: [{ roleId: "role_admin" }],
+      roles: [{ roleId: "role_admin" }, { roleId: "role_member" }, { roleId: "role_tester" }],
     });
 
     const result = await bootstrapProductionAdmin();
@@ -169,12 +174,12 @@ describe("bootstrapProductionAdmin", () => {
     mockPrismaClient.user.findUnique.mockResolvedValue({
       id: "user_123",
       email: "admin@example.com",
-      roles: [{ roleId: "role_admin" }],
+      roles: [{ roleId: "role_admin" }, { roleId: "role_member" }, { roleId: "role_tester" }],
     });
     mockPrismaClient.user.update.mockResolvedValueOnce({
       id: "user_123",
       email: "admin@example.com",
-      roles: [{ roleId: "role_admin" }],
+      roles: [{ roleId: "role_admin" }, { roleId: "role_member" }, { roleId: "role_tester" }],
     });
 
     // Simulate existing audit log

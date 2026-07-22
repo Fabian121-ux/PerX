@@ -231,3 +231,23 @@ export type AuditLog = Prisma.AuditLogModel
  * 
  */
 export type ModerationAction = Prisma.ModerationActionModel
+/**
+ * Model Connection
+ * 
+ */
+export type Connection = Prisma.ConnectionModel
+/**
+ * Model ProfileBookmark
+ * 
+ */
+export type ProfileBookmark = Prisma.ProfileBookmarkModel
+/**
+ * Model SupportTicket
+ * 
+ */
+export type SupportTicket = Prisma.SupportTicketModel
+/**
+ * Model TicketMessage
+ * 
+ */
+export type TicketMessage = Prisma.TicketMessageModel

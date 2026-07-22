@@ -16,7 +16,8 @@ export const RoleName = {
   FOUNDER: 'FOUNDER',
   INVESTOR: 'INVESTOR',
   PROPERTY_OWNER: 'PROPERTY_OWNER',
-  ADMIN: 'ADMIN'
+  ADMIN: 'ADMIN',
+  INTERNAL_TESTER: 'INTERNAL_TESTER'
 } as const
 
 export type RoleName = (typeof RoleName)[keyof typeof RoleName]
@@ -186,7 +187,30 @@ export const NotificationType = {
   PROPOSAL: 'PROPOSAL',
   DEAL: 'DEAL',
   REVIEW: 'REVIEW',
-  MODERATION: 'MODERATION'
+  MODERATION: 'MODERATION',
+  SUPPORT: 'SUPPORT',
+  CONNECTION: 'CONNECTION'
 } as const
 
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]
+
+
+export const ConnectionStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  DECLINED: 'DECLINED',
+  BLOCKED: 'BLOCKED'
+} as const
+
+export type ConnectionStatus = (typeof ConnectionStatus)[keyof typeof ConnectionStatus]
+
+
+export const TicketStatus = {
+  OPEN: 'OPEN',
+  IN_PROGRESS: 'IN_PROGRESS',
+  WAITING_ON_USER: 'WAITING_ON_USER',
+  RESOLVED: 'RESOLVED',
+  CLOSED: 'CLOSED'
+} as const
+
+export type TicketStatus = (typeof TicketStatus)[keyof typeof TicketStatus]

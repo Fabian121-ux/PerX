@@ -6,6 +6,7 @@ export const roleLabels = {
   INVESTOR: "Investor",
   MEMBER: "Member",
   PROPERTY_OWNER: "Property Owner",
+  INTERNAL_TESTER: "Internal Tester",
 } as const;
 
 export type RoleName = keyof typeof roleLabels;
@@ -16,6 +17,7 @@ export type Capability =
   | "conversation:read:participant"
   | "deal:transition:participant"
   | "deal:view:participant"
+  | "internal:tester"
   | "opportunity:create"
   | "opportunity:moderate"
   | "opportunity:update:own"
@@ -57,6 +59,7 @@ const capabilitiesByRole: Record<RoleName, Capability[]> = {
   INVESTOR: ["conversation:read:participant", "proposal:create"],
   MEMBER: [],
   PROPERTY_OWNER: ["opportunity:create", "opportunity:update:own", "conversation:read:participant"],
+  INTERNAL_TESTER: ["internal:tester"],
 };
 
 export function getCapabilities(roles: RoleName[]) {

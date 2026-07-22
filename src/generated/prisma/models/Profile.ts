@@ -297,6 +297,7 @@ export type ProfileWhereInput = {
   portfolio?: Prisma.PortfolioItemListRelationFilter
   workHistory?: Prisma.WorkHistoryListRelationFilter
   verificationRequests?: Prisma.VerificationRequestListRelationFilter
+  profileBookmarks?: Prisma.ProfileBookmarkListRelationFilter
 }
 
 export type ProfileOrderByWithRelationInput = {
@@ -318,6 +319,7 @@ export type ProfileOrderByWithRelationInput = {
   portfolio?: Prisma.PortfolioItemOrderByRelationAggregateInput
   workHistory?: Prisma.WorkHistoryOrderByRelationAggregateInput
   verificationRequests?: Prisma.VerificationRequestOrderByRelationAggregateInput
+  profileBookmarks?: Prisma.ProfileBookmarkOrderByRelationAggregateInput
 }
 
 export type ProfileWhereUniqueInput = Prisma.AtLeast<{
@@ -342,6 +344,7 @@ export type ProfileWhereUniqueInput = Prisma.AtLeast<{
   portfolio?: Prisma.PortfolioItemListRelationFilter
   workHistory?: Prisma.WorkHistoryListRelationFilter
   verificationRequests?: Prisma.VerificationRequestListRelationFilter
+  profileBookmarks?: Prisma.ProfileBookmarkListRelationFilter
 }, "id" | "userId">
 
 export type ProfileOrderByWithAggregationInput = {
@@ -402,6 +405,7 @@ export type ProfileCreateInput = {
   portfolio?: Prisma.PortfolioItemCreateNestedManyWithoutProfileInput
   workHistory?: Prisma.WorkHistoryCreateNestedManyWithoutProfileInput
   verificationRequests?: Prisma.VerificationRequestCreateNestedManyWithoutProfileInput
+  profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileUncheckedCreateInput = {
@@ -422,6 +426,7 @@ export type ProfileUncheckedCreateInput = {
   portfolio?: Prisma.PortfolioItemUncheckedCreateNestedManyWithoutProfileInput
   workHistory?: Prisma.WorkHistoryUncheckedCreateNestedManyWithoutProfileInput
   verificationRequests?: Prisma.VerificationRequestUncheckedCreateNestedManyWithoutProfileInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileUpdateInput = {
@@ -442,6 +447,7 @@ export type ProfileUpdateInput = {
   portfolio?: Prisma.PortfolioItemUpdateManyWithoutProfileNestedInput
   workHistory?: Prisma.WorkHistoryUpdateManyWithoutProfileNestedInput
   verificationRequests?: Prisma.VerificationRequestUpdateManyWithoutProfileNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutProfileNestedInput
 }
 
 export type ProfileUncheckedUpdateInput = {
@@ -462,6 +468,7 @@ export type ProfileUncheckedUpdateInput = {
   portfolio?: Prisma.PortfolioItemUncheckedUpdateManyWithoutProfileNestedInput
   workHistory?: Prisma.WorkHistoryUncheckedUpdateManyWithoutProfileNestedInput
   verificationRequests?: Prisma.VerificationRequestUncheckedUpdateManyWithoutProfileNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutProfileNestedInput
 }
 
 export type ProfileCreateManyInput = {
@@ -687,6 +694,20 @@ export type ProfileUpdateOneRequiredWithoutVerificationRequestsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProfileUpdateToOneWithWhereWithoutVerificationRequestsInput, Prisma.ProfileUpdateWithoutVerificationRequestsInput>, Prisma.ProfileUncheckedUpdateWithoutVerificationRequestsInput>
 }
 
+export type ProfileCreateNestedOneWithoutProfileBookmarksInput = {
+  create?: Prisma.XOR<Prisma.ProfileCreateWithoutProfileBookmarksInput, Prisma.ProfileUncheckedCreateWithoutProfileBookmarksInput>
+  connectOrCreate?: Prisma.ProfileCreateOrConnectWithoutProfileBookmarksInput
+  connect?: Prisma.ProfileWhereUniqueInput
+}
+
+export type ProfileUpdateOneRequiredWithoutProfileBookmarksNestedInput = {
+  create?: Prisma.XOR<Prisma.ProfileCreateWithoutProfileBookmarksInput, Prisma.ProfileUncheckedCreateWithoutProfileBookmarksInput>
+  connectOrCreate?: Prisma.ProfileCreateOrConnectWithoutProfileBookmarksInput
+  upsert?: Prisma.ProfileUpsertWithoutProfileBookmarksInput
+  connect?: Prisma.ProfileWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProfileUpdateToOneWithWhereWithoutProfileBookmarksInput, Prisma.ProfileUpdateWithoutProfileBookmarksInput>, Prisma.ProfileUncheckedUpdateWithoutProfileBookmarksInput>
+}
+
 export type ProfileCreateWithoutUserInput = {
   id?: string
   headline: string
@@ -704,6 +725,7 @@ export type ProfileCreateWithoutUserInput = {
   portfolio?: Prisma.PortfolioItemCreateNestedManyWithoutProfileInput
   workHistory?: Prisma.WorkHistoryCreateNestedManyWithoutProfileInput
   verificationRequests?: Prisma.VerificationRequestCreateNestedManyWithoutProfileInput
+  profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileUncheckedCreateWithoutUserInput = {
@@ -723,6 +745,7 @@ export type ProfileUncheckedCreateWithoutUserInput = {
   portfolio?: Prisma.PortfolioItemUncheckedCreateNestedManyWithoutProfileInput
   workHistory?: Prisma.WorkHistoryUncheckedCreateNestedManyWithoutProfileInput
   verificationRequests?: Prisma.VerificationRequestUncheckedCreateNestedManyWithoutProfileInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileCreateOrConnectWithoutUserInput = {
@@ -758,6 +781,7 @@ export type ProfileUpdateWithoutUserInput = {
   portfolio?: Prisma.PortfolioItemUpdateManyWithoutProfileNestedInput
   workHistory?: Prisma.WorkHistoryUpdateManyWithoutProfileNestedInput
   verificationRequests?: Prisma.VerificationRequestUpdateManyWithoutProfileNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutProfileNestedInput
 }
 
 export type ProfileUncheckedUpdateWithoutUserInput = {
@@ -777,6 +801,7 @@ export type ProfileUncheckedUpdateWithoutUserInput = {
   portfolio?: Prisma.PortfolioItemUncheckedUpdateManyWithoutProfileNestedInput
   workHistory?: Prisma.WorkHistoryUncheckedUpdateManyWithoutProfileNestedInput
   verificationRequests?: Prisma.VerificationRequestUncheckedUpdateManyWithoutProfileNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutProfileNestedInput
 }
 
 export type ProfileCreateWithoutSkillsInput = {
@@ -796,6 +821,7 @@ export type ProfileCreateWithoutSkillsInput = {
   portfolio?: Prisma.PortfolioItemCreateNestedManyWithoutProfileInput
   workHistory?: Prisma.WorkHistoryCreateNestedManyWithoutProfileInput
   verificationRequests?: Prisma.VerificationRequestCreateNestedManyWithoutProfileInput
+  profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileUncheckedCreateWithoutSkillsInput = {
@@ -815,6 +841,7 @@ export type ProfileUncheckedCreateWithoutSkillsInput = {
   portfolio?: Prisma.PortfolioItemUncheckedCreateNestedManyWithoutProfileInput
   workHistory?: Prisma.WorkHistoryUncheckedCreateNestedManyWithoutProfileInput
   verificationRequests?: Prisma.VerificationRequestUncheckedCreateNestedManyWithoutProfileInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileCreateOrConnectWithoutSkillsInput = {
@@ -850,6 +877,7 @@ export type ProfileUpdateWithoutSkillsInput = {
   portfolio?: Prisma.PortfolioItemUpdateManyWithoutProfileNestedInput
   workHistory?: Prisma.WorkHistoryUpdateManyWithoutProfileNestedInput
   verificationRequests?: Prisma.VerificationRequestUpdateManyWithoutProfileNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutProfileNestedInput
 }
 
 export type ProfileUncheckedUpdateWithoutSkillsInput = {
@@ -869,6 +897,7 @@ export type ProfileUncheckedUpdateWithoutSkillsInput = {
   portfolio?: Prisma.PortfolioItemUncheckedUpdateManyWithoutProfileNestedInput
   workHistory?: Prisma.WorkHistoryUncheckedUpdateManyWithoutProfileNestedInput
   verificationRequests?: Prisma.VerificationRequestUncheckedUpdateManyWithoutProfileNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutProfileNestedInput
 }
 
 export type ProfileCreateWithoutPortfolioInput = {
@@ -888,6 +917,7 @@ export type ProfileCreateWithoutPortfolioInput = {
   skills?: Prisma.ProfileSkillCreateNestedManyWithoutProfileInput
   workHistory?: Prisma.WorkHistoryCreateNestedManyWithoutProfileInput
   verificationRequests?: Prisma.VerificationRequestCreateNestedManyWithoutProfileInput
+  profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileUncheckedCreateWithoutPortfolioInput = {
@@ -907,6 +937,7 @@ export type ProfileUncheckedCreateWithoutPortfolioInput = {
   skills?: Prisma.ProfileSkillUncheckedCreateNestedManyWithoutProfileInput
   workHistory?: Prisma.WorkHistoryUncheckedCreateNestedManyWithoutProfileInput
   verificationRequests?: Prisma.VerificationRequestUncheckedCreateNestedManyWithoutProfileInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileCreateOrConnectWithoutPortfolioInput = {
@@ -942,6 +973,7 @@ export type ProfileUpdateWithoutPortfolioInput = {
   skills?: Prisma.ProfileSkillUpdateManyWithoutProfileNestedInput
   workHistory?: Prisma.WorkHistoryUpdateManyWithoutProfileNestedInput
   verificationRequests?: Prisma.VerificationRequestUpdateManyWithoutProfileNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutProfileNestedInput
 }
 
 export type ProfileUncheckedUpdateWithoutPortfolioInput = {
@@ -961,6 +993,7 @@ export type ProfileUncheckedUpdateWithoutPortfolioInput = {
   skills?: Prisma.ProfileSkillUncheckedUpdateManyWithoutProfileNestedInput
   workHistory?: Prisma.WorkHistoryUncheckedUpdateManyWithoutProfileNestedInput
   verificationRequests?: Prisma.VerificationRequestUncheckedUpdateManyWithoutProfileNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutProfileNestedInput
 }
 
 export type ProfileCreateWithoutWorkHistoryInput = {
@@ -980,6 +1013,7 @@ export type ProfileCreateWithoutWorkHistoryInput = {
   skills?: Prisma.ProfileSkillCreateNestedManyWithoutProfileInput
   portfolio?: Prisma.PortfolioItemCreateNestedManyWithoutProfileInput
   verificationRequests?: Prisma.VerificationRequestCreateNestedManyWithoutProfileInput
+  profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileUncheckedCreateWithoutWorkHistoryInput = {
@@ -999,6 +1033,7 @@ export type ProfileUncheckedCreateWithoutWorkHistoryInput = {
   skills?: Prisma.ProfileSkillUncheckedCreateNestedManyWithoutProfileInput
   portfolio?: Prisma.PortfolioItemUncheckedCreateNestedManyWithoutProfileInput
   verificationRequests?: Prisma.VerificationRequestUncheckedCreateNestedManyWithoutProfileInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileCreateOrConnectWithoutWorkHistoryInput = {
@@ -1034,6 +1069,7 @@ export type ProfileUpdateWithoutWorkHistoryInput = {
   skills?: Prisma.ProfileSkillUpdateManyWithoutProfileNestedInput
   portfolio?: Prisma.PortfolioItemUpdateManyWithoutProfileNestedInput
   verificationRequests?: Prisma.VerificationRequestUpdateManyWithoutProfileNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutProfileNestedInput
 }
 
 export type ProfileUncheckedUpdateWithoutWorkHistoryInput = {
@@ -1053,6 +1089,7 @@ export type ProfileUncheckedUpdateWithoutWorkHistoryInput = {
   skills?: Prisma.ProfileSkillUncheckedUpdateManyWithoutProfileNestedInput
   portfolio?: Prisma.PortfolioItemUncheckedUpdateManyWithoutProfileNestedInput
   verificationRequests?: Prisma.VerificationRequestUncheckedUpdateManyWithoutProfileNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutProfileNestedInput
 }
 
 export type ProfileCreateWithoutVerificationRequestsInput = {
@@ -1072,6 +1109,7 @@ export type ProfileCreateWithoutVerificationRequestsInput = {
   skills?: Prisma.ProfileSkillCreateNestedManyWithoutProfileInput
   portfolio?: Prisma.PortfolioItemCreateNestedManyWithoutProfileInput
   workHistory?: Prisma.WorkHistoryCreateNestedManyWithoutProfileInput
+  profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileUncheckedCreateWithoutVerificationRequestsInput = {
@@ -1091,6 +1129,7 @@ export type ProfileUncheckedCreateWithoutVerificationRequestsInput = {
   skills?: Prisma.ProfileSkillUncheckedCreateNestedManyWithoutProfileInput
   portfolio?: Prisma.PortfolioItemUncheckedCreateNestedManyWithoutProfileInput
   workHistory?: Prisma.WorkHistoryUncheckedCreateNestedManyWithoutProfileInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileCreateOrConnectWithoutVerificationRequestsInput = {
@@ -1126,6 +1165,7 @@ export type ProfileUpdateWithoutVerificationRequestsInput = {
   skills?: Prisma.ProfileSkillUpdateManyWithoutProfileNestedInput
   portfolio?: Prisma.PortfolioItemUpdateManyWithoutProfileNestedInput
   workHistory?: Prisma.WorkHistoryUpdateManyWithoutProfileNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutProfileNestedInput
 }
 
 export type ProfileUncheckedUpdateWithoutVerificationRequestsInput = {
@@ -1145,6 +1185,103 @@ export type ProfileUncheckedUpdateWithoutVerificationRequestsInput = {
   skills?: Prisma.ProfileSkillUncheckedUpdateManyWithoutProfileNestedInput
   portfolio?: Prisma.PortfolioItemUncheckedUpdateManyWithoutProfileNestedInput
   workHistory?: Prisma.WorkHistoryUncheckedUpdateManyWithoutProfileNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutProfileNestedInput
+}
+
+export type ProfileCreateWithoutProfileBookmarksInput = {
+  id?: string
+  headline: string
+  biography: string
+  location: string
+  websiteUrl?: string | null
+  profileImageUrl?: string | null
+  trustScore?: number
+  profileCompleteness?: number
+  completedDeals?: number
+  averageRating?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  user: Prisma.UserCreateNestedOneWithoutProfileInput
+  skills?: Prisma.ProfileSkillCreateNestedManyWithoutProfileInput
+  portfolio?: Prisma.PortfolioItemCreateNestedManyWithoutProfileInput
+  workHistory?: Prisma.WorkHistoryCreateNestedManyWithoutProfileInput
+  verificationRequests?: Prisma.VerificationRequestCreateNestedManyWithoutProfileInput
+}
+
+export type ProfileUncheckedCreateWithoutProfileBookmarksInput = {
+  id?: string
+  userId: string
+  headline: string
+  biography: string
+  location: string
+  websiteUrl?: string | null
+  profileImageUrl?: string | null
+  trustScore?: number
+  profileCompleteness?: number
+  completedDeals?: number
+  averageRating?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  skills?: Prisma.ProfileSkillUncheckedCreateNestedManyWithoutProfileInput
+  portfolio?: Prisma.PortfolioItemUncheckedCreateNestedManyWithoutProfileInput
+  workHistory?: Prisma.WorkHistoryUncheckedCreateNestedManyWithoutProfileInput
+  verificationRequests?: Prisma.VerificationRequestUncheckedCreateNestedManyWithoutProfileInput
+}
+
+export type ProfileCreateOrConnectWithoutProfileBookmarksInput = {
+  where: Prisma.ProfileWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProfileCreateWithoutProfileBookmarksInput, Prisma.ProfileUncheckedCreateWithoutProfileBookmarksInput>
+}
+
+export type ProfileUpsertWithoutProfileBookmarksInput = {
+  update: Prisma.XOR<Prisma.ProfileUpdateWithoutProfileBookmarksInput, Prisma.ProfileUncheckedUpdateWithoutProfileBookmarksInput>
+  create: Prisma.XOR<Prisma.ProfileCreateWithoutProfileBookmarksInput, Prisma.ProfileUncheckedCreateWithoutProfileBookmarksInput>
+  where?: Prisma.ProfileWhereInput
+}
+
+export type ProfileUpdateToOneWithWhereWithoutProfileBookmarksInput = {
+  where?: Prisma.ProfileWhereInput
+  data: Prisma.XOR<Prisma.ProfileUpdateWithoutProfileBookmarksInput, Prisma.ProfileUncheckedUpdateWithoutProfileBookmarksInput>
+}
+
+export type ProfileUpdateWithoutProfileBookmarksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  headline?: Prisma.StringFieldUpdateOperationsInput | string
+  biography?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  trustScore?: Prisma.IntFieldUpdateOperationsInput | number
+  profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
+  completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
+  averageRating?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  user?: Prisma.UserUpdateOneRequiredWithoutProfileNestedInput
+  skills?: Prisma.ProfileSkillUpdateManyWithoutProfileNestedInput
+  portfolio?: Prisma.PortfolioItemUpdateManyWithoutProfileNestedInput
+  workHistory?: Prisma.WorkHistoryUpdateManyWithoutProfileNestedInput
+  verificationRequests?: Prisma.VerificationRequestUpdateManyWithoutProfileNestedInput
+}
+
+export type ProfileUncheckedUpdateWithoutProfileBookmarksInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  userId?: Prisma.StringFieldUpdateOperationsInput | string
+  headline?: Prisma.StringFieldUpdateOperationsInput | string
+  biography?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.StringFieldUpdateOperationsInput | string
+  websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  trustScore?: Prisma.IntFieldUpdateOperationsInput | number
+  profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
+  completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
+  averageRating?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  skills?: Prisma.ProfileSkillUncheckedUpdateManyWithoutProfileNestedInput
+  portfolio?: Prisma.PortfolioItemUncheckedUpdateManyWithoutProfileNestedInput
+  workHistory?: Prisma.WorkHistoryUncheckedUpdateManyWithoutProfileNestedInput
+  verificationRequests?: Prisma.VerificationRequestUncheckedUpdateManyWithoutProfileNestedInput
 }
 
 
@@ -1157,6 +1294,7 @@ export type ProfileCountOutputType = {
   portfolio: number
   workHistory: number
   verificationRequests: number
+  profileBookmarks: number
 }
 
 export type ProfileCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1164,6 +1302,7 @@ export type ProfileCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   portfolio?: boolean | ProfileCountOutputTypeCountPortfolioArgs
   workHistory?: boolean | ProfileCountOutputTypeCountWorkHistoryArgs
   verificationRequests?: boolean | ProfileCountOutputTypeCountVerificationRequestsArgs
+  profileBookmarks?: boolean | ProfileCountOutputTypeCountProfileBookmarksArgs
 }
 
 /**
@@ -1204,6 +1343,13 @@ export type ProfileCountOutputTypeCountVerificationRequestsArgs<ExtArgs extends 
   where?: Prisma.VerificationRequestWhereInput
 }
 
+/**
+ * ProfileCountOutputType without action
+ */
+export type ProfileCountOutputTypeCountProfileBookmarksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProfileBookmarkWhereInput
+}
+
 
 export type ProfileSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1224,6 +1370,7 @@ export type ProfileSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   portfolio?: boolean | Prisma.Profile$portfolioArgs<ExtArgs>
   workHistory?: boolean | Prisma.Profile$workHistoryArgs<ExtArgs>
   verificationRequests?: boolean | Prisma.Profile$verificationRequestsArgs<ExtArgs>
+  profileBookmarks?: boolean | Prisma.Profile$profileBookmarksArgs<ExtArgs>
   _count?: boolean | Prisma.ProfileCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["profile"]>
 
@@ -1284,6 +1431,7 @@ export type ProfileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   portfolio?: boolean | Prisma.Profile$portfolioArgs<ExtArgs>
   workHistory?: boolean | Prisma.Profile$workHistoryArgs<ExtArgs>
   verificationRequests?: boolean | Prisma.Profile$verificationRequestsArgs<ExtArgs>
+  profileBookmarks?: boolean | Prisma.Profile$profileBookmarksArgs<ExtArgs>
   _count?: boolean | Prisma.ProfileCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ProfileIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1301,6 +1449,7 @@ export type $ProfilePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     portfolio: Prisma.$PortfolioItemPayload<ExtArgs>[]
     workHistory: Prisma.$WorkHistoryPayload<ExtArgs>[]
     verificationRequests: Prisma.$VerificationRequestPayload<ExtArgs>[]
+    profileBookmarks: Prisma.$ProfileBookmarkPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1715,6 +1864,7 @@ export interface Prisma__ProfileClient<T, Null = never, ExtArgs extends runtime.
   portfolio<T extends Prisma.Profile$portfolioArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Profile$portfolioArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PortfolioItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   workHistory<T extends Prisma.Profile$workHistoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Profile$workHistoryArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$WorkHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   verificationRequests<T extends Prisma.Profile$verificationRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Profile$verificationRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$VerificationRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  profileBookmarks<T extends Prisma.Profile$profileBookmarksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Profile$profileBookmarksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProfileBookmarkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2251,6 +2401,30 @@ export type Profile$verificationRequestsArgs<ExtArgs extends runtime.Types.Exten
   take?: number
   skip?: number
   distinct?: Prisma.VerificationRequestScalarFieldEnum | Prisma.VerificationRequestScalarFieldEnum[]
+}
+
+/**
+ * Profile.profileBookmarks
+ */
+export type Profile$profileBookmarksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProfileBookmark
+   */
+  select?: Prisma.ProfileBookmarkSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProfileBookmark
+   */
+  omit?: Prisma.ProfileBookmarkOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProfileBookmarkInclude<ExtArgs> | null
+  where?: Prisma.ProfileBookmarkWhereInput
+  orderBy?: Prisma.ProfileBookmarkOrderByWithRelationInput | Prisma.ProfileBookmarkOrderByWithRelationInput[]
+  cursor?: Prisma.ProfileBookmarkWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProfileBookmarkScalarFieldEnum | Prisma.ProfileBookmarkScalarFieldEnum[]
 }
 
 /**

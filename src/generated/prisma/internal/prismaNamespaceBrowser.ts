@@ -88,7 +88,11 @@ export const ModelName = {
   TrustSignal: 'TrustSignal',
   Notification: 'Notification',
   AuditLog: 'AuditLog',
-  ModerationAction: 'ModerationAction'
+  ModerationAction: 'ModerationAction',
+  Connection: 'Connection',
+  ProfileBookmark: 'ProfileBookmark',
+  SupportTicket: 'SupportTicket',
+  TicketMessage: 'TicketMessage'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -612,6 +616,52 @@ export const ModerationActionScalarFieldEnum = {
 } as const
 
 export type ModerationActionScalarFieldEnum = (typeof ModerationActionScalarFieldEnum)[keyof typeof ModerationActionScalarFieldEnum]
+
+
+export const ConnectionScalarFieldEnum = {
+  id: 'id',
+  requesterId: 'requesterId',
+  receiverId: 'receiverId',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ConnectionScalarFieldEnum = (typeof ConnectionScalarFieldEnum)[keyof typeof ConnectionScalarFieldEnum]
+
+
+export const ProfileBookmarkScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  profileId: 'profileId',
+  createdAt: 'createdAt'
+} as const
+
+export type ProfileBookmarkScalarFieldEnum = (typeof ProfileBookmarkScalarFieldEnum)[keyof typeof ProfileBookmarkScalarFieldEnum]
+
+
+export const SupportTicketScalarFieldEnum = {
+  id: 'id',
+  authorId: 'authorId',
+  subject: 'subject',
+  category: 'category',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SupportTicketScalarFieldEnum = (typeof SupportTicketScalarFieldEnum)[keyof typeof SupportTicketScalarFieldEnum]
+
+
+export const TicketMessageScalarFieldEnum = {
+  id: 'id',
+  ticketId: 'ticketId',
+  senderId: 'senderId',
+  body: 'body',
+  createdAt: 'createdAt'
+} as const
+
+export type TicketMessageScalarFieldEnum = (typeof TicketMessageScalarFieldEnum)[keyof typeof TicketMessageScalarFieldEnum]
 
 
 export const SortOrder = {

@@ -1,3 +1,4 @@
+import "dotenv/config";
 import readline from "node:readline";
 import { getPrisma } from "../src/lib/db/prisma";
 import { hashPassword } from "../src/lib/auth/password";
@@ -174,6 +175,26 @@ export async function bootstrapProductionAdmin() {
         where: { name: "ADMIN" },
       });
 
+      const memberRole = await tx.role.upsert({
+        create: {
+          description: "Standard user access.",
+          label: "Member",
+          name: "MEMBER",
+        },
+        update: {},
+        where: { name: "MEMBER" },
+      });
+
+      const internalTesterRole = await tx.role.upsert({
+        create: {
+          description: "Internal beta tester access.",
+          label: "Internal Tester",
+          name: "INTERNAL_TESTER",
+        },
+        update: {},
+        where: { name: "INTERNAL_TESTER" },
+      });
+
       if (user) {
         logInfo("User found with matching email. Promoting to production administrator.");
         
@@ -190,6 +211,26 @@ export async function bootstrapProductionAdmin() {
           await tx.userRole.create({
             data: {
               roleId: adminRole.id,
+              userId: user.id,
+            },
+          });
+        }
+        
+        const hasMemberRole = user.roles.some((r) => r.roleId === memberRole.id);
+        if (!hasMemberRole) {
+          await tx.userRole.create({
+            data: {
+              roleId: memberRole.id,
+              userId: user.id,
+            },
+          });
+        }
+        
+        const hasInternalTesterRole = user.roles.some((r) => r.roleId === internalTesterRole.id);
+        if (!hasInternalTesterRole) {
+          await tx.userRole.create({
+            data: {
+              roleId: internalTesterRole.id,
               userId: user.id,
             },
           });
@@ -224,7 +265,7 @@ export async function bootstrapProductionAdmin() {
               },
             },
             roles: {
-              create: [{ roleId: adminRole.id }],
+              create: [{ roleId: adminRole.id }, { roleId: memberRole.id }, { roleId: internalTesterRole.id }],
             },
           },
           include: { roles: true },
@@ -251,7 +292,7 @@ export async function bootstrapProductionAdmin() {
           },
         });
       }
-    });
+    }, { maxWait: 10000, timeout: 30000 });
 
     logInfo("Bootstrap completed successfully.");
     return true;

@@ -9,11 +9,12 @@ import {
   Search,
   ShoppingBag,
   UserRoundPlus,
+  Wrench,
+  Users
 } from "lucide-react";
 
 import { usePathname } from "next/navigation";
 import { getAppRoute, getEnvironment } from "@/lib/navigation/app-routes";
-import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
 
 export function QuickActions() {
   const pathname = usePathname();
@@ -23,16 +24,21 @@ export function QuickActions() {
 
   const actions = [
     { label: "Find Work", icon: Search, href: getHref("discover") },
-    { label: "Offer a Skill", icon: UserRoundPlus, href: getHref("profile") },
+    { label: "Offer a Skill", icon: UserRoundPlus, href: getHref("new_opportunity") + "?type=SERVICE" },
     {
-      label: "Post Opportunity",
+      label: "Post an Opportunity",
       icon: PlusCircle,
       href: getHref("new_opportunity"),
     },
     {
-      label: "Find Co-founder",
-      icon: Briefcase,
-      href: `${getHref("discover")}?type=COFOUNDER`,
+      label: "Find People",
+      icon: Users,
+      href: "/app/network",
+    },
+    {
+      label: "Register a Business",
+      icon: Building2,
+      href: `${getHref("discover")}?type=BUSINESS`,
     },
     {
       label: "Find a Partner",
@@ -40,51 +46,32 @@ export function QuickActions() {
       href: `${getHref("discover")}?type=PARTNERSHIP`,
     },
     {
-      label: "Explore Businesses",
-      icon: Building2,
-      href: `${getHref("discover")}?type=BUSINESS`,
+      label: "List an Item",
+      icon: ShoppingBag,
+      href: getHref("new_opportunity") + "?type=MARKET",
     },
     {
-      label: "Buy or Sell",
-      icon: ShoppingBag,
-      href: `${getHref("discover")}?type=MARKETPLACE`,
+      label: "Explore Services",
+      icon: Wrench,
+      href: "/app/services",
     },
   ];
 
   return (
     <div className="rounded-[24px] bg-[color:var(--px-surface)] p-5 shadow-sm ring-1 ring-[color:var(--px-border)] transition-colors duration-200 sm:p-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-7">
-        {actions.map((action, i) => {
-          const content = (
-            <div className="group flex min-h-[92px] flex-col items-center justify-center gap-3 rounded-[var(--px-radius-sm)] border border-transparent p-2 transition-colors hover:border-[color:var(--px-primary)]/35 hover:bg-[color:var(--px-surface-soft)]">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)] transition-transform group-hover:scale-105 group-hover:text-[color:var(--px-primary-strong)]">
-                <action.icon size={23} />
-              </div>
-              <span className="text-center text-xs font-semibold text-[color:var(--px-text)]">
-                {action.label}
-              </span>
-            </div>
-          );
-
-          if (action.href === "DIALOG") {
-            return (
-              <FeatureStatusDialog key={i} featureName={action.label}>
-                <button
-                  className="w-full focus:outline-none"
-                  aria-label={action.label}
-                >
-                  {content}
-                </button>
-              </FeatureStatusDialog>
-            );
-          }
-
-          return (
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-8">
+        {actions.map((action, i) => (
             <Link key={i} href={action.href} title={action.label}>
-              {content}
+              <div className="group flex min-h-[92px] flex-col items-center justify-center gap-3 rounded-[var(--px-radius-sm)] border border-transparent p-2 transition-colors hover:border-[color:var(--px-primary)]/35 hover:bg-[color:var(--px-surface-soft)]">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)] transition-transform group-hover:scale-105 group-hover:text-[color:var(--px-primary-strong)]">
+                  <action.icon size={23} />
+                </div>
+                <span className="text-center text-xs font-semibold text-[color:var(--px-text)]">
+                  {action.label}
+                </span>
+              </div>
             </Link>
-          );
-        })}
+        ))}
       </div>
     </div>
   );

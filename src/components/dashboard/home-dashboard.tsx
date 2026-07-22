@@ -21,6 +21,7 @@ import { DashboardMetricCard } from "./dashboard-metric-card";
 import { QuickActions } from "./quick-actions";
 import { RecommendedProfiles } from "./recommended-profiles";
 import { RecommendedOpportunities } from "./recommended-opportunities";
+import { ActivityFeed } from "./activity-feed";
 import { Card } from "@/components/ui/card";
 
 export function HomeDashboard({ data }: { data: HomeDashboardData }) {
@@ -33,17 +34,18 @@ export function HomeDashboard({ data }: { data: HomeDashboardData }) {
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
       {/* Main Content Column */}
       <div className="flex min-w-0 flex-col gap-6">
-        <FeatureStatusDialog featureName="Search functionality">
-          <button className="flex h-12 w-full items-center gap-3 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-muted)] px-4 text-left transition-colors hover:border-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:hidden">
-            <Search
-              size={18}
-              className="shrink-0 text-[color:var(--px-primary)]"
-            />
-            <span className="min-w-0 truncate text-sm font-medium text-[color:var(--px-text-muted)]">
-              Search opportunities, people and startups...
-            </span>
-          </button>
-        </FeatureStatusDialog>
+        <Link
+          href={getHref("discover")}
+          className="flex h-12 w-full items-center gap-3 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-muted)] px-4 text-left transition-colors hover:border-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:hidden"
+        >
+          <Search
+            size={18}
+            className="shrink-0 text-[color:var(--px-primary)]"
+          />
+          <span className="min-w-0 truncate text-sm font-medium text-[color:var(--px-text-muted)]">
+            Search opportunities, people and startups...
+          </span>
+        </Link>
 
         <Card className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <div>
@@ -108,6 +110,10 @@ export function HomeDashboard({ data }: { data: HomeDashboardData }) {
         />
 
         <RecommendedProfiles profiles={data.recommendedProfiles} />
+
+        {data.activityFeed && data.activityFeed.length > 0 && (
+          <ActivityFeed feed={data.activityFeed} />
+        )}
 
         <ConnectionStrip connections={data.connections} user={data.user} />
       </div>

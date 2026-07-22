@@ -23,6 +23,12 @@ export default function NewOpportunityPage() {
               <Select name="type" required>
                 <option value="FREELANCE_PROJECT">Freelance project</option>
                 <option value="JOB">Job</option>
+                <option value="SERVICE">Service</option>
+                <option value="PROPERTY">Real Estate</option>
+                <option value="PARTNERSHIP">Partnership</option>
+                <option value="STARTUP">Startup</option>
+                <option value="COFOUNDER">Cofounder</option>
+                <option value="INVESTMENT">Investment</option>
               </Select>
             </Field>
             <Field label="Category">

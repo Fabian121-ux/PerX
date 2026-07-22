@@ -18,8 +18,9 @@ export default defineConfig({
     ? undefined
     : {
         command:
-          "npx cross-env PERX_SIGNUP_MODE=open_beta PERX_BETA_MAX_USERS=10 npm run dev:mock -- --port 3100",
+          "npx cross-env PERX_SIGNUP_MODE=open_beta PERX_BETA_MAX_USERS=10 npm run dev:mock -- -p 3100 -H 127.0.0.1",
         reuseExistingServer: true,
         url: defaultBaseURL,
+        timeout: 120 * 1000,
       },
 });

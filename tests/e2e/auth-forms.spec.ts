@@ -49,8 +49,8 @@ test.describe("auth form experience", () => {
   }) => {
     await page.goto("/sign-up");
 
-    const emailHeight = await page.locator('input[name="email"]').evaluate((node) => window.getComputedStyle(node).height);
-    const passwordHeight = await page.locator('input[name="password"]').evaluate((node) => window.getComputedStyle(node).height);
+    const emailHeight = await page.getByLabel("Email address").evaluate((node) => window.getComputedStyle(node).height);
+    const passwordHeight = await page.getByLabel("Password", { exact: true }).evaluate((node) => window.getComputedStyle(node).height);
 
     expect(emailHeight).toBe(passwordHeight);
   });
@@ -80,7 +80,7 @@ test.describe("auth form experience", () => {
 
     await page.goto("/sign-up");
 
-    await expect(page.getByRole("heading", { name: "temporarily unavailable" })).toBeVisible();
+    await expect(page.getByRole("alert").filter({ hasText: "temporarily unavailable" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Retry connection" })).toBeVisible();
 
     // The retry action should reload or refresh the route

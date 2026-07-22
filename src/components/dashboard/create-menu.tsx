@@ -44,47 +44,104 @@ export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
                 size={16}
                 className="text-[color:var(--px-text-muted)]"
               />
-              Post an opportunity
+              Post opportunity
             </Link>
           </DropdownMenu.Item>
 
-          <FeatureStatusDialog featureName="Create a project">
-            <DropdownMenu.Item asChild onSelect={(e) => e.preventDefault()}>
-              <button className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
-                <FileSignature
-                  size={16}
-                  className="text-[color:var(--px-text-muted)]"
-                />
-                Create a project
-              </button>
-            </DropdownMenu.Item>
-          </FeatureStatusDialog>
+          <DropdownMenu.Item asChild>
+            <Link
+              href={getHref("/app/opportunities/new")}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+            >
+              <FileSignature
+                size={16}
+                className="text-[color:var(--px-text-muted)]"
+              />
+              Offer service
+            </Link>
+          </DropdownMenu.Item>
 
-          <FeatureStatusDialog featureName="Start a deal">
-            <DropdownMenu.Item asChild onSelect={(e) => e.preventDefault()}>
-              <button className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
-                <Handshake
-                  size={16}
-                  className="text-[color:var(--px-text-muted)]"
-                />
-                Start a deal
-              </button>
-            </DropdownMenu.Item>
-          </FeatureStatusDialog>
+          <DropdownMenu.Item asChild>
+            <Link
+              href={getHref("/app/opportunities/new")}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+            >
+              <Handshake
+                size={16}
+                className="text-[color:var(--px-text-muted)]"
+              />
+              Request service
+            </Link>
+          </DropdownMenu.Item>
 
           <DropdownMenu.Separator className="my-1 h-px bg-[color:var(--px-border)]" />
 
-          <FeatureStatusDialog featureName="Add portfolio work">
-            <DropdownMenu.Item asChild onSelect={(e) => e.preventDefault()}>
-              <button className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
-                <FolderPlus
-                  size={16}
-                  className="text-[color:var(--px-text-muted)]"
-                />
-                Add portfolio work
-              </button>
-            </DropdownMenu.Item>
-          </FeatureStatusDialog>
+          <DropdownMenu.Item asChild>
+            <Link
+              href={getHref("/app/opportunities/new")}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+            >
+              <FolderPlus
+                size={16}
+                className="text-[color:var(--px-text-muted)]"
+              />
+              Create real-estate listing
+            </Link>
+          </DropdownMenu.Item>
+          
+          <DropdownMenu.Item asChild>
+            <Link
+              href={getHref("/app/opportunities/new")}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+            >
+              <Plus
+                size={16}
+                className="text-[color:var(--px-text-muted)]"
+              />
+              Create logistics listing
+            </Link>
+          </DropdownMenu.Item>
+
+          <DropdownMenu.Item asChild>
+            <Link
+              href={getHref("/app/opportunities/new")}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+            >
+              <Plus
+                size={16}
+                className="text-[color:var(--px-text-muted)]"
+              />
+              Create travel/stay listing
+            </Link>
+          </DropdownMenu.Item>
+
+          <DropdownMenu.Item asChild>
+            <Link
+              href={getHref("/app/opportunities/new")}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+            >
+              <Plus
+                size={16}
+                className="text-[color:var(--px-text-muted)]"
+              />
+              Create market listing
+            </Link>
+          </DropdownMenu.Item>
+
+          <DropdownMenu.Separator className="my-1 h-px bg-[color:var(--px-border)]" />
+
+          <DropdownMenu.Item asChild>
+            <Link
+              href={getHref("/app/opportunities/new")}
+              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+            >
+              <Handshake
+                size={16}
+                className="text-[color:var(--px-text-muted)]"
+              />
+              Find partner
+            </Link>
+          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
