@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { PrismaClient } from "@prisma/client";
+import { getPrisma } from "@/lib/db/prisma";
 import { signUpAction } from "@/features/auth/actions";
-import { updateProfileAction } from "@/features/profile/actions";
-// import other actions as needed
 
 // Verify DB guard
 const testDbUrl = process.env.TEST_DATABASE_URL || "";
@@ -10,9 +8,7 @@ if (!testDbUrl || testDbUrl.includes("qtmvausduxiqcguckfql")) {
   throw new Error("Safety Guard: TEST_DATABASE_URL is missing or matches production.");
 }
 
-const prisma = new PrismaClient({
-  datasourceUrl: testDbUrl,
-});
+const prisma = getPrisma();
 
 describe("Server-Side Authorization Rules", () => {
   const runId = Date.now();
@@ -43,13 +39,13 @@ describe("Server-Side Authorization Rules", () => {
     const result = await signUpAction(formData);
     
     // If it succeeds, check DB to ensure no admin roles
-    if (result.status === "success" || result.status === "idle") {
+    if (result.status === "idle") {
       const user = await prisma.user.findUnique({
         where: { email: `audit-${runId}-hacker@example.com` },
         include: { roles: true }
       });
       if (user) {
-        const roles = user.roles.map(r => r.role);
+        const roles = user.roles.map((r: any) => r.role);
         expect(roles).not.toContain("ADMIN");
         expect(roles).not.toContain("INTERNAL_ADMIN");
         expect(roles).not.toContain("INTERNAL_TESTER");

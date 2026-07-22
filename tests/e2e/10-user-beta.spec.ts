@@ -1,13 +1,11 @@
 import { test, expect } from "@playwright/test";
 import { enforceTestDatabaseIsolation } from "./utils/db-guard";
-import { PrismaClient } from "@prisma/client";
+import { getPrisma } from "../../src/lib/db/prisma";
 
 // Guard immediately
 enforceTestDatabaseIsolation();
 
-const prisma = new PrismaClient({
-  datasourceUrl: process.env.TEST_DATABASE_URL,
-});
+const prisma = getPrisma();
 
 test.describe("10-User Beta constraints and Core Workflow", () => {
   const runId = Date.now();
@@ -75,7 +73,7 @@ test.describe("10-User Beta constraints and Core Workflow", () => {
 
     for (const u of createdUsers) {
       expect(u.betaClassification).toBe("PUBLIC_BETA_USER");
-      const roles = u.roles.map(r => r.role);
+      const roles = u.roles.map((r: any) => r.role);
       expect(roles).toContain("MEMBER");
       expect(roles).not.toContain("ADMIN");
       expect(roles).not.toContain("INTERNAL_TESTER");
