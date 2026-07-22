@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("primary public journey loads core routes", async ({ page }) => {
+test("primary public journey loads homepage and discover", async ({ page }) => {
   await page.goto("/");
   await expect(
     page.getByRole("heading", {
@@ -11,20 +11,26 @@ test("primary public journey loads core routes", async ({ page }) => {
   await expect(
     page.getByRole("link", { name: "Explore discovery" }).first(),
   ).toHaveAttribute("href", "/discover");
+  
   await page.goto("/discover");
   await expect(
     page.getByRole("heading", {
       name: "Find trusted people, work and business opportunities.",
     }),
   ).toBeVisible();
+});
 
+test("primary public journey can view onboarding redesign article", async ({ page }) => {
+  await page.goto("/discover");
   await page
     .getByRole("link", { name: /Trust-led onboarding redesign/ })
     .click();
   await expect(
     page.getByRole("heading", { name: "Trust-led onboarding redesign" }),
   ).toBeVisible();
+});
 
+test("primary public journey can load sign up", async ({ page }) => {
   await page.goto("/sign-up");
   await expect(
     page.getByRole("heading", { name: "Create your PerX account" }),
