@@ -4,6 +4,7 @@ import { Plus, ShieldCheck } from "lucide-react";
 
 import type { DashboardConnection, HomeDashboardData } from "@/components/dashboard/types";
 import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
+import Link from "next/link";
 
 export function ConnectionStrip({
   connections,
@@ -24,21 +25,19 @@ export function ConnectionStrip({
     <section aria-label="People in your opportunity network" className="dashboard-scroll -mx-4 overflow-x-auto px-4 pb-4 pt-2 scrollbar-hide sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
       <div className="flex w-max gap-4 sm:gap-6">
         {/* Current User Item */}
-        <FeatureStatusDialog featureName="View profile">
-          <button className="group flex flex-col items-center gap-2 focus:outline-none snap-start shrink-0">
-            <div className="relative">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--px-surface-soft)] ring-2 ring-[color:var(--px-border)] transition-transform group-hover:scale-105">
-                <span className="text-xl font-bold text-[color:var(--px-text)]">
-                  {getInitials(user.name)}
-                </span>
-              </div>
-              <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--px-primary)] ring-2 ring-[color:var(--px-surface)]">
-                <Plus size={12} className="text-white" />
-              </div>
+        <Link href="/app/profile" className="group flex flex-col items-center gap-2 focus:outline-none snap-start shrink-0">
+          <div className="relative">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--px-surface-soft)] ring-2 ring-[color:var(--px-border)] transition-transform group-hover:scale-105">
+              <span className="text-xl font-bold text-[color:var(--px-text)]">
+                {getInitials(user.name)}
+              </span>
             </div>
-            <span className="text-xs font-medium text-[color:var(--px-text)]">Your profile</span>
-          </button>
-        </FeatureStatusDialog>
+            <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--px-primary)] ring-2 ring-[color:var(--px-surface)]">
+              <Plus size={12} className="text-white" />
+            </div>
+          </div>
+          <span className="text-xs font-medium text-[color:var(--px-text)]">Your profile</span>
+        </Link>
 
         {/* Connections */}
         {connections.map((conn) => (

@@ -19,6 +19,17 @@ export function proxy(request: NextRequest) {
     response.headers.set("x-perx-blocked-header", "x-middleware-subrequest");
   }
 
+  const { pathname } = request.nextUrl;
+  const isProtectedPage = pathname.startsWith("/app") || pathname.startsWith("/admin");
+  
+  const cookieName = process.env.SESSION_COOKIE_NAME || "perx_session";
+  const sessionCookie = request.cookies.get(cookieName);
+
+  if (!sessionCookie && isProtectedPage) {
+    const returnTo = encodeURIComponent(pathname);
+    return NextResponse.redirect(new URL(`/sign-in?returnTo=${returnTo}`, request.url));
+  }
+
   return response;
 }
 

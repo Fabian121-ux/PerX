@@ -23,16 +23,28 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
       .join("")
       .substring(0, 2)
       .toUpperCase();
+
+  const getUsernameInitial = (username: string) =>
+    username ? username.charAt(0).toUpperCase() : "";
   
 
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[color:var(--px-primary)] font-bold text-white ring-2 ring-[color:var(--px-surface)] transition-shadow hover:ring-[color:var(--px-primary)] focus:outline-none focus:ring-[color:var(--px-primary)]"
-          aria-label="Account menu"
+          className="flex h-10 w-10 overflow-hidden shrink-0 items-center justify-center rounded-full bg-[color:var(--px-primary)] font-bold text-white ring-2 ring-[color:var(--px-surface)] transition-shadow hover:ring-[color:var(--px-primary)] focus:outline-none focus:ring-[color:var(--px-primary)]"
+          aria-label="Open account menu"
         >
-          {getInitials(user.name || "User")}
+          {user.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={user.imageUrl} alt={user.name} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+          ) : user.name ? (
+            getInitials(user.name)
+          ) : user.username ? (
+            getUsernameInitial(user.username)
+          ) : (
+            <UserRound size={20} />
+          )}
         </button>
       </DropdownMenu.Trigger>
       
@@ -54,23 +66,19 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
           
           <DropdownMenu.Separator className="my-1 h-px bg-[color:var(--px-border)]" />
           
-          <FeatureStatusDialog featureName="View profile">
-            <DropdownMenu.Item asChild onSelect={(e) => e.preventDefault()}>
-              <button className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
-                <UserRound size={16} className="text-[color:var(--px-text-muted)]" />
-                View profile
-              </button>
-            </DropdownMenu.Item>
-          </FeatureStatusDialog>
+          <DropdownMenu.Item asChild onSelect={() => {}}>
+            <Link href="/app/profile" className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
+              <UserRound size={16} className="text-[color:var(--px-text-muted)]" />
+              View profile
+            </Link>
+          </DropdownMenu.Item>
 
-          <FeatureStatusDialog featureName="Settings">
-            <DropdownMenu.Item asChild onSelect={(e) => e.preventDefault()}>
-              <button className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
-                <Settings size={16} className="text-[color:var(--px-text-muted)]" />
-                Settings
-              </button>
-            </DropdownMenu.Item>
-          </FeatureStatusDialog>
+          <DropdownMenu.Item asChild>
+            <Link href="/app/settings" className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
+              <Settings size={16} className="text-[color:var(--px-text-muted)]" />
+              Settings
+            </Link>
+          </DropdownMenu.Item>
           
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)] data-[state=open]:bg-[color:var(--px-muted)]">

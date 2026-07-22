@@ -46,7 +46,7 @@ describe("Messaging Actions", () => {
       // If we don't have a real DB running, Prisma will throw an initialization error, 
       // which is caught by the try-catch block and returns a generic error.
       expect(result.error).toBeDefined();
-    } catch (e) {
+    } catch {
       // Expected if DB is not available
     }
   });

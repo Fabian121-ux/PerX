@@ -1,9 +1,11 @@
 import { BrandLogo } from "@/components/brand-logo";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { SignUpForm } from "@/components/auth/sign-up-form";
 import { RetryButton } from "@/components/auth/retry-button";
 import { PublicPageShell } from "@/components/standard-page";
 import { Card } from "@/components/ui/card";
+import { getCurrentUser } from "@/lib/auth/session";
 import type { AuthFormState } from "@/features/auth/actions";
 import {
   BETA_FULL_MESSAGE,
@@ -29,6 +31,10 @@ export default async function SignUpPage({
   const error = params.error
     ? errors[params.error] || "An unexpected error occurred."
     : null;
+
+  const currentUser = await getCurrentUser().catch(() => null);
+  if (currentUser) redirect("/app");
+
   const initialState: AuthFormState | undefined = error
     ? { message: error, status: "error" }
     : undefined;

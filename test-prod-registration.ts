@@ -29,7 +29,7 @@ import { chromium } from 'playwright';
   try {
     await page.waitForURL('**/app/profile/setup', { timeout: 15000 });
     console.log('SUCCESS: Reached /app/profile/setup. Real user registered successfully.');
-  } catch (error) {
+  } catch {
     console.error('FAILED: Did not reach /app/profile/setup within the timeout.');
     const errorText = await page.evaluate(() => document.body.innerText);
     console.error('Page text:', errorText);

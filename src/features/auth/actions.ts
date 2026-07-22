@@ -393,7 +393,7 @@ export async function signInAction(
 
 export async function signOutAction() {
   await destroySession();
-  redirect("/");
+  redirect("/sign-in?signedOut=1");
 }
 
 export async function passwordRecoveryAction(formData: FormData) {

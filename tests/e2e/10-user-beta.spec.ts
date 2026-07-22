@@ -23,7 +23,7 @@ test.describe("10-User Beta constraints and Core Workflow", () => {
   test("Beta registration capacity restricts to 10 users max using real registration path", async ({ page, request }) => {
     // Check initial count
     const initialCount = await prisma.user.count({
-      where: { role: { notIn: ["INTERNAL_ADMIN", "INTERNAL_TESTER", "SYSTEM_ACCOUNT"] }, isActive: true }
+      where: { accountClassification: { notIn: ["INTERNAL_ADMIN", "INTERNAL_TEST_USER", "SYSTEM_ACCOUNT"] }, isActive: true }
     });
 
     let successfulRegistrations = 0;
@@ -66,14 +66,14 @@ test.describe("10-User Beta constraints and Core Workflow", () => {
     // Verify in database
     const createdUsers = await prisma.user.findMany({
       where: { email: { startsWith: `audit-${runId}-` } },
-      include: { roles: true }
+      include: { roles: { include: { role: true } } }
     });
 
     expect(createdUsers.length).toBeLessThanOrEqual(10);
 
     for (const u of createdUsers) {
-      expect(u.betaClassification).toBe("PUBLIC_BETA_USER");
-      const roles = u.roles.map((r: any) => r.role);
+      expect(u.accountClassification).toBe("PUBLIC_BETA_USER");
+      const roles = u.roles.map((r: any) => r.role.name);
       expect(roles).toContain("MEMBER");
       expect(roles).not.toContain("ADMIN");
       expect(roles).not.toContain("INTERNAL_TESTER");
@@ -81,7 +81,7 @@ test.describe("10-User Beta constraints and Core Workflow", () => {
     }
   });
 
-  test("Authenticated routes do not throw generic modals", async ({ page }) => {
+  test("Authenticated routes do not throw generic modals", async () => {
     // Handled by primary-flow test
     expect(true).toBeTruthy();
   });

@@ -16,7 +16,7 @@ export async function createSupportTicketAction(formData: FormData) {
     throw new Error("All fields are required");
   }
 
-  const ticket = await getPrisma().supportTicket.create({
+  await getPrisma().supportTicket.create({
     data: {
       authorId: user.id,
       subject,

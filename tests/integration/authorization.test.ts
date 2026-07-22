@@ -36,16 +36,16 @@ describe("Server-Side Authorization Rules", () => {
     formData.append("roles", "ADMIN");
     formData.append("role", "INTERNAL_ADMIN");
 
-    const result = await signUpAction(formData);
+    const result = await signUpAction({ status: "idle" }, formData);
     
     // If it succeeds, check DB to ensure no admin roles
     if (result.status === "idle") {
       const user = await prisma.user.findUnique({
         where: { email: `audit-${runId}-hacker@example.com` },
-        include: { roles: true }
+        include: { roles: { include: { role: true } } }
       });
       if (user) {
-        const roles = user.roles.map((r: any) => r.role);
+        const roles = user.roles.map((r: any) => r.role.name);
         expect(roles).not.toContain("ADMIN");
         expect(roles).not.toContain("INTERNAL_ADMIN");
         expect(roles).not.toContain("INTERNAL_TESTER");

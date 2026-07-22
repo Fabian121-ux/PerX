@@ -14,8 +14,14 @@ export type CurrentUser = {
   name: string;
   username: string;
   roles: RoleName[];
+  imageUrl?: string | null;
+  accountClassification?: string;
+  verificationStatus?: string;
+  createdAt?: Date;
   profile?: {
     headline: string;
+    biography?: string;
+    location?: string;
     trustScore: number;
     profileCompleteness: number;
   } | null;
@@ -113,6 +119,10 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   });
 
   if (!session || session.expiresAt <= new Date() || !session.user.isActive) {
+    if (session) {
+      // Clear invalid session from DB
+      await getPrisma().session.delete({ where: { id: session.id } });
+    }
     return null;
   }
 
@@ -120,21 +130,33 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     email: session.user.email,
     id: session.user.id,
     name: session.user.name,
+    username: session.user.username,
+    imageUrl: session.user.imageUrl,
+    accountClassification: session.user.accountClassification,
+    verificationStatus: session.user.verificationStatus,
+    createdAt: session.user.createdAt,
     profile: session.user.profile
       ? {
           headline: session.user.profile.headline,
+          biography: session.user.profile.biography,
+          location: session.user.profile.location,
           profileCompleteness: session.user.profile.profileCompleteness,
           trustScore: session.user.profile.trustScore,
         }
       : null,
     roles: session.user.roles.map((entry) => entry.role.name as RoleName),
-    username: session.user.username,
   };
 }
 
 export async function requireUser(): Promise<NonNullable<CurrentUser>> {
   const user = await getCurrentUser();
-  if (!user) redirect("/sign-in?next=/app");
+  if (!user) {
+    const cookieStore = await cookies();
+    if (cookieStore.has(sessionCookieName())) {
+      redirect("/api/auth/clear-session?next=/app");
+    }
+    redirect("/sign-in?next=/app");
+  }
   return user;
 }
 

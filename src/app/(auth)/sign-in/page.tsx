@@ -20,13 +20,15 @@ const errors: Record<string, string> = {
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; next?: string }>;
+  searchParams: Promise<{ error?: string; next?: string; signedOut?: string; returnTo?: string }>;
 }) {
   const params = await searchParams;
   const error = params.error ? errors[params.error] || "An unexpected error occurred." : null;
-  const nextPath = getSafeAuthRedirect(params.next);
+  const nextPath = getSafeAuthRedirect(params.next || params.returnTo);
   const currentUser = await getCurrentUser().catch(() => null);
   if (currentUser) redirect(nextPath);
+
+  const isSignedOut = params.signedOut === "1";
 
   const initialState: AuthFormState | undefined = error
     ? { message: error, status: "error" }
@@ -59,6 +61,13 @@ export default async function SignInPage({
           <Card className="w-full max-w-md">
           <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--px-primary)]">Sign in</p>
           <h1 className="mt-2 text-3xl font-bold text-[color:var(--px-text)]">Welcome back to perX</h1>
+          
+          {isSignedOut && !error && (
+            <div className="mb-4 mt-4 rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+              You have been signed out successfully.
+            </div>
+          )}
+
           <SignInForm initialState={initialState} nextPath={nextPath} />
           <div className="mt-5 flex items-center justify-between text-sm">
             <Link className="font-medium text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]" href="/password-recovery">

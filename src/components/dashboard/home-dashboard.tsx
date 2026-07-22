@@ -12,7 +12,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { HomeDashboardData } from "./types";
-import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
+
 import { getAppRoute, getEnvironment } from "@/lib/navigation/app-routes";
 
 import { ConnectionStrip } from "./connection-strip";
