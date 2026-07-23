@@ -7,6 +7,7 @@ import {
   FileSignature,
   Handshake,
   FolderPlus,
+  Rocket,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -37,20 +38,20 @@ export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
         >
           <DropdownMenu.Item asChild>
             <Link
-              href={getHref("/app/opportunities/new")}
+              href={getHref("/app/opportunities/new?type=FREELANCE_PROJECT")}
               className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)] data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
             >
               <Briefcase
                 size={16}
                 className="text-[color:var(--px-text-muted)]"
               />
-              Post opportunity
+              Create opportunity
             </Link>
           </DropdownMenu.Item>
 
           <DropdownMenu.Item asChild>
             <Link
-              href={getHref("/app/opportunities/new")}
+              href={getHref("/app/opportunities/new?type=SERVICE")}
               className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
             >
               <FileSignature
@@ -63,14 +64,14 @@ export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
 
           <DropdownMenu.Item asChild>
             <Link
-              href={getHref("/app/opportunities/new")}
+              href={getHref("/app/opportunities/new?type=PARTNERSHIP")}
               className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
             >
               <Handshake
                 size={16}
                 className="text-[color:var(--px-text-muted)]"
               />
-              Request service
+              Find partner
             </Link>
           </DropdownMenu.Item>
 
@@ -78,7 +79,7 @@ export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
 
           <DropdownMenu.Item asChild>
             <Link
-              href={getHref("/app/opportunities/new")}
+              href={getHref("/app/opportunities/new?type=PROPERTY&category=real-estate")}
               className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
             >
               <FolderPlus
@@ -88,58 +89,17 @@ export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
               Create real-estate listing
             </Link>
           </DropdownMenu.Item>
-          
-          <DropdownMenu.Item asChild>
-            <Link
-              href={getHref("/app/opportunities/new")}
-              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
-            >
-              <Plus
-                size={16}
-                className="text-[color:var(--px-text-muted)]"
-              />
-              Create logistics listing
-            </Link>
-          </DropdownMenu.Item>
 
           <DropdownMenu.Item asChild>
             <Link
-              href={getHref("/app/opportunities/new")}
+              href={getHref("/app/opportunities/new?type=STARTUP&category=startups")}
               className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
             >
-              <Plus
+              <Rocket
                 size={16}
                 className="text-[color:var(--px-text-muted)]"
               />
-              Create travel/stay listing
-            </Link>
-          </DropdownMenu.Item>
-
-          <DropdownMenu.Item asChild>
-            <Link
-              href={getHref("/app/opportunities/new")}
-              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
-            >
-              <Plus
-                size={16}
-                className="text-[color:var(--px-text-muted)]"
-              />
-              Create market listing
-            </Link>
-          </DropdownMenu.Item>
-
-          <DropdownMenu.Separator className="my-1 h-px bg-[color:var(--px-border)]" />
-
-          <DropdownMenu.Item asChild>
-            <Link
-              href={getHref("/app/opportunities/new")}
-              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
-            >
-              <Handshake
-                size={16}
-                className="text-[color:var(--px-text-muted)]"
-              />
-              Find partner
+              Create startup listing
             </Link>
           </DropdownMenu.Item>
         </DropdownMenu.Content>

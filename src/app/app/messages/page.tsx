@@ -18,7 +18,7 @@ type DbConversationLike = {
   id: string;
   messages: { body: string; createdAt: Date; id: string; senderId: string }[];
   opportunity?: { title: string } | null;
-  participants: { user?: { name: string | null; username: string | null } | null; userId: string }[];
+  participants: { user?: { imageUrl?: string | null; name: string | null; profile?: { profileImageUrl?: string | null } | null; username: string | null } | null; userId: string; lastReadAt?: Date | null }[];
 };
 
 function isPreviewConversation(conversation: unknown): conversation is PreviewConversationLike {
@@ -66,6 +66,7 @@ function toWorkspaceConversation(conversation: unknown, user: CurrentUser): Work
         ]
       : [],
     opportunityTitle: dbConversation.opportunity?.title ?? undefined,
+    participantImageUrl: otherParticipant?.imageUrl ?? otherParticipant?.profile?.profileImageUrl ?? null,
     participantName: otherParticipant?.name ?? dbConversation.opportunity?.title ?? "Conversation",
     participantRole: "Opportunity participant",
     participantUsername: otherParticipant?.username ?? undefined,

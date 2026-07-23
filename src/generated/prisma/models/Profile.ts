@@ -48,6 +48,13 @@ export type ProfileMinAggregateOutputType = {
   location: string | null
   websiteUrl: string | null
   profileImageUrl: string | null
+  profileImageStorageKey: string | null
+  isDiscoverable: boolean | null
+  showLocation: boolean | null
+  showSkills: boolean | null
+  allowConnectionRequests: boolean | null
+  allowMessagesFromConnections: boolean | null
+  allowMessagesFromMembers: boolean | null
   trustScore: number | null
   profileCompleteness: number | null
   completedDeals: number | null
@@ -64,6 +71,13 @@ export type ProfileMaxAggregateOutputType = {
   location: string | null
   websiteUrl: string | null
   profileImageUrl: string | null
+  profileImageStorageKey: string | null
+  isDiscoverable: boolean | null
+  showLocation: boolean | null
+  showSkills: boolean | null
+  allowConnectionRequests: boolean | null
+  allowMessagesFromConnections: boolean | null
+  allowMessagesFromMembers: boolean | null
   trustScore: number | null
   profileCompleteness: number | null
   completedDeals: number | null
@@ -80,6 +94,13 @@ export type ProfileCountAggregateOutputType = {
   location: number
   websiteUrl: number
   profileImageUrl: number
+  profileImageStorageKey: number
+  isDiscoverable: number
+  showLocation: number
+  showSkills: number
+  allowConnectionRequests: number
+  allowMessagesFromConnections: number
+  allowMessagesFromMembers: number
   trustScore: number
   profileCompleteness: number
   completedDeals: number
@@ -112,6 +133,13 @@ export type ProfileMinAggregateInputType = {
   location?: true
   websiteUrl?: true
   profileImageUrl?: true
+  profileImageStorageKey?: true
+  isDiscoverable?: true
+  showLocation?: true
+  showSkills?: true
+  allowConnectionRequests?: true
+  allowMessagesFromConnections?: true
+  allowMessagesFromMembers?: true
   trustScore?: true
   profileCompleteness?: true
   completedDeals?: true
@@ -128,6 +156,13 @@ export type ProfileMaxAggregateInputType = {
   location?: true
   websiteUrl?: true
   profileImageUrl?: true
+  profileImageStorageKey?: true
+  isDiscoverable?: true
+  showLocation?: true
+  showSkills?: true
+  allowConnectionRequests?: true
+  allowMessagesFromConnections?: true
+  allowMessagesFromMembers?: true
   trustScore?: true
   profileCompleteness?: true
   completedDeals?: true
@@ -144,6 +179,13 @@ export type ProfileCountAggregateInputType = {
   location?: true
   websiteUrl?: true
   profileImageUrl?: true
+  profileImageStorageKey?: true
+  isDiscoverable?: true
+  showLocation?: true
+  showSkills?: true
+  allowConnectionRequests?: true
+  allowMessagesFromConnections?: true
+  allowMessagesFromMembers?: true
   trustScore?: true
   profileCompleteness?: true
   completedDeals?: true
@@ -247,6 +289,13 @@ export type ProfileGroupByOutputType = {
   location: string
   websiteUrl: string | null
   profileImageUrl: string | null
+  profileImageStorageKey: string | null
+  isDiscoverable: boolean
+  showLocation: boolean
+  showSkills: boolean
+  allowConnectionRequests: boolean
+  allowMessagesFromConnections: boolean
+  allowMessagesFromMembers: boolean
   trustScore: number
   profileCompleteness: number
   completedDeals: number
@@ -286,6 +335,13 @@ export type ProfileWhereInput = {
   location?: Prisma.StringFilter<"Profile"> | string
   websiteUrl?: Prisma.StringNullableFilter<"Profile"> | string | null
   profileImageUrl?: Prisma.StringNullableFilter<"Profile"> | string | null
+  profileImageStorageKey?: Prisma.StringNullableFilter<"Profile"> | string | null
+  isDiscoverable?: Prisma.BoolFilter<"Profile"> | boolean
+  showLocation?: Prisma.BoolFilter<"Profile"> | boolean
+  showSkills?: Prisma.BoolFilter<"Profile"> | boolean
+  allowConnectionRequests?: Prisma.BoolFilter<"Profile"> | boolean
+  allowMessagesFromConnections?: Prisma.BoolFilter<"Profile"> | boolean
+  allowMessagesFromMembers?: Prisma.BoolFilter<"Profile"> | boolean
   trustScore?: Prisma.IntFilter<"Profile"> | number
   profileCompleteness?: Prisma.IntFilter<"Profile"> | number
   completedDeals?: Prisma.IntFilter<"Profile"> | number
@@ -308,6 +364,13 @@ export type ProfileOrderByWithRelationInput = {
   location?: Prisma.SortOrder
   websiteUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileImageStorageKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  isDiscoverable?: Prisma.SortOrder
+  showLocation?: Prisma.SortOrder
+  showSkills?: Prisma.SortOrder
+  allowConnectionRequests?: Prisma.SortOrder
+  allowMessagesFromConnections?: Prisma.SortOrder
+  allowMessagesFromMembers?: Prisma.SortOrder
   trustScore?: Prisma.SortOrder
   profileCompleteness?: Prisma.SortOrder
   completedDeals?: Prisma.SortOrder
@@ -333,6 +396,13 @@ export type ProfileWhereUniqueInput = Prisma.AtLeast<{
   location?: Prisma.StringFilter<"Profile"> | string
   websiteUrl?: Prisma.StringNullableFilter<"Profile"> | string | null
   profileImageUrl?: Prisma.StringNullableFilter<"Profile"> | string | null
+  profileImageStorageKey?: Prisma.StringNullableFilter<"Profile"> | string | null
+  isDiscoverable?: Prisma.BoolFilter<"Profile"> | boolean
+  showLocation?: Prisma.BoolFilter<"Profile"> | boolean
+  showSkills?: Prisma.BoolFilter<"Profile"> | boolean
+  allowConnectionRequests?: Prisma.BoolFilter<"Profile"> | boolean
+  allowMessagesFromConnections?: Prisma.BoolFilter<"Profile"> | boolean
+  allowMessagesFromMembers?: Prisma.BoolFilter<"Profile"> | boolean
   trustScore?: Prisma.IntFilter<"Profile"> | number
   profileCompleteness?: Prisma.IntFilter<"Profile"> | number
   completedDeals?: Prisma.IntFilter<"Profile"> | number
@@ -355,6 +425,13 @@ export type ProfileOrderByWithAggregationInput = {
   location?: Prisma.SortOrder
   websiteUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  profileImageStorageKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  isDiscoverable?: Prisma.SortOrder
+  showLocation?: Prisma.SortOrder
+  showSkills?: Prisma.SortOrder
+  allowConnectionRequests?: Prisma.SortOrder
+  allowMessagesFromConnections?: Prisma.SortOrder
+  allowMessagesFromMembers?: Prisma.SortOrder
   trustScore?: Prisma.SortOrder
   profileCompleteness?: Prisma.SortOrder
   completedDeals?: Prisma.SortOrder
@@ -379,6 +456,13 @@ export type ProfileScalarWhereWithAggregatesInput = {
   location?: Prisma.StringWithAggregatesFilter<"Profile"> | string
   websiteUrl?: Prisma.StringNullableWithAggregatesFilter<"Profile"> | string | null
   profileImageUrl?: Prisma.StringNullableWithAggregatesFilter<"Profile"> | string | null
+  profileImageStorageKey?: Prisma.StringNullableWithAggregatesFilter<"Profile"> | string | null
+  isDiscoverable?: Prisma.BoolWithAggregatesFilter<"Profile"> | boolean
+  showLocation?: Prisma.BoolWithAggregatesFilter<"Profile"> | boolean
+  showSkills?: Prisma.BoolWithAggregatesFilter<"Profile"> | boolean
+  allowConnectionRequests?: Prisma.BoolWithAggregatesFilter<"Profile"> | boolean
+  allowMessagesFromConnections?: Prisma.BoolWithAggregatesFilter<"Profile"> | boolean
+  allowMessagesFromMembers?: Prisma.BoolWithAggregatesFilter<"Profile"> | boolean
   trustScore?: Prisma.IntWithAggregatesFilter<"Profile"> | number
   profileCompleteness?: Prisma.IntWithAggregatesFilter<"Profile"> | number
   completedDeals?: Prisma.IntWithAggregatesFilter<"Profile"> | number
@@ -394,6 +478,13 @@ export type ProfileCreateInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -416,6 +507,13 @@ export type ProfileUncheckedCreateInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -436,6 +534,13 @@ export type ProfileUpdateInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -458,6 +563,13 @@ export type ProfileUncheckedUpdateInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -479,6 +591,13 @@ export type ProfileCreateManyInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -494,6 +613,13 @@ export type ProfileUpdateManyMutationInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -510,6 +636,13 @@ export type ProfileUncheckedUpdateManyInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -531,6 +664,13 @@ export type ProfileCountOrderByAggregateInput = {
   location?: Prisma.SortOrder
   websiteUrl?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrder
+  profileImageStorageKey?: Prisma.SortOrder
+  isDiscoverable?: Prisma.SortOrder
+  showLocation?: Prisma.SortOrder
+  showSkills?: Prisma.SortOrder
+  allowConnectionRequests?: Prisma.SortOrder
+  allowMessagesFromConnections?: Prisma.SortOrder
+  allowMessagesFromMembers?: Prisma.SortOrder
   trustScore?: Prisma.SortOrder
   profileCompleteness?: Prisma.SortOrder
   completedDeals?: Prisma.SortOrder
@@ -554,6 +694,13 @@ export type ProfileMaxOrderByAggregateInput = {
   location?: Prisma.SortOrder
   websiteUrl?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrder
+  profileImageStorageKey?: Prisma.SortOrder
+  isDiscoverable?: Prisma.SortOrder
+  showLocation?: Prisma.SortOrder
+  showSkills?: Prisma.SortOrder
+  allowConnectionRequests?: Prisma.SortOrder
+  allowMessagesFromConnections?: Prisma.SortOrder
+  allowMessagesFromMembers?: Prisma.SortOrder
   trustScore?: Prisma.SortOrder
   profileCompleteness?: Prisma.SortOrder
   completedDeals?: Prisma.SortOrder
@@ -570,6 +717,13 @@ export type ProfileMinOrderByAggregateInput = {
   location?: Prisma.SortOrder
   websiteUrl?: Prisma.SortOrder
   profileImageUrl?: Prisma.SortOrder
+  profileImageStorageKey?: Prisma.SortOrder
+  isDiscoverable?: Prisma.SortOrder
+  showLocation?: Prisma.SortOrder
+  showSkills?: Prisma.SortOrder
+  allowConnectionRequests?: Prisma.SortOrder
+  allowMessagesFromConnections?: Prisma.SortOrder
+  allowMessagesFromMembers?: Prisma.SortOrder
   trustScore?: Prisma.SortOrder
   profileCompleteness?: Prisma.SortOrder
   completedDeals?: Prisma.SortOrder
@@ -715,6 +869,13 @@ export type ProfileCreateWithoutUserInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -735,6 +896,13 @@ export type ProfileUncheckedCreateWithoutUserInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -771,6 +939,13 @@ export type ProfileUpdateWithoutUserInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -791,6 +966,13 @@ export type ProfileUncheckedUpdateWithoutUserInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -811,6 +993,13 @@ export type ProfileCreateWithoutSkillsInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -832,6 +1021,13 @@ export type ProfileUncheckedCreateWithoutSkillsInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -867,6 +1063,13 @@ export type ProfileUpdateWithoutSkillsInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -888,6 +1091,13 @@ export type ProfileUncheckedUpdateWithoutSkillsInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -907,6 +1117,13 @@ export type ProfileCreateWithoutPortfolioInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -928,6 +1145,13 @@ export type ProfileUncheckedCreateWithoutPortfolioInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -963,6 +1187,13 @@ export type ProfileUpdateWithoutPortfolioInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -984,6 +1215,13 @@ export type ProfileUncheckedUpdateWithoutPortfolioInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1003,6 +1241,13 @@ export type ProfileCreateWithoutWorkHistoryInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1024,6 +1269,13 @@ export type ProfileUncheckedCreateWithoutWorkHistoryInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1059,6 +1311,13 @@ export type ProfileUpdateWithoutWorkHistoryInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1080,6 +1339,13 @@ export type ProfileUncheckedUpdateWithoutWorkHistoryInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1099,6 +1365,13 @@ export type ProfileCreateWithoutVerificationRequestsInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1120,6 +1393,13 @@ export type ProfileUncheckedCreateWithoutVerificationRequestsInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1155,6 +1435,13 @@ export type ProfileUpdateWithoutVerificationRequestsInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1176,6 +1463,13 @@ export type ProfileUncheckedUpdateWithoutVerificationRequestsInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1195,6 +1489,13 @@ export type ProfileCreateWithoutProfileBookmarksInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1216,6 +1517,13 @@ export type ProfileUncheckedCreateWithoutProfileBookmarksInput = {
   location: string
   websiteUrl?: string | null
   profileImageUrl?: string | null
+  profileImageStorageKey?: string | null
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1251,6 +1559,13 @@ export type ProfileUpdateWithoutProfileBookmarksInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1272,6 +1587,13 @@ export type ProfileUncheckedUpdateWithoutProfileBookmarksInput = {
   location?: Prisma.StringFieldUpdateOperationsInput | string
   websiteUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   profileImageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  profileImageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  isDiscoverable?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLocation?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showSkills?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1359,6 +1681,13 @@ export type ProfileSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   location?: boolean
   websiteUrl?: boolean
   profileImageUrl?: boolean
+  profileImageStorageKey?: boolean
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: boolean
   profileCompleteness?: boolean
   completedDeals?: boolean
@@ -1382,6 +1711,13 @@ export type ProfileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   location?: boolean
   websiteUrl?: boolean
   profileImageUrl?: boolean
+  profileImageStorageKey?: boolean
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: boolean
   profileCompleteness?: boolean
   completedDeals?: boolean
@@ -1399,6 +1735,13 @@ export type ProfileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   location?: boolean
   websiteUrl?: boolean
   profileImageUrl?: boolean
+  profileImageStorageKey?: boolean
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: boolean
   profileCompleteness?: boolean
   completedDeals?: boolean
@@ -1416,6 +1759,13 @@ export type ProfileSelectScalar = {
   location?: boolean
   websiteUrl?: boolean
   profileImageUrl?: boolean
+  profileImageStorageKey?: boolean
+  isDiscoverable?: boolean
+  showLocation?: boolean
+  showSkills?: boolean
+  allowConnectionRequests?: boolean
+  allowMessagesFromConnections?: boolean
+  allowMessagesFromMembers?: boolean
   trustScore?: boolean
   profileCompleteness?: boolean
   completedDeals?: boolean
@@ -1424,7 +1774,7 @@ export type ProfileSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "headline" | "biography" | "location" | "websiteUrl" | "profileImageUrl" | "trustScore" | "profileCompleteness" | "completedDeals" | "averageRating" | "createdAt" | "updatedAt", ExtArgs["result"]["profile"]>
+export type ProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "headline" | "biography" | "location" | "websiteUrl" | "profileImageUrl" | "profileImageStorageKey" | "isDiscoverable" | "showLocation" | "showSkills" | "allowConnectionRequests" | "allowMessagesFromConnections" | "allowMessagesFromMembers" | "trustScore" | "profileCompleteness" | "completedDeals" | "averageRating" | "createdAt" | "updatedAt", ExtArgs["result"]["profile"]>
 export type ProfileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   skills?: boolean | Prisma.Profile$skillsArgs<ExtArgs>
@@ -1459,6 +1809,13 @@ export type $ProfilePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     location: string
     websiteUrl: string | null
     profileImageUrl: string | null
+    profileImageStorageKey: string | null
+    isDiscoverable: boolean
+    showLocation: boolean
+    showSkills: boolean
+    allowConnectionRequests: boolean
+    allowMessagesFromConnections: boolean
+    allowMessagesFromMembers: boolean
     trustScore: number
     profileCompleteness: number
     completedDeals: number
@@ -1901,6 +2258,13 @@ export interface ProfileFieldRefs {
   readonly location: Prisma.FieldRef<"Profile", 'String'>
   readonly websiteUrl: Prisma.FieldRef<"Profile", 'String'>
   readonly profileImageUrl: Prisma.FieldRef<"Profile", 'String'>
+  readonly profileImageStorageKey: Prisma.FieldRef<"Profile", 'String'>
+  readonly isDiscoverable: Prisma.FieldRef<"Profile", 'Boolean'>
+  readonly showLocation: Prisma.FieldRef<"Profile", 'Boolean'>
+  readonly showSkills: Prisma.FieldRef<"Profile", 'Boolean'>
+  readonly allowConnectionRequests: Prisma.FieldRef<"Profile", 'Boolean'>
+  readonly allowMessagesFromConnections: Prisma.FieldRef<"Profile", 'Boolean'>
+  readonly allowMessagesFromMembers: Prisma.FieldRef<"Profile", 'Boolean'>
   readonly trustScore: Prisma.FieldRef<"Profile", 'Int'>
   readonly profileCompleteness: Prisma.FieldRef<"Profile", 'Int'>
   readonly completedDeals: Prisma.FieldRef<"Profile", 'Int'>

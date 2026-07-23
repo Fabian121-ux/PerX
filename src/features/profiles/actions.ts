@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 import { getPrisma } from "@/lib/db/prisma";
 import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
@@ -27,6 +28,16 @@ function completeness(input: {
   return Math.min(score, 100);
 }
 
+function checkboxValue(
+  formData: FormData,
+  name: string,
+  defaultValue: boolean,
+) {
+  const values = formData.getAll(name).map(String);
+  if (!values.length) return defaultValue;
+  return values.includes("on");
+}
+
 export async function updateProfileAction(formData: FormData) {
   const user = await requireUser();
   if (getResolvedDataMode() === "mock") redirect("/app?mock=true");
@@ -40,6 +51,21 @@ export async function updateProfileAction(formData: FormData) {
     profileImageUrl: formData.get("profileImageUrl"),
     skills: formData.get("skills"),
     websiteUrl: formData.get("websiteUrl"),
+    isDiscoverable: checkboxValue(formData, "isDiscoverable", true),
+    showLocation: checkboxValue(formData, "showLocation", true),
+    showSkills: checkboxValue(formData, "showSkills", true),
+    allowConnectionRequests: checkboxValue(
+      formData,
+      "allowConnectionRequests",
+      true,
+    ),
+    allowMessagesFromConnections:
+      checkboxValue(formData, "allowMessagesFromConnections", true),
+    allowMessagesFromMembers: checkboxValue(
+      formData,
+      "allowMessagesFromMembers",
+      false,
+    ),
   });
   if (!parsed.success) redirect("/app/profile/edit?error=check-fields");
 
@@ -53,22 +79,41 @@ export async function updateProfileAction(formData: FormData) {
 
   try {
     await getPrisma().$transaction(async (tx) => {
+      await tx.user.update({
+        data: { imageUrl: parsed.data.profileImageUrl || null },
+        where: { id: user.id },
+      });
+
       await tx.profile.upsert({
         create: {
           biography: parsed.data.biography,
           headline: parsed.data.headline,
+          allowConnectionRequests: parsed.data.allowConnectionRequests,
+          allowMessagesFromConnections:
+            parsed.data.allowMessagesFromConnections,
+          allowMessagesFromMembers: parsed.data.allowMessagesFromMembers,
+          isDiscoverable: parsed.data.isDiscoverable,
           location: parsed.data.location,
           profileCompleteness: profileCompleteness,
           profileImageUrl: parsed.data.profileImageUrl || null,
+          showLocation: parsed.data.showLocation,
+          showSkills: parsed.data.showSkills,
           userId: user.id,
           websiteUrl: parsed.data.websiteUrl || null,
         },
         update: {
+          allowConnectionRequests: parsed.data.allowConnectionRequests,
+          allowMessagesFromConnections:
+            parsed.data.allowMessagesFromConnections,
+          allowMessagesFromMembers: parsed.data.allowMessagesFromMembers,
           biography: parsed.data.biography,
           headline: parsed.data.headline,
+          isDiscoverable: parsed.data.isDiscoverable,
           location: parsed.data.location,
           profileCompleteness: profileCompleteness,
           profileImageUrl: parsed.data.profileImageUrl || null,
+          showLocation: parsed.data.showLocation,
+          showSkills: parsed.data.showSkills,
           websiteUrl: parsed.data.websiteUrl || null,
         },
         where: { userId: user.id },
@@ -100,5 +145,9 @@ export async function updateProfileAction(formData: FormData) {
     entityId: user.id,
     entityType: "profile",
   });
+  revalidatePath("/app/profile");
+  revalidatePath("/app/profile/edit");
+  revalidatePath("/app/people");
+  revalidatePath(`/u/${user.username}`);
   redirect("/app/profile/edit?success=true");
 }

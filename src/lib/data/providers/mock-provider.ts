@@ -45,7 +45,7 @@ export const mockProvider: PerXDataProvider = {
     },
   },
   app: {
-    getDashboardMetrics: async (_userId: string) => {
+    getDashboardMetrics: async () => {
       return {
         deals: dealsStore.length,
         notifications: 3,
@@ -68,7 +68,7 @@ export const mockProvider: PerXDataProvider = {
         d.id === dealId && d.participants?.some((p: any) => p.username === userId || p.id === userId)
       ) || null;
     },
-    getConversations: async (_userId: string) => {
+    getConversations: async () => {
       return conversationsStore;
     },
     getConversationMessages: async (conversationId: string) => {

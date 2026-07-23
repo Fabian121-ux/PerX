@@ -20,14 +20,17 @@ test("primary public journey loads homepage and discover", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("primary public journey can view onboarding redesign article", async ({ page }) => {
+test("primary public journey can view an opportunity detail page", async ({ page }) => {
   await page.goto("/discover");
-  await page
-    .getByRole("link", { name: /Trust-led onboarding redesign/ })
-    .click();
-  await expect(
-    page.getByRole("heading", { name: "Trust-led onboarding redesign" }),
-  ).toBeVisible();
+  const detailsLink = page.getByRole("link", { name: /View details/ }).first();
+  test.skip(
+    (await detailsLink.count()) === 0,
+    "Configured database has no public opportunity available for this smoke test.",
+  );
+  await expect(detailsLink).toBeVisible();
+  await detailsLink.click();
+  await expect(page).toHaveURL(/\/opportunities\//);
+  await expect(page.getByRole("heading").first()).toBeVisible();
 });
 
 test("primary public journey can load sign up", async ({ page }) => {

@@ -6,7 +6,6 @@ import {
   Handshake,
   PlusCircle,
   Search,
-  ShoppingBag,
   UserRoundPlus,
   Wrench,
   Users
@@ -32,22 +31,17 @@ export function QuickActions() {
     {
       label: "Find People",
       icon: Users,
-      href: "/app/network",
+      href: "/app/people",
     },
     {
-      label: "Register a Business",
+      label: "Explore Startups",
       icon: Building2,
-      href: `${getHref("discover")}?type=BUSINESS`,
+      href: `${getHref("discover")}?type=STARTUP`,
     },
     {
       label: "Find a Partner",
       icon: Handshake,
       href: `${getHref("discover")}?type=PARTNERSHIP`,
-    },
-    {
-      label: "List an Item",
-      icon: ShoppingBag,
-      href: getHref("new_opportunity") + "?type=MARKET",
     },
     {
       label: "Explore Services",

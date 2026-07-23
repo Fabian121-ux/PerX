@@ -32,6 +32,7 @@ export type UserMinAggregateOutputType = {
   username: string | null
   accountClassification: $Enums.AccountClassification | null
   imageUrl: string | null
+  imageStorageKey: string | null
   emailVerifiedAt: Date | null
   verificationStatus: $Enums.VerificationStatus | null
   isActive: boolean | null
@@ -47,6 +48,7 @@ export type UserMaxAggregateOutputType = {
   username: string | null
   accountClassification: $Enums.AccountClassification | null
   imageUrl: string | null
+  imageStorageKey: string | null
   emailVerifiedAt: Date | null
   verificationStatus: $Enums.VerificationStatus | null
   isActive: boolean | null
@@ -62,6 +64,7 @@ export type UserCountAggregateOutputType = {
   username: number
   accountClassification: number
   imageUrl: number
+  imageStorageKey: number
   emailVerifiedAt: number
   verificationStatus: number
   isActive: number
@@ -79,6 +82,7 @@ export type UserMinAggregateInputType = {
   username?: true
   accountClassification?: true
   imageUrl?: true
+  imageStorageKey?: true
   emailVerifiedAt?: true
   verificationStatus?: true
   isActive?: true
@@ -94,6 +98,7 @@ export type UserMaxAggregateInputType = {
   username?: true
   accountClassification?: true
   imageUrl?: true
+  imageStorageKey?: true
   emailVerifiedAt?: true
   verificationStatus?: true
   isActive?: true
@@ -109,6 +114,7 @@ export type UserCountAggregateInputType = {
   username?: true
   accountClassification?: true
   imageUrl?: true
+  imageStorageKey?: true
   emailVerifiedAt?: true
   verificationStatus?: true
   isActive?: true
@@ -197,6 +203,7 @@ export type UserGroupByOutputType = {
   username: string
   accountClassification: $Enums.AccountClassification
   imageUrl: string | null
+  imageStorageKey: string | null
   emailVerifiedAt: Date | null
   verificationStatus: $Enums.VerificationStatus
   isActive: boolean
@@ -233,6 +240,7 @@ export type UserWhereInput = {
   username?: Prisma.StringFilter<"User"> | string
   accountClassification?: Prisma.EnumAccountClassificationFilter<"User"> | $Enums.AccountClassification
   imageUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  imageStorageKey?: Prisma.StringNullableFilter<"User"> | string | null
   emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFilter<"User"> | $Enums.VerificationStatus
   isActive?: Prisma.BoolFilter<"User"> | boolean
@@ -273,6 +281,7 @@ export type UserOrderByWithRelationInput = {
   username?: Prisma.SortOrder
   accountClassification?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  imageStorageKey?: Prisma.SortOrderInput | Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
@@ -316,6 +325,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"User"> | string
   accountClassification?: Prisma.EnumAccountClassificationFilter<"User"> | $Enums.AccountClassification
   imageUrl?: Prisma.StringNullableFilter<"User"> | string | null
+  imageStorageKey?: Prisma.StringNullableFilter<"User"> | string | null
   emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFilter<"User"> | $Enums.VerificationStatus
   isActive?: Prisma.BoolFilter<"User"> | boolean
@@ -356,6 +366,7 @@ export type UserOrderByWithAggregationInput = {
   username?: Prisma.SortOrder
   accountClassification?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  imageStorageKey?: Prisma.SortOrderInput | Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
@@ -377,6 +388,7 @@ export type UserScalarWhereWithAggregatesInput = {
   username?: Prisma.StringWithAggregatesFilter<"User"> | string
   accountClassification?: Prisma.EnumAccountClassificationWithAggregatesFilter<"User"> | $Enums.AccountClassification
   imageUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  imageStorageKey?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   emailVerifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusWithAggregatesFilter<"User"> | $Enums.VerificationStatus
   isActive?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
@@ -392,6 +404,7 @@ export type UserCreateInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -432,6 +445,7 @@ export type UserUncheckedCreateInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -472,6 +486,7 @@ export type UserUpdateInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -512,6 +527,7 @@ export type UserUncheckedUpdateInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -552,6 +568,7 @@ export type UserCreateManyInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -567,6 +584,7 @@ export type UserUpdateManyMutationInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -582,6 +600,7 @@ export type UserUncheckedUpdateManyInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -597,6 +616,7 @@ export type UserCountOrderByAggregateInput = {
   username?: Prisma.SortOrder
   accountClassification?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
+  imageStorageKey?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
@@ -612,6 +632,7 @@ export type UserMaxOrderByAggregateInput = {
   username?: Prisma.SortOrder
   accountClassification?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
+  imageStorageKey?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
@@ -627,6 +648,7 @@ export type UserMinOrderByAggregateInput = {
   username?: Prisma.SortOrder
   accountClassification?: Prisma.SortOrder
   imageUrl?: Prisma.SortOrder
+  imageStorageKey?: Prisma.SortOrder
   emailVerifiedAt?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
@@ -1032,6 +1054,7 @@ export type UserCreateWithoutSessionsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -1071,6 +1094,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -1126,6 +1150,7 @@ export type UserUpdateWithoutSessionsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1165,6 +1190,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1204,6 +1230,7 @@ export type UserCreateWithoutRolesInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -1243,6 +1270,7 @@ export type UserUncheckedCreateWithoutRolesInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -1298,6 +1326,7 @@ export type UserUpdateWithoutRolesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1337,6 +1366,7 @@ export type UserUncheckedUpdateWithoutRolesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1376,6 +1406,7 @@ export type UserCreateWithoutProfileInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -1415,6 +1446,7 @@ export type UserUncheckedCreateWithoutProfileInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -1470,6 +1502,7 @@ export type UserUpdateWithoutProfileInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1509,6 +1542,7 @@ export type UserUncheckedUpdateWithoutProfileInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1548,6 +1582,7 @@ export type UserCreateWithoutOpportunitiesInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -1587,6 +1622,7 @@ export type UserUncheckedCreateWithoutOpportunitiesInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -1642,6 +1678,7 @@ export type UserUpdateWithoutOpportunitiesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1681,6 +1718,7 @@ export type UserUncheckedUpdateWithoutOpportunitiesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1720,6 +1758,7 @@ export type UserCreateWithoutBookmarksInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -1759,6 +1798,7 @@ export type UserUncheckedCreateWithoutBookmarksInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -1814,6 +1854,7 @@ export type UserUpdateWithoutBookmarksInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1853,6 +1894,7 @@ export type UserUncheckedUpdateWithoutBookmarksInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -1892,6 +1934,7 @@ export type UserCreateWithoutReportsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -1931,6 +1974,7 @@ export type UserUncheckedCreateWithoutReportsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -1986,6 +2030,7 @@ export type UserUpdateWithoutReportsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2025,6 +2070,7 @@ export type UserUncheckedUpdateWithoutReportsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2064,6 +2110,7 @@ export type UserCreateWithoutConversationsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -2103,6 +2150,7 @@ export type UserUncheckedCreateWithoutConversationsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -2158,6 +2206,7 @@ export type UserUpdateWithoutConversationsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2197,6 +2246,7 @@ export type UserUncheckedUpdateWithoutConversationsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2236,6 +2286,7 @@ export type UserCreateWithoutMessagesInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -2275,6 +2326,7 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -2330,6 +2382,7 @@ export type UserUpdateWithoutMessagesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2369,6 +2422,7 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2408,6 +2462,7 @@ export type UserCreateWithoutProposalsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -2447,6 +2502,7 @@ export type UserUncheckedCreateWithoutProposalsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -2502,6 +2558,7 @@ export type UserUpdateWithoutProposalsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2541,6 +2598,7 @@ export type UserUncheckedUpdateWithoutProposalsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2580,6 +2638,7 @@ export type UserCreateWithoutDealsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -2619,6 +2678,7 @@ export type UserUncheckedCreateWithoutDealsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -2674,6 +2734,7 @@ export type UserUpdateWithoutDealsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2713,6 +2774,7 @@ export type UserUncheckedUpdateWithoutDealsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2752,6 +2814,7 @@ export type UserCreateWithoutDeliveriesInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -2791,6 +2854,7 @@ export type UserUncheckedCreateWithoutDeliveriesInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -2846,6 +2910,7 @@ export type UserUpdateWithoutDeliveriesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2885,6 +2950,7 @@ export type UserUncheckedUpdateWithoutDeliveriesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -2924,6 +2990,7 @@ export type UserCreateWithoutApprovalsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -2963,6 +3030,7 @@ export type UserUncheckedCreateWithoutApprovalsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -3018,6 +3086,7 @@ export type UserUpdateWithoutApprovalsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3057,6 +3126,7 @@ export type UserUncheckedUpdateWithoutApprovalsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3096,6 +3166,7 @@ export type UserCreateWithoutReleasesInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -3135,6 +3206,7 @@ export type UserUncheckedCreateWithoutReleasesInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -3190,6 +3262,7 @@ export type UserUpdateWithoutReleasesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3229,6 +3302,7 @@ export type UserUncheckedUpdateWithoutReleasesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3268,6 +3342,7 @@ export type UserCreateWithoutRefundsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -3307,6 +3382,7 @@ export type UserUncheckedCreateWithoutRefundsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -3362,6 +3438,7 @@ export type UserUpdateWithoutRefundsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3401,6 +3478,7 @@ export type UserUncheckedUpdateWithoutRefundsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3440,6 +3518,7 @@ export type UserCreateWithoutDisputesOpenedInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -3479,6 +3558,7 @@ export type UserUncheckedCreateWithoutDisputesOpenedInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -3534,6 +3614,7 @@ export type UserUpdateWithoutDisputesOpenedInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3573,6 +3654,7 @@ export type UserUncheckedUpdateWithoutDisputesOpenedInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3612,6 +3694,7 @@ export type UserCreateWithoutReviewsGivenInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -3651,6 +3734,7 @@ export type UserUncheckedCreateWithoutReviewsGivenInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -3695,6 +3779,7 @@ export type UserCreateWithoutReviewsReceivedInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -3734,6 +3819,7 @@ export type UserUncheckedCreateWithoutReviewsReceivedInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -3789,6 +3875,7 @@ export type UserUpdateWithoutReviewsGivenInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3828,6 +3915,7 @@ export type UserUncheckedUpdateWithoutReviewsGivenInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3878,6 +3966,7 @@ export type UserUpdateWithoutReviewsReceivedInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3917,6 +4006,7 @@ export type UserUncheckedUpdateWithoutReviewsReceivedInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -3956,6 +4046,7 @@ export type UserCreateWithoutNotificationsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -3995,6 +4086,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -4050,6 +4142,7 @@ export type UserUpdateWithoutNotificationsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4089,6 +4182,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4128,6 +4222,7 @@ export type UserCreateWithoutAuditLogsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -4167,6 +4262,7 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -4222,6 +4318,7 @@ export type UserUpdateWithoutAuditLogsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4261,6 +4358,7 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4300,6 +4398,7 @@ export type UserCreateWithoutModerationActionsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -4339,6 +4438,7 @@ export type UserUncheckedCreateWithoutModerationActionsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -4394,6 +4494,7 @@ export type UserUpdateWithoutModerationActionsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4433,6 +4534,7 @@ export type UserUncheckedUpdateWithoutModerationActionsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4472,6 +4574,7 @@ export type UserCreateWithoutConnectionsSentInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -4511,6 +4614,7 @@ export type UserUncheckedCreateWithoutConnectionsSentInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -4555,6 +4659,7 @@ export type UserCreateWithoutConnectionsReceivedInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -4594,6 +4699,7 @@ export type UserUncheckedCreateWithoutConnectionsReceivedInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -4649,6 +4755,7 @@ export type UserUpdateWithoutConnectionsSentInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4688,6 +4795,7 @@ export type UserUncheckedUpdateWithoutConnectionsSentInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4738,6 +4846,7 @@ export type UserUpdateWithoutConnectionsReceivedInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4777,6 +4886,7 @@ export type UserUncheckedUpdateWithoutConnectionsReceivedInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4816,6 +4926,7 @@ export type UserCreateWithoutProfileBookmarksInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -4855,6 +4966,7 @@ export type UserUncheckedCreateWithoutProfileBookmarksInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -4910,6 +5022,7 @@ export type UserUpdateWithoutProfileBookmarksInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4949,6 +5062,7 @@ export type UserUncheckedUpdateWithoutProfileBookmarksInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -4988,6 +5102,7 @@ export type UserCreateWithoutSupportTicketsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -5027,6 +5142,7 @@ export type UserUncheckedCreateWithoutSupportTicketsInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -5082,6 +5198,7 @@ export type UserUpdateWithoutSupportTicketsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5121,6 +5238,7 @@ export type UserUncheckedUpdateWithoutSupportTicketsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5160,6 +5278,7 @@ export type UserCreateWithoutTicketMessagesInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -5199,6 +5318,7 @@ export type UserUncheckedCreateWithoutTicketMessagesInput = {
   username: string
   accountClassification?: $Enums.AccountClassification
   imageUrl?: string | null
+  imageStorageKey?: string | null
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
@@ -5254,6 +5374,7 @@ export type UserUpdateWithoutTicketMessagesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5293,6 +5414,7 @@ export type UserUncheckedUpdateWithoutTicketMessagesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
   imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -5570,6 +5692,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   username?: boolean
   accountClassification?: boolean
   imageUrl?: boolean
+  imageStorageKey?: boolean
   emailVerifiedAt?: boolean
   verificationStatus?: boolean
   isActive?: boolean
@@ -5611,6 +5734,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   username?: boolean
   accountClassification?: boolean
   imageUrl?: boolean
+  imageStorageKey?: boolean
   emailVerifiedAt?: boolean
   verificationStatus?: boolean
   isActive?: boolean
@@ -5626,6 +5750,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   username?: boolean
   accountClassification?: boolean
   imageUrl?: boolean
+  imageStorageKey?: boolean
   emailVerifiedAt?: boolean
   verificationStatus?: boolean
   isActive?: boolean
@@ -5641,6 +5766,7 @@ export type UserSelectScalar = {
   username?: boolean
   accountClassification?: boolean
   imageUrl?: boolean
+  imageStorageKey?: boolean
   emailVerifiedAt?: boolean
   verificationStatus?: boolean
   isActive?: boolean
@@ -5648,7 +5774,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "name" | "username" | "accountClassification" | "imageUrl" | "emailVerifiedAt" | "verificationStatus" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "name" | "username" | "accountClassification" | "imageUrl" | "imageStorageKey" | "emailVerifiedAt" | "verificationStatus" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   roles?: boolean | Prisma.User$rolesArgs<ExtArgs>
@@ -5717,6 +5843,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     username: string
     accountClassification: $Enums.AccountClassification
     imageUrl: string | null
+    imageStorageKey: string | null
     emailVerifiedAt: Date | null
     verificationStatus: $Enums.VerificationStatus
     isActive: boolean
@@ -6177,6 +6304,7 @@ export interface UserFieldRefs {
   readonly username: Prisma.FieldRef<"User", 'String'>
   readonly accountClassification: Prisma.FieldRef<"User", 'AccountClassification'>
   readonly imageUrl: Prisma.FieldRef<"User", 'String'>
+  readonly imageStorageKey: Prisma.FieldRef<"User", 'String'>
   readonly emailVerifiedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly verificationStatus: Prisma.FieldRef<"User", 'VerificationStatus'>
   readonly isActive: Prisma.FieldRef<"User", 'Boolean'>

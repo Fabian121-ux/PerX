@@ -2,6 +2,9 @@ export type AppEnvironment = "app" | "preview";
 
 export type RouteKey =
   | "home"
+  | "people"
+  | "connections"
+  | "manage"
   | "network"
   | "real_estate"
   | "logistics"
@@ -28,6 +31,9 @@ export type RouteKey =
 
 const routeMap: Record<RouteKey, string> = {
   home: "/app",
+  people: "/app/people",
+  connections: "/app/connections",
+  manage: "/app/manage",
   network: "/app/network",
   real_estate: "/app/real-estate",
   logistics: "/app/logistics",

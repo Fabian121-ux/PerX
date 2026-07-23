@@ -46,5 +46,11 @@ export async function getProfileForEdit(userId: string) {
     profileImageUrl: user.profile.profileImageUrl ?? "",
     skills: user.profile.skills.map((s) => s.name).join(", "),
     websiteUrl: user.profile.websiteUrl ?? "",
+    isDiscoverable: user.profile.isDiscoverable,
+    showLocation: user.profile.showLocation,
+    showSkills: user.profile.showSkills,
+    allowConnectionRequests: user.profile.allowConnectionRequests,
+    allowMessagesFromConnections: user.profile.allowMessagesFromConnections,
+    allowMessagesFromMembers: user.profile.allowMessagesFromMembers,
   };
 }

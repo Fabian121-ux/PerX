@@ -1,6 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { sendMessageAction } from "../../src/features/messages/actions";
-import { getPrisma } from "../../src/lib/db/prisma";
 import { setCachedDataModeForTest } from "../../src/lib/env";
 
 // Mock auth session

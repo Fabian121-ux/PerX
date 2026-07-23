@@ -28,6 +28,7 @@ export const opportunityCategoryValues = [
   "logistics",
   "travel-stay",
   "services",
+  "startups",
   "market",
 ] as const;
 
@@ -66,6 +67,11 @@ export const opportunityCategoryOptions = [
     description: "Professional services offered through PerX.",
     label: "Services",
     value: "services",
+  },
+  {
+    description: "Startup, cofounder, and investor collaboration.",
+    label: "Startups",
+    value: "startups",
   },
   {
     description: "Marketplace listings and commerce enquiries.",

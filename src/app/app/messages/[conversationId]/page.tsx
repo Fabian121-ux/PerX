@@ -29,7 +29,7 @@ type DbConversationLike = {
   messages: { body: string; createdAt: Date; id: string; senderId: string }[];
   opportunity?: { title: string } | null;
   participants: {
-    user?: { name: string | null; username: string | null } | null;
+    user?: { imageUrl?: string | null; name: string | null; profile?: { profileImageUrl?: string | null } | null; username: string | null } | null;
     userId: string;
   }[];
 };
@@ -95,6 +95,7 @@ function toWorkspaceConversation(
           : (otherParticipant?.name ?? "Participant"),
     })),
     opportunityTitle: dbConversation.opportunity?.title ?? undefined,
+    participantImageUrl: otherParticipant?.imageUrl ?? otherParticipant?.profile?.profileImageUrl ?? null,
     participantName:
       otherParticipant?.name ??
       dbConversation.opportunity?.title ??

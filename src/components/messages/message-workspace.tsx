@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
 import { ArrowLeft, FileText, Paperclip, Phone, Search, Send, ShieldCheck, Video, Loader2 } from "lucide-react";
 import Link from "next/link";
 
@@ -12,6 +12,7 @@ export type WorkspaceMessage = {
   createdAt: string;
   id: string;
   senderId: string;
+  senderImageUrl?: string | null;
   senderName: string;
 };
 
@@ -23,6 +24,7 @@ export type WorkspaceConversation = {
   messages: WorkspaceMessage[];
   opportunityTitle?: string;
   participantName: string;
+  participantImageUrl?: string | null;
   participantRole?: string;
   participantUsername?: string;
   timestamp?: string;
@@ -44,14 +46,56 @@ export function MessageWorkspace({
   const [activeId, setActiveId] = useState(defaultConversationId ?? conversations[0]?.id ?? "");
   const [mobileDetailOpen, setMobileDetailOpen] = useState(Boolean(defaultConversationId));
   const [draft, setDraft] = useState("");
+  const [sendError, setSendError] = useState("");
+  const [syncedConversations, setSyncedConversations] = useState(() => conversations);
   const [localMessages, setLocalMessages] = useState<Record<string, WorkspaceMessage[]>>({});
   const [isPending, startTransition] = useTransition();
+  const historyRef = useRef<HTMLDivElement>(null);
 
-  const activeConversation = conversations.find((conversation) => conversation.id === activeId) ?? conversations[0];
+  useEffect(() => {
+    let active = true;
+    const sync = async () => {
+      try {
+        const response = await fetch(
+          activeId
+            ? `/api/messages/sync?conversationId=${encodeURIComponent(activeId)}`
+            : "/api/messages/sync",
+          { cache: "no-store" },
+        );
+        if (!response.ok) return;
+        const payload = (await response.json()) as {
+          conversations?: WorkspaceConversation[];
+        };
+        if (active && payload.conversations) {
+          setSyncedConversations(payload.conversations);
+        }
+      } catch {
+        // Polling is a freshness aid only; persisted messages remain available after refresh.
+      }
+    };
+
+    sync();
+    const interval = window.setInterval(sync, 4000);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [activeId]);
+
+  const activeConversation =
+    syncedConversations.find((conversation) => conversation.id === activeId) ??
+    syncedConversations[0];
   const messages = useMemo(() => {
     if (!activeConversation) return [];
     return [...(activeConversation.messages ?? []), ...(localMessages[activeConversation.id] ?? [])];
   }, [activeConversation, localMessages]);
+
+  useEffect(() => {
+    historyRef.current?.scrollTo({
+      behavior: "smooth",
+      top: historyRef.current.scrollHeight,
+    });
+  }, [activeConversation?.id, messages.length]);
 
   const sendMessage = (event: FormEvent) => {
     event.preventDefault();
@@ -60,6 +104,7 @@ export function MessageWorkspace({
     const body = draft.trim();
     const conversationId = activeConversation.id;
     const messageId = `local-${Date.now()}`;
+    setSendError("");
 
     const message: WorkspaceMessage = {
       body,
@@ -78,17 +123,21 @@ export function MessageWorkspace({
     startTransition(async () => {
       const result = await sendMessageAction(conversationId, body);
       if (result.error) {
-        // Rollback optimistic update
         setLocalMessages((value) => ({
           ...value,
           [conversationId]: (value[conversationId] ?? []).filter((m) => m.id !== messageId),
         }));
-        alert(result.error);
+        setSendError(result.error);
+      } else {
+        setLocalMessages((value) => ({
+          ...value,
+          [conversationId]: (value[conversationId] ?? []).filter((m) => m.id !== messageId),
+        }));
       }
     });
   };
 
-  if (!conversations.length) {
+  if (!syncedConversations.length) {
     return (
       <section className="grid min-h-[58dvh] place-items-center rounded-[28px] bg-[color:var(--px-surface)] p-8 text-center shadow-sm ring-1 ring-[color:var(--px-border)]">
         <div className="max-w-md">
@@ -127,7 +176,7 @@ export function MessageWorkspace({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-3">
-          {conversations.map((conversation) => {
+          {syncedConversations.map((conversation) => {
             const active = conversation.id === activeConversation?.id;
             return (
               <button
@@ -141,7 +190,7 @@ export function MessageWorkspace({
                 }}
                 type="button"
               >
-                <Avatar name={conversation.participantName} online />
+                <Avatar imageUrl={conversation.participantImageUrl} name={conversation.participantName} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-sm font-bold text-[color:var(--px-text)]">{conversation.participantName}</p>
@@ -168,7 +217,7 @@ export function MessageWorkspace({
               <button className="grid h-10 w-10 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] lg:hidden" onClick={() => setMobileDetailOpen(false)} type="button" aria-label="Back to conversations">
                 <ArrowLeft size={18} />
               </button>
-              <Avatar name={activeConversation.participantName} online />
+              <Avatar imageUrl={activeConversation.participantImageUrl} name={activeConversation.participantName} />
               <div className="min-w-0">
                 <h2 className="truncate text-sm font-black text-[color:var(--px-text)]">{activeConversation.participantName}</h2>
                 <p className="truncate text-xs text-[color:var(--px-text-muted)]">{activeConversation.participantRole ?? activeConversation.opportunityTitle ?? "perX conversation"}</p>
@@ -192,7 +241,7 @@ export function MessageWorkspace({
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4" ref={historyRef}>
             <div className="mx-auto flex max-w-3xl flex-col gap-4">
               <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4">
                 <p className="text-xs font-bold uppercase tracking-wide text-[color:var(--px-primary)]">Context</p>
@@ -204,9 +253,9 @@ export function MessageWorkspace({
                 const mine = message.senderId === currentUserId;
                 return (
                   <div className={`flex ${mine ? "justify-end" : "justify-start"}`} key={message.id}>
-                    <div className={`max-w-[82%] rounded-3xl px-4 py-3 shadow-sm ${mine ? "rounded-br-md bg-[color:var(--px-primary)] text-white" : "rounded-bl-md bg-[color:var(--px-surface)] text-[color:var(--px-text)] ring-1 ring-[color:var(--px-border)]"}`}>
+                    <div className={`max-w-[82%] overflow-hidden rounded-3xl px-4 py-3 shadow-sm ${mine ? "rounded-br-md bg-[color:var(--px-primary)] text-white" : "rounded-bl-md bg-[color:var(--px-surface)] text-[color:var(--px-text)] ring-1 ring-[color:var(--px-border)]"}`}>
                       <p className={`mb-1 text-[10px] font-black uppercase tracking-wide ${mine ? "text-blue-100" : "text-[color:var(--px-primary)]"}`}>{message.senderName}</p>
-                      <p className="text-sm leading-6">{message.body}</p>
+                      <p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p>
                       <p className={`mt-2 text-[10px] ${mine ? "text-blue-100" : "text-[color:var(--px-text-muted)]"}`}>
                         {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </p>
@@ -238,6 +287,11 @@ export function MessageWorkspace({
                 {isPending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
               </button>
             </div>
+            {sendError ? (
+              <p className="mx-auto mt-2 max-w-3xl text-sm font-semibold text-[color:var(--px-error)]">
+                {sendError}
+              </p>
+            ) : null}
           </form>
         </div>
       ) : null}
@@ -246,7 +300,7 @@ export function MessageWorkspace({
         {activeConversation ? (
           <>
             <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-5 text-center ring-1 ring-[color:var(--px-border)]">
-              <Avatar name={activeConversation.participantName} size="lg" online />
+              <Avatar imageUrl={activeConversation.participantImageUrl} name={activeConversation.participantName} size="lg" />
               <h3 className="mt-3 font-black text-[color:var(--px-text)]">{activeConversation.participantName}</h3>
               <p className="text-xs text-[color:var(--px-text-muted)]">@{activeConversation.participantUsername ?? "perx-member"}</p>
               {activeConversation.trustScore ? <Badge className="mt-3 bg-green-50 text-green-800">Trust {activeConversation.trustScore}</Badge> : null}
@@ -282,7 +336,8 @@ export function MessageWorkspace({
   );
 }
 
-function Avatar({ name, online, size = "md" }: { name: string; online?: boolean; size?: "md" | "lg" }) {
+function Avatar({ imageUrl, name, size = "md" }: { imageUrl?: string | null; name: string; size?: "md" | "lg" }) {
+  const [imageFailed, setImageFailed] = useState(false);
   const initials = name
     .split(" ")
     .map((part) => part[0])
@@ -294,9 +349,18 @@ function Avatar({ name, online, size = "md" }: { name: string; online?: boolean;
   return (
     <div className="relative shrink-0">
       <div className={`${dimensions} grid place-items-center rounded-full bg-[color:var(--px-primary)] font-black text-white ring-2 ring-[color:var(--px-surface)]`}>
-        {initials}
+        {imageUrl && !imageFailed ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            alt={`${name} avatar`}
+            className="h-full w-full object-cover"
+            onError={() => setImageFailed(true)}
+            src={imageUrl}
+          />
+        ) : (
+          initials
+        )}
       </div>
-      {online ? <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-[color:var(--px-success)] ring-2 ring-[color:var(--px-surface)]" /> : null}
     </div>
   );
 }

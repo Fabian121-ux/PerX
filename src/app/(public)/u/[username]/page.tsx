@@ -13,9 +13,16 @@ import {
 
 import { PublicPageShell } from "@/components/standard-page";
 import { Badge } from "@/components/ui/badge";
-import { ButtonLink } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
+import {
+  acceptConnectionAction,
+  requestConnectionAction,
+  startConversationAction,
+} from "@/features/network/actions";
+import { getCurrentUser } from "@/lib/auth/session";
 import { getPublicProfileResult } from "@/lib/data/profiles";
+import { getPrisma } from "@/lib/db/prisma";
 
 export default async function PublicProfilePage({
   params,
@@ -40,6 +47,11 @@ export default async function PublicProfilePage({
   if (!profile) notFound();
 
   const normalized = normalizeProfile(profile);
+  const viewer = await getCurrentUser();
+  const relationship =
+    viewer && viewer.id !== normalized.id
+      ? await getProfileRelationship(viewer.id, normalized.id)
+      : null;
 
   return (
     <PublicPageShell>
@@ -66,27 +78,38 @@ export default async function PublicProfilePage({
                       <h1 className="text-3xl font-black text-[color:var(--px-text)]">
                         {normalized.name}
                       </h1>
-                      <Badge className="border-green-200 bg-green-50 text-green-800">
-                        <BadgeCheck aria-hidden className="mr-1" size={13} />
-                        Verified
-                      </Badge>
+                      {normalized.isVerified ? (
+                        <Badge className="border-green-200 bg-green-50 text-green-800">
+                          <BadgeCheck aria-hidden className="mr-1" size={13} />
+                          Verified
+                        </Badge>
+                      ) : null}
                     </div>
                     <p className="mt-1 text-lg font-semibold text-[color:var(--px-text-muted)]">
                       {normalized.headline}
                     </p>
                   </div>
                 </div>
-                <ButtonLink href={`/sign-in?next=/u/${username}`}>
-                  <Mail aria-hidden className="mr-2" size={16} />
-                  Contact
-                </ButtonLink>
+                <ProfilePrimaryAction
+                  allowConnectionRequests={normalized.allowConnectionRequests}
+                  allowMessagesFromConnections={
+                    normalized.allowMessagesFromConnections
+                  }
+                  allowMessagesFromMembers={normalized.allowMessagesFromMembers}
+                  relationship={relationship}
+                  targetUserId={normalized.id}
+                  username={username}
+                  viewerSignedIn={Boolean(viewer)}
+                />
               </div>
 
               <div className="mt-5 flex flex-wrap gap-2 text-sm font-semibold text-[color:var(--px-text-muted)]">
-                <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--px-surface-soft)] px-3 py-1.5">
-                  <MapPin aria-hidden size={14} />
-                  {normalized.location}
-                </span>
+                {normalized.location ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--px-surface-soft)] px-3 py-1.5">
+                    <MapPin aria-hidden size={14} />
+                    {normalized.location}
+                  </span>
+                ) : null}
                 <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--px-surface-soft)] px-3 py-1.5">
                   <BriefcaseBusiness aria-hidden size={14} />
                   {normalized.completedDeals} completed deals
@@ -124,6 +147,31 @@ export default async function PublicProfilePage({
               <p className="mt-3 text-sm leading-7 text-[color:var(--px-text-muted)]">
                 {normalized.biography}
               </p>
+            </Card>
+
+            <Card>
+              <h2 className="text-xl font-black text-[color:var(--px-text)]">
+                Published work
+              </h2>
+              <div className="mt-4 grid gap-3">
+                {normalized.opportunities.length ? (
+                  normalized.opportunities.map((opportunity: any) => (
+                    <ButtonLink
+                      className="justify-start"
+                      href={`/opportunities/${opportunity.slug}`}
+                      key={opportunity.id}
+                      variant="secondary"
+                    >
+                      <BriefcaseBusiness aria-hidden className="mr-2" size={16} />
+                      {opportunity.title}
+                    </ButtonLink>
+                  ))
+                ) : (
+                  <p className="text-sm text-[color:var(--px-text-muted)]">
+                    Published opportunities and listings will appear here.
+                  </p>
+                )}
+              </div>
             </Card>
 
             <Card>
@@ -303,6 +351,10 @@ function normalizeProfile(profile: any) {
   );
 
   return {
+    allowConnectionRequests: details.allowConnectionRequests ?? true,
+    allowMessagesFromConnections:
+      details.allowMessagesFromConnections ?? true,
+    allowMessagesFromMembers: details.allowMessagesFromMembers ?? false,
     averageRating: Number.isFinite(averageRating) ? averageRating : 0,
     biography:
       details.biography ??
@@ -312,8 +364,16 @@ function normalizeProfile(profile: any) {
       details.completedDeals ?? profile.completedDeals ?? 0,
     ),
     headline: details.headline ?? profile.headline ?? "perX member",
-    location: details.location ?? profile.location ?? "Remote",
+    id: profile.id,
+    isVerified: profile.verificationStatus === "VERIFIED",
+    location:
+      details.showLocation === false
+        ? null
+        : (details.location ?? profile.location ?? null),
     name: profile.name ?? "perX member",
+    opportunities: Array.isArray(profile.opportunities)
+      ? profile.opportunities
+      : [],
     profileImageUrl:
       details.profileImageUrl ??
       profile.profileImageUrl ??
@@ -323,10 +383,125 @@ function normalizeProfile(profile: any) {
       ? profile.reviewsReceived
       : [],
     roles,
-    skills,
+    skills: details.showSkills === false ? [] : skills,
     trustScore: Number(details.trustScore ?? profile.trustScore ?? 0),
     workHistory: Array.isArray(details.workHistory) ? details.workHistory : [],
   };
+}
+
+async function getProfileRelationship(viewerId: string, targetUserId: string) {
+  const [connection, block] = await Promise.all([
+    getPrisma().connection.findFirst({
+      where: {
+        OR: [
+          { requesterId: viewerId, receiverId: targetUserId },
+          { requesterId: targetUserId, receiverId: viewerId },
+        ],
+      },
+    }),
+    getPrisma().blockedUser.findFirst({
+      where: {
+        OR: [
+          { blockerUserId: viewerId, blockedUserId: targetUserId },
+          { blockerUserId: targetUserId, blockedUserId: viewerId },
+        ],
+      },
+    }),
+  ]);
+
+  return {
+    blocked: Boolean(block),
+    connectionDirection: connection
+      ? connection.requesterId === viewerId
+        ? "outgoing"
+        : "incoming"
+      : null,
+    connectionId: connection?.id ?? null,
+    status: connection?.status ?? "NONE",
+  };
+}
+
+function ProfilePrimaryAction({
+  allowConnectionRequests,
+  allowMessagesFromConnections,
+  allowMessagesFromMembers,
+  relationship,
+  targetUserId,
+  username,
+  viewerSignedIn,
+}: {
+  allowConnectionRequests: boolean;
+  allowMessagesFromConnections: boolean;
+  allowMessagesFromMembers: boolean;
+  relationship: Awaited<ReturnType<typeof getProfileRelationship>> | null;
+  targetUserId: string;
+  username: string;
+  viewerSignedIn: boolean;
+}) {
+  if (!viewerSignedIn) {
+    return (
+      <ButtonLink href={`/sign-in?next=/u/${username}`}>
+        <Mail aria-hidden className="mr-2" size={16} />
+        Contact
+      </ButtonLink>
+    );
+  }
+
+  if (!relationship) {
+    return <ButtonLink href="/app/profile">View private profile</ButtonLink>;
+  }
+
+  if (relationship.blocked || relationship.status === "BLOCKED") {
+    return <Button disabled>Unavailable</Button>;
+  }
+
+  if (relationship.status === "ACCEPTED" && allowMessagesFromConnections) {
+    return (
+      <form action={async () => { "use server"; await startConversationAction(targetUserId); }}>
+        <Button type="submit">
+          <Mail aria-hidden className="mr-2" size={16} />
+          Message
+        </Button>
+      </form>
+    );
+  }
+
+  if (allowMessagesFromMembers) {
+    return (
+      <form action={async () => { "use server"; await startConversationAction(targetUserId); }}>
+        <Button type="submit">
+          <Mail aria-hidden className="mr-2" size={16} />
+          Message
+        </Button>
+      </form>
+    );
+  }
+
+  if (relationship.status === "PENDING" && relationship.connectionDirection === "outgoing") {
+    return <Button disabled variant="secondary">Request sent</Button>;
+  }
+
+  if (
+    relationship.status === "PENDING" &&
+    relationship.connectionDirection === "incoming" &&
+    relationship.connectionId
+  ) {
+    return (
+      <form action={async () => { "use server"; await acceptConnectionAction(relationship.connectionId!); }}>
+        <Button type="submit">Accept connection</Button>
+      </form>
+    );
+  }
+
+  if (allowConnectionRequests) {
+    return (
+      <form action={async () => { "use server"; await requestConnectionAction(targetUserId); }}>
+        <Button type="submit">Connect</Button>
+      </form>
+    );
+  }
+
+  return <Button disabled variant="secondary">Connections closed</Button>;
 }
 
 function getInitials(name: string) {

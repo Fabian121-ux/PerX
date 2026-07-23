@@ -21,7 +21,11 @@ export default async function MyOpportunitiesPage() {
       {opportunities.length ? (
         <div className="grid gap-5 xl:grid-cols-2">
           {opportunities.map((opportunity: any) => (
-            <OpportunityCard key={opportunity.slug} opportunity={opportunity} />
+            <OpportunityCard
+              href={`/app/opportunities/${opportunity.id}`}
+              key={opportunity.slug}
+              opportunity={opportunity}
+            />
           ))}
         </div>
       ) : (

@@ -1,8 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { getCurrentUser, requireUser, requireCapability } from "@/lib/auth/session";
+import { getCurrentUser, requireUser, requireCapability, requireCapabilityOrNotFound } from "@/lib/auth/session";
 import { hasDatabaseUrl } from "@/lib/env";
 
 vi.mock("next/navigation", () => ({
+  notFound: vi.fn(() => {
+    throw new Error("NOT_FOUND");
+  }),
   redirect: vi.fn((url: string) => {
     throw new Error(`REDIRECT:${url}`);
   }),
@@ -52,6 +55,13 @@ describe("Session Management", () => {
     it("redirects to sign-in if no session exists", async () => {
       vi.mocked(hasDatabaseUrl).mockReturnValue(false);
       await expect(requireCapability("admin:access")).rejects.toThrow("REDIRECT:/sign-in?next=/app");
+    });
+  });
+
+  describe("requireCapabilityOrNotFound", () => {
+    it("returns a not-found response if no authorized session exists", async () => {
+      vi.mocked(hasDatabaseUrl).mockReturnValue(false);
+      await expect(requireCapabilityOrNotFound("admin:access")).rejects.toThrow("NOT_FOUND");
     });
   });
 });

@@ -22,6 +22,8 @@ const envSchema = z.object({
   ...signupEnvSchema.shape,
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1).optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  SUPABASE_AVATAR_BUCKET: z.string().min(1).default("profile-images"),
   SESSION_COOKIE_NAME: z.string().min(1).default("perx_session"),
   AUTH_SESSION_DAYS: z.coerce.number().int().min(1).max(120).default(30),
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),

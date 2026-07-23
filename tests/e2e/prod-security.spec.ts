@@ -19,15 +19,17 @@ testWithDatabase("Normal user cannot access /admin", async ({ page }) => {
 
   await page.waitForURL("**/app/profile/setup", { timeout: 15000 }).catch(() => {});
   
-  // Try to access /admin
-  await page.goto("/admin");
-  expect(page.url()).not.toContain("/admin");
-  expect(page.url()).toContain("/app");
+  const response = await page.goto("/admin");
+  expect(response?.status()).toBe(404);
+  const bodyText = await page.innerText("body");
+  expect(bodyText).not.toMatch(/forbidden|access denied|administrator|required capability|required role/i);
 });
 
 test("Public visitor denied from /admin", async ({ page }) => {
-  await page.goto("/admin");
-  expect(page.url()).toContain("/sign-in");
+  const response = await page.goto("/admin");
+  expect(response?.status()).toBe(404);
+  const bodyText = await page.innerText("body");
+  expect(bodyText).not.toMatch(/forbidden|access denied|administrator|required capability|required role/i);
 });
 
 testWithDatabase("Signup cannot request ADMIN, INTERNAL_ADMIN, or INTERNAL_TESTER", async ({ request }) => {

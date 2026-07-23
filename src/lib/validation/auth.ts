@@ -47,6 +47,12 @@ export const profileSchema = z.object({
   profileImageUrl: z.string().trim().url().or(z.literal("")).optional(),
   skills: z.string().trim().max(400).optional(),
   websiteUrl: z.string().trim().url().or(z.literal("")).optional(),
+  isDiscoverable: z.boolean().default(true),
+  showLocation: z.boolean().default(true),
+  showSkills: z.boolean().default(true),
+  allowConnectionRequests: z.boolean().default(true),
+  allowMessagesFromConnections: z.boolean().default(true),
+  allowMessagesFromMembers: z.boolean().default(false),
 });
 
 export const profileSetupSchema = profileSchema.extend({

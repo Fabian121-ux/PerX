@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
 import { getRegistrationStatus } from "../../src/lib/registration/status";
-import { getPrisma } from "../../src/lib/db/prisma";
 
 const mockPrismaClient = {
   user: {

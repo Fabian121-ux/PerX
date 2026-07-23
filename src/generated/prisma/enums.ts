@@ -199,6 +199,7 @@ export const ConnectionStatus = {
   PENDING: 'PENDING',
   ACCEPTED: 'ACCEPTED',
   DECLINED: 'DECLINED',
+  CANCELLED: 'CANCELLED',
   BLOCKED: 'BLOCKED'
 } as const
 

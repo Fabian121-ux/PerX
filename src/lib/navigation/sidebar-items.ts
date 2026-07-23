@@ -60,15 +60,27 @@ export const sidebarItems: SidebarItem[] = [
   // Network and work
   {
     group: "work",
+    href: "/app/people",
+    icon: UsersRound,
+    label: "People",
+  },
+  {
+    group: "work",
     href: "/app/network",
     icon: UsersRound,
-    label: "Network / Friends",
+    label: "Connections",
   },
   {
     group: "work",
     href: "/app/opportunities",
     icon: BriefcaseBusiness,
     label: "Opportunities",
+  },
+  {
+    group: "work",
+    href: "/app/manage",
+    icon: ClipboardList,
+    label: "Manage",
   },
   {
     group: "work",

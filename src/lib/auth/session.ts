@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import type { RoleName } from "@/lib/permissions/capabilities";
 import { hasCapability, type Capability } from "@/lib/permissions/capabilities";
@@ -22,9 +22,16 @@ export type CurrentUser = {
     headline: string;
     biography?: string;
     location?: string;
+    profileImageUrl?: string | null;
     skills?: string[];
     trustScore: number;
     profileCompleteness: number;
+    isDiscoverable?: boolean;
+    showLocation?: boolean;
+    showSkills?: boolean;
+    allowConnectionRequests?: boolean;
+    allowMessagesFromConnections?: boolean;
+    allowMessagesFromMembers?: boolean;
   } | null;
 };
 
@@ -115,11 +122,32 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 
   const session = await getPrisma().session.findUnique({
     where: { tokenHash: hashToken(token) },
-    include: {
+    select: {
+      expiresAt: true,
+      id: true,
       user: {
-        include: {
-          profile: { include: { skills: true } },
+        select: {
+          accountClassification: true,
+          createdAt: true,
+          email: true,
+          id: true,
+          imageUrl: true,
+          isActive: true,
+          name: true,
+          profile: {
+            select: {
+              biography: true,
+              headline: true,
+              location: true,
+              profileCompleteness: true,
+              profileImageUrl: true,
+              skills: true,
+              trustScore: true,
+            },
+          },
           roles: { include: { role: true } },
+          username: true,
+          verificationStatus: true,
         },
       },
     },
@@ -138,7 +166,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     id: session.user.id,
     name: session.user.name,
     username: session.user.username,
-    imageUrl: session.user.imageUrl,
+    imageUrl: session.user.imageUrl ?? session.user.profile?.profileImageUrl,
     accountClassification: session.user.accountClassification,
     verificationStatus: session.user.verificationStatus,
     createdAt: session.user.createdAt,
@@ -147,6 +175,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
           headline: session.user.profile.headline,
           biography: session.user.profile.biography,
           location: session.user.profile.location,
+          profileImageUrl: session.user.profile.profileImageUrl,
           profileCompleteness: session.user.profile.profileCompleteness,
           skills: session.user.profile.skills.map((skill) => skill.name),
           trustScore: session.user.profile.trustScore,
@@ -175,6 +204,14 @@ export async function requireCapability(capability: Capability) {
   const user = await requireUser();
   if (!hasCapability(user.roles, capability)) {
     redirect("/app?error=forbidden");
+  }
+  return user;
+}
+
+export async function requireCapabilityOrNotFound(capability: Capability) {
+  const user = await getCurrentUser();
+  if (!user || !hasCapability(user.roles, capability)) {
+    notFound();
   }
   return user;
 }

@@ -14,6 +14,9 @@ const sendMessageSchema = z.object({
   body: z.string().trim().min(1, "Message cannot be empty.").max(2000, "Message is too long."),
 });
 
+const rateLimitWindowMs = 60_000;
+const rateLimitMaxMessages = 20;
+
 export async function sendMessageAction(conversationId: string, body: string) {
   const user = await requireUser();
 
@@ -31,19 +34,53 @@ export async function sendMessageAction(conversationId: string, body: string) {
   }
 
   try {
-    // Verify participation
-    const participation = await getPrisma().conversationParticipant.findUnique({
+    const conversation = await getPrisma().conversation.findFirst({
+      include: { participants: true },
       where: {
-        conversationId_userId: {
-          conversationId: parsed.data.conversationId,
-          userId: user.id,
-        },
+        id: parsed.data.conversationId,
+        participants: { some: { userId: user.id } },
+        status: "ACTIVE",
       },
     });
 
-    if (!participation) {
+    if (!conversation) {
       return { error: "You are not a participant in this conversation." };
     }
+
+    const otherParticipantIds = conversation.participants
+      .map((participant) => participant.userId)
+      .filter((participantId) => participantId !== user.id);
+
+    const [blocked, recentMessages, duplicate] = await Promise.all([
+      getPrisma().blockedUser.findFirst({
+        where: {
+          OR: otherParticipantIds.flatMap((participantId) => [
+            { blockerUserId: user.id, blockedUserId: participantId },
+            { blockerUserId: participantId, blockedUserId: user.id },
+          ]),
+        },
+      }),
+      getPrisma().message.count({
+        where: {
+          createdAt: { gte: new Date(Date.now() - rateLimitWindowMs) },
+          senderId: user.id,
+        },
+      }),
+      getPrisma().message.findFirst({
+        where: {
+          body: parsed.data.body.trim(),
+          conversationId: parsed.data.conversationId,
+          createdAt: { gte: new Date(Date.now() - 5_000) },
+          senderId: user.id,
+        },
+      }),
+    ]);
+
+    if (blocked) return { error: "Messaging is unavailable." };
+    if (recentMessages >= rateLimitMaxMessages) {
+      return { error: "Please slow down before sending more messages." };
+    }
+    if (duplicate) return { success: true };
 
     const policy = evaluatePolicy({
       actorId: user.id,
@@ -71,7 +108,7 @@ export async function sendMessageAction(conversationId: string, body: string) {
     }
 
     await getPrisma().$transaction(async (tx) => {
-      await tx.message.create({
+      const message = await tx.message.create({
         data: {
           body: parsed.data.body.trim(),
           conversationId: parsed.data.conversationId,
@@ -82,6 +119,19 @@ export async function sendMessageAction(conversationId: string, body: string) {
       await tx.conversation.update({
         where: { id: parsed.data.conversationId },
         data: { updatedAt: new Date() },
+      });
+
+      await tx.messageReadReceipt.create({
+        data: { messageId: message.id, userId: user.id },
+      });
+
+      await tx.notification.createMany({
+        data: otherParticipantIds.map((participantId) => ({
+          body: `${user.name} sent you a message.`,
+          title: "New message",
+          type: "MESSAGE" as const,
+          userId: participantId,
+        })),
       });
     });
 

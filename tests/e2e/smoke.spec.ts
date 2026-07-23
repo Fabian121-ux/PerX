@@ -38,9 +38,10 @@ test.describe("PerX Application Smoke Tests", () => {
   });
 
   test("/admin requires admin access", async ({ page }) => {
-    await page.goto("/admin");
-    // Will redirect to sign-in since no user, but even if logged in without admin, it should reject
-    await expect(page).toHaveURL(/.*\/sign-in/);
+    const response = await page.goto("/admin");
+    expect(response?.status()).toBe(404);
+    const bodyText = await page.innerText("body");
+    expect(bodyText).not.toMatch(/forbidden|access denied|administrator|required capability|required role/i);
   });
 
   test("Preview routes are gated by default", async ({ page }) => {

@@ -32,7 +32,15 @@ export const prismaProvider: PerXDataProvider = {
       return getPrisma().opportunity.findMany({
         include: {
           category: true,
-          owner: { include: { profile: true } },
+          owner: {
+            select: {
+              id: true,
+              imageUrl: true,
+              name: true,
+              profile: { select: { profileImageUrl: true, trustScore: true } },
+              username: true,
+            },
+          },
         },
         orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
         take: 20,
@@ -57,7 +65,16 @@ export const prismaProvider: PerXDataProvider = {
       return getPrisma().opportunity.findFirst({
         include: {
           category: true,
-          owner: { include: { profile: true, roles: { include: { role: true } } } },
+          owner: {
+            select: {
+              id: true,
+              imageUrl: true,
+              name: true,
+              profile: { select: { profileImageUrl: true, trustScore: true } },
+              roles: { include: { role: true } },
+              username: true,
+            },
+          },
         },
         where: {
           moderationStatus: "APPROVED",
@@ -126,7 +143,19 @@ export const prismaProvider: PerXDataProvider = {
         include: {
           messages: { orderBy: { createdAt: "desc" }, take: 1 },
           opportunity: true,
-          participants: { include: { user: true } },
+          participants: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  imageUrl: true,
+                  name: true,
+                  profile: { select: { profileImageUrl: true } },
+                  username: true,
+                },
+              },
+            },
+          },
         },
         orderBy: { updatedAt: "desc" },
         where: { participants: { some: { userId } } },
@@ -144,13 +173,47 @@ export const prismaProvider: PerXDataProvider = {
   },
   profiles: {
     getPublicProfile: async (username: string) => {
-      return getPrisma().user.findUnique({
-        include: {
-          profile: { include: { portfolio: true, skills: true, workHistory: true } },
-          reviewsReceived: { take: 5, orderBy: { createdAt: "desc" } },
-          roles: { include: { role: true } },
+      return getPrisma().user.findFirst({
+        select: {
+          createdAt: true,
+          id: true,
+          imageUrl: true,
+          name: true,
+          opportunities: {
+            include: { category: true },
+            orderBy: { publishedAt: "desc" },
+            take: 8,
+            where: {
+              moderationStatus: "APPROVED",
+              status: "PUBLISHED",
+            },
+          },
+          profile: {
+            include: {
+              portfolio: true,
+              skills: { orderBy: { name: "asc" } },
+              workHistory: true,
+            },
+          },
+          reviewsReceived: {
+            orderBy: { createdAt: "desc" },
+            take: 5,
+            where: { visibility: "PUBLIC" },
+          },
+          roles: {
+            select: {
+              role: { select: { label: true, name: true } },
+            },
+          },
+          username: true,
+          verificationStatus: true,
         },
-        where: { username },
+        where: {
+          accountClassification: "PUBLIC_BETA_USER",
+          isActive: true,
+          profile: { is: { isDiscoverable: true } },
+          username,
+        },
       });
     },
   },

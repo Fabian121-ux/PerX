@@ -1,11 +1,22 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { getPrisma } from "@/lib/db/prisma";
 import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { requireUser } from "@/lib/auth/session";
 import { profileSetupSchema } from "@/lib/validation/auth";
+
+function checkboxValue(
+  formData: FormData,
+  name: string,
+  defaultValue: boolean,
+) {
+  const values = formData.getAll(name).map(String);
+  if (!values.length) return defaultValue;
+  return values.includes("on");
+}
 
 export async function setupProfileAction(formData: FormData) {
   const user = await requireUser();
@@ -22,6 +33,21 @@ export async function setupProfileAction(formData: FormData) {
     profileImageUrl: String(formData.get("profileImageUrl") || ""),
     skills: String(formData.get("skills") || ""),
     websiteUrl: String(formData.get("websiteUrl") || ""),
+    isDiscoverable: checkboxValue(formData, "isDiscoverable", true),
+    showLocation: checkboxValue(formData, "showLocation", true),
+    showSkills: checkboxValue(formData, "showSkills", true),
+    allowConnectionRequests: checkboxValue(
+      formData,
+      "allowConnectionRequests",
+      true,
+    ),
+    allowMessagesFromConnections:
+      checkboxValue(formData, "allowMessagesFromConnections", true),
+    allowMessagesFromMembers: checkboxValue(
+      formData,
+      "allowMessagesFromMembers",
+      false,
+    ),
   };
 
   const parsed = profileSetupSchema.safeParse(rawData);
@@ -38,6 +64,12 @@ export async function setupProfileAction(formData: FormData) {
     profileImageUrl,
     skills,
     websiteUrl,
+    isDiscoverable,
+    showLocation,
+    showSkills,
+    allowConnectionRequests,
+    allowMessagesFromConnections,
+    allowMessagesFromMembers,
   } = parsed.data;
 
   // Check if username is taken by another user
@@ -69,15 +101,21 @@ export async function setupProfileAction(formData: FormData) {
       // Update User
       await tx.user.update({
         where: { id: user.id },
-        data: { name, username },
+        data: { imageUrl: profileImageUrl || null, name, username },
       });
 
       const profileData = {
+        allowConnectionRequests,
+        allowMessagesFromConnections,
+        allowMessagesFromMembers,
         biography,
         headline,
+        isDiscoverable,
         location,
         profileCompleteness: completeness,
         profileImageUrl: profileImageUrl || null,
+        showLocation,
+        showSkills,
         websiteUrl: websiteUrl || null,
       };
 
@@ -113,5 +151,9 @@ export async function setupProfileAction(formData: FormData) {
     entityType: "profile",
   });
 
+  revalidatePath("/app/profile");
+  revalidatePath("/app/profile/setup");
+  revalidatePath("/app/people");
+  revalidatePath(`/u/${username}`);
   redirect("/app");
 }

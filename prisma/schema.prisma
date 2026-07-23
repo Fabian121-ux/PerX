@@ -149,6 +149,7 @@ enum ConnectionStatus {
   PENDING
   ACCEPTED
   DECLINED
+  CANCELLED
   BLOCKED
 }
 
@@ -168,6 +169,7 @@ model User {
   username              String                    @unique
   accountClassification AccountClassification     @default(PUBLIC_BETA_USER)
   imageUrl              String?
+  imageStorageKey       String?
   emailVerifiedAt       DateTime?
   verificationStatus    VerificationStatus        @default(UNVERIFIED)
   isActive              Boolean                   @default(true)
@@ -201,6 +203,7 @@ model User {
 
   @@index([createdAt])
   @@index([accountClassification])
+  @@index([isActive, accountClassification])
 }
 
 model Session {
@@ -238,25 +241,35 @@ model UserRole {
 }
 
 model Profile {
-  id                   String                @id @default(cuid())
-  userId               String                @unique
-  headline             String
-  biography            String
-  location             String
-  websiteUrl           String?
-  profileImageUrl      String?
-  trustScore           Int                   @default(0)
-  profileCompleteness  Int                   @default(0)
-  completedDeals       Int                   @default(0)
-  averageRating        Decimal               @default(0) @db.Decimal(3, 2)
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skills               ProfileSkill[]
-  portfolio            PortfolioItem[]
-  workHistory          WorkHistory[]
-  verificationRequests VerificationRequest[]
-  profileBookmarks     ProfileBookmark[]
+  id                           String                @id @default(cuid())
+  userId                       String                @unique
+  headline                     String
+  biography                    String
+  location                     String
+  websiteUrl                   String?
+  profileImageUrl              String?
+  profileImageStorageKey       String?
+  isDiscoverable               Boolean               @default(true)
+  showLocation                 Boolean               @default(true)
+  showSkills                   Boolean               @default(true)
+  allowConnectionRequests      Boolean               @default(true)
+  allowMessagesFromConnections Boolean               @default(true)
+  allowMessagesFromMembers     Boolean               @default(false)
+  trustScore                   Int                   @default(0)
+  profileCompleteness          Int                   @default(0)
+  completedDeals               Int                   @default(0)
+  averageRating                Decimal               @default(0) @db.Decimal(3, 2)
+  createdAt                    DateTime              @default(now())
+  updatedAt                    DateTime              @updatedAt
+  user                         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills                       ProfileSkill[]
+  portfolio                    PortfolioItem[]
+  workHistory                  WorkHistory[]
+  verificationRequests         VerificationRequest[]
+  profileBookmarks             ProfileBookmark[]
+
+  @@index([isDiscoverable, updatedAt])
+  @@index([location])
 }
 
 model ProfileSkill {
@@ -266,6 +279,7 @@ model ProfileSkill {
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([profileId, name])
+  @@index([name])
 }
 
 model PortfolioItem {
@@ -341,6 +355,7 @@ model Opportunity {
 
   @@index([status, moderationStatus, publishedAt])
   @@index([ownerId, status])
+  @@index([ownerId, status, updatedAt])
   @@index([type])
   @@index([categoryId])
 }
@@ -394,6 +409,7 @@ model Conversation {
   proposals     Proposal[]
 
   @@index([opportunityId])
+  @@index([updatedAt])
 }
 
 model ConversationParticipant {
@@ -406,7 +422,9 @@ model ConversationParticipant {
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([conversationId, userId])
+  @@index([conversationId])
   @@index([userId])
+  @@index([userId, lastReadAt])
 }
 
 model Message {
@@ -443,6 +461,7 @@ model MessageReadReceipt {
   message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId])
+  @@index([userId, readAt])
 }
 
 model BlockedUser {
@@ -453,6 +472,8 @@ model BlockedUser {
   createdAt     DateTime @default(now())
 
   @@unique([blockerUserId, blockedUserId])
+  @@index([blockerUserId])
+  @@index([blockedUserId])
 }
 
 model Proposal {
@@ -724,6 +745,9 @@ model Connection {
   @@unique([requesterId, receiverId])
   @@index([requesterId])
   @@index([receiverId])
+  @@index([requesterId, status])
+  @@index([receiverId, status])
+  @@index([status])
 }
 
 model ProfileBookmark {

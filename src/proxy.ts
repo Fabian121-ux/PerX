@@ -20,7 +20,7 @@ export function proxy(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
-  const isProtectedPage = pathname.startsWith("/app") || pathname.startsWith("/admin");
+  const isProtectedPage = pathname.startsWith("/app");
   
   const cookieName = process.env.SESSION_COOKIE_NAME || "perx_session";
   const sessionCookie = request.cookies.get(cookieName);
