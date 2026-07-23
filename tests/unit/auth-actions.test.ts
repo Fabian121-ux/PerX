@@ -29,6 +29,7 @@ vi.mock("@/lib/auth/session", () => ({
   createSession: vi.fn(),
   createSessionRecord: vi.fn(),
   destroySession: vi.fn(),
+  getCurrentUser: vi.fn(async () => null),
   setSessionCookie: vi.fn(),
 }));
 

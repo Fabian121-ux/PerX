@@ -4,7 +4,6 @@ import { ShieldCheck, Info } from "lucide-react";
 import Link from "next/link";
 import { getAppRoute, getEnvironment } from "@/lib/navigation/app-routes";
 import { usePathname } from "next/navigation";
-import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
 
 export function TrustHeroCard() {
   const pathname = usePathname();
@@ -33,13 +32,12 @@ export function TrustHeroCard() {
           >
             Explore opportunities
           </Link>
-          <FeatureStatusDialog featureName="How deals work">
-            <button
-              className="inline-flex h-11 items-center justify-center rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] px-6 text-sm font-bold text-[color:var(--px-text)] transition-colors hover:bg-[color:var(--px-surface-elevated)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-            >
-              How deals work
-            </button>
-          </FeatureStatusDialog>
+          <Link
+            className="inline-flex h-11 items-center justify-center rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] px-6 text-sm font-bold text-[color:var(--px-text)] transition-colors hover:bg-[color:var(--px-surface-elevated)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            href={getAppRoute("deals", env)}
+          >
+            How deals work
+          </Link>
         </div>
 
         <div className="mt-8 flex items-center gap-2 text-sm font-medium text-blue-50">
@@ -47,9 +45,9 @@ export function TrustHeroCard() {
             <ShieldCheck size={14} />
           </div>
           <span>Beta simulated deal-state structure</span>
-          <button className="ml-1 text-blue-100 hover:text-white" aria-label="More info">
+          <span className="ml-1 text-blue-100" aria-label="More info" role="img">
             <Info size={14} />
-          </button>
+          </span>
         </div>
       </div>
     </div>

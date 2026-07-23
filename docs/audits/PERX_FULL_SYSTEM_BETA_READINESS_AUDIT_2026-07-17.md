@@ -290,7 +290,7 @@ Not verified or absent from repo:
 | `npx cross-env NODE_ENV=production PERX_DATA_MODE=mock npm run build` | FAIL for correct mock-production prohibition |
 | `npm run build` | PASS |
 
-Additional diagnostics:
+Additional checks:
 
 - `DATABASE_URL` read-only `SELECT 1`: FAIL `28P01`.
 - `DIRECT_URL` read-only `SELECT 1`: FAIL `28P01`.
@@ -508,4 +508,3 @@ Pause beta immediately if any occurs:
 - Prisma/DB credentials, session tokens, private messages, or stack traces appear in public UI/log drains.
 - More than two users cannot sign in or recover from invalid sessions.
 - Any migration/seed threatens non-disposable data.
-

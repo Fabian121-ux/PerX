@@ -14,30 +14,48 @@ export type RoleName = keyof typeof roleLabels;
 export type Capability =
   | "admin:access"
   | "admin:moderate"
+  | "audit:read"
   | "conversation:read:participant"
   | "deal:transition:participant"
+  | "deals:review"
   | "deal:view:participant"
   | "internal:tester"
   | "opportunity:create"
   | "opportunity:moderate"
   | "opportunity:update:own"
+  | "messages:moderate"
+  | "policies:manage"
   | "proposal:create"
   | "proposal:decide:received"
-  | "review:create:eligible";
+  | "reports:review"
+  | "review:create:eligible"
+  | "settings:manage"
+  | "support:manage"
+  | "users:manage"
+  | "users:read";
 
 const capabilitiesByRole: Record<RoleName, Capability[]> = {
   ADMIN: [
     "admin:access",
     "admin:moderate",
+    "audit:read",
     "conversation:read:participant",
     "deal:transition:participant",
+    "deals:review",
     "deal:view:participant",
+    "messages:moderate",
     "opportunity:create",
     "opportunity:moderate",
     "opportunity:update:own",
+    "policies:manage",
     "proposal:create",
     "proposal:decide:received",
+    "reports:review",
     "review:create:eligible",
+    "settings:manage",
+    "support:manage",
+    "users:manage",
+    "users:read",
   ],
   CLIENT: [
     "conversation:read:participant",

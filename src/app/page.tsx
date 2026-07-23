@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { demoProfiles } from "@/lib/data/demo";
 import { getOpportunityFeedResult } from "@/lib/data/opportunities";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -104,7 +105,13 @@ const activityCards = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const currentUser = await getCurrentUser().catch(() => null);
+  const discoveryHref = currentUser ? "/app/discover" : "/discover";
+  const postOpportunityHref = currentUser
+    ? "/app/opportunities/new"
+    : "/sign-up";
+
   return (
     <div className="min-h-dvh bg-[color:var(--px-page)]">
       <SiteHeader />
@@ -126,7 +133,7 @@ export default function Home() {
               </p>
 
               <form
-                action="/discover"
+                action={discoveryHref}
                 className="mt-8 grid gap-3 rounded-[22px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-2 shadow-[var(--px-shadow)] sm:grid-cols-[1fr_auto]"
               >
                 <label className="sr-only" htmlFor="home-search">
@@ -147,11 +154,11 @@ export default function Home() {
               </form>
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink href="/discover">
+                <ButtonLink href={discoveryHref}>
                   Explore discovery
                   <ArrowRight aria-hidden className="ml-2" size={18} />
                 </ButtonLink>
-                <ButtonLink href="/sign-up" variant="secondary">
+                <ButtonLink href={postOpportunityHref} variant="secondary">
                   Post an opportunity
                 </ButtonLink>
               </div>
@@ -160,7 +167,7 @@ export default function Home() {
                 {categories.slice(0, 6).map((category) => (
                   <a
                     className="rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] px-3 py-1.5 text-xs font-semibold text-[color:var(--px-text-muted)] transition hover:border-[color:var(--px-primary)] hover:text-[color:var(--px-primary)]"
-                    href={`/discover?q=${encodeURIComponent(category)}`}
+                    href={`${discoveryHref}?q=${encodeURIComponent(category)}`}
                     key={category}
                   >
                     {category}
@@ -261,7 +268,7 @@ export default function Home() {
                 Main activity paths
               </h2>
             </div>
-            <ButtonLink href="/discover" variant="secondary">
+            <ButtonLink href={discoveryHref} variant="secondary">
               Browse all
             </ButtonLink>
           </div>
@@ -269,7 +276,7 @@ export default function Home() {
             {activityCards.map((item) => (
               <a
                 className="perx-card group grid min-h-[180px] gap-4 p-5 transition hover:border-[color:var(--px-primary)] hover:shadow-[var(--px-shadow-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                href={item.href}
+                href={item.href.replace("/discover", discoveryHref)}
                 key={item.label}
               >
                 <span className="perx-soft-tile grid h-11 w-11 place-items-center rounded-[var(--px-radius-sm)]">
@@ -340,9 +347,9 @@ export default function Home() {
           </div>
         </section>
 
-        <FeaturedOpportunities />
-        <FeaturedPeople />
-        <PartnershipAndMarketplacePreview />
+        <FeaturedOpportunities discoveryHref={discoveryHref} />
+        <FeaturedPeople discoveryHref={discoveryHref} />
+        <PartnershipAndMarketplacePreview discoveryHref={discoveryHref} />
 
         <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
           <div className="perx-hero-card grid gap-6 rounded-[28px] p-8 sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -389,7 +396,11 @@ export default function Home() {
   );
 }
 
-async function FeaturedOpportunities() {
+async function FeaturedOpportunities({
+  discoveryHref,
+}: {
+  discoveryHref: string;
+}) {
   const { opportunities, unavailable } = await getOpportunityFeedResult();
   const featuredOpportunities = opportunities.slice(0, 3);
 
@@ -404,7 +415,7 @@ async function FeaturedOpportunities() {
             Featured opportunities
           </h2>
         </div>
-        <ButtonLink href="/discover" variant="secondary">
+        <ButtonLink href={discoveryHref} variant="secondary">
           See all
         </ButtonLink>
       </div>
@@ -433,7 +444,7 @@ async function FeaturedOpportunities() {
   );
 }
 
-function FeaturedPeople() {
+function FeaturedPeople({ discoveryHref }: { discoveryHref: string }) {
   return (
     <section className="bg-[color:var(--px-surface)] py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -446,7 +457,7 @@ function FeaturedPeople() {
               Featured workers and professionals
             </h2>
           </div>
-          <ButtonLink href="/discover?type=PEOPLE" variant="secondary">
+          <ButtonLink href={`${discoveryHref}?type=PEOPLE`} variant="secondary">
             Find people
           </ButtonLink>
         </div>
@@ -484,7 +495,11 @@ function FeaturedPeople() {
   );
 }
 
-function PartnershipAndMarketplacePreview() {
+function PartnershipAndMarketplacePreview({
+  discoveryHref,
+}: {
+  discoveryHref: string;
+}) {
   return (
     <section className="mx-auto grid max-w-7xl gap-5 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:px-8">
       <Card>
@@ -503,7 +518,7 @@ function PartnershipAndMarketplacePreview() {
         </p>
         <ButtonLink
           className="mt-5"
-          href="/discover?type=PARTNERSHIP"
+          href={`${discoveryHref}?type=PARTNERSHIP`}
           variant="secondary"
         >
           Explore partnerships
@@ -525,7 +540,7 @@ function PartnershipAndMarketplacePreview() {
         </p>
         <ButtonLink
           className="mt-5"
-          href="/discover?type=MARKETPLACE"
+          href={`${discoveryHref}?type=MARKETPLACE`}
           variant="secondary"
         >
           View marketplace status

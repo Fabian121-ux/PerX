@@ -1,14 +1,32 @@
 import { test, expect } from "@playwright/test";
-import { enforceTestDatabaseIsolation } from "./utils/db-guard";
-import { getPrisma } from "../../src/lib/db/prisma";
+import { hasIsolatedTestDatabase } from "./utils/db-guard";
 
-// Guard immediately
-enforceTestDatabaseIsolation();
+type TestPrisma = {
+  $disconnect: () => Promise<void>;
+  user: {
+    count: (args: unknown) => Promise<number>;
+    deleteMany: (args: unknown) => Promise<unknown>;
+    findMany: (args: unknown) => Promise<
+      Array<{
+        accountClassification: string;
+        roles: Array<{ role: { name: string } }>;
+      }>
+    >;
+  };
+};
 
-const prisma = getPrisma();
+const describeWithDatabase = hasIsolatedTestDatabase()
+  ? test.describe
+  : test.describe.skip;
 
-test.describe("10-User Beta constraints and Core Workflow", () => {
+describeWithDatabase("10-User Beta constraints and Core Workflow", () => {
   const runId = Date.now();
+  let prisma: TestPrisma;
+
+  test.beforeAll(async () => {
+    const { getPrisma } = await import("../../src/lib/db/prisma");
+    prisma = getPrisma() as unknown as TestPrisma;
+  });
   
   test.afterAll(async () => {
     // strict cleanup of test accounts
@@ -20,7 +38,7 @@ test.describe("10-User Beta constraints and Core Workflow", () => {
     await prisma.$disconnect();
   });
 
-  test("Beta registration capacity restricts to 10 users max using real registration path", async ({ page, request }) => {
+  test("Beta registration capacity restricts to 10 users max using real registration path", async ({ page }) => {
     // Check initial count
     const initialCount = await prisma.user.count({
       where: { accountClassification: { notIn: ["INTERNAL_ADMIN", "INTERNAL_TEST_USER", "SYSTEM_ACCOUNT"] }, isActive: true }
@@ -55,7 +73,7 @@ test.describe("10-User Beta constraints and Core Workflow", () => {
         if (page.url().includes("/app/profile/setup")) {
           successfulRegistrations++;
           // Sign out for next user
-          await page.goto("/api/auth/sign-out");
+          await page.goto("/api/auth/clear-session?next=/sign-in");
         }
       }
     }
@@ -73,7 +91,7 @@ test.describe("10-User Beta constraints and Core Workflow", () => {
 
     for (const u of createdUsers) {
       expect(u.accountClassification).toBe("PUBLIC_BETA_USER");
-      const roles = u.roles.map((r: any) => r.role.name);
+      const roles = u.roles.map((r) => r.role.name);
       expect(roles).toContain("MEMBER");
       expect(roles).not.toContain("ADMIN");
       expect(roles).not.toContain("INTERNAL_TESTER");

@@ -1,8 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
 import { getPrisma } from "@/lib/db/prisma";
 import { requireUser } from "@/lib/auth/session";
+import { writeAuditLog } from "@/lib/logging/audit";
 
 export async function requestConnectionAction(targetUserId: string) {
   const user = await requireUser();
@@ -90,4 +93,56 @@ export async function disconnectAction(connectionId: string) {
   });
 
   revalidatePath("/app/network");
+}
+
+export async function startConversationAction(targetUserId: string) {
+  const user = await requireUser();
+
+  if (user.id === targetUserId) {
+    throw new Error("Cannot message yourself");
+  }
+
+  const targetUser = await getPrisma().user.findFirst({
+    select: { id: true },
+    where: { id: targetUserId, isActive: true },
+  });
+
+  if (!targetUser) {
+    throw new Error("User not found");
+  }
+
+  const existingConversation = await getPrisma().conversation.findFirst({
+    select: { id: true },
+    where: {
+      opportunityId: null,
+      AND: [
+        { participants: { some: { userId: user.id } } },
+        { participants: { some: { userId: targetUserId } } },
+      ],
+    },
+  });
+
+  if (existingConversation) {
+    redirect(`/app/messages/${existingConversation.id}`);
+  }
+
+  const conversation = await getPrisma().conversation.create({
+    data: {
+      participants: {
+        create: [{ userId: user.id }, { userId: targetUserId }],
+      },
+    },
+    select: { id: true },
+  });
+
+  await writeAuditLog({
+    actorId: user.id,
+    action: "conversation.direct_started",
+    entityId: conversation.id,
+    entityType: "conversation",
+    metadata: { participantCount: 2 },
+  });
+
+  revalidatePath("/app/messages");
+  redirect(`/app/messages/${conversation.id}`);
 }

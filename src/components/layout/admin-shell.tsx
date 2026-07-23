@@ -8,15 +8,14 @@ import type { CurrentUser } from "@/lib/auth/session";
 const adminLinks = [
   ["/admin", "Dashboard"],
   ["/admin/users", "Users"],
-  ["/admin/profiles", "Profiles"],
   ["/admin/opportunities", "Opportunities"],
+  ["/admin/messages", "Messages"],
   ["/admin/reports", "Reports"],
-  ["/admin/reviews", "Reviews"],
-  ["/admin/disputes", "Disputes"],
-  ["/admin/verification", "Verification"],
-  ["/admin/audit-logs", "Audit logs"],
-  ["/admin/activity", "Activity"],
-  ["/admin/moderation", "Moderation"],
+  ["/admin/support", "Support"],
+  ["/admin/deals", "Deals"],
+  ["/admin/audit", "Audit"],
+  ["/admin/policies", "Policies"],
+  ["/admin/settings", "Settings"],
 ];
 
 export function AdminShell({
@@ -42,7 +41,7 @@ export function AdminShell({
           <div className="flex items-center gap-3">
             <Link
               className="text-sm font-medium text-slate-300 hover:text-white"
-              href="/dashboard"
+              href="/app/dashboard"
             >
               User app
             </Link>

@@ -66,9 +66,9 @@ export const sidebarItems: SidebarItem[] = [
   },
   {
     group: "work",
-    href: "/app/listings",
+    href: "/app/opportunities",
     icon: BriefcaseBusiness,
-    label: "Listings",
+    label: "Opportunities",
   },
   {
     group: "work",

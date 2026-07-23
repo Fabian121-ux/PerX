@@ -72,6 +72,7 @@ describe("registration status and gate", () => {
     expect(client.user.count).toHaveBeenCalledWith({
       where: {
         accountClassification: "PUBLIC_BETA_USER",
+        isActive: true,
         roles: {
           none: {
             role: {

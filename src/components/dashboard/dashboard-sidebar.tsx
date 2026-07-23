@@ -49,6 +49,11 @@ function SidebarLink({
   );
 }
 
+function canShowSidebarItem(item: SidebarItem, userRoles?: readonly string[]) {
+  if (item.href !== "/admin") return true;
+  return Boolean(userRoles?.includes("ADMIN"));
+}
+
 function getRenderedHref(href: string, pathname: string) {
   if (!pathname.startsWith("/preview")) {
     return href;
@@ -68,11 +73,19 @@ function getRenderedHref(href: string, pathname: string) {
   return `/preview${href}`;
 }
 
-export function SidebarNavigation({ onNavigate }: { onNavigate?: () => void }) {
+export function SidebarNavigation({
+  onNavigate,
+  userRoles,
+}: {
+  onNavigate?: () => void;
+  userRoles?: readonly string[];
+}) {
   return (
     <nav aria-label="Sidebar navigation" className="grid gap-5">
       {sidebarGroups.map((group) => {
-        const items = sidebarItems.filter((item) => item.group === group.key);
+        const items = sidebarItems.filter(
+          (item) => item.group === group.key && canShowSidebarItem(item, userRoles),
+        );
 
         return (
           <section className="grid gap-1.5" key={group.key}>
@@ -95,7 +108,11 @@ export function SidebarNavigation({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function DashboardSidebar() {
+export function DashboardSidebar({
+  userRoles,
+}: {
+  userRoles?: readonly string[];
+}) {
   const isDesktop = useIsDesktop();
 
   if (!isDesktop) {
@@ -112,7 +129,7 @@ export function DashboardSidebar() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-5 pt-1">
-        <SidebarNavigation />
+        <SidebarNavigation userRoles={userRoles} />
       </div>
     </aside>
   );

@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { getAppRoute, getEnvironment } from "@/lib/navigation/app-routes";
 import { ShieldCheck } from "lucide-react";
 import type { DashboardRecommendedProfile } from "./types";
-import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
 
 export function RecommendedProfiles({
   profiles,
@@ -66,11 +65,12 @@ export function RecommendedProfiles({
               <p className="mt-2 line-clamp-2 text-xs text-[color:var(--px-text-muted)]">
                 {profile.headline}
               </p>
-              <FeatureStatusDialog featureName={`Connect with ${profile.name}`}>
-                <button className="mt-4 w-full rounded-full bg-[color:var(--px-primary)] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]">
-                  Connect
-                </button>
-              </FeatureStatusDialog>
+              <Link
+                className="mt-4 w-full rounded-full bg-[color:var(--px-primary)] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                href={`/u/${profile.username}`}
+              >
+                View profile
+              </Link>
             </div>
           ))}
         </div>

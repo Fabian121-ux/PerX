@@ -133,11 +133,13 @@ export const prismaProvider: PerXDataProvider = {
       });
     },
     getConversationMessages: async (conversationId: string) => {
-      return getPrisma().message.findMany({
+      const messages = await getPrisma().message.findMany({
         where: { conversationId },
-        orderBy: { createdAt: "asc" },
+        orderBy: { createdAt: "desc" },
+        take: 50,
         include: { sender: true },
       });
+      return messages.reverse();
     },
   },
   profiles: {
@@ -187,4 +189,3 @@ export const prismaProvider: PerXDataProvider = {
     },
   },
 };
-

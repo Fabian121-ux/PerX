@@ -3,8 +3,29 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { createOpportunityAction } from "@/features/opportunities/actions";
+import {
+  currencyOptions,
+  findOption,
+  opportunityCategoryOptions,
+  opportunityTypeOptions,
+} from "@/lib/options";
 
-export default function NewOpportunityPage() {
+export default async function NewOpportunityPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; type?: string }>;
+}) {
+  const params = await searchParams;
+  const defaultType = findOption(opportunityTypeOptions, params.type ?? "")
+    ? params.type
+    : "FREELANCE_PROJECT";
+  const defaultCategory = findOption(
+    opportunityCategoryOptions,
+    params.category ?? "",
+  )
+    ? params.category
+    : "software";
+
   return (
     <AppSection description="Create a job or freelance project that can move into proposals, deals, milestones, and trust." title="Create opportunity">
       <Card>
@@ -20,30 +41,42 @@ export default function NewOpportunityPage() {
           </Field>
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Type">
-              <Select name="type" required>
-                <option value="FREELANCE_PROJECT">Freelance project</option>
-                <option value="JOB">Job</option>
-                <option value="SERVICE">Service</option>
-                <option value="PROPERTY">Real Estate</option>
-                <option value="PARTNERSHIP">Partnership</option>
-                <option value="STARTUP">Startup</option>
-                <option value="COFOUNDER">Cofounder</option>
-                <option value="INVESTMENT">Investment</option>
+              <Select defaultValue={defaultType} name="type" required>
+                {opportunityTypeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </Select>
             </Field>
             <Field label="Category">
-              <Input name="category" placeholder="Software" required />
+              <Select defaultValue={defaultCategory} name="category" required>
+                {opportunityCategoryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
             </Field>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <Field label="Currency">
-              <Input defaultValue="NGN" maxLength={3} name="currency" required />
+              <Select defaultValue="NGN" name="currency" required>
+                {currencyOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.value}
+                  </option>
+                ))}
+              </Select>
             </Field>
             <Field label="Budget min">
               <Input name="budgetMin" placeholder="250000.00" />
             </Field>
             <Field label="Budget max">
               <Input name="budgetMax" placeholder="1200000.00" />
+            </Field>
+            <Field label="Location">
+              <Input name="location" placeholder="Lagos, remote, hybrid" />
             </Field>
           </div>
           <Field label="Skills">

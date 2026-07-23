@@ -23,10 +23,11 @@ export default function PreviewLayout({ children }: { children: ReactNode }) {
   return (
     <div className="perx-shell relative flex h-dvh overflow-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200">
       <AnimatedBackground />
-      <DashboardSidebar />
+      <DashboardSidebar userRoles={mockCurrentUser.roles} />
       <MobileDashboardDrawer
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
+        userRoles={mockCurrentUser.roles}
       />
 
       <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">

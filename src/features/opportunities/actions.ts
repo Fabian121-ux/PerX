@@ -6,9 +6,18 @@ import { getPrisma } from "@/lib/db/prisma";
 import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { parseMoneyToMinor } from "@/lib/money";
+import {
+  findOption,
+  opportunityCategoryOptions,
+  reportReasonOptions,
+} from "@/lib/options";
 import { hasCapability } from "@/lib/permissions/capabilities";
 import { requireUser } from "@/lib/auth/session";
-import { opportunityFormSchema } from "@/lib/validation/opportunity";
+import {
+  opportunityFormSchema,
+  opportunityReportSchema,
+} from "@/lib/validation/opportunity";
+import { evaluatePolicy, isPolicyBlocking } from "@/lib/policy/enforcement";
 
 function slugify(value: string) {
   return value
@@ -23,9 +32,9 @@ export async function createOpportunityAction(formData: FormData) {
   if (!hasCapability(user.roles, "opportunity:create"))
     redirect("/app?error=forbidden");
 
-  if (getResolvedDataMode() === "mock") redirect("/market?mock=true");
+  if (getResolvedDataMode() === "mock") redirect("/app/market?mock=true");
   if (!hasDatabaseUrl())
-    redirect("/opportunities/new?error=database-not-configured");
+    redirect("/app/opportunities/new?error=database-not-configured");
 
   const parsed = opportunityFormSchema.safeParse({
     budgetMax: formData.get("budgetMax"),
@@ -42,15 +51,40 @@ export async function createOpportunityAction(formData: FormData) {
     type: formData.get("type"),
   });
 
-  if (!parsed.success) redirect("/opportunities/new?error=check-fields");
+  if (!parsed.success) redirect("/app/opportunities/new?error=check-fields");
 
-  const categorySlug = slugify(parsed.data.category);
+  const categoryOption = findOption(opportunityCategoryOptions, parsed.data.category);
+  if (!categoryOption) redirect("/app/opportunities/new?error=check-fields");
+
+  const policy = evaluatePolicy({
+    actorId: user.id,
+    content: `${parsed.data.title}\n${parsed.data.summary}\n${parsed.data.description}`,
+    entityType: "opportunity",
+  });
+
+  if (policy.outcome !== "ALLOW") {
+    await writeAuditLog({
+      actorId: user.id,
+      action: "policy.opportunity_evaluated",
+      entityType: "opportunity",
+      metadata: policy.auditMetadata,
+    });
+  }
+
+  if (isPolicyBlocking(policy)) {
+    redirect("/app/opportunities/new?error=check-fields");
+  }
+
+  const categorySlug = categoryOption.value;
   const category = await getPrisma().opportunityCategory.upsert({
     where: { slug: categorySlug },
-    update: { name: parsed.data.category },
+    update: {
+      description: categoryOption.description,
+      name: categoryOption.label,
+    },
     create: {
-      description: `${parsed.data.category} opportunities on perX.`,
-      name: parsed.data.category,
+      description: categoryOption.description,
+      name: categoryOption.label,
       slug: categorySlug,
     },
   });
@@ -104,14 +138,14 @@ export async function createOpportunityAction(formData: FormData) {
     entityType: "opportunity",
   });
 
-  redirect("/market");
+  redirect("/app/opportunities");
 }
 
 export async function bookmarkOpportunityAction(formData: FormData) {
   const user = await requireUser();
   
-  if (getResolvedDataMode() === "mock") redirect("/saved?mock=true");
-  if (!hasDatabaseUrl()) redirect("/saved?error=database-not-configured");
+  if (getResolvedDataMode() === "mock") redirect("/app/saved?mock=true");
+  if (!hasDatabaseUrl()) redirect("/app/saved?error=database-not-configured");
 
   const opportunityId = String(formData.get("opportunityId") ?? "");
   await getPrisma().opportunityBookmark.upsert({
@@ -120,7 +154,7 @@ export async function bookmarkOpportunityAction(formData: FormData) {
     where: { userId_opportunityId: { opportunityId, userId: user.id } },
   });
 
-  redirect("/saved");
+  redirect("/app/saved");
 }
 
 export async function reportOpportunityAction(formData: FormData) {
@@ -129,20 +163,49 @@ export async function reportOpportunityAction(formData: FormData) {
   if (getResolvedDataMode() === "mock") redirect("/discover?status=reported&mock=true");
   if (!hasDatabaseUrl()) redirect("/discover?error=database-not-configured");
 
-  const opportunityId = String(formData.get("opportunityId") ?? "");
-  const reason = String(formData.get("reason") ?? "Safety concern").slice(
-    0,
-    240,
-  );
-  await getPrisma().opportunityReport.create({
-    data: { opportunityId, reason, reporterId: user.id },
+  const parsed = opportunityReportSchema.safeParse({
+    details: formData.get("details"),
+    opportunityId: formData.get("opportunityId"),
+    reason: formData.get("reason"),
+  });
+
+  if (!parsed.success) redirect("/discover?error=invalid-report");
+
+  const reason = findOption(reportReasonOptions, parsed.data.reason);
+  const existing = await getPrisma().opportunityReport.findFirst({
+    where: {
+      opportunityId: parsed.data.opportunityId,
+      reporterId: user.id,
+      status: { in: ["OPEN", "REVIEWING"] },
+    },
+  });
+
+  if (!existing) {
+    await getPrisma().opportunityReport.create({
+      data: {
+        details: parsed.data.details || null,
+        opportunityId: parsed.data.opportunityId,
+        reason: reason?.label ?? parsed.data.reason,
+        reporterId: user.id,
+      },
+    });
+  }
+
+  await getPrisma().notification.create({
+    data: {
+      body: existing
+        ? "You already have an open report for this listing."
+        : "Your report was received and will be reviewed.",
+      title: existing ? "Report already open" : "Report submitted",
+      type: "MODERATION",
+      userId: user.id,
+    },
   });
   await writeAuditLog({
     actorId: user.id,
     action: "opportunity.report",
-    entityId: opportunityId,
+    entityId: parsed.data.opportunityId,
     entityType: "opportunity",
   });
   redirect("/discover?status=reported");
 }
-

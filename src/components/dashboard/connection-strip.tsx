@@ -3,7 +3,6 @@
 import { Plus, ShieldCheck } from "lucide-react";
 
 import type { DashboardConnection, HomeDashboardData } from "@/components/dashboard/types";
-import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
 import Link from "next/link";
 
 export function ConnectionStrip({
@@ -41,8 +40,11 @@ export function ConnectionStrip({
 
         {/* Connections */}
         {connections.map((conn) => (
-          <FeatureStatusDialog key={conn.id} featureName={`View ${conn.name}'s profile`}>
-            <button className="group flex flex-col items-center gap-2 focus:outline-none snap-start shrink-0">
+          <Link
+            className="group flex flex-col items-center gap-2 focus:outline-none snap-start shrink-0"
+            href={`/u/${conn.username}`}
+            key={conn.id}
+          >
             <div className="relative">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--px-surface-soft)] ring-2 ring-[color:var(--px-primary)] ring-offset-2 ring-offset-[color:var(--px-page)] transition-transform group-hover:scale-105">
                 <span className="text-xl font-bold text-[color:var(--px-primary)]">
@@ -60,8 +62,7 @@ export function ConnectionStrip({
               )}
             </div>
             <span className="text-xs font-medium text-[color:var(--px-text)]">{conn.name.split(" ")[0]}</span>
-          </button>
-          </FeatureStatusDialog>
+          </Link>
         ))}
       </div>
     </section>

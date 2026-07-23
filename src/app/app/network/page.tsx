@@ -4,7 +4,13 @@ import { getPrisma } from "@/lib/db/prisma";
 import Link from "next/link";
 import { Card, EmptyState } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { acceptConnectionAction, rejectConnectionAction, disconnectAction, requestConnectionAction } from "@/features/network/actions";
+import {
+  acceptConnectionAction,
+  disconnectAction,
+  rejectConnectionAction,
+  requestConnectionAction,
+  startConversationAction,
+} from "@/features/network/actions";
 
 export default async function NetworkPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const user = await getCurrentUser();
@@ -98,9 +104,9 @@ export default async function NetworkPage({ searchParams }: { searchParams: Prom
                     <form action={async () => { "use server"; await disconnectAction(conn.id); }}>
                       <Button type="submit" variant="secondary" size="sm">Remove</Button>
                     </form>
-                    <Link href={`/app/messages/new?to=${connectedUser.id}`} className="inline-flex h-9 items-center justify-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-3 text-sm font-semibold text-white transition-colors hover:bg-[color:var(--px-primary-strong)]">
-                      Message
-                    </Link>
+                    <form action={async () => { "use server"; await startConversationAction(connectedUser.id); }}>
+                      <Button type="submit" size="sm">Message</Button>
+                    </form>
                   </div>
                 </Card>
               )

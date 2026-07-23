@@ -1,10 +1,9 @@
 import { test, expect } from "@playwright/test";
-import { enforceTestDatabaseIsolation } from "./utils/db-guard";
+import { hasIsolatedTestDatabase } from "./utils/db-guard";
 
-// Enforce isolation
-enforceTestDatabaseIsolation();
+const testWithDatabase = hasIsolatedTestDatabase() ? test : test.skip;
 
-test("Normal user cannot access /admin", async ({ page }) => {
+testWithDatabase("Normal user cannot access /admin", async ({ page }) => {
   const timestamp = Date.now();
   const email = `audit_norm_${timestamp}@example.com`;
   const username = `audit_norm_${timestamp}`;
@@ -31,7 +30,7 @@ test("Public visitor denied from /admin", async ({ page }) => {
   expect(page.url()).toContain("/sign-in");
 });
 
-test("Signup cannot request ADMIN, INTERNAL_ADMIN, or INTERNAL_TESTER", async ({ request }) => {
+testWithDatabase("Signup cannot request ADMIN, INTERNAL_ADMIN, or INTERNAL_TESTER", async ({ request }) => {
   const runId = Date.now();
   
   const formData = new FormData();

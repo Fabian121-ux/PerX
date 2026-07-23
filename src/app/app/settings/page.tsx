@@ -15,7 +15,7 @@ export default async function SettingsPage() {
         </p>
         <ButtonLink
           className="mt-4"
-          href="/settings/security"
+          href="/app/settings/security"
           variant="secondary"
         >
           Security settings

@@ -4,7 +4,6 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { UserRound, Settings, LogOut, Sun, Moon, Monitor, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
 import { signOutAction } from "@/features/auth/actions";
 import type { CurrentUser } from "@/lib/auth/session";
 
@@ -66,7 +65,7 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
           
           <DropdownMenu.Separator className="my-1 h-px bg-[color:var(--px-border)]" />
           
-          <DropdownMenu.Item asChild onSelect={() => {}}>
+          <DropdownMenu.Item asChild>
             <Link href="/app/profile" className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
               <UserRound size={16} className="text-[color:var(--px-text-muted)]" />
               View profile

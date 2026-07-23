@@ -7,7 +7,6 @@ import type { CurrentUser } from "@/lib/auth/session";
 import { CreateMenu } from "./create-menu";
 import { AccountMenu } from "./account-menu";
 import { ThemeToggle } from "./theme-toggle";
-import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
 import { BrandSymbol } from "@/components/brand-logo";
 
 export function DashboardTopbar({
@@ -20,6 +19,11 @@ export function DashboardTopbar({
   onMenuClick?: () => void;
 }) {
   const discoverHref = previewMode ? "/preview/discover" : "/app/discover";
+  const messagesHref = previewMode ? "/preview/messages" : "/app/messages";
+  const notificationsHref = previewMode
+    ? "/preview/notifications"
+    : "/app/notifications";
+  const trustHref = previewMode ? "/preview" : "/app/trust";
 
   return (
     <header className="dashboard-topbar sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b border-[color:var(--px-border)] px-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:px-6 lg:px-8">
@@ -80,34 +84,32 @@ export function DashboardTopbar({
             <Search size={20} />
           </Link>
 
-          <FeatureStatusDialog featureName="Trust Dashboard">
-            <button
-              className="hidden h-9 w-9 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none sm:flex"
-              aria-label="Trust Dashboard"
-            >
-              <ShieldCheck size={20} />
-            </button>
-          </FeatureStatusDialog>
+          <Link
+            className="hidden h-9 w-9 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:flex"
+            aria-label="Trust dashboard"
+            href={trustHref}
+            title="Trust dashboard"
+          >
+            <ShieldCheck size={20} />
+          </Link>
 
-          <FeatureStatusDialog featureName="Notifications">
-            <button
-              className="relative flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:h-9 sm:w-9"
-              aria-label="Notifications"
-            >
-              <Bell size={20} />
-              <span className="absolute right-1.5 top-1.5 flex h-2.5 w-2.5 rounded-full bg-[color:var(--px-gold)] ring-2 ring-[color:var(--px-surface)]" />
-            </button>
-          </FeatureStatusDialog>
+          <Link
+            className="relative flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:h-9 sm:w-9"
+            aria-label="Notifications"
+            href={notificationsHref}
+            title="Notifications"
+          >
+            <Bell size={20} />
+          </Link>
 
-          <FeatureStatusDialog featureName="Messages">
-            <button
-              className="relative hidden h-9 w-9 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none sm:flex"
-              aria-label="Messages"
-            >
-              <MessageSquare size={20} />
-              <span className="absolute right-1.5 top-1.5 flex h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-[color:var(--px-surface)]" />
-            </button>
-          </FeatureStatusDialog>
+          <Link
+            className="relative hidden h-9 w-9 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:flex"
+            aria-label="Messages"
+            href={messagesHref}
+            title="Messages"
+          >
+            <MessageSquare size={20} />
+          </Link>
         </div>
 
         <AccountMenu user={user} previewMode={previewMode} />

@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { getAppRoute, getEnvironment } from "@/lib/navigation/app-routes";
-import { Bookmark, MapPin, ShieldCheck, Clock } from "lucide-react";
+import { MapPin, ShieldCheck, Clock } from "lucide-react";
 import type { DashboardOpportunity } from "./types";
 import { formatBudgetRange } from "@/lib/money";
 
@@ -97,13 +97,6 @@ export function RecommendedOpportunities({
                   </div>
                 </div>
               </Link>
-              <button
-                className="absolute right-3 top-3 rounded-full bg-black/45 p-2 text-white backdrop-blur-md transition-colors hover:bg-black/65 hover:text-[color:var(--px-gold-bright)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                aria-label="Save opportunity"
-                type="button"
-              >
-                <Bookmark size={16} />
-              </button>
             </article>
           ))}
         </div>

@@ -25,10 +25,11 @@ export function AppShell({
   return (
     <div className="perx-shell relative flex h-dvh overflow-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200">
       <AnimatedBackground />
-      <DashboardSidebar />
+      <DashboardSidebar userRoles={user.roles} />
       <MobileDashboardDrawer
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
+        userRoles={user.roles}
       />
 
       <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -45,9 +46,11 @@ export function AppShell({
 export function MobileDashboardDrawer({
   open,
   onClose,
+  userRoles,
 }: {
   open: boolean;
   onClose: () => void;
+  userRoles: readonly string[];
 }) {
   return (
     <Dialog.Root
@@ -76,7 +79,7 @@ export function MobileDashboardDrawer({
             </Dialog.Close>
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto pb-4 pt-4">
-            <SidebarNavigation onNavigate={onClose} />
+            <SidebarNavigation onNavigate={onClose} userRoles={userRoles} />
           </div>
         </Dialog.Content>
       </Dialog.Portal>

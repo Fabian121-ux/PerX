@@ -5,7 +5,6 @@ import { ArrowLeft, FileText, Paperclip, Phone, Search, Send, ShieldCheck, Video
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
-import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
 import { sendMessageAction } from "@/features/messages/actions";
 
 export type WorkspaceMessage = {
@@ -176,16 +175,20 @@ export function MessageWorkspace({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <FeatureStatusDialog featureName="Voice call">
-                <button className="grid h-10 w-10 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)]" aria-label="Start call" type="button">
-                  <Phone size={17} />
-                </button>
-              </FeatureStatusDialog>
-              <FeatureStatusDialog featureName="Video call">
-                <button className="grid h-10 w-10 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)]" aria-label="Start video" type="button">
-                  <Video size={17} />
-                </button>
-              </FeatureStatusDialog>
+              <span
+                aria-label="Voice calls are not active in beta"
+                className="grid h-10 w-10 place-items-center rounded-full text-[color:var(--px-text-muted)] opacity-60"
+                title="Voice calls are not active in beta"
+              >
+                <Phone aria-hidden size={17} />
+              </span>
+              <span
+                aria-label="Video calls are not active in beta"
+                className="grid h-10 w-10 place-items-center rounded-full text-[color:var(--px-text-muted)] opacity-60"
+                title="Video calls are not active in beta"
+              >
+                <Video aria-hidden size={17} />
+              </span>
             </div>
           </div>
 
@@ -216,11 +219,13 @@ export function MessageWorkspace({
 
           <form className="shrink-0 border-t border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-3" onSubmit={sendMessage}>
             <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-2">
-              <FeatureStatusDialog featureName="Message attachments">
-                <button className="grid h-10 w-10 place-items-center rounded-xl text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface)]" aria-label="Attach file" type="button">
-                  <Paperclip size={18} />
-                </button>
-              </FeatureStatusDialog>
+              <span
+                aria-label="Attachments are not active in beta"
+                className="grid h-10 w-10 place-items-center rounded-xl text-[color:var(--px-text-muted)] opacity-60"
+                title="Attachments are not active in beta"
+              >
+                <Paperclip aria-hidden size={18} />
+              </span>
               <label className="sr-only" htmlFor="message-draft">Message</label>
               <textarea
                 className="max-h-32 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm text-[color:var(--px-text)] outline-none placeholder:text-[color:var(--px-text-muted)]"
@@ -250,14 +255,14 @@ export function MessageWorkspace({
             <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-4 ring-1 ring-[color:var(--px-border)]">
               <h3 className="font-bold text-[color:var(--px-text)]">Deal tools</h3>
               <div className="mt-3 grid gap-2">
-                <ToolButton icon={<FileText size={16} />} label="View proposal" />
+                <ToolStatus icon={<FileText size={16} />} label="No linked proposal" />
                 {activeConversation.dealHref ? (
                   <Link className="flex items-center gap-2 rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-3 py-2 text-sm font-bold text-white" href={activeConversation.dealHref}>
                     <ShieldCheck size={16} />
                     Deal workspace
                   </Link>
                 ) : (
-                  <ToolButton icon={<ShieldCheck size={16} />} label="Deal workspace" />
+                  <ToolStatus icon={<ShieldCheck size={16} />} label="No deal workspace" />
                 )}
               </div>
             </div>
@@ -265,8 +270,9 @@ export function MessageWorkspace({
             <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-4 ring-1 ring-[color:var(--px-border)]">
               <h3 className="font-bold text-[color:var(--px-text)]">Shared files</h3>
               <div className="mt-3 grid gap-2 text-xs text-[color:var(--px-text-muted)]">
-                <p className="rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface)] p-3">proposal-scope.pdf</p>
-                <p className="rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface)] p-3">milestone-outline.docx</p>
+                <p className="rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface)] p-3">
+                  No shared files are attached to this conversation.
+                </p>
               </div>
             </div>
           </>
@@ -295,13 +301,11 @@ function Avatar({ name, online, size = "md" }: { name: string; online?: boolean;
   );
 }
 
-function ToolButton({ icon, label }: { icon: ReactNode; label: string }) {
+function ToolStatus({ icon, label }: { icon: ReactNode; label: string }) {
   return (
-    <FeatureStatusDialog featureName={label}>
-      <button className="flex w-full items-center gap-2 rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface)] px-3 py-2 text-left text-sm font-bold text-[color:var(--px-text)] hover:bg-[color:var(--px-hover)]" type="button">
-        {icon}
-        {label}
-      </button>
-    </FeatureStatusDialog>
+    <div className="flex w-full items-center gap-2 rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface)] px-3 py-2 text-sm font-bold text-[color:var(--px-text-muted)]">
+      {icon}
+      {label}
+    </div>
   );
 }

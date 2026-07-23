@@ -17,7 +17,7 @@ import { PublicPageShell } from "@/components/standard-page";
 import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
-import { Field, Input, Textarea } from "@/components/ui/form";
+import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import {
   bookmarkOpportunityAction,
   reportOpportunityAction,
@@ -26,6 +26,7 @@ import { submitProposalAction } from "@/features/proposals/actions";
 import { getOpportunityBySlugResult } from "@/lib/data/opportunities";
 import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { formatBudgetRange } from "@/lib/money";
+import { reportReasonOptions } from "@/lib/options";
 
 export default async function OpportunityDetailPage({
   params,
@@ -264,7 +265,23 @@ export default async function OpportunityDetailPage({
                 type="hidden"
                 value={opportunity.id}
               />
-              <Input name="reason" placeholder="Reason" required />
+              <Field label="Reason">
+                <Select name="reason" required>
+                  <option value="">Select a reason</option>
+                  {reportReasonOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Details">
+                <Textarea
+                  maxLength={1000}
+                  name="details"
+                  placeholder="Optional context for the safety team"
+                />
+              </Field>
               <Button type="submit" variant="secondary">
                 <Flag aria-hidden className="mr-2" size={16} />
                 Report

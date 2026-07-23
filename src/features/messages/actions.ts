@@ -6,6 +6,8 @@ import { z } from "zod";
 import { requireUser } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
+import { writeAuditLog } from "@/lib/logging/audit";
+import { evaluatePolicy, isPolicyBlocking } from "@/lib/policy/enforcement";
 
 const sendMessageSchema = z.object({
   conversationId: z.string().cuid(),
@@ -41,6 +43,31 @@ export async function sendMessageAction(conversationId: string, body: string) {
 
     if (!participation) {
       return { error: "You are not a participant in this conversation." };
+    }
+
+    const policy = evaluatePolicy({
+      actorId: user.id,
+      content: parsed.data.body,
+      entityId: parsed.data.conversationId,
+      entityType: "message",
+    });
+
+    if (policy.outcome !== "ALLOW") {
+      await writeAuditLog({
+        actorId: user.id,
+        action: "policy.message_evaluated",
+        entityId: parsed.data.conversationId,
+        entityType: "conversation",
+        metadata: policy.auditMetadata,
+      });
+    }
+
+    if (isPolicyBlocking(policy)) {
+      return {
+        error:
+          policy.userMessage ??
+          "This message needs review before it can be sent.",
+      };
     }
 
     await getPrisma().$transaction(async (tx) => {

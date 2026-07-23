@@ -22,6 +22,7 @@ export type CurrentUser = {
     headline: string;
     biography?: string;
     location?: string;
+    skills?: string[];
     trustScore: number;
     profileCompleteness: number;
   } | null;
@@ -96,7 +97,13 @@ export async function destroySession() {
       where: { tokenHash: hashToken(token) },
     });
   }
-  cookieStore.delete(sessionCookieName());
+  cookieStore.set(sessionCookieName(), "", {
+    httpOnly: true,
+    maxAge: 0,
+    path: "/",
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+  });
 }
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
@@ -111,7 +118,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     include: {
       user: {
         include: {
-          profile: true,
+          profile: { include: { skills: true } },
           roles: { include: { role: true } },
         },
       },
@@ -141,6 +148,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
           biography: session.user.profile.biography,
           location: session.user.profile.location,
           profileCompleteness: session.user.profile.profileCompleteness,
+          skills: session.user.profile.skills.map((skill) => skill.name),
           trustScore: session.user.profile.trustScore,
         }
       : null,
@@ -152,7 +160,10 @@ export async function requireUser(): Promise<NonNullable<CurrentUser>> {
   const user = await getCurrentUser();
   if (!user) {
     const cookieStore = await cookies();
-    if (cookieStore.has(sessionCookieName())) {
+    if (
+      typeof cookieStore.has === "function" &&
+      cookieStore.has(sessionCookieName())
+    ) {
       redirect("/api/auth/clear-session?next=/app");
     }
     redirect("/sign-in?next=/app");

@@ -12,10 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { formatBudgetRange } from "@/lib/money";
+import { bookmarkOpportunityAction } from "@/features/opportunities/actions";
 
 type OpportunityCardProps = {
   href?: string;
   opportunity: {
+    id?: string;
     slug: string;
     title: string;
     summary: string;
@@ -49,13 +51,18 @@ export function OpportunityCard({ href, opportunity }: OpportunityCardProps) {
 
   return (
     <Card className="relative overflow-hidden p-0 transition hover:border-[color:var(--px-border-strong)] hover:shadow-[var(--px-shadow-strong)]">
-      <button
-        aria-label={`Save ${opportunity.title}`}
-        className="absolute right-4 top-4 z-20 grid h-10 w-10 place-items-center rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text-muted)] shadow-sm transition hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-        type="button"
-      >
-        <Bookmark aria-hidden size={17} />
-      </button>
+      {opportunity.id ? (
+        <form action={bookmarkOpportunityAction} className="absolute right-4 top-4 z-20">
+          <input name="opportunityId" type="hidden" value={opportunity.id} />
+          <button
+            aria-label={`Save ${opportunity.title}`}
+            className="grid h-10 w-10 place-items-center rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text-muted)] shadow-sm transition hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            type="submit"
+          >
+            <Bookmark aria-hidden size={17} />
+          </button>
+        </form>
+      ) : null}
       <Link
         className="group grid focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--px-focus)]"
         href={href ?? `/opportunities/${opportunity.slug}`}

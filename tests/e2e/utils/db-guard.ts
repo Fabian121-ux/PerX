@@ -1,11 +1,7 @@
-export function enforceTestDatabaseIsolation() {
+export function hasIsolatedTestDatabase() {
   const testDbUrl = process.env.TEST_DATABASE_URL || "";
   const prodDbUrl = process.env.DATABASE_URL || "";
-  
-  if (!testDbUrl) {
-    throw new Error("Safety Guard: TEST_DATABASE_URL is not provided.");
-  }
-  
+
   // Production host/fingerprint checks
   const prodMatches = [
     "aws-0-eu-north-1.pooler.supabase.com",
@@ -21,5 +17,13 @@ export function enforceTestDatabaseIsolation() {
 
   if (testDbUrl === prodDbUrl && prodDbUrl !== "") {
     throw new Error("Safety Guard: TEST_DATABASE_URL matches DATABASE_URL exactly.");
+  }
+
+  return Boolean(testDbUrl);
+}
+
+export function enforceTestDatabaseIsolation() {
+  if (!hasIsolatedTestDatabase()) {
+    throw new Error("Safety Guard: TEST_DATABASE_URL is not provided.");
   }
 }

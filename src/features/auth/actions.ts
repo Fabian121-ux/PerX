@@ -8,6 +8,7 @@ import {
   createSession,
   createSessionRecord,
   destroySession,
+  getCurrentUser,
   setSessionCookie,
 } from "@/lib/auth/session";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
@@ -392,7 +393,14 @@ export async function signInAction(
 }
 
 export async function signOutAction() {
+  const user = await getCurrentUser().catch(() => null);
   await destroySession();
+  await writeAuditLog({
+    actorId: user?.id,
+    action: "auth.sign_out",
+    entityId: user?.id,
+    entityType: "session",
+  });
   redirect("/sign-in?signedOut=1");
 }
 

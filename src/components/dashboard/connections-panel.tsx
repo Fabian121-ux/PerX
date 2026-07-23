@@ -1,8 +1,8 @@
 "use client";
 
 import { ShieldCheck } from "lucide-react";
+import Link from "next/link";
 import type { DashboardConnection } from "./types";
-import { FeatureStatusDialog } from "@/components/shared/feature-status-dialog";
 
 export function ConnectionsPanel({ connections }: { connections: DashboardConnection[] }) {
   const getInitials = (name: string) =>
@@ -17,11 +17,12 @@ export function ConnectionsPanel({ connections }: { connections: DashboardConnec
     <div className="rounded-[24px] bg-[color:var(--px-surface)] p-6 shadow-sm ring-1 ring-[color:var(--px-border)] transition-colors duration-200">
       <div className="flex items-center justify-between border-b border-[color:var(--px-border)] pb-4">
         <h3 className="font-bold text-[color:var(--px-text)]">Your Connections</h3>
-        <FeatureStatusDialog featureName="Connections network">
-          <button className="inline-flex min-h-10 items-center text-xs font-semibold text-[color:var(--px-primary)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]">
-            See all
-          </button>
-        </FeatureStatusDialog>
+        <Link
+          className="inline-flex min-h-10 items-center text-xs font-semibold text-[color:var(--px-primary)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+          href="/app/network"
+        >
+          See all
+        </Link>
       </div>
 
       <div className="mt-4 flex flex-col gap-4">

@@ -289,13 +289,13 @@ export function DiscoverExperience({
                 categories={categories}
                 params={params}
               />
-              <button
+              <span
                 className="grid h-10 w-10 place-items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)]"
                 aria-label="Grid view"
-                type="button"
+                role="img"
               >
                 <Grid2X2 size={17} />
-              </button>
+              </span>
             </div>
           </div>
 

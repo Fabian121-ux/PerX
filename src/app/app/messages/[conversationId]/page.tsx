@@ -7,6 +7,7 @@ import {
 } from "@/components/messages/message-workspace";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth/session";
 import { getConversations } from "@/lib/data/app";
+import { getPrisma } from "@/lib/db/prisma";
 
 type PreviewConversationLike = {
   id: string;
@@ -31,6 +32,13 @@ type DbConversationLike = {
     user?: { name: string | null; username: string | null } | null;
     userId: string;
   }[];
+};
+
+type DbMessageLike = {
+  body: string;
+  createdAt: Date;
+  id: string;
+  senderId: string;
 };
 
 function isPreviewConversation(
@@ -101,6 +109,30 @@ function toWorkspaceConversation(
   };
 }
 
+async function markConversationRead(
+  conversationId: string,
+  userId: string,
+  messages: DbMessageLike[],
+) {
+  const unreadMessageIds = messages
+    .filter((message) => message.senderId !== userId)
+    .map((message) => message.id);
+
+  await getPrisma().$transaction(async (tx) => {
+    await tx.conversationParticipant.updateMany({
+      where: { conversationId, userId },
+      data: { lastReadAt: new Date() },
+    });
+
+    if (unreadMessageIds.length) {
+      await tx.messageReadReceipt.createMany({
+        data: unreadMessageIds.map((messageId) => ({ messageId, userId })),
+        skipDuplicates: true,
+      });
+    }
+  });
+}
+
 export default async function ConversationPage({
   params,
 }: {
@@ -120,6 +152,7 @@ export default async function ConversationPage({
   const { getConversationMessages } = await import("@/lib/data/app");
   const fullMessages = await getConversationMessages(conversationId);
   (selected as DbConversationLike).messages = fullMessages;
+  await markConversationRead(conversationId, user.id, fullMessages);
 
   const workspaceConversations: WorkspaceConversation[] = conversations.map(
     (conversation) => toWorkspaceConversation(conversation, user),
@@ -127,7 +160,7 @@ export default async function ConversationPage({
 
   return (
     <MessageWorkspace
-      backHref="/messages"
+      backHref="/app/messages"
       conversations={workspaceConversations}
       currentUserId={user.id}
       defaultConversationId={conversationId}

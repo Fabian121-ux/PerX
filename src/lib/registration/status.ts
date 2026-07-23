@@ -45,6 +45,7 @@ export type RegistrationStatus = {
 function publicBetaUserCountWhere() {
   return {
     accountClassification: "PUBLIC_BETA_USER",
+    isActive: true,
     roles: {
       none: {
         role: {
