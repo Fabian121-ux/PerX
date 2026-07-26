@@ -1,19 +1,27 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
-import { ArrowLeft, FileText, Paperclip, Phone, Search, Send, ShieldCheck, Video, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, CheckCheck, Clock3, FileText, Loader2, Paperclip, Pencil, Phone, Search, Send, ShieldCheck, Video } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
-import { sendMessageAction } from "@/features/messages/actions";
+import {
+  editMessageAction,
+  markConversationReadAction,
+  sendMessageAction,
+} from "@/features/messages/actions";
 
 export type WorkspaceMessage = {
   body: string;
   createdAt: string;
+  deletedAt?: string | null;
+  editedAt?: string | null;
   id: string;
+  readByOtherParticipants?: boolean;
   senderId: string;
   senderImageUrl?: string | null;
   senderName: string;
+  status?: "sending" | "sent" | "failed";
 };
 
 export type WorkspaceConversation = {
@@ -26,6 +34,7 @@ export type WorkspaceConversation = {
   participantName: string;
   participantImageUrl?: string | null;
   participantRole?: string;
+  participantPresence?: "hidden" | "online" | "recent" | "offline";
   participantUsername?: string;
   timestamp?: string;
   trustScore?: number;
@@ -46,10 +55,14 @@ export function MessageWorkspace({
   const [activeId, setActiveId] = useState(defaultConversationId ?? conversations[0]?.id ?? "");
   const [mobileDetailOpen, setMobileDetailOpen] = useState(Boolean(defaultConversationId));
   const [draft, setDraft] = useState("");
+  const [editDraft, setEditDraft] = useState("");
+  const [editingMessageId, setEditingMessageId] = useState("");
+  const [editError, setEditError] = useState("");
   const [sendError, setSendError] = useState("");
   const [syncedConversations, setSyncedConversations] = useState(() => conversations);
   const [localMessages, setLocalMessages] = useState<Record<string, WorkspaceMessage[]>>({});
   const [isPending, startTransition] = useTransition();
+  const [isEditPending, startEditTransition] = useTransition();
   const historyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -97,6 +110,13 @@ export function MessageWorkspace({
     });
   }, [activeConversation?.id, messages.length]);
 
+  useEffect(() => {
+    if (!activeConversation?.id) return;
+    markConversationReadAction(activeConversation.id).then(() => {
+      window.dispatchEvent(new Event("perx-unread-refresh"));
+    });
+  }, [activeConversation?.id, messages.length]);
+
   const sendMessage = (event: FormEvent) => {
     event.preventDefault();
     if (!draft.trim() || !activeConversation || isPending) return;
@@ -112,6 +132,7 @@ export function MessageWorkspace({
       id: messageId,
       senderId: currentUserId,
       senderName: "You",
+      status: "sending",
     };
 
     setLocalMessages((value) => ({
@@ -133,7 +154,32 @@ export function MessageWorkspace({
           ...value,
           [conversationId]: (value[conversationId] ?? []).filter((m) => m.id !== messageId),
         }));
+        window.dispatchEvent(new Event("perx-unread-refresh"));
       }
+    });
+  };
+
+  const startEditing = (message: WorkspaceMessage) => {
+    setEditingMessageId(message.id);
+    setEditDraft(message.body);
+    setEditError("");
+  };
+
+  const cancelEditing = () => {
+    setEditingMessageId("");
+    setEditDraft("");
+    setEditError("");
+  };
+
+  const saveEdit = (message: WorkspaceMessage) => {
+    if (!editDraft.trim() || isEditPending) return;
+    startEditTransition(async () => {
+      const result = await editMessageAction(message.id, editDraft);
+      if (result.error) {
+        setEditError(result.error);
+        return;
+      }
+      cancelEditing();
     });
   };
 
@@ -190,7 +236,11 @@ export function MessageWorkspace({
                 }}
                 type="button"
               >
-                <Avatar imageUrl={conversation.participantImageUrl} name={conversation.participantName} />
+                <Avatar
+                  imageUrl={conversation.participantImageUrl}
+                  name={conversation.participantName}
+                  presence={conversation.participantPresence}
+                />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-sm font-bold text-[color:var(--px-text)]">{conversation.participantName}</p>
@@ -217,10 +267,19 @@ export function MessageWorkspace({
               <button className="grid h-10 w-10 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] lg:hidden" onClick={() => setMobileDetailOpen(false)} type="button" aria-label="Back to conversations">
                 <ArrowLeft size={18} />
               </button>
-              <Avatar imageUrl={activeConversation.participantImageUrl} name={activeConversation.participantName} />
+              <Avatar
+                imageUrl={activeConversation.participantImageUrl}
+                name={activeConversation.participantName}
+                presence={activeConversation.participantPresence}
+              />
               <div className="min-w-0">
                 <h2 className="truncate text-sm font-black text-[color:var(--px-text)]">{activeConversation.participantName}</h2>
-                <p className="truncate text-xs text-[color:var(--px-text-muted)]">{activeConversation.participantRole ?? activeConversation.opportunityTitle ?? "perX conversation"}</p>
+                <p className="truncate text-xs text-[color:var(--px-text-muted)]">
+                  {presenceLabel(activeConversation.participantPresence) ??
+                    activeConversation.participantRole ??
+                    activeConversation.opportunityTitle ??
+                    "perX conversation"}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -251,14 +310,66 @@ export function MessageWorkspace({
 
               {messages.map((message) => {
                 const mine = message.senderId === currentUserId;
+                const editing = editingMessageId === message.id;
                 return (
                   <div className={`flex ${mine ? "justify-end" : "justify-start"}`} key={message.id}>
                     <div className={`max-w-[82%] overflow-hidden rounded-3xl px-4 py-3 shadow-sm ${mine ? "rounded-br-md bg-[color:var(--px-primary)] text-white" : "rounded-bl-md bg-[color:var(--px-surface)] text-[color:var(--px-text)] ring-1 ring-[color:var(--px-border)]"}`}>
-                      <p className={`mb-1 text-[10px] font-black uppercase tracking-wide ${mine ? "text-blue-100" : "text-[color:var(--px-primary)]"}`}>{message.senderName}</p>
-                      <p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p>
-                      <p className={`mt-2 text-[10px] ${mine ? "text-blue-100" : "text-[color:var(--px-text-muted)]"}`}>
-                        {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </p>
+                      <div className="mb-1 flex items-center justify-between gap-3">
+                        <p className={`text-[10px] font-black uppercase tracking-wide ${mine ? "text-blue-100" : "text-[color:var(--px-primary)]"}`}>{message.senderName}</p>
+                        {mine && !message.id.startsWith("local-") && !message.deletedAt ? (
+                          <button
+                            aria-label="Edit message"
+                            className={`rounded-full p-1 ${mine ? "text-blue-100 hover:bg-white/10" : "text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)]"}`}
+                            onClick={() => startEditing(message)}
+                            type="button"
+                          >
+                            <Pencil aria-hidden size={13} />
+                          </button>
+                        ) : null}
+                      </div>
+                      {message.deletedAt ? (
+                        <p className="text-sm italic leading-6 opacity-80">This message was deleted.</p>
+                      ) : editing ? (
+                        <div className="grid gap-2">
+                          <label className="sr-only" htmlFor={`edit-${message.id}`}>
+                            Edit message
+                          </label>
+                          <textarea
+                            className="min-h-20 rounded-xl border border-white/30 bg-white/95 px-3 py-2 text-sm leading-6 text-slate-950 outline-none focus:ring-2 focus:ring-white"
+                            id={`edit-${message.id}`}
+                            maxLength={2000}
+                            onChange={(event) => setEditDraft(event.target.value)}
+                            value={editDraft}
+                          />
+                          {editError ? (
+                            <p className="text-xs font-semibold text-red-100">{editError}</p>
+                          ) : null}
+                          <div className="flex justify-end gap-2">
+                            <button
+                              className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-bold text-white"
+                              onClick={cancelEditing}
+                              type="button"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[color:var(--px-primary)] disabled:opacity-60"
+                              disabled={!editDraft.trim() || isEditPending}
+                              onClick={() => saveEdit(message)}
+                              type="button"
+                            >
+                              {isEditPending ? "Saving..." : "Save"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p>
+                      )}
+                      <div className={`mt-2 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-blue-100" : "text-[color:var(--px-text-muted)]"}`}>
+                        {message.editedAt ? <span>Edited</span> : null}
+                        <span>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                        {mine ? <MessageStateIcon message={message} /> : null}
+                      </div>
                     </div>
                   </div>
                 );
@@ -300,7 +411,12 @@ export function MessageWorkspace({
         {activeConversation ? (
           <>
             <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-5 text-center ring-1 ring-[color:var(--px-border)]">
-              <Avatar imageUrl={activeConversation.participantImageUrl} name={activeConversation.participantName} size="lg" />
+              <Avatar
+                imageUrl={activeConversation.participantImageUrl}
+                name={activeConversation.participantName}
+                presence={activeConversation.participantPresence}
+                size="lg"
+              />
               <h3 className="mt-3 font-black text-[color:var(--px-text)]">{activeConversation.participantName}</h3>
               <p className="text-xs text-[color:var(--px-text-muted)]">@{activeConversation.participantUsername ?? "perx-member"}</p>
               {activeConversation.trustScore ? <Badge className="mt-3 bg-green-50 text-green-800">Trust {activeConversation.trustScore}</Badge> : null}
@@ -336,7 +452,17 @@ export function MessageWorkspace({
   );
 }
 
-function Avatar({ imageUrl, name, size = "md" }: { imageUrl?: string | null; name: string; size?: "md" | "lg" }) {
+function Avatar({
+  imageUrl,
+  name,
+  presence = "hidden",
+  size = "md",
+}: {
+  imageUrl?: string | null;
+  name: string;
+  presence?: "hidden" | "online" | "recent" | "offline";
+  size?: "md" | "lg";
+}) {
   const [imageFailed, setImageFailed] = useState(false);
   const initials = name
     .split(" ")
@@ -361,8 +487,40 @@ function Avatar({ imageUrl, name, size = "md" }: { imageUrl?: string | null; nam
           initials
         )}
       </div>
+      {presence === "online" ? (
+        <span
+          aria-label="Online"
+          className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-500 ring-2 ring-[color:var(--px-surface)]"
+          title="Online"
+        />
+      ) : presence === "recent" ? (
+        <span
+          aria-label="Recently active"
+          className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-amber-400 ring-2 ring-[color:var(--px-surface)]"
+          title="Recently active"
+        />
+      ) : null}
     </div>
   );
+}
+
+function presenceLabel(presence?: "hidden" | "online" | "recent" | "offline") {
+  if (presence === "online") return "Online";
+  if (presence === "recent") return "Recently active";
+  return null;
+}
+
+function MessageStateIcon({ message }: { message: WorkspaceMessage }) {
+  if (message.status === "sending") {
+    return <Clock3 aria-label="Sending" size={13} />;
+  }
+  if (message.status === "failed") {
+    return <span aria-label="Failed">Failed</span>;
+  }
+  if (message.readByOtherParticipants) {
+    return <CheckCheck aria-label="Read" className="text-green-200" size={14} />;
+  }
+  return <Check aria-label="Sent" size={13} />;
 }
 
 function ToolStatus({ icon, label }: { icon: ReactNode; label: string }) {

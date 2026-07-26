@@ -34,6 +34,7 @@ const envSchema = z.object({
     .min(1)
     .max(25 * 1024 * 1024)
     .default(5 * 1024 * 1024),
+  MESSAGE_EDIT_WINDOW_MINUTES: z.coerce.number().int().positive().default(15),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   ERROR_MONITORING_DSN: z.string().url().or(z.literal("")).optional(),
   PERX_ENABLE_PREVIEW: booleanEnv,
@@ -52,6 +53,7 @@ const strictRequiredVariables = [
   "SESSION_COOKIE_NAME",
   "AUTH_SESSION_DAYS",
   "UPLOAD_MAX_BYTES",
+  "MESSAGE_EDIT_WINDOW_MINUTES",
   "LOG_LEVEL",
   "PERX_ENABLE_PREVIEW",
 ] as const;

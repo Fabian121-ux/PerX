@@ -402,6 +402,7 @@ export const ModelName = {
   Conversation: 'Conversation',
   ConversationParticipant: 'ConversationParticipant',
   Message: 'Message',
+  MessageEdit: 'MessageEdit',
   MessageAttachment: 'MessageAttachment',
   MessageReadReceipt: 'MessageReadReceipt',
   BlockedUser: 'BlockedUser',
@@ -421,6 +422,8 @@ export const ModelName = {
   Review: 'Review',
   TrustSignal: 'TrustSignal',
   Notification: 'Notification',
+  AdminBroadcast: 'AdminBroadcast',
+  BroadcastDelivery: 'BroadcastDelivery',
   AuditLog: 'AuditLog',
   ModerationAction: 'ModerationAction',
   Connection: 'Connection',
@@ -442,7 +445,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "role" | "userRole" | "profile" | "profileSkill" | "portfolioItem" | "workHistory" | "verificationRequest" | "opportunityCategory" | "opportunity" | "opportunityImage" | "opportunityBookmark" | "opportunityReport" | "opportunityStatusHistory" | "conversation" | "conversationParticipant" | "message" | "messageAttachment" | "messageReadReceipt" | "blockedUser" | "proposal" | "proposalMilestone" | "proposalStatusHistory" | "deal" | "dealParticipant" | "dealMilestone" | "delivery" | "approval" | "release" | "refund" | "dispute" | "ledgerEntry" | "escrowStatusHistory" | "review" | "trustSignal" | "notification" | "auditLog" | "moderationAction" | "connection" | "profileBookmark" | "supportTicket" | "ticketMessage"
+    modelProps: "user" | "session" | "role" | "userRole" | "profile" | "profileSkill" | "portfolioItem" | "workHistory" | "verificationRequest" | "opportunityCategory" | "opportunity" | "opportunityImage" | "opportunityBookmark" | "opportunityReport" | "opportunityStatusHistory" | "conversation" | "conversationParticipant" | "message" | "messageEdit" | "messageAttachment" | "messageReadReceipt" | "blockedUser" | "proposal" | "proposalMilestone" | "proposalStatusHistory" | "deal" | "dealParticipant" | "dealMilestone" | "delivery" | "approval" | "release" | "refund" | "dispute" | "ledgerEntry" | "escrowStatusHistory" | "review" | "trustSignal" | "notification" | "adminBroadcast" | "broadcastDelivery" | "auditLog" | "moderationAction" | "connection" | "profileBookmark" | "supportTicket" | "ticketMessage"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1775,6 +1778,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.MessageCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.MessageCountAggregateOutputType> | number
+        }
+      }
+    }
+    MessageEdit: {
+      payload: Prisma.$MessageEditPayload<ExtArgs>
+      fields: Prisma.MessageEditFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MessageEditFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageEditPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MessageEditFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageEditPayload>
+        }
+        findFirst: {
+          args: Prisma.MessageEditFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageEditPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MessageEditFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageEditPayload>
+        }
+        findMany: {
+          args: Prisma.MessageEditFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageEditPayload>[]
+        }
+        create: {
+          args: Prisma.MessageEditCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageEditPayload>
+        }
+        createMany: {
+          args: Prisma.MessageEditCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MessageEditCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageEditPayload>[]
+        }
+        delete: {
+          args: Prisma.MessageEditDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageEditPayload>
+        }
+        update: {
+          args: Prisma.MessageEditUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageEditPayload>
+        }
+        deleteMany: {
+          args: Prisma.MessageEditDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MessageEditUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MessageEditUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageEditPayload>[]
+        }
+        upsert: {
+          args: Prisma.MessageEditUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MessageEditPayload>
+        }
+        aggregate: {
+          args: Prisma.MessageEditAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMessageEdit>
+        }
+        groupBy: {
+          args: Prisma.MessageEditGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MessageEditGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MessageEditCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MessageEditCountAggregateOutputType> | number
         }
       }
     }
@@ -3184,6 +3261,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AdminBroadcast: {
+      payload: Prisma.$AdminBroadcastPayload<ExtArgs>
+      fields: Prisma.AdminBroadcastFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AdminBroadcastFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminBroadcastPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AdminBroadcastFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminBroadcastPayload>
+        }
+        findFirst: {
+          args: Prisma.AdminBroadcastFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminBroadcastPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AdminBroadcastFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminBroadcastPayload>
+        }
+        findMany: {
+          args: Prisma.AdminBroadcastFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminBroadcastPayload>[]
+        }
+        create: {
+          args: Prisma.AdminBroadcastCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminBroadcastPayload>
+        }
+        createMany: {
+          args: Prisma.AdminBroadcastCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AdminBroadcastCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminBroadcastPayload>[]
+        }
+        delete: {
+          args: Prisma.AdminBroadcastDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminBroadcastPayload>
+        }
+        update: {
+          args: Prisma.AdminBroadcastUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminBroadcastPayload>
+        }
+        deleteMany: {
+          args: Prisma.AdminBroadcastDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AdminBroadcastUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AdminBroadcastUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminBroadcastPayload>[]
+        }
+        upsert: {
+          args: Prisma.AdminBroadcastUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AdminBroadcastPayload>
+        }
+        aggregate: {
+          args: Prisma.AdminBroadcastAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAdminBroadcast>
+        }
+        groupBy: {
+          args: Prisma.AdminBroadcastGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AdminBroadcastGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AdminBroadcastCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AdminBroadcastCountAggregateOutputType> | number
+        }
+      }
+    }
+    BroadcastDelivery: {
+      payload: Prisma.$BroadcastDeliveryPayload<ExtArgs>
+      fields: Prisma.BroadcastDeliveryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BroadcastDeliveryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BroadcastDeliveryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BroadcastDeliveryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BroadcastDeliveryPayload>
+        }
+        findFirst: {
+          args: Prisma.BroadcastDeliveryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BroadcastDeliveryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BroadcastDeliveryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BroadcastDeliveryPayload>
+        }
+        findMany: {
+          args: Prisma.BroadcastDeliveryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BroadcastDeliveryPayload>[]
+        }
+        create: {
+          args: Prisma.BroadcastDeliveryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BroadcastDeliveryPayload>
+        }
+        createMany: {
+          args: Prisma.BroadcastDeliveryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BroadcastDeliveryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BroadcastDeliveryPayload>[]
+        }
+        delete: {
+          args: Prisma.BroadcastDeliveryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BroadcastDeliveryPayload>
+        }
+        update: {
+          args: Prisma.BroadcastDeliveryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BroadcastDeliveryPayload>
+        }
+        deleteMany: {
+          args: Prisma.BroadcastDeliveryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BroadcastDeliveryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BroadcastDeliveryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BroadcastDeliveryPayload>[]
+        }
+        upsert: {
+          args: Prisma.BroadcastDeliveryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BroadcastDeliveryPayload>
+        }
+        aggregate: {
+          args: Prisma.BroadcastDeliveryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBroadcastDelivery>
+        }
+        groupBy: {
+          args: Prisma.BroadcastDeliveryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BroadcastDeliveryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BroadcastDeliveryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BroadcastDeliveryCountAggregateOutputType> | number
+        }
+      }
+    }
     AuditLog: {
       payload: Prisma.$AuditLogPayload<ExtArgs>
       fields: Prisma.AuditLogFieldRefs
@@ -3735,6 +3960,8 @@ export const ProfileScalarFieldEnum = {
   allowConnectionRequests: 'allowConnectionRequests',
   allowMessagesFromConnections: 'allowMessagesFromConnections',
   allowMessagesFromMembers: 'allowMessagesFromMembers',
+  showPresence: 'showPresence',
+  showLastActiveTime: 'showLastActiveTime',
   trustScore: 'trustScore',
   profileCompleteness: 'profileCompleteness',
   completedDeals: 'completedDeals',
@@ -3917,10 +4144,25 @@ export const MessageScalarFieldEnum = {
   conversationId: 'conversationId',
   senderId: 'senderId',
   body: 'body',
+  editedAt: 'editedAt',
+  deletedAt: 'deletedAt',
+  deletedById: 'deletedById',
   createdAt: 'createdAt'
 } as const
 
 export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
+
+
+export const MessageEditScalarFieldEnum = {
+  id: 'id',
+  messageId: 'messageId',
+  editorId: 'editorId',
+  previousBodyHash: 'previousBodyHash',
+  nextBodyHash: 'nextBodyHash',
+  createdAt: 'createdAt'
+} as const
+
+export type MessageEditScalarFieldEnum = (typeof MessageEditScalarFieldEnum)[keyof typeof MessageEditScalarFieldEnum]
 
 
 export const MessageAttachmentScalarFieldEnum = {
@@ -4171,12 +4413,45 @@ export const NotificationScalarFieldEnum = {
   title: 'title',
   body: 'body',
   actionUrl: 'actionUrl',
+  actionState: 'actionState',
+  broadcastId: 'broadcastId',
   metadata: 'metadata',
   readAt: 'readAt',
   createdAt: 'createdAt'
 } as const
 
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
+export const AdminBroadcastScalarFieldEnum = {
+  id: 'id',
+  senderId: 'senderId',
+  title: 'title',
+  body: 'body',
+  audience: 'audience',
+  priority: 'priority',
+  actionUrl: 'actionUrl',
+  expiresAt: 'expiresAt',
+  deliveryCount: 'deliveryCount',
+  failedCount: 'failedCount',
+  sentAt: 'sentAt',
+  createdAt: 'createdAt'
+} as const
+
+export type AdminBroadcastScalarFieldEnum = (typeof AdminBroadcastScalarFieldEnum)[keyof typeof AdminBroadcastScalarFieldEnum]
+
+
+export const BroadcastDeliveryScalarFieldEnum = {
+  id: 'id',
+  broadcastId: 'broadcastId',
+  userId: 'userId',
+  notificationId: 'notificationId',
+  status: 'status',
+  error: 'error',
+  createdAt: 'createdAt'
+} as const
+
+export type BroadcastDeliveryScalarFieldEnum = (typeof BroadcastDeliveryScalarFieldEnum)[keyof typeof BroadcastDeliveryScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {
@@ -4798,6 +5073,7 @@ export type GlobalOmitConfig = {
   conversation?: Prisma.ConversationOmit
   conversationParticipant?: Prisma.ConversationParticipantOmit
   message?: Prisma.MessageOmit
+  messageEdit?: Prisma.MessageEditOmit
   messageAttachment?: Prisma.MessageAttachmentOmit
   messageReadReceipt?: Prisma.MessageReadReceiptOmit
   blockedUser?: Prisma.BlockedUserOmit
@@ -4817,6 +5093,8 @@ export type GlobalOmitConfig = {
   review?: Prisma.ReviewOmit
   trustSignal?: Prisma.TrustSignalOmit
   notification?: Prisma.NotificationOmit
+  adminBroadcast?: Prisma.AdminBroadcastOmit
+  broadcastDelivery?: Prisma.BroadcastDeliveryOmit
   auditLog?: Prisma.AuditLogOmit
   moderationAction?: Prisma.ModerationActionOmit
   connection?: Prisma.ConnectionOmit

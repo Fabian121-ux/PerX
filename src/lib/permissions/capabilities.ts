@@ -15,6 +15,7 @@ export type Capability =
   | "admin:access"
   | "admin:moderate"
   | "audit:read"
+  | "broadcasts:create"
   | "conversation:read:participant"
   | "deal:transition:participant"
   | "deals:review"
@@ -39,6 +40,7 @@ const capabilitiesByRole: Record<RoleName, Capability[]> = {
     "admin:access",
     "admin:moderate",
     "audit:read",
+    "broadcasts:create",
     "conversation:read:participant",
     "deal:transition:participant",
     "deals:review",

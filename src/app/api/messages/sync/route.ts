@@ -47,7 +47,19 @@ export async function GET(request: Request) {
               id: true,
               imageUrl: true,
               name: true,
-              profile: { select: { profileImageUrl: true, trustScore: true } },
+              profile: {
+                select: {
+                  profileImageUrl: true,
+                  showLastActiveTime: true,
+                  showPresence: true,
+                  trustScore: true,
+                },
+              },
+              sessions: {
+                orderBy: { lastSeenAt: "desc" },
+                select: { lastSeenAt: true },
+                take: 1,
+              },
               username: true,
             },
           },
@@ -70,6 +82,9 @@ export async function GET(request: Request) {
       const other = conversation.participants.find(
         (entry) => entry.userId !== user.id,
       )?.user;
+      const otherParticipantIds = conversation.participants
+        .map((entry) => entry.userId)
+        .filter((participantId) => participantId !== user.id);
       const messages = [...conversation.messages].reverse();
       const unreadCount = conversation.messages.filter(
         (message) =>
@@ -84,10 +99,17 @@ export async function GET(request: Request) {
         messages: messages.map((message) => ({
           body: message.body,
           createdAt: message.createdAt.toISOString(),
+          deletedAt: message.deletedAt?.toISOString() ?? null,
+          editedAt: message.editedAt?.toISOString() ?? null,
           id: message.id,
           readByCurrentUser: message.readReceipts.some(
             (receipt) => receipt.userId === user.id,
           ),
+          readByOtherParticipants:
+            otherParticipantIds.length > 0 &&
+            otherParticipantIds.every((participantId) =>
+              message.readReceipts.some((receipt) => receipt.userId === participantId),
+            ),
           senderId: message.senderId,
           senderImageUrl:
             message.sender.imageUrl ?? null,
@@ -96,6 +118,10 @@ export async function GET(request: Request) {
         opportunityTitle: conversation.opportunity?.title ?? null,
         participantImageUrl: other?.imageUrl ?? other?.profile?.profileImageUrl ?? null,
         participantName: other?.name ?? "Conversation",
+        participantPresence: getPresenceState(
+          other?.profile?.showPresence ?? false,
+          other?.sessions[0]?.lastSeenAt ?? null,
+        ),
         participantUsername: other?.username ?? null,
         timestamp:
           conversation.messages[0]?.createdAt.toISOString() ??
@@ -105,4 +131,12 @@ export async function GET(request: Request) {
       };
     }),
   });
+}
+
+function getPresenceState(showPresence: boolean, lastSeenAt: Date | null) {
+  if (!showPresence || !lastSeenAt) return "hidden";
+  const ageMs = Date.now() - lastSeenAt.getTime();
+  if (ageMs <= 2 * 60_000) return "online";
+  if (ageMs <= 30 * 60_000) return "recent";
+  return "offline";
 }

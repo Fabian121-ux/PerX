@@ -1,11 +1,13 @@
 "use server";
 
+import crypto from "node:crypto";
+
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireUser } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
-import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
+import { getServerEnv, hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { evaluatePolicy, isPolicyBlocking } from "@/lib/policy/enforcement";
 
@@ -14,8 +16,17 @@ const sendMessageSchema = z.object({
   body: z.string().trim().min(1, "Message cannot be empty.").max(2000, "Message is too long."),
 });
 
+const editMessageSchema = z.object({
+  body: z.string().trim().min(1, "Message cannot be empty.").max(2000, "Message is too long."),
+  messageId: z.string().cuid(),
+});
+
 const rateLimitWindowMs = 60_000;
 const rateLimitMaxMessages = 20;
+
+function hashMessageBody(body: string) {
+  return crypto.createHash("sha256").update(body).digest("hex");
+}
 
 export async function sendMessageAction(conversationId: string, body: string) {
   const user = await requireUser();
@@ -143,6 +154,11 @@ export async function sendMessageAction(conversationId: string, body: string) {
         data: { messageId: message.id, userId: user.id },
       });
 
+      await tx.conversationParticipant.updateMany({
+        data: { lastReadAt: message.createdAt },
+        where: { conversationId: parsed.data.conversationId, userId: user.id },
+      });
+
       await tx.notification.createMany({
         data: otherParticipantIds.map((participantId) => ({
           actionUrl: `/app/messages/${parsed.data.conversationId}`,
@@ -157,9 +173,173 @@ export async function sendMessageAction(conversationId: string, body: string) {
 
     revalidatePath("/app/messages");
     revalidatePath(`/app/messages/${parsed.data.conversationId}`);
+    revalidatePath("/app/notifications");
     return { success: true };
   } catch (error) {
     console.error("Failed to send message:", error);
     return { error: "Failed to send message." };
   }
+}
+
+export async function editMessageAction(messageId: string, body: string) {
+  const user = await requireUser();
+
+  if (getResolvedDataMode() === "mock") {
+    return { success: true };
+  }
+
+  const parsed = editMessageSchema.safeParse({ body, messageId });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid message." };
+  }
+
+  const message = await getPrisma().message.findFirst({
+    include: {
+      conversation: {
+        include: { participants: true },
+      },
+    },
+    where: {
+      id: parsed.data.messageId,
+      conversation: { participants: { some: { userId: user.id } } },
+    },
+  });
+
+  if (!message || message.senderId !== user.id) {
+    return { error: "You can only edit your own messages." };
+  }
+  if (message.deletedAt) {
+    return { error: "Deleted messages cannot be edited." };
+  }
+
+  const editWindowMs = getServerEnv().MESSAGE_EDIT_WINDOW_MINUTES * 60_000;
+  if (Date.now() - message.createdAt.getTime() > editWindowMs) {
+    return { error: "The edit window for this message has closed." };
+  }
+
+  const nextBody = parsed.data.body.trim();
+  if (nextBody === message.body) return { success: true };
+
+  const policy = evaluatePolicy({
+    actorId: user.id,
+    content: nextBody,
+    entityId: message.id,
+    entityType: "message",
+  });
+
+  if (policy.outcome !== "ALLOW") {
+    await writeAuditLog({
+      actorId: user.id,
+      action: "policy.message_edit_evaluated",
+      entityId: message.id,
+      entityType: "message",
+      metadata: policy.auditMetadata,
+    });
+  }
+
+  if (isPolicyBlocking(policy)) {
+    return {
+      error:
+        policy.userMessage ??
+        "This edit needs review before it can be saved.",
+    };
+  }
+
+  await getPrisma().$transaction(async (tx) => {
+    await tx.message.update({
+      data: { body: nextBody, editedAt: new Date() },
+      where: { id: message.id },
+    });
+    await tx.messageEdit.create({
+      data: {
+        editorId: user.id,
+        messageId: message.id,
+        nextBodyHash: hashMessageBody(nextBody),
+        previousBodyHash: hashMessageBody(message.body),
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        action: "message.edited",
+        actorId: user.id,
+        entityId: message.id,
+        entityType: "message",
+        metadata: {
+          bodyChanged: true,
+          conversationId: message.conversationId,
+          policyOutcome: policy.outcome,
+        },
+      },
+    });
+  });
+
+  revalidatePath("/app/messages");
+  revalidatePath(`/app/messages/${message.conversationId}`);
+  return { success: true };
+}
+
+export async function markConversationReadAction(conversationId: string) {
+  const user = await requireUser();
+  const parsed = z.string().cuid().safeParse(conversationId);
+  if (!parsed.success) return { error: "Invalid conversation." };
+
+  const participant = await getPrisma().conversationParticipant.findUnique({
+    select: { id: true },
+    where: {
+      conversationId_userId: {
+        conversationId: parsed.data,
+        userId: user.id,
+      },
+    },
+  });
+
+  if (!participant) return { error: "Conversation not found." };
+
+  const unreadMessages = await getPrisma().message.findMany({
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+    take: 100,
+    where: {
+      conversationId: parsed.data,
+      senderId: { not: user.id },
+      readReceipts: { none: { userId: user.id } },
+    },
+  });
+
+  await getPrisma().$transaction(async (tx) => {
+    await tx.conversationParticipant.update({
+      data: { lastReadAt: new Date() },
+      where: {
+        conversationId_userId: {
+          conversationId: parsed.data,
+          userId: user.id,
+        },
+      },
+    });
+
+    if (unreadMessages.length) {
+      await tx.messageReadReceipt.createMany({
+        data: unreadMessages.map((message) => ({
+          messageId: message.id,
+          userId: user.id,
+        })),
+        skipDuplicates: true,
+      });
+    }
+
+    await tx.notification.updateMany({
+      data: { readAt: new Date() },
+      where: {
+        actionUrl: `/app/messages/${parsed.data}`,
+        readAt: null,
+        type: { in: ["MESSAGE", "NEW_MESSAGE"] },
+        userId: user.id,
+      },
+    });
+  });
+
+  revalidatePath("/app/messages");
+  revalidatePath(`/app/messages/${parsed.data}`);
+  revalidatePath("/app/notifications");
+  return { success: true };
 }

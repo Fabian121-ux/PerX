@@ -149,7 +149,11 @@ export const prismaProvider: PerXDataProvider = {
     getConversations: async (userId: string) => {
       return getPrisma().conversation.findMany({
         include: {
-          messages: { orderBy: { createdAt: "desc" }, take: 1 },
+          messages: {
+            include: { readReceipts: { select: { userId: true } } },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
           opportunity: true,
           participants: {
             include: {
@@ -158,7 +162,18 @@ export const prismaProvider: PerXDataProvider = {
                   id: true,
                   imageUrl: true,
                   name: true,
-                  profile: { select: { profileImageUrl: true } },
+                  profile: {
+                    select: {
+                      profileImageUrl: true,
+                      showLastActiveTime: true,
+                      showPresence: true,
+                    },
+                  },
+                  sessions: {
+                    orderBy: { lastSeenAt: "desc" },
+                    select: { lastSeenAt: true },
+                    take: 1,
+                  },
                   username: true,
                 },
               },
@@ -174,7 +189,10 @@ export const prismaProvider: PerXDataProvider = {
         where: { conversationId },
         orderBy: { createdAt: "desc" },
         take: 50,
-        include: { sender: true },
+        include: {
+          readReceipts: { select: { userId: true } },
+          sender: true,
+        },
       });
       return messages.reverse();
     },

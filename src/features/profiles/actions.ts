@@ -68,6 +68,8 @@ export async function updateProfileAction(formData: FormData) {
       "allowMessagesFromMembers",
       false,
     ),
+    showPresence: checkboxValue(formData, "showPresence", true),
+    showLastActiveTime: checkboxValue(formData, "showLastActiveTime", false),
   });
   if (!parsed.success) redirect("/app/profile/edit?error=check-fields");
 
@@ -106,6 +108,8 @@ export async function updateProfileAction(formData: FormData) {
           allowMessagesFromConnections:
             parsed.data.allowMessagesFromConnections,
           allowMessagesFromMembers: parsed.data.allowMessagesFromMembers,
+          showLastActiveTime: parsed.data.showLastActiveTime,
+          showPresence: parsed.data.showPresence,
           isDiscoverable: parsed.data.isDiscoverable,
           location: parsed.data.location,
           profileCompleteness: profileCompleteness,
@@ -127,6 +131,8 @@ export async function updateProfileAction(formData: FormData) {
           profileCompleteness: profileCompleteness,
           profileImageUrl: parsed.data.profileImageUrl || null,
           showLocation: parsed.data.showLocation,
+          showLastActiveTime: parsed.data.showLastActiveTime,
+          showPresence: parsed.data.showPresence,
           showSkills: parsed.data.showSkills,
           websiteUrl: parsed.data.websiteUrl || null,
         },

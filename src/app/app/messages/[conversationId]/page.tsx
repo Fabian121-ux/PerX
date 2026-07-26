@@ -26,10 +26,27 @@ type PreviewConversationLike = {
 
 type DbConversationLike = {
   id: string;
-  messages: { body: string; createdAt: Date; id: string; senderId: string }[];
+  messages: {
+    body: string;
+    createdAt: Date;
+    deletedAt?: Date | null;
+    editedAt?: Date | null;
+    id: string;
+    readReceipts?: { userId: string }[];
+    senderId: string;
+  }[];
   opportunity?: { title: string } | null;
   participants: {
-    user?: { imageUrl?: string | null; name: string | null; profile?: { profileImageUrl?: string | null } | null; username: string | null } | null;
+    user?: {
+      imageUrl?: string | null;
+      name: string | null;
+      profile?: {
+        profileImageUrl?: string | null;
+        showPresence?: boolean | null;
+      } | null;
+      sessions?: { lastSeenAt: Date }[];
+      username: string | null;
+    } | null;
     userId: string;
   }[];
 };
@@ -40,6 +57,14 @@ type DbMessageLike = {
   id: string;
   senderId: string;
 };
+
+function getPresenceState(showPresence: boolean, lastSeenAt?: Date | null) {
+  if (!showPresence || !lastSeenAt) return "hidden";
+  const ageMs = Date.now() - lastSeenAt.getTime();
+  if (ageMs <= 2 * 60_000) return "online";
+  if (ageMs <= 30 * 60_000) return "recent";
+  return "offline";
+}
 
 function isPreviewConversation(
   conversation: unknown,
@@ -76,6 +101,9 @@ function toWorkspaceConversation(
   const otherParticipant = dbConversation.participants.map((participant: any) => participant).find(
     (participant) => participant.userId !== user.id,
   )?.user;
+  const otherParticipantIds = dbConversation.participants
+    .map((participant) => participant.userId)
+    .filter((participantId) => participantId !== user.id);
   const latestMessage = dbConversation.messages.length > 1 
     ? dbConversation.messages[dbConversation.messages.length - 1] // ascending full messages
     : dbConversation.messages[0]; // descending single message
@@ -87,7 +115,14 @@ function toWorkspaceConversation(
     messages: dbConversation.messages.map(msg => ({
       body: msg.body,
       createdAt: msg.createdAt.toISOString(),
+      deletedAt: msg.deletedAt?.toISOString() ?? null,
+      editedAt: msg.editedAt?.toISOString() ?? null,
       id: msg.id,
+      readByOtherParticipants:
+        otherParticipantIds.length > 0 &&
+        otherParticipantIds.every((participantId) =>
+          msg.readReceipts?.some((receipt) => receipt.userId === participantId),
+        ),
       senderId: msg.senderId,
       senderName:
         msg.senderId === user.id
@@ -100,6 +135,10 @@ function toWorkspaceConversation(
       otherParticipant?.name ??
       dbConversation.opportunity?.title ??
       "Conversation",
+    participantPresence: getPresenceState(
+      Boolean(otherParticipant?.profile?.showPresence),
+      otherParticipant?.sessions?.[0]?.lastSeenAt ?? null,
+    ),
     participantRole: "Opportunity participant",
     participantUsername: otherParticipant?.username ?? undefined,
     timestamp: latestMessage

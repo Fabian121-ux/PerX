@@ -8,13 +8,35 @@ import { CreateMenu } from "./create-menu";
 import { AccountMenu } from "./account-menu";
 import { ThemeToggle } from "./theme-toggle";
 import { BrandSymbol } from "@/components/brand-logo";
+import type { UnreadCounts } from "@/lib/data/unread-counts";
+
+function formatBadgeCount(value: number) {
+  if (!value) return "";
+  return value > 99 ? "99+" : String(value);
+}
+
+function IconBadge({ count, label }: { count: number; label: string }) {
+  const display = formatBadgeCount(count);
+  if (!display) return null;
+
+  return (
+    <span
+      aria-label={`${display} unread ${label}`}
+      className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[color:var(--px-warning)] px-1 text-[10px] font-black leading-none text-white ring-2 ring-[color:var(--px-surface)]"
+    >
+      {display}
+    </span>
+  );
+}
 
 export function DashboardTopbar({
   user,
+  unreadCounts,
   previewMode = false,
   onMenuClick,
 }: {
   user: CurrentUser;
+  unreadCounts: UnreadCounts;
   previewMode?: boolean;
   onMenuClick?: () => void;
 }) {
@@ -95,20 +117,30 @@ export function DashboardTopbar({
 
           <Link
             className="relative flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:h-9 sm:w-9"
-            aria-label="Notifications"
+            aria-label={
+              unreadCounts.notifications
+                ? `${formatBadgeCount(unreadCounts.notifications)} unread notifications`
+                : "Notifications"
+            }
             href={notificationsHref}
             title="Notifications"
           >
             <Bell size={20} />
+            <IconBadge count={unreadCounts.notifications} label="notifications" />
           </Link>
 
           <Link
             className="relative hidden h-9 w-9 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:flex"
-            aria-label="Messages"
+            aria-label={
+              unreadCounts.messages
+                ? `${formatBadgeCount(unreadCounts.messages)} unread messages`
+                : "Messages"
+            }
             href={messagesHref}
             title="Messages"
           >
             <MessageSquare size={20} />
+            <IconBadge count={unreadCounts.messages} label="messages" />
           </Link>
         </div>
 

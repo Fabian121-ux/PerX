@@ -69,6 +69,7 @@ export const ModelName = {
   Conversation: 'Conversation',
   ConversationParticipant: 'ConversationParticipant',
   Message: 'Message',
+  MessageEdit: 'MessageEdit',
   MessageAttachment: 'MessageAttachment',
   MessageReadReceipt: 'MessageReadReceipt',
   BlockedUser: 'BlockedUser',
@@ -88,6 +89,8 @@ export const ModelName = {
   Review: 'Review',
   TrustSignal: 'TrustSignal',
   Notification: 'Notification',
+  AdminBroadcast: 'AdminBroadcast',
+  BroadcastDelivery: 'BroadcastDelivery',
   AuditLog: 'AuditLog',
   ModerationAction: 'ModerationAction',
   Connection: 'Connection',
@@ -180,6 +183,8 @@ export const ProfileScalarFieldEnum = {
   allowConnectionRequests: 'allowConnectionRequests',
   allowMessagesFromConnections: 'allowMessagesFromConnections',
   allowMessagesFromMembers: 'allowMessagesFromMembers',
+  showPresence: 'showPresence',
+  showLastActiveTime: 'showLastActiveTime',
   trustScore: 'trustScore',
   profileCompleteness: 'profileCompleteness',
   completedDeals: 'completedDeals',
@@ -362,10 +367,25 @@ export const MessageScalarFieldEnum = {
   conversationId: 'conversationId',
   senderId: 'senderId',
   body: 'body',
+  editedAt: 'editedAt',
+  deletedAt: 'deletedAt',
+  deletedById: 'deletedById',
   createdAt: 'createdAt'
 } as const
 
 export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
+
+
+export const MessageEditScalarFieldEnum = {
+  id: 'id',
+  messageId: 'messageId',
+  editorId: 'editorId',
+  previousBodyHash: 'previousBodyHash',
+  nextBodyHash: 'nextBodyHash',
+  createdAt: 'createdAt'
+} as const
+
+export type MessageEditScalarFieldEnum = (typeof MessageEditScalarFieldEnum)[keyof typeof MessageEditScalarFieldEnum]
 
 
 export const MessageAttachmentScalarFieldEnum = {
@@ -616,12 +636,45 @@ export const NotificationScalarFieldEnum = {
   title: 'title',
   body: 'body',
   actionUrl: 'actionUrl',
+  actionState: 'actionState',
+  broadcastId: 'broadcastId',
   metadata: 'metadata',
   readAt: 'readAt',
   createdAt: 'createdAt'
 } as const
 
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
+export const AdminBroadcastScalarFieldEnum = {
+  id: 'id',
+  senderId: 'senderId',
+  title: 'title',
+  body: 'body',
+  audience: 'audience',
+  priority: 'priority',
+  actionUrl: 'actionUrl',
+  expiresAt: 'expiresAt',
+  deliveryCount: 'deliveryCount',
+  failedCount: 'failedCount',
+  sentAt: 'sentAt',
+  createdAt: 'createdAt'
+} as const
+
+export type AdminBroadcastScalarFieldEnum = (typeof AdminBroadcastScalarFieldEnum)[keyof typeof AdminBroadcastScalarFieldEnum]
+
+
+export const BroadcastDeliveryScalarFieldEnum = {
+  id: 'id',
+  broadcastId: 'broadcastId',
+  userId: 'userId',
+  notificationId: 'notificationId',
+  status: 'status',
+  error: 'error',
+  createdAt: 'createdAt'
+} as const
+
+export type BroadcastDeliveryScalarFieldEnum = (typeof BroadcastDeliveryScalarFieldEnum)[keyof typeof BroadcastDeliveryScalarFieldEnum]
 
 
 export const AuditLogScalarFieldEnum = {

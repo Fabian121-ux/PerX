@@ -123,7 +123,7 @@ function PeopleCard({ person }: { person: PeopleDirectoryEntry }) {
   return (
     <Card className="flex min-h-full flex-col gap-4">
       <div className="flex items-start gap-3">
-        <Avatar imageUrl={person.imageUrl} name={person.name} />
+        <Avatar imageUrl={person.imageUrl} name={person.name} presence={person.presence} />
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             <Link
@@ -222,7 +222,15 @@ function ConnectionAction({ person }: { person: PeopleDirectoryEntry }) {
   );
 }
 
-function Avatar({ imageUrl, name }: { imageUrl: string | null; name: string }) {
+function Avatar({
+  imageUrl,
+  name,
+  presence,
+}: {
+  imageUrl: string | null;
+  name: string;
+  presence: PeopleDirectoryEntry["presence"];
+}) {
   const initials = name
     .split(" ")
     .map((part) => part[0])
@@ -231,17 +239,32 @@ function Avatar({ imageUrl, name }: { imageUrl: string | null; name: string }) {
     .toUpperCase();
 
   return (
-    <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-[color:var(--px-primary)] font-black text-white">
-      {imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          alt={`${name} profile image`}
-          className="h-full w-full object-cover"
-          src={imageUrl}
+    <div className="relative h-14 w-14 shrink-0">
+      <div className="grid h-14 w-14 place-items-center overflow-hidden rounded-2xl bg-[color:var(--px-primary)] font-black text-white">
+        {imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            alt={`${name} profile image`}
+            className="h-full w-full object-cover"
+            src={imageUrl}
+          />
+        ) : (
+          initials
+        )}
+      </div>
+      {presence === "online" ? (
+        <span
+          aria-label="Online"
+          className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full bg-green-500 ring-2 ring-[color:var(--px-surface)]"
+          title="Online"
         />
-      ) : (
-        initials
-      )}
+      ) : presence === "recent" ? (
+        <span
+          aria-label="Recently active"
+          className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full bg-amber-400 ring-2 ring-[color:var(--px-surface)]"
+          title="Recently active"
+        />
+      ) : null}
     </div>
   );
 }

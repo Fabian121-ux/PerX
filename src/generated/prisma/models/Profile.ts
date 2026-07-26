@@ -55,6 +55,8 @@ export type ProfileMinAggregateOutputType = {
   allowConnectionRequests: boolean | null
   allowMessagesFromConnections: boolean | null
   allowMessagesFromMembers: boolean | null
+  showPresence: boolean | null
+  showLastActiveTime: boolean | null
   trustScore: number | null
   profileCompleteness: number | null
   completedDeals: number | null
@@ -78,6 +80,8 @@ export type ProfileMaxAggregateOutputType = {
   allowConnectionRequests: boolean | null
   allowMessagesFromConnections: boolean | null
   allowMessagesFromMembers: boolean | null
+  showPresence: boolean | null
+  showLastActiveTime: boolean | null
   trustScore: number | null
   profileCompleteness: number | null
   completedDeals: number | null
@@ -101,6 +105,8 @@ export type ProfileCountAggregateOutputType = {
   allowConnectionRequests: number
   allowMessagesFromConnections: number
   allowMessagesFromMembers: number
+  showPresence: number
+  showLastActiveTime: number
   trustScore: number
   profileCompleteness: number
   completedDeals: number
@@ -140,6 +146,8 @@ export type ProfileMinAggregateInputType = {
   allowConnectionRequests?: true
   allowMessagesFromConnections?: true
   allowMessagesFromMembers?: true
+  showPresence?: true
+  showLastActiveTime?: true
   trustScore?: true
   profileCompleteness?: true
   completedDeals?: true
@@ -163,6 +171,8 @@ export type ProfileMaxAggregateInputType = {
   allowConnectionRequests?: true
   allowMessagesFromConnections?: true
   allowMessagesFromMembers?: true
+  showPresence?: true
+  showLastActiveTime?: true
   trustScore?: true
   profileCompleteness?: true
   completedDeals?: true
@@ -186,6 +196,8 @@ export type ProfileCountAggregateInputType = {
   allowConnectionRequests?: true
   allowMessagesFromConnections?: true
   allowMessagesFromMembers?: true
+  showPresence?: true
+  showLastActiveTime?: true
   trustScore?: true
   profileCompleteness?: true
   completedDeals?: true
@@ -296,6 +308,8 @@ export type ProfileGroupByOutputType = {
   allowConnectionRequests: boolean
   allowMessagesFromConnections: boolean
   allowMessagesFromMembers: boolean
+  showPresence: boolean
+  showLastActiveTime: boolean
   trustScore: number
   profileCompleteness: number
   completedDeals: number
@@ -342,6 +356,8 @@ export type ProfileWhereInput = {
   allowConnectionRequests?: Prisma.BoolFilter<"Profile"> | boolean
   allowMessagesFromConnections?: Prisma.BoolFilter<"Profile"> | boolean
   allowMessagesFromMembers?: Prisma.BoolFilter<"Profile"> | boolean
+  showPresence?: Prisma.BoolFilter<"Profile"> | boolean
+  showLastActiveTime?: Prisma.BoolFilter<"Profile"> | boolean
   trustScore?: Prisma.IntFilter<"Profile"> | number
   profileCompleteness?: Prisma.IntFilter<"Profile"> | number
   completedDeals?: Prisma.IntFilter<"Profile"> | number
@@ -371,6 +387,8 @@ export type ProfileOrderByWithRelationInput = {
   allowConnectionRequests?: Prisma.SortOrder
   allowMessagesFromConnections?: Prisma.SortOrder
   allowMessagesFromMembers?: Prisma.SortOrder
+  showPresence?: Prisma.SortOrder
+  showLastActiveTime?: Prisma.SortOrder
   trustScore?: Prisma.SortOrder
   profileCompleteness?: Prisma.SortOrder
   completedDeals?: Prisma.SortOrder
@@ -403,6 +421,8 @@ export type ProfileWhereUniqueInput = Prisma.AtLeast<{
   allowConnectionRequests?: Prisma.BoolFilter<"Profile"> | boolean
   allowMessagesFromConnections?: Prisma.BoolFilter<"Profile"> | boolean
   allowMessagesFromMembers?: Prisma.BoolFilter<"Profile"> | boolean
+  showPresence?: Prisma.BoolFilter<"Profile"> | boolean
+  showLastActiveTime?: Prisma.BoolFilter<"Profile"> | boolean
   trustScore?: Prisma.IntFilter<"Profile"> | number
   profileCompleteness?: Prisma.IntFilter<"Profile"> | number
   completedDeals?: Prisma.IntFilter<"Profile"> | number
@@ -432,6 +452,8 @@ export type ProfileOrderByWithAggregationInput = {
   allowConnectionRequests?: Prisma.SortOrder
   allowMessagesFromConnections?: Prisma.SortOrder
   allowMessagesFromMembers?: Prisma.SortOrder
+  showPresence?: Prisma.SortOrder
+  showLastActiveTime?: Prisma.SortOrder
   trustScore?: Prisma.SortOrder
   profileCompleteness?: Prisma.SortOrder
   completedDeals?: Prisma.SortOrder
@@ -463,6 +485,8 @@ export type ProfileScalarWhereWithAggregatesInput = {
   allowConnectionRequests?: Prisma.BoolWithAggregatesFilter<"Profile"> | boolean
   allowMessagesFromConnections?: Prisma.BoolWithAggregatesFilter<"Profile"> | boolean
   allowMessagesFromMembers?: Prisma.BoolWithAggregatesFilter<"Profile"> | boolean
+  showPresence?: Prisma.BoolWithAggregatesFilter<"Profile"> | boolean
+  showLastActiveTime?: Prisma.BoolWithAggregatesFilter<"Profile"> | boolean
   trustScore?: Prisma.IntWithAggregatesFilter<"Profile"> | number
   profileCompleteness?: Prisma.IntWithAggregatesFilter<"Profile"> | number
   completedDeals?: Prisma.IntWithAggregatesFilter<"Profile"> | number
@@ -485,6 +509,8 @@ export type ProfileCreateInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -514,6 +540,8 @@ export type ProfileUncheckedCreateInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -541,6 +569,8 @@ export type ProfileUpdateInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -570,6 +600,8 @@ export type ProfileUncheckedUpdateInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -598,6 +630,8 @@ export type ProfileCreateManyInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -620,6 +654,8 @@ export type ProfileUpdateManyMutationInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -643,6 +679,8 @@ export type ProfileUncheckedUpdateManyInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -671,6 +709,8 @@ export type ProfileCountOrderByAggregateInput = {
   allowConnectionRequests?: Prisma.SortOrder
   allowMessagesFromConnections?: Prisma.SortOrder
   allowMessagesFromMembers?: Prisma.SortOrder
+  showPresence?: Prisma.SortOrder
+  showLastActiveTime?: Prisma.SortOrder
   trustScore?: Prisma.SortOrder
   profileCompleteness?: Prisma.SortOrder
   completedDeals?: Prisma.SortOrder
@@ -701,6 +741,8 @@ export type ProfileMaxOrderByAggregateInput = {
   allowConnectionRequests?: Prisma.SortOrder
   allowMessagesFromConnections?: Prisma.SortOrder
   allowMessagesFromMembers?: Prisma.SortOrder
+  showPresence?: Prisma.SortOrder
+  showLastActiveTime?: Prisma.SortOrder
   trustScore?: Prisma.SortOrder
   profileCompleteness?: Prisma.SortOrder
   completedDeals?: Prisma.SortOrder
@@ -724,6 +766,8 @@ export type ProfileMinOrderByAggregateInput = {
   allowConnectionRequests?: Prisma.SortOrder
   allowMessagesFromConnections?: Prisma.SortOrder
   allowMessagesFromMembers?: Prisma.SortOrder
+  showPresence?: Prisma.SortOrder
+  showLastActiveTime?: Prisma.SortOrder
   trustScore?: Prisma.SortOrder
   profileCompleteness?: Prisma.SortOrder
   completedDeals?: Prisma.SortOrder
@@ -876,6 +920,8 @@ export type ProfileCreateWithoutUserInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -903,6 +949,8 @@ export type ProfileUncheckedCreateWithoutUserInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -946,6 +994,8 @@ export type ProfileUpdateWithoutUserInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -973,6 +1023,8 @@ export type ProfileUncheckedUpdateWithoutUserInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1000,6 +1052,8 @@ export type ProfileCreateWithoutSkillsInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1028,6 +1082,8 @@ export type ProfileUncheckedCreateWithoutSkillsInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1070,6 +1126,8 @@ export type ProfileUpdateWithoutSkillsInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1098,6 +1156,8 @@ export type ProfileUncheckedUpdateWithoutSkillsInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1124,6 +1184,8 @@ export type ProfileCreateWithoutPortfolioInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1152,6 +1214,8 @@ export type ProfileUncheckedCreateWithoutPortfolioInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1194,6 +1258,8 @@ export type ProfileUpdateWithoutPortfolioInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1222,6 +1288,8 @@ export type ProfileUncheckedUpdateWithoutPortfolioInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1248,6 +1316,8 @@ export type ProfileCreateWithoutWorkHistoryInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1276,6 +1346,8 @@ export type ProfileUncheckedCreateWithoutWorkHistoryInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1318,6 +1390,8 @@ export type ProfileUpdateWithoutWorkHistoryInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1346,6 +1420,8 @@ export type ProfileUncheckedUpdateWithoutWorkHistoryInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1372,6 +1448,8 @@ export type ProfileCreateWithoutVerificationRequestsInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1400,6 +1478,8 @@ export type ProfileUncheckedCreateWithoutVerificationRequestsInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1442,6 +1522,8 @@ export type ProfileUpdateWithoutVerificationRequestsInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1470,6 +1552,8 @@ export type ProfileUncheckedUpdateWithoutVerificationRequestsInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1496,6 +1580,8 @@ export type ProfileCreateWithoutProfileBookmarksInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1524,6 +1610,8 @@ export type ProfileUncheckedCreateWithoutProfileBookmarksInput = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: number
   profileCompleteness?: number
   completedDeals?: number
@@ -1566,6 +1654,8 @@ export type ProfileUpdateWithoutProfileBookmarksInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1594,6 +1684,8 @@ export type ProfileUncheckedUpdateWithoutProfileBookmarksInput = {
   allowConnectionRequests?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromConnections?: Prisma.BoolFieldUpdateOperationsInput | boolean
   allowMessagesFromMembers?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showPresence?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  showLastActiveTime?: Prisma.BoolFieldUpdateOperationsInput | boolean
   trustScore?: Prisma.IntFieldUpdateOperationsInput | number
   profileCompleteness?: Prisma.IntFieldUpdateOperationsInput | number
   completedDeals?: Prisma.IntFieldUpdateOperationsInput | number
@@ -1688,6 +1780,8 @@ export type ProfileSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: boolean
   profileCompleteness?: boolean
   completedDeals?: boolean
@@ -1718,6 +1812,8 @@ export type ProfileSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: boolean
   profileCompleteness?: boolean
   completedDeals?: boolean
@@ -1742,6 +1838,8 @@ export type ProfileSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: boolean
   profileCompleteness?: boolean
   completedDeals?: boolean
@@ -1766,6 +1864,8 @@ export type ProfileSelectScalar = {
   allowConnectionRequests?: boolean
   allowMessagesFromConnections?: boolean
   allowMessagesFromMembers?: boolean
+  showPresence?: boolean
+  showLastActiveTime?: boolean
   trustScore?: boolean
   profileCompleteness?: boolean
   completedDeals?: boolean
@@ -1774,7 +1874,7 @@ export type ProfileSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "headline" | "biography" | "location" | "websiteUrl" | "profileImageUrl" | "profileImageStorageKey" | "isDiscoverable" | "showLocation" | "showSkills" | "allowConnectionRequests" | "allowMessagesFromConnections" | "allowMessagesFromMembers" | "trustScore" | "profileCompleteness" | "completedDeals" | "averageRating" | "createdAt" | "updatedAt", ExtArgs["result"]["profile"]>
+export type ProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "headline" | "biography" | "location" | "websiteUrl" | "profileImageUrl" | "profileImageStorageKey" | "isDiscoverable" | "showLocation" | "showSkills" | "allowConnectionRequests" | "allowMessagesFromConnections" | "allowMessagesFromMembers" | "showPresence" | "showLastActiveTime" | "trustScore" | "profileCompleteness" | "completedDeals" | "averageRating" | "createdAt" | "updatedAt", ExtArgs["result"]["profile"]>
 export type ProfileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   skills?: boolean | Prisma.Profile$skillsArgs<ExtArgs>
@@ -1816,6 +1916,8 @@ export type $ProfilePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     allowConnectionRequests: boolean
     allowMessagesFromConnections: boolean
     allowMessagesFromMembers: boolean
+    showPresence: boolean
+    showLastActiveTime: boolean
     trustScore: number
     profileCompleteness: number
     completedDeals: number
@@ -2265,6 +2367,8 @@ export interface ProfileFieldRefs {
   readonly allowConnectionRequests: Prisma.FieldRef<"Profile", 'Boolean'>
   readonly allowMessagesFromConnections: Prisma.FieldRef<"Profile", 'Boolean'>
   readonly allowMessagesFromMembers: Prisma.FieldRef<"Profile", 'Boolean'>
+  readonly showPresence: Prisma.FieldRef<"Profile", 'Boolean'>
+  readonly showLastActiveTime: Prisma.FieldRef<"Profile", 'Boolean'>
   readonly trustScore: Prisma.FieldRef<"Profile", 'Int'>
   readonly profileCompleteness: Prisma.FieldRef<"Profile", 'Int'>
   readonly completedDeals: Prisma.FieldRef<"Profile", 'Int'>

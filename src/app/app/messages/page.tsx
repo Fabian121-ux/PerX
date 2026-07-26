@@ -16,10 +16,39 @@ type PreviewConversationLike = {
 
 type DbConversationLike = {
   id: string;
-  messages: { body: string; createdAt: Date; id: string; senderId: string }[];
+  messages: {
+    body: string;
+    createdAt: Date;
+    deletedAt?: Date | null;
+    editedAt?: Date | null;
+    id: string;
+    readReceipts?: { userId: string }[];
+    senderId: string;
+  }[];
   opportunity?: { title: string } | null;
-  participants: { user?: { imageUrl?: string | null; name: string | null; profile?: { profileImageUrl?: string | null } | null; username: string | null } | null; userId: string; lastReadAt?: Date | null }[];
+  participants: {
+    user?: {
+      imageUrl?: string | null;
+      name: string | null;
+      profile?: {
+        profileImageUrl?: string | null;
+        showPresence?: boolean | null;
+      } | null;
+      sessions?: { lastSeenAt: Date }[];
+      username: string | null;
+    } | null;
+    userId: string;
+    lastReadAt?: Date | null;
+  }[];
 };
+
+function getPresenceState(showPresence: boolean, lastSeenAt?: Date | null) {
+  if (!showPresence || !lastSeenAt) return "hidden";
+  const ageMs = Date.now() - lastSeenAt.getTime();
+  if (ageMs <= 2 * 60_000) return "online";
+  if (ageMs <= 30 * 60_000) return "recent";
+  return "offline";
+}
 
 function isPreviewConversation(conversation: unknown): conversation is PreviewConversationLike {
   return (
@@ -47,8 +76,18 @@ function toWorkspaceConversation(conversation: unknown, user: CurrentUser): Work
   }
 
   const dbConversation = conversation as DbConversationLike;
+  const currentParticipant = dbConversation.participants.find((participant) => participant.userId === user.id);
   const otherParticipant = dbConversation.participants.find((participant) => participant.userId !== user.id)?.user;
+  const otherParticipantIds = dbConversation.participants
+    .map((participant) => participant.userId)
+    .filter((participantId) => participantId !== user.id);
   const latestMessage = dbConversation.messages[0];
+  const unreadCount =
+    latestMessage &&
+    latestMessage.senderId !== user.id &&
+    (!currentParticipant?.lastReadAt || latestMessage.createdAt > currentParticipant.lastReadAt)
+      ? 1
+      : 0;
 
   return {
     context: dbConversation.opportunity?.title ?? "Professional conversation",
@@ -59,7 +98,14 @@ function toWorkspaceConversation(conversation: unknown, user: CurrentUser): Work
           {
             body: latestMessage.body,
             createdAt: latestMessage.createdAt.toISOString(),
+            deletedAt: latestMessage.deletedAt?.toISOString() ?? null,
+            editedAt: latestMessage.editedAt?.toISOString() ?? null,
             id: latestMessage.id,
+            readByOtherParticipants:
+              otherParticipantIds.length > 0 &&
+              otherParticipantIds.every((participantId) =>
+                latestMessage.readReceipts?.some((receipt) => receipt.userId === participantId),
+              ),
             senderId: latestMessage.senderId,
             senderName: latestMessage.senderId === user.id ? user.name : otherParticipant?.name ?? "Participant",
           },
@@ -68,11 +114,15 @@ function toWorkspaceConversation(conversation: unknown, user: CurrentUser): Work
     opportunityTitle: dbConversation.opportunity?.title ?? undefined,
     participantImageUrl: otherParticipant?.imageUrl ?? otherParticipant?.profile?.profileImageUrl ?? null,
     participantName: otherParticipant?.name ?? dbConversation.opportunity?.title ?? "Conversation",
+    participantPresence: getPresenceState(
+      Boolean(otherParticipant?.profile?.showPresence),
+      otherParticipant?.sessions?.[0]?.lastSeenAt ?? null,
+    ),
     participantRole: "Opportunity participant",
     participantUsername: otherParticipant?.username ?? undefined,
     timestamp: latestMessage ? latestMessage.createdAt.toLocaleDateString() : "new",
     trustScore: undefined,
-    unreadCount: 0,
+    unreadCount,
   };
 }
 

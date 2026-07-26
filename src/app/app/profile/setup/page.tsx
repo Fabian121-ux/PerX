@@ -190,6 +190,16 @@ export default async function ProfileSetupPage({
                 label="Allow message requests from approved PerX members"
                 name="allowMessagesFromMembers"
               />
+              <CheckboxRow
+                defaultChecked={profile?.showPresence ?? true}
+                label="Show when I am active"
+                name="showPresence"
+              />
+              <CheckboxRow
+                defaultChecked={profile?.showLastActiveTime ?? false}
+                label="Show recently active state"
+                name="showLastActiveTime"
+              />
             </div>
             <Button type="submit">Save profile</Button>
           </form>

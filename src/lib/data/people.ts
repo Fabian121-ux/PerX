@@ -22,6 +22,7 @@ export type PeopleDirectoryEntry = {
   joinedAt: Date;
   location: string | null;
   name: string;
+  presence: "hidden" | "online" | "recent" | "offline";
   roles: string[];
   skills: string[];
   trustScore: number;
@@ -33,6 +34,14 @@ const pageSize = 24;
 function normalizeFilter(value?: string) {
   const trimmed = value?.trim();
   return trimmed ? trimmed.slice(0, 80) : undefined;
+}
+
+function getPresenceState(showPresence: boolean, lastSeenAt?: Date | null) {
+  if (!showPresence || !lastSeenAt) return "hidden";
+  const ageMs = Date.now() - lastSeenAt.getTime();
+  if (ageMs <= 2 * 60_000) return "online";
+  if (ageMs <= 30 * 60_000) return "recent";
+  return "offline";
 }
 
 export async function getPeopleDirectory(
@@ -68,6 +77,11 @@ export async function getPeopleDirectory(
     include: {
       profile: { include: { skills: { orderBy: { name: "asc" } } } },
       roles: { include: { role: true } },
+      sessions: {
+        orderBy: { lastSeenAt: "desc" },
+        select: { lastSeenAt: true },
+        take: 1,
+      },
     },
     orderBy: [{ createdAt: "desc" }, { id: "asc" }],
     skip: params.cursor ? 1 : 0,
@@ -172,6 +186,10 @@ export async function getPeopleDirectory(
             ? person.profile.location
             : null,
         name: person.name,
+        presence: getPresenceState(
+          Boolean(person.profile?.showPresence),
+          person.sessions[0]?.lastSeenAt ?? null,
+        ),
         roles: person.roles.map((entry) => entry.role.label),
         skills:
           person.profile?.showSkills

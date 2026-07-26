@@ -32,6 +32,8 @@ export type CurrentUser = {
     allowConnectionRequests?: boolean;
     allowMessagesFromConnections?: boolean;
     allowMessagesFromMembers?: boolean;
+    showLastActiveTime?: boolean;
+    showPresence?: boolean;
   } | null;
 };
 
@@ -141,6 +143,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
               location: true,
               profileCompleteness: true,
               profileImageUrl: true,
+              showLastActiveTime: true,
+              showPresence: true,
               skills: true,
               trustScore: true,
             },
@@ -178,11 +182,32 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
           profileImageUrl: session.user.profile.profileImageUrl,
           profileCompleteness: session.user.profile.profileCompleteness,
           skills: session.user.profile.skills.map((skill) => skill.name),
+          showLastActiveTime: session.user.profile.showLastActiveTime,
+          showPresence: session.user.profile.showPresence,
           trustScore: session.user.profile.trustScore,
         }
       : null,
     roles: session.user.roles.map((entry) => entry.role.name as RoleName),
   };
+}
+
+export async function touchCurrentSession() {
+  if (!hasDatabaseUrl()) return false;
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get(sessionCookieName())?.value;
+  if (!token) return false;
+
+  const result = await getPrisma().session.updateMany({
+    data: { lastSeenAt: new Date() },
+    where: {
+      expiresAt: { gt: new Date() },
+      tokenHash: hashToken(token),
+      user: { isActive: true },
+    },
+  });
+
+  return result.count > 0;
 }
 
 export async function requireUser(): Promise<NonNullable<CurrentUser>> {

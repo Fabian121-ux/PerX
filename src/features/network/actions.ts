@@ -80,30 +80,28 @@ export async function requestConnectionAction(targetUserId: string) {
       return;
     }
 
-    if (existing) {
-      await tx.connection.update({
+    const connection = existing
+      ? await tx.connection.update({
         data: {
           requesterId: user.id,
           receiverId: targetUserId,
           status: "PENDING",
         },
         where: { id: existing.id },
-      });
-    } else {
-      await tx.connection.create({
+      })
+      : await tx.connection.create({
         data: {
           requesterId: user.id,
           receiverId: targetUserId,
           status: "PENDING",
         },
       });
-    }
 
     await tx.notification.create({
       data: {
-        actionUrl: `/u/${user.username}`,
+        actionUrl: "/app/connections/requests",
         body: `${user.name} sent you a connection request.`,
-        metadata: { actorId: user.id },
+        metadata: { actorId: user.id, connectionId: connection.id },
         title: "New connection request",
         type: "CONNECTION_REQUEST_RECEIVED",
         userId: targetUserId,
@@ -120,6 +118,7 @@ export async function requestConnectionAction(targetUserId: string) {
   revalidatePath("/app/people");
   revalidatePath("/app/network");
   revalidatePath("/app/connections");
+  revalidatePath("/app/notifications");
 }
 
 export async function acceptConnectionAction(connectionId: string) {
@@ -133,10 +132,46 @@ export async function acceptConnectionAction(connectionId: string) {
   if (connection.receiverId !== user.id) throw new Error("Unauthorized");
 
   await getPrisma().$transaction(async (tx) => {
-    await tx.connection.update({
+    const current = await tx.connection.findUnique({
+      select: { status: true },
       where: { id: connectionId },
-      data: { status: "ACCEPTED" },
     });
+    if (!current || current.status === "DECLINED" || current.status === "CANCELLED" || current.status === "BLOCKED") {
+      throw new Error("Connection request is no longer available.");
+    }
+    if (current.status !== "ACCEPTED") {
+      await tx.connection.update({
+        where: { id: connectionId },
+        data: { status: "ACCEPTED" },
+      });
+    }
+
+    await tx.notification.updateMany({
+      data: { actionState: "ACCEPTED", readAt: new Date() },
+      where: {
+        OR: [
+          { metadata: { path: ["connectionId"], equals: connectionId } },
+          {
+            metadata: { path: ["actorId"], equals: connection.requesterId },
+            type: "CONNECTION_REQUEST_RECEIVED",
+          },
+        ],
+        type: "CONNECTION_REQUEST_RECEIVED",
+        userId: user.id,
+      },
+    });
+
+    const existingNotification = await tx.notification.findFirst({
+      select: { id: true },
+      where: {
+        metadata: { path: ["connectionId"], equals: connectionId },
+        type: "CONNECTION_REQUEST_ACCEPTED",
+        userId: connection.requesterId,
+      },
+    });
+
+    if (existingNotification) return;
+
     await tx.notification.create({
       data: {
         actionUrl: `/u/${user.username}`,
@@ -158,6 +193,7 @@ export async function acceptConnectionAction(connectionId: string) {
   revalidatePath("/app/people");
   revalidatePath("/app/network");
   revalidatePath("/app/connections");
+  revalidatePath("/app/notifications");
 }
 
 export async function rejectConnectionAction(connectionId: string) {
@@ -173,14 +209,49 @@ export async function rejectConnectionAction(connectionId: string) {
   }
 
   await getPrisma().$transaction(async (tx) => {
-    await tx.connection.update({
+    const current = await tx.connection.findUnique({
+      select: { status: true },
       where: { id: connectionId },
-      data: { status: "DECLINED" },
     });
+    if (!current || current.status === "ACCEPTED" || current.status === "BLOCKED") {
+      throw new Error("Connection request is no longer available.");
+    }
+    if (current.status !== "DECLINED") {
+      await tx.connection.update({
+        where: { id: connectionId },
+        data: { status: "DECLINED" },
+      });
+    }
+
+    await tx.notification.updateMany({
+      data: { actionState: "DECLINED", readAt: new Date() },
+      where: {
+        OR: [
+          { metadata: { path: ["connectionId"], equals: connectionId } },
+          {
+            metadata: { path: ["actorId"], equals: connection.requesterId },
+            type: "CONNECTION_REQUEST_RECEIVED",
+          },
+        ],
+        type: "CONNECTION_REQUEST_RECEIVED",
+        userId: user.id,
+      },
+    });
+
     const notifyUserId =
       connection.receiverId === user.id
         ? connection.requesterId
         : connection.receiverId;
+    const existingNotification = await tx.notification.findFirst({
+      select: { id: true },
+      where: {
+        metadata: { path: ["connectionId"], equals: connectionId },
+        type: "CONNECTION_REQUEST_DECLINED",
+        userId: notifyUserId,
+      },
+    });
+
+    if (existingNotification) return;
     await tx.notification.create({
       data: {
         actionUrl: `/u/${user.username}`,
@@ -199,9 +270,10 @@ export async function rejectConnectionAction(connectionId: string) {
     entityId: connectionId,
     entityType: "connection",
   });
-  revalidatePath("/app/people");
-  revalidatePath("/app/network");
-  revalidatePath("/app/connections");
+revalidatePath("/app/people");
+revalidatePath("/app/network");
+revalidatePath("/app/connections");
+revalidatePath("/app/notifications");
 }
 
 export async function disconnectAction(connectionId: string) {

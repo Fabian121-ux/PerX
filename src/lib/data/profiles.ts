@@ -52,5 +52,7 @@ export async function getProfileForEdit(userId: string) {
     allowConnectionRequests: user.profile.allowConnectionRequests,
     allowMessagesFromConnections: user.profile.allowMessagesFromConnections,
     allowMessagesFromMembers: user.profile.allowMessagesFromMembers,
+    showPresence: user.profile.showPresence,
+    showLastActiveTime: user.profile.showLastActiveTime,
   };
 }

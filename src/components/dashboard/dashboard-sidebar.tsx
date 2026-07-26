@@ -11,11 +11,26 @@ import {
   sidebarItems,
   type SidebarItem,
 } from "@/lib/navigation/sidebar-items";
+import type { UnreadCounts } from "@/lib/data/unread-counts";
+
+function formatBadgeCount(value: number) {
+  if (!value) return "";
+  return value > 99 ? "99+" : String(value);
+}
+
+function badgeForHref(href: string, badges?: UnreadCounts) {
+  if (!badges) return 0;
+  if (href === "/app/messages") return badges.messages;
+  if (href === "/app/notifications") return badges.notifications;
+  return 0;
+}
 
 function SidebarLink({
+  badgeCount = 0,
   item,
   onNavigate,
 }: {
+  badgeCount?: number;
   item: SidebarItem;
   onNavigate?: () => void;
 }) {
@@ -45,6 +60,16 @@ function SidebarLink({
         }`}
       />
       <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
+      {badgeCount ? (
+        <span
+          aria-label={`${formatBadgeCount(badgeCount)} unread ${item.label.toLowerCase()}`}
+          className={`grid h-5 min-w-5 shrink-0 place-items-center rounded-full px-1.5 text-[10px] font-black ${
+            active ? "bg-white text-[color:var(--px-primary)]" : "bg-[color:var(--px-warning)] text-white"
+          }`}
+        >
+          {formatBadgeCount(badgeCount)}
+        </span>
+      ) : null}
     </Link>
   );
 }
@@ -74,9 +99,11 @@ function getRenderedHref(href: string, pathname: string) {
 }
 
 export function SidebarNavigation({
+  badges,
   onNavigate,
   userRoles,
 }: {
+  badges?: UnreadCounts;
   onNavigate?: () => void;
   userRoles?: readonly string[];
 }) {
@@ -95,6 +122,7 @@ export function SidebarNavigation({
             <div className="grid gap-1">
               {items.map((item) => (
                 <SidebarLink
+                  badgeCount={badgeForHref(item.href, badges)}
                   item={item}
                   key={item.href}
                   onNavigate={onNavigate}
@@ -109,8 +137,10 @@ export function SidebarNavigation({
 }
 
 export function DashboardSidebar({
+  badges,
   userRoles,
 }: {
+  badges?: UnreadCounts;
   userRoles?: readonly string[];
 }) {
   const isDesktop = useIsDesktop();
@@ -129,7 +159,7 @@ export function DashboardSidebar({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-5 pt-1">
-        <SidebarNavigation userRoles={userRoles} />
+        <SidebarNavigation badges={badges} userRoles={userRoles} />
       </div>
     </aside>
   );

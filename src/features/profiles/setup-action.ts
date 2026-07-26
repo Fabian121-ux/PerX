@@ -48,6 +48,8 @@ export async function setupProfileAction(formData: FormData) {
       "allowMessagesFromMembers",
       false,
     ),
+    showPresence: checkboxValue(formData, "showPresence", true),
+    showLastActiveTime: checkboxValue(formData, "showLastActiveTime", false),
   };
 
   const parsed = profileSetupSchema.safeParse(rawData);
@@ -70,6 +72,8 @@ export async function setupProfileAction(formData: FormData) {
     allowConnectionRequests,
     allowMessagesFromConnections,
     allowMessagesFromMembers,
+    showLastActiveTime,
+    showPresence,
   } = parsed.data;
 
   // Check if username is taken by another user
@@ -115,6 +119,8 @@ export async function setupProfileAction(formData: FormData) {
         profileCompleteness: completeness,
         profileImageUrl: profileImageUrl || null,
         showLocation,
+        showLastActiveTime,
+        showPresence,
         showSkills,
         websiteUrl: websiteUrl || null,
       };

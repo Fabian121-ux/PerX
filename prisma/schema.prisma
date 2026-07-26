@@ -136,6 +136,7 @@ enum ReviewVisibility {
 
 enum NotificationType {
   SYSTEM
+  BROADCAST
   MESSAGE
   NEW_MESSAGE
   MESSAGE_REQUEST_RECEIVED
@@ -275,6 +276,8 @@ model Profile {
   allowConnectionRequests      Boolean               @default(true)
   allowMessagesFromConnections Boolean               @default(true)
   allowMessagesFromMembers     Boolean               @default(false)
+  showPresence                 Boolean               @default(true)
+  showLastActiveTime           Boolean               @default(false)
   trustScore                   Int                   @default(0)
   profileCompleteness          Int                   @default(0)
   completedDeals               Int                   @default(0)
@@ -480,13 +483,32 @@ model Message {
   conversationId String
   senderId       String
   body           String
+  editedAt       DateTime?
+  deletedAt      DateTime?
+  deletedById    String?
   createdAt      DateTime             @default(now())
   conversation   Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User                 @relation(fields: [senderId], references: [id], onDelete: Cascade)
   attachments    MessageAttachment[]
+  edits          MessageEdit[]
   readReceipts   MessageReadReceipt[]
 
   @@index([conversationId, createdAt])
+  @@index([senderId, createdAt])
+  @@index([editedAt])
+}
+
+model MessageEdit {
+  id               String   @id @default(cuid())
+  messageId        String
+  editorId         String
+  previousBodyHash String
+  nextBodyHash     String
+  createdAt        DateTime @default(now())
+  message          Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId, createdAt])
+  @@index([editorId, createdAt])
 }
 
 model MessageAttachment {
@@ -738,19 +760,59 @@ model TrustSignal {
 }
 
 model Notification {
-  id        String           @id @default(cuid())
-  userId    String
-  type      NotificationType
-  title     String
-  body      String
-  actionUrl String?
-  metadata  Json?
-  readAt    DateTime?
-  createdAt DateTime         @default(now())
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String           @id @default(cuid())
+  userId      String
+  type        NotificationType
+  title       String
+  body        String
+  actionUrl   String?
+  actionState String?
+  broadcastId String?
+  metadata    Json?
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  broadcast   AdminBroadcast?  @relation(fields: [broadcastId], references: [id], onDelete: SetNull)
 
+  @@unique([userId, broadcastId])
   @@index([userId, readAt, createdAt])
   @@index([userId, type, createdAt])
+  @@index([broadcastId])
+}
+
+model AdminBroadcast {
+  id            String              @id @default(cuid())
+  senderId      String
+  title         String
+  body          String
+  audience      String
+  priority      String              @default("NORMAL")
+  actionUrl     String?
+  expiresAt     DateTime?
+  deliveryCount Int                 @default(0)
+  failedCount   Int                 @default(0)
+  sentAt        DateTime?
+  createdAt     DateTime            @default(now())
+  notifications Notification[]
+  deliveries    BroadcastDelivery[]
+
+  @@index([senderId, createdAt])
+  @@index([audience, createdAt])
+}
+
+model BroadcastDelivery {
+  id             String         @id @default(cuid())
+  broadcastId    String
+  userId         String
+  notificationId String?
+  status         String
+  error          String?
+  createdAt      DateTime       @default(now())
+  broadcast      AdminBroadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+
+  @@unique([broadcastId, userId])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
 }
 
 model AuditLog {

@@ -108,6 +108,11 @@ export type ConversationParticipant = Prisma.ConversationParticipantModel
  */
 export type Message = Prisma.MessageModel
 /**
+ * Model MessageEdit
+ *
+ */
+export type MessageEdit = Prisma.MessageEditModel
+/**
  * Model MessageAttachment
  *
  */
@@ -202,6 +207,16 @@ export type TrustSignal = Prisma.TrustSignalModel
  *
  */
 export type Notification = Prisma.NotificationModel
+/**
+ * Model AdminBroadcast
+ *
+ */
+export type AdminBroadcast = Prisma.AdminBroadcastModel
+/**
+ * Model BroadcastDelivery
+ *
+ */
+export type BroadcastDelivery = Prisma.BroadcastDeliveryModel
 /**
  * Model AuditLog
  *

@@ -183,6 +183,7 @@ export type ReviewVisibility = (typeof ReviewVisibility)[keyof typeof ReviewVisi
 
 export const NotificationType = {
   SYSTEM: 'SYSTEM',
+  BROADCAST: 'BROADCAST',
   MESSAGE: 'MESSAGE',
   NEW_MESSAGE: 'NEW_MESSAGE',
   MESSAGE_REQUEST_RECEIVED: 'MESSAGE_REQUEST_RECEIVED',

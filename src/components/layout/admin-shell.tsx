@@ -11,6 +11,7 @@ const adminLinks = [
   ["/admin/opportunities", "Opportunities"],
   ["/admin/real-estate", "Real Estate"],
   ["/admin/messages", "Messages"],
+  ["/admin/broadcasts", "Broadcasts"],
   ["/admin/reports", "Reports"],
   ["/admin/support", "Support"],
   ["/admin/deals", "Deals"],

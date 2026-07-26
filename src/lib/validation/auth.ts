@@ -80,6 +80,8 @@ export const profileSchema = z.object({
   allowConnectionRequests: z.boolean().default(true),
   allowMessagesFromConnections: z.boolean().default(true),
   allowMessagesFromMembers: z.boolean().default(false),
+  showPresence: z.boolean().default(true),
+  showLastActiveTime: z.boolean().default(false),
 });
 
 export const profileSetupSchema = profileSchema.extend({
