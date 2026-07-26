@@ -12,6 +12,7 @@ import {
 import { DashboardTopbar } from "@/components/dashboard/dashboard-topbar";
 import { AnimatedBackground } from "@/components/dashboard/animated-background";
 import { BrandLogo } from "@/components/brand-logo";
+import { AppScrollRestoration } from "@/components/layout/app-scroll-restoration";
 
 export function AppShell({
   children,
@@ -36,6 +37,7 @@ export function AppShell({
         <DashboardTopbar user={user} onMenuClick={() => setMobileOpen(true)} />
 
         <main className="dashboard-main min-h-0 flex-1 overflow-y-auto px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
+          <AppScrollRestoration />
           <div className="mx-auto max-w-[1480px]">{children}</div>
         </main>
       </div>

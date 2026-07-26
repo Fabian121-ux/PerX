@@ -77,6 +77,24 @@ export async function sendMessageAction(conversationId: string, body: string) {
     ]);
 
     if (blocked) return { error: "Messaging is unavailable." };
+    if (!conversation.opportunityId && conversation.participants.length === 2) {
+      const [otherParticipantId] = otherParticipantIds;
+      const acceptedConnection = otherParticipantId
+        ? await getPrisma().connection.findFirst({
+            select: { id: true },
+            where: {
+              status: "ACCEPTED",
+              OR: [
+                { requesterId: user.id, receiverId: otherParticipantId },
+                { requesterId: otherParticipantId, receiverId: user.id },
+              ],
+            },
+          })
+        : null;
+      if (!acceptedConnection) {
+        return { error: "Connect before sending a private message." };
+      }
+    }
     if (recentMessages >= rateLimitMaxMessages) {
       return { error: "Please slow down before sending more messages." };
     }
@@ -127,9 +145,11 @@ export async function sendMessageAction(conversationId: string, body: string) {
 
       await tx.notification.createMany({
         data: otherParticipantIds.map((participantId) => ({
+          actionUrl: `/app/messages/${parsed.data.conversationId}`,
           body: `${user.name} sent you a message.`,
+          metadata: { conversationId: parsed.data.conversationId, senderId: user.id },
           title: "New message",
-          type: "MESSAGE" as const,
+          type: "NEW_MESSAGE" as const,
           userId: participantId,
         })),
       });

@@ -29,6 +29,7 @@ type OpportunityCardProps = {
     currency?: string;
     imageAlt?: string;
     imageUrl?: string;
+    images?: { isCover?: boolean; url: string }[];
     publishedAt?: Date | string | null;
     skills?: string[];
     category?: { name: string; slug: string } | null;
@@ -39,7 +40,9 @@ type OpportunityCardProps = {
 export function OpportunityCard({ href, opportunity }: OpportunityCardProps) {
   const trustScore = opportunity.owner?.profile?.trustScore ?? opportunity.owner?.trustScore;
   const temporaryImage = getTemporaryOpportunityImage(opportunity.slug);
-  const imageSrc = opportunity.imageUrl ?? temporaryImage.src;
+  const coverImage =
+    opportunity.images?.find((image) => image.isCover) ?? opportunity.images?.[0];
+  const imageSrc = opportunity.imageUrl ?? coverImage?.url ?? temporaryImage.src;
   const imageAlt = opportunity.imageAlt ?? temporaryImage.alt;
   const ownerName = opportunity.owner?.name ?? "perX member";
   const ownerInitials = (opportunity.owner?.name ?? "perX")

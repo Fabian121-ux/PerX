@@ -89,6 +89,39 @@ export const currencyOptions = [
   { label: "British pound", value: "GBP" },
 ] as const;
 
+export const propertyTypeValues = [
+  "APARTMENT",
+  "HOUSE",
+  "LAND",
+  "COMMERCIAL",
+  "SHORT_STAY",
+] as const;
+
+export const propertyTypeOptions = [
+  { label: "Apartment", value: "APARTMENT" },
+  { label: "House", value: "HOUSE" },
+  { label: "Land", value: "LAND" },
+  { label: "Commercial property", value: "COMMERCIAL" },
+  { label: "Short stay", value: "SHORT_STAY" },
+] as const;
+
+export const propertyListingTypeValues = ["SALE", "RENT", "LEASE", "CO_INVESTMENT"] as const;
+
+export const propertyListingTypeOptions = [
+  { label: "For sale", value: "SALE" },
+  { label: "For rent", value: "RENT" },
+  { label: "Lease", value: "LEASE" },
+  { label: "Co-investment", value: "CO_INVESTMENT" },
+] as const;
+
+export const contactPreferenceValues = ["PERX_MESSAGES", "PHONE_AFTER_CONNECTION", "EMAIL_AFTER_CONNECTION"] as const;
+
+export const contactPreferenceOptions = [
+  { label: "PerX messages", value: "PERX_MESSAGES" },
+  { label: "Phone after connection", value: "PHONE_AFTER_CONNECTION" },
+  { label: "Email after connection", value: "EMAIL_AFTER_CONNECTION" },
+] as const;
+
 export const reportReasonValues = [
   "SPAM",
   "SCAM_OR_FRAUD",

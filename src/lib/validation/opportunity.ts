@@ -4,6 +4,9 @@ import {
   currencyValues,
   opportunityCategoryValues,
   opportunityTypeValues,
+  contactPreferenceValues,
+  propertyListingTypeValues,
+  propertyTypeValues,
   reportReasonValues,
 } from "@/lib/options";
 
@@ -20,6 +23,11 @@ export const opportunityFormSchema = z.object({
   budgetMax: z.string().trim().optional(),
   skills: z.string().trim().max(500).optional(),
   intent: z.enum(["draft", "publish"]).default("draft"),
+  propertyType: z.enum(propertyTypeValues).optional(),
+  propertyListingType: z.enum(propertyListingTypeValues).optional(),
+  contactPreference: z.enum(contactPreferenceValues).optional(),
+  authorityDeclaration: z.string().trim().max(1000).optional(),
+  listingRulesAccepted: z.boolean().default(false),
 });
 
 export const opportunityReportSchema = z.object({

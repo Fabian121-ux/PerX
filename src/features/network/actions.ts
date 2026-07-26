@@ -101,9 +101,11 @@ export async function requestConnectionAction(targetUserId: string) {
 
     await tx.notification.create({
       data: {
+        actionUrl: `/u/${user.username}`,
         body: `${user.name} sent you a connection request.`,
+        metadata: { actorId: user.id },
         title: "New connection request",
-        type: "CONNECTION",
+        type: "CONNECTION_REQUEST_RECEIVED",
         userId: targetUserId,
       },
     });
@@ -137,9 +139,11 @@ export async function acceptConnectionAction(connectionId: string) {
     });
     await tx.notification.create({
       data: {
+        actionUrl: `/u/${user.username}`,
         body: `${user.name} accepted your connection request.`,
+        metadata: { actorId: user.id, connectionId },
         title: "Connection accepted",
-        type: "CONNECTION",
+        type: "CONNECTION_REQUEST_ACCEPTED",
         userId: connection.requesterId,
       },
     });
@@ -168,9 +172,25 @@ export async function rejectConnectionAction(connectionId: string) {
     throw new Error("Unauthorized");
   }
 
-  await getPrisma().connection.update({
-    where: { id: connectionId },
-    data: { status: "DECLINED" },
+  await getPrisma().$transaction(async (tx) => {
+    await tx.connection.update({
+      where: { id: connectionId },
+      data: { status: "DECLINED" },
+    });
+    const notifyUserId =
+      connection.receiverId === user.id
+        ? connection.requesterId
+        : connection.receiverId;
+    await tx.notification.create({
+      data: {
+        actionUrl: `/u/${user.username}`,
+        body: `${user.name} declined a connection request.`,
+        metadata: { actorId: user.id, connectionId },
+        title: "Connection request declined",
+        type: "CONNECTION_REQUEST_DECLINED",
+        userId: notifyUserId,
+      },
+    });
   });
 
   await writeAuditLog({
@@ -286,7 +306,6 @@ export async function startConversationAction(targetUserId: string) {
       profile: {
         select: {
           allowMessagesFromConnections: true,
-          allowMessagesFromMembers: true,
         },
       },
     },
@@ -312,8 +331,7 @@ export async function startConversationAction(targetUserId: string) {
   });
 
   const messageAllowed =
-    (acceptedConnection && targetUser.profile?.allowMessagesFromConnections) ||
-    targetUser.profile?.allowMessagesFromMembers;
+    acceptedConnection && targetUser.profile?.allowMessagesFromConnections;
 
   if (!messageAllowed) {
     throw new Error("Messaging is unavailable.");

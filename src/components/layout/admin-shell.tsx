@@ -9,6 +9,7 @@ const adminLinks = [
   ["/admin", "Dashboard"],
   ["/admin/users", "Users"],
   ["/admin/opportunities", "Opportunities"],
+  ["/admin/real-estate", "Real Estate"],
   ["/admin/messages", "Messages"],
   ["/admin/reports", "Reports"],
   ["/admin/support", "Support"],

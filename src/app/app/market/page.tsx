@@ -1,18 +1,11 @@
 import { AppSection } from "@/components/app-section";
-import { getPrisma } from "@/lib/db/prisma";
+import { getPublishedSectionOpportunities } from "@/lib/data/section-opportunities";
 import { OpportunityCard } from "@/components/opportunity-card";
 import { EmptyState } from "@/components/ui/card";
 import { ButtonLink } from "@/components/ui/button";
 
 export default async function MarketPage() {
-  const opportunities = await getPrisma().opportunity.findMany({
-    where: {
-      status: "PUBLISHED"
-    },
-    include: { owner: true },
-    orderBy: { createdAt: "desc" },
-    take: 50 // Limit for general marketplace
-  });
+  const opportunities = await getPublishedSectionOpportunities({ take: 50 });
 
   return (
     <AppSection

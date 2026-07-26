@@ -50,6 +50,7 @@ export default async function ManageContentPage({
     include: {
       _count: { select: { bookmarks: true, proposals: true, reports: true } },
       category: true,
+      images: { orderBy: [{ isCover: "desc" }, { createdAt: "asc" }], take: 1 },
     },
     orderBy: { updatedAt: "desc" },
     take: 50,
@@ -73,12 +74,14 @@ export default async function ManageContentPage({
     createdAt: Date;
     id: string;
     moderationStatus: string;
+    propertyVerificationState: string | null;
     slug: string;
     status: string;
     summary: string;
     title: string;
     type: string;
     updatedAt: Date;
+    verificationNotes: string | null;
   }>;
 
   return (
@@ -145,6 +148,11 @@ export default async function ManageContentPage({
                       <Badge className="bg-[color:var(--px-surface-soft)] text-[color:var(--px-text-muted)]">
                         {opportunity.moderationStatus.replaceAll("_", " ")}
                       </Badge>
+                      {opportunity.propertyVerificationState ? (
+                        <Badge className="bg-purple-50 text-purple-800">
+                          {opportunity.propertyVerificationState.replaceAll("_", " ")}
+                        </Badge>
+                      ) : null}
                     </div>
                     <h2 className="mt-2 truncate text-lg font-black text-[color:var(--px-text)]">
                       {opportunity.title}
@@ -159,6 +167,11 @@ export default async function ManageContentPage({
                       <span>{opportunity._count.bookmarks} save(s)</span>
                       <span>{opportunity._count.reports} report(s)</span>
                     </div>
+                    {opportunity.verificationNotes ? (
+                      <p className="mt-3 rounded-[var(--px-radius-sm)] bg-amber-50 p-3 text-xs font-semibold text-amber-800">
+                        Review note: {opportunity.verificationNotes}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2 lg:justify-end">
                     <ButtonLink

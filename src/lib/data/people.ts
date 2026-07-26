@@ -149,9 +149,7 @@ export async function getPeopleDirectory(
       const connection = connectionByUser.get(person.id);
       const accepted = connection?.status === "ACCEPTED";
       const messageAllowed =
-        accepted
-          ? person.profile?.allowMessagesFromConnections
-          : person.profile?.allowMessagesFromMembers;
+        accepted && person.profile?.allowMessagesFromConnections;
 
       return {
         canRequestConnection:

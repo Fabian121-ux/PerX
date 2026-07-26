@@ -43,6 +43,13 @@ export type OpportunityMinAggregateOutputType = {
   type: $Enums.OpportunityType | null
   status: $Enums.OpportunityStatus | null
   moderationStatus: $Enums.ModerationStatus | null
+  propertyVerificationState: $Enums.PropertyVerificationState | null
+  propertyType: string | null
+  propertyListingType: string | null
+  contactPreference: string | null
+  authorityDeclaration: string | null
+  listingRulesAccepted: boolean | null
+  verificationNotes: string | null
   title: string | null
   slug: string | null
   summary: string | null
@@ -67,6 +74,13 @@ export type OpportunityMaxAggregateOutputType = {
   type: $Enums.OpportunityType | null
   status: $Enums.OpportunityStatus | null
   moderationStatus: $Enums.ModerationStatus | null
+  propertyVerificationState: $Enums.PropertyVerificationState | null
+  propertyType: string | null
+  propertyListingType: string | null
+  contactPreference: string | null
+  authorityDeclaration: string | null
+  listingRulesAccepted: boolean | null
+  verificationNotes: string | null
   title: string | null
   slug: string | null
   summary: string | null
@@ -91,6 +105,13 @@ export type OpportunityCountAggregateOutputType = {
   type: number
   status: number
   moderationStatus: number
+  propertyVerificationState: number
+  propertyType: number
+  propertyListingType: number
+  contactPreference: number
+  authorityDeclaration: number
+  listingRulesAccepted: number
+  verificationNotes: number
   title: number
   slug: number
   summary: number
@@ -128,6 +149,13 @@ export type OpportunityMinAggregateInputType = {
   type?: true
   status?: true
   moderationStatus?: true
+  propertyVerificationState?: true
+  propertyType?: true
+  propertyListingType?: true
+  contactPreference?: true
+  authorityDeclaration?: true
+  listingRulesAccepted?: true
+  verificationNotes?: true
   title?: true
   slug?: true
   summary?: true
@@ -152,6 +180,13 @@ export type OpportunityMaxAggregateInputType = {
   type?: true
   status?: true
   moderationStatus?: true
+  propertyVerificationState?: true
+  propertyType?: true
+  propertyListingType?: true
+  contactPreference?: true
+  authorityDeclaration?: true
+  listingRulesAccepted?: true
+  verificationNotes?: true
   title?: true
   slug?: true
   summary?: true
@@ -176,6 +211,13 @@ export type OpportunityCountAggregateInputType = {
   type?: true
   status?: true
   moderationStatus?: true
+  propertyVerificationState?: true
+  propertyType?: true
+  propertyListingType?: true
+  contactPreference?: true
+  authorityDeclaration?: true
+  listingRulesAccepted?: true
+  verificationNotes?: true
   title?: true
   slug?: true
   summary?: true
@@ -288,6 +330,13 @@ export type OpportunityGroupByOutputType = {
   type: $Enums.OpportunityType
   status: $Enums.OpportunityStatus
   moderationStatus: $Enums.ModerationStatus
+  propertyVerificationState: $Enums.PropertyVerificationState | null
+  propertyType: string | null
+  propertyListingType: string | null
+  contactPreference: string | null
+  authorityDeclaration: string | null
+  listingRulesAccepted: boolean
+  verificationNotes: string | null
   title: string
   slug: string
   summary: string
@@ -336,6 +385,13 @@ export type OpportunityWhereInput = {
   type?: Prisma.EnumOpportunityTypeFilter<"Opportunity"> | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFilter<"Opportunity"> | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFilter<"Opportunity"> | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.EnumPropertyVerificationStateNullableFilter<"Opportunity"> | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  propertyListingType?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  contactPreference?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  authorityDeclaration?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  listingRulesAccepted?: Prisma.BoolFilter<"Opportunity"> | boolean
+  verificationNotes?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   title?: Prisma.StringFilter<"Opportunity"> | string
   slug?: Prisma.StringFilter<"Opportunity"> | string
   summary?: Prisma.StringFilter<"Opportunity"> | string
@@ -359,6 +415,7 @@ export type OpportunityWhereInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryListRelationFilter
   proposals?: Prisma.ProposalListRelationFilter
   conversations?: Prisma.ConversationListRelationFilter
+  images?: Prisma.OpportunityImageListRelationFilter
 }
 
 export type OpportunityOrderByWithRelationInput = {
@@ -368,6 +425,13 @@ export type OpportunityOrderByWithRelationInput = {
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
   moderationStatus?: Prisma.SortOrder
+  propertyVerificationState?: Prisma.SortOrderInput | Prisma.SortOrder
+  propertyType?: Prisma.SortOrderInput | Prisma.SortOrder
+  propertyListingType?: Prisma.SortOrderInput | Prisma.SortOrder
+  contactPreference?: Prisma.SortOrderInput | Prisma.SortOrder
+  authorityDeclaration?: Prisma.SortOrderInput | Prisma.SortOrder
+  listingRulesAccepted?: Prisma.SortOrder
+  verificationNotes?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
@@ -391,6 +455,7 @@ export type OpportunityOrderByWithRelationInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryOrderByRelationAggregateInput
   proposals?: Prisma.ProposalOrderByRelationAggregateInput
   conversations?: Prisma.ConversationOrderByRelationAggregateInput
+  images?: Prisma.OpportunityImageOrderByRelationAggregateInput
 }
 
 export type OpportunityWhereUniqueInput = Prisma.AtLeast<{
@@ -404,6 +469,13 @@ export type OpportunityWhereUniqueInput = Prisma.AtLeast<{
   type?: Prisma.EnumOpportunityTypeFilter<"Opportunity"> | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFilter<"Opportunity"> | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFilter<"Opportunity"> | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.EnumPropertyVerificationStateNullableFilter<"Opportunity"> | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  propertyListingType?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  contactPreference?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  authorityDeclaration?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  listingRulesAccepted?: Prisma.BoolFilter<"Opportunity"> | boolean
+  verificationNotes?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   title?: Prisma.StringFilter<"Opportunity"> | string
   summary?: Prisma.StringFilter<"Opportunity"> | string
   description?: Prisma.StringFilter<"Opportunity"> | string
@@ -426,6 +498,7 @@ export type OpportunityWhereUniqueInput = Prisma.AtLeast<{
   statusHistory?: Prisma.OpportunityStatusHistoryListRelationFilter
   proposals?: Prisma.ProposalListRelationFilter
   conversations?: Prisma.ConversationListRelationFilter
+  images?: Prisma.OpportunityImageListRelationFilter
 }, "id" | "slug">
 
 export type OpportunityOrderByWithAggregationInput = {
@@ -435,6 +508,13 @@ export type OpportunityOrderByWithAggregationInput = {
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
   moderationStatus?: Prisma.SortOrder
+  propertyVerificationState?: Prisma.SortOrderInput | Prisma.SortOrder
+  propertyType?: Prisma.SortOrderInput | Prisma.SortOrder
+  propertyListingType?: Prisma.SortOrderInput | Prisma.SortOrder
+  contactPreference?: Prisma.SortOrderInput | Prisma.SortOrder
+  authorityDeclaration?: Prisma.SortOrderInput | Prisma.SortOrder
+  listingRulesAccepted?: Prisma.SortOrder
+  verificationNotes?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
@@ -468,6 +548,13 @@ export type OpportunityScalarWhereWithAggregatesInput = {
   type?: Prisma.EnumOpportunityTypeWithAggregatesFilter<"Opportunity"> | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusWithAggregatesFilter<"Opportunity"> | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusWithAggregatesFilter<"Opportunity"> | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.EnumPropertyVerificationStateNullableWithAggregatesFilter<"Opportunity"> | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.StringNullableWithAggregatesFilter<"Opportunity"> | string | null
+  propertyListingType?: Prisma.StringNullableWithAggregatesFilter<"Opportunity"> | string | null
+  contactPreference?: Prisma.StringNullableWithAggregatesFilter<"Opportunity"> | string | null
+  authorityDeclaration?: Prisma.StringNullableWithAggregatesFilter<"Opportunity"> | string | null
+  listingRulesAccepted?: Prisma.BoolWithAggregatesFilter<"Opportunity"> | boolean
+  verificationNotes?: Prisma.StringNullableWithAggregatesFilter<"Opportunity"> | string | null
   title?: Prisma.StringWithAggregatesFilter<"Opportunity"> | string
   slug?: Prisma.StringWithAggregatesFilter<"Opportunity"> | string
   summary?: Prisma.StringWithAggregatesFilter<"Opportunity"> | string
@@ -491,6 +578,13 @@ export type OpportunityCreateInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -514,6 +608,7 @@ export type OpportunityCreateInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityUncheckedCreateInput = {
@@ -523,6 +618,13 @@ export type OpportunityUncheckedCreateInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -544,6 +646,7 @@ export type OpportunityUncheckedCreateInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageUncheckedCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityUpdateInput = {
@@ -551,6 +654,13 @@ export type OpportunityUpdateInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -574,6 +684,7 @@ export type OpportunityUpdateInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityUncheckedUpdateInput = {
@@ -583,6 +694,13 @@ export type OpportunityUncheckedUpdateInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -604,6 +722,7 @@ export type OpportunityUncheckedUpdateInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUncheckedUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityCreateManyInput = {
@@ -613,6 +732,13 @@ export type OpportunityCreateManyInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -636,6 +762,13 @@ export type OpportunityUpdateManyMutationInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -661,6 +794,13 @@ export type OpportunityUncheckedUpdateManyInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -704,6 +844,13 @@ export type OpportunityCountOrderByAggregateInput = {
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
   moderationStatus?: Prisma.SortOrder
+  propertyVerificationState?: Prisma.SortOrder
+  propertyType?: Prisma.SortOrder
+  propertyListingType?: Prisma.SortOrder
+  contactPreference?: Prisma.SortOrder
+  authorityDeclaration?: Prisma.SortOrder
+  listingRulesAccepted?: Prisma.SortOrder
+  verificationNotes?: Prisma.SortOrder
   title?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
@@ -734,6 +881,13 @@ export type OpportunityMaxOrderByAggregateInput = {
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
   moderationStatus?: Prisma.SortOrder
+  propertyVerificationState?: Prisma.SortOrder
+  propertyType?: Prisma.SortOrder
+  propertyListingType?: Prisma.SortOrder
+  contactPreference?: Prisma.SortOrder
+  authorityDeclaration?: Prisma.SortOrder
+  listingRulesAccepted?: Prisma.SortOrder
+  verificationNotes?: Prisma.SortOrder
   title?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
@@ -758,6 +912,13 @@ export type OpportunityMinOrderByAggregateInput = {
   type?: Prisma.SortOrder
   status?: Prisma.SortOrder
   moderationStatus?: Prisma.SortOrder
+  propertyVerificationState?: Prisma.SortOrder
+  propertyType?: Prisma.SortOrder
+  propertyListingType?: Prisma.SortOrder
+  contactPreference?: Prisma.SortOrder
+  authorityDeclaration?: Prisma.SortOrder
+  listingRulesAccepted?: Prisma.SortOrder
+  verificationNotes?: Prisma.SortOrder
   title?: Prisma.SortOrder
   slug?: Prisma.SortOrder
   summary?: Prisma.SortOrder
@@ -890,6 +1051,10 @@ export type EnumModerationStatusFieldUpdateOperationsInput = {
   set?: $Enums.ModerationStatus
 }
 
+export type NullableEnumPropertyVerificationStateFieldUpdateOperationsInput = {
+  set?: $Enums.PropertyVerificationState | null
+}
+
 export type NullableBigIntFieldUpdateOperationsInput = {
   set?: bigint | number | null
   increment?: bigint | number
@@ -901,6 +1066,20 @@ export type NullableBigIntFieldUpdateOperationsInput = {
 export type OpportunityUpdateskillsInput = {
   set?: string[]
   push?: string | string[]
+}
+
+export type OpportunityCreateNestedOneWithoutImagesInput = {
+  create?: Prisma.XOR<Prisma.OpportunityCreateWithoutImagesInput, Prisma.OpportunityUncheckedCreateWithoutImagesInput>
+  connectOrCreate?: Prisma.OpportunityCreateOrConnectWithoutImagesInput
+  connect?: Prisma.OpportunityWhereUniqueInput
+}
+
+export type OpportunityUpdateOneRequiredWithoutImagesNestedInput = {
+  create?: Prisma.XOR<Prisma.OpportunityCreateWithoutImagesInput, Prisma.OpportunityUncheckedCreateWithoutImagesInput>
+  connectOrCreate?: Prisma.OpportunityCreateOrConnectWithoutImagesInput
+  upsert?: Prisma.OpportunityUpsertWithoutImagesInput
+  connect?: Prisma.OpportunityWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.OpportunityUpdateToOneWithWhereWithoutImagesInput, Prisma.OpportunityUpdateWithoutImagesInput>, Prisma.OpportunityUncheckedUpdateWithoutImagesInput>
 }
 
 export type OpportunityCreateNestedOneWithoutBookmarksInput = {
@@ -980,6 +1159,13 @@ export type OpportunityCreateWithoutOwnerInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1002,6 +1188,7 @@ export type OpportunityCreateWithoutOwnerInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityUncheckedCreateWithoutOwnerInput = {
@@ -1010,6 +1197,13 @@ export type OpportunityUncheckedCreateWithoutOwnerInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1031,6 +1225,7 @@ export type OpportunityUncheckedCreateWithoutOwnerInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageUncheckedCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityCreateOrConnectWithoutOwnerInput = {
@@ -1069,6 +1264,13 @@ export type OpportunityScalarWhereInput = {
   type?: Prisma.EnumOpportunityTypeFilter<"Opportunity"> | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFilter<"Opportunity"> | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFilter<"Opportunity"> | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.EnumPropertyVerificationStateNullableFilter<"Opportunity"> | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  propertyListingType?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  contactPreference?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  authorityDeclaration?: Prisma.StringNullableFilter<"Opportunity"> | string | null
+  listingRulesAccepted?: Prisma.BoolFilter<"Opportunity"> | boolean
+  verificationNotes?: Prisma.StringNullableFilter<"Opportunity"> | string | null
   title?: Prisma.StringFilter<"Opportunity"> | string
   slug?: Prisma.StringFilter<"Opportunity"> | string
   summary?: Prisma.StringFilter<"Opportunity"> | string
@@ -1092,6 +1294,13 @@ export type OpportunityCreateWithoutCategoryInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1114,6 +1323,7 @@ export type OpportunityCreateWithoutCategoryInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityUncheckedCreateWithoutCategoryInput = {
@@ -1122,6 +1332,13 @@ export type OpportunityUncheckedCreateWithoutCategoryInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1143,6 +1360,7 @@ export type OpportunityUncheckedCreateWithoutCategoryInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageUncheckedCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityCreateOrConnectWithoutCategoryInput = {
@@ -1171,11 +1389,182 @@ export type OpportunityUpdateManyWithWhereWithoutCategoryInput = {
   data: Prisma.XOR<Prisma.OpportunityUpdateManyMutationInput, Prisma.OpportunityUncheckedUpdateManyWithoutCategoryInput>
 }
 
+export type OpportunityCreateWithoutImagesInput = {
+  id?: string
+  type: $Enums.OpportunityType
+  status?: $Enums.OpportunityStatus
+  moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
+  title: string
+  slug: string
+  summary: string
+  description: string
+  location?: string | null
+  remote?: boolean
+  budgetMinMinor?: bigint | number | null
+  budgetMaxMinor?: bigint | number | null
+  currency?: string
+  skills?: Prisma.OpportunityCreateskillsInput | string[]
+  publishedAt?: Date | string | null
+  pausedAt?: Date | string | null
+  closedAt?: Date | string | null
+  archivedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  owner: Prisma.UserCreateNestedOneWithoutOpportunitiesInput
+  category?: Prisma.OpportunityCategoryCreateNestedOneWithoutOpportunitiesInput
+  bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutOpportunityInput
+  reports?: Prisma.OpportunityReportCreateNestedManyWithoutOpportunityInput
+  statusHistory?: Prisma.OpportunityStatusHistoryCreateNestedManyWithoutOpportunityInput
+  proposals?: Prisma.ProposalCreateNestedManyWithoutOpportunityInput
+  conversations?: Prisma.ConversationCreateNestedManyWithoutOpportunityInput
+}
+
+export type OpportunityUncheckedCreateWithoutImagesInput = {
+  id?: string
+  ownerId: string
+  categoryId?: string | null
+  type: $Enums.OpportunityType
+  status?: $Enums.OpportunityStatus
+  moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
+  title: string
+  slug: string
+  summary: string
+  description: string
+  location?: string | null
+  remote?: boolean
+  budgetMinMinor?: bigint | number | null
+  budgetMaxMinor?: bigint | number | null
+  currency?: string
+  skills?: Prisma.OpportunityCreateskillsInput | string[]
+  publishedAt?: Date | string | null
+  pausedAt?: Date | string | null
+  closedAt?: Date | string | null
+  archivedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutOpportunityInput
+  reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutOpportunityInput
+  statusHistory?: Prisma.OpportunityStatusHistoryUncheckedCreateNestedManyWithoutOpportunityInput
+  proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutOpportunityInput
+  conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutOpportunityInput
+}
+
+export type OpportunityCreateOrConnectWithoutImagesInput = {
+  where: Prisma.OpportunityWhereUniqueInput
+  create: Prisma.XOR<Prisma.OpportunityCreateWithoutImagesInput, Prisma.OpportunityUncheckedCreateWithoutImagesInput>
+}
+
+export type OpportunityUpsertWithoutImagesInput = {
+  update: Prisma.XOR<Prisma.OpportunityUpdateWithoutImagesInput, Prisma.OpportunityUncheckedUpdateWithoutImagesInput>
+  create: Prisma.XOR<Prisma.OpportunityCreateWithoutImagesInput, Prisma.OpportunityUncheckedCreateWithoutImagesInput>
+  where?: Prisma.OpportunityWhereInput
+}
+
+export type OpportunityUpdateToOneWithWhereWithoutImagesInput = {
+  where?: Prisma.OpportunityWhereInput
+  data: Prisma.XOR<Prisma.OpportunityUpdateWithoutImagesInput, Prisma.OpportunityUncheckedUpdateWithoutImagesInput>
+}
+
+export type OpportunityUpdateWithoutImagesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
+  status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
+  moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remote?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  budgetMinMinor?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  budgetMaxMinor?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  skills?: Prisma.OpportunityUpdateskillsInput | string[]
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  pausedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  owner?: Prisma.UserUpdateOneRequiredWithoutOpportunitiesNestedInput
+  category?: Prisma.OpportunityCategoryUpdateOneWithoutOpportunitiesNestedInput
+  bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutOpportunityNestedInput
+  reports?: Prisma.OpportunityReportUpdateManyWithoutOpportunityNestedInput
+  statusHistory?: Prisma.OpportunityStatusHistoryUpdateManyWithoutOpportunityNestedInput
+  proposals?: Prisma.ProposalUpdateManyWithoutOpportunityNestedInput
+  conversations?: Prisma.ConversationUpdateManyWithoutOpportunityNestedInput
+}
+
+export type OpportunityUncheckedUpdateWithoutImagesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  categoryId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
+  status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
+  moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  slug?: Prisma.StringFieldUpdateOperationsInput | string
+  summary?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  remote?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  budgetMinMinor?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  budgetMaxMinor?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  skills?: Prisma.OpportunityUpdateskillsInput | string[]
+  publishedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  pausedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  closedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  archivedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutOpportunityNestedInput
+  reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutOpportunityNestedInput
+  statusHistory?: Prisma.OpportunityStatusHistoryUncheckedUpdateManyWithoutOpportunityNestedInput
+  proposals?: Prisma.ProposalUncheckedUpdateManyWithoutOpportunityNestedInput
+  conversations?: Prisma.ConversationUncheckedUpdateManyWithoutOpportunityNestedInput
+}
+
 export type OpportunityCreateWithoutBookmarksInput = {
   id?: string
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1198,6 +1587,7 @@ export type OpportunityCreateWithoutBookmarksInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityUncheckedCreateWithoutBookmarksInput = {
@@ -1207,6 +1597,13 @@ export type OpportunityUncheckedCreateWithoutBookmarksInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1227,6 +1624,7 @@ export type OpportunityUncheckedCreateWithoutBookmarksInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageUncheckedCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityCreateOrConnectWithoutBookmarksInput = {
@@ -1250,6 +1648,13 @@ export type OpportunityUpdateWithoutBookmarksInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1272,6 +1677,7 @@ export type OpportunityUpdateWithoutBookmarksInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityUncheckedUpdateWithoutBookmarksInput = {
@@ -1281,6 +1687,13 @@ export type OpportunityUncheckedUpdateWithoutBookmarksInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1301,6 +1714,7 @@ export type OpportunityUncheckedUpdateWithoutBookmarksInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUncheckedUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityCreateWithoutReportsInput = {
@@ -1308,6 +1722,13 @@ export type OpportunityCreateWithoutReportsInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1330,6 +1751,7 @@ export type OpportunityCreateWithoutReportsInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityUncheckedCreateWithoutReportsInput = {
@@ -1339,6 +1761,13 @@ export type OpportunityUncheckedCreateWithoutReportsInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1359,6 +1788,7 @@ export type OpportunityUncheckedCreateWithoutReportsInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageUncheckedCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityCreateOrConnectWithoutReportsInput = {
@@ -1382,6 +1812,13 @@ export type OpportunityUpdateWithoutReportsInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1404,6 +1841,7 @@ export type OpportunityUpdateWithoutReportsInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityUncheckedUpdateWithoutReportsInput = {
@@ -1413,6 +1851,13 @@ export type OpportunityUncheckedUpdateWithoutReportsInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1433,6 +1878,7 @@ export type OpportunityUncheckedUpdateWithoutReportsInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUncheckedUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityCreateWithoutStatusHistoryInput = {
@@ -1440,6 +1886,13 @@ export type OpportunityCreateWithoutStatusHistoryInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1462,6 +1915,7 @@ export type OpportunityCreateWithoutStatusHistoryInput = {
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityUncheckedCreateWithoutStatusHistoryInput = {
@@ -1471,6 +1925,13 @@ export type OpportunityUncheckedCreateWithoutStatusHistoryInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1491,6 +1952,7 @@ export type OpportunityUncheckedCreateWithoutStatusHistoryInput = {
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageUncheckedCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityCreateOrConnectWithoutStatusHistoryInput = {
@@ -1514,6 +1976,13 @@ export type OpportunityUpdateWithoutStatusHistoryInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1536,6 +2005,7 @@ export type OpportunityUpdateWithoutStatusHistoryInput = {
   reports?: Prisma.OpportunityReportUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityUncheckedUpdateWithoutStatusHistoryInput = {
@@ -1545,6 +2015,13 @@ export type OpportunityUncheckedUpdateWithoutStatusHistoryInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1565,6 +2042,7 @@ export type OpportunityUncheckedUpdateWithoutStatusHistoryInput = {
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUncheckedUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityCreateWithoutConversationsInput = {
@@ -1572,6 +2050,13 @@ export type OpportunityCreateWithoutConversationsInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1594,6 +2079,7 @@ export type OpportunityCreateWithoutConversationsInput = {
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutOpportunityInput
   statusHistory?: Prisma.OpportunityStatusHistoryCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityUncheckedCreateWithoutConversationsInput = {
@@ -1603,6 +2089,13 @@ export type OpportunityUncheckedCreateWithoutConversationsInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1623,6 +2116,7 @@ export type OpportunityUncheckedCreateWithoutConversationsInput = {
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutOpportunityInput
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedCreateNestedManyWithoutOpportunityInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageUncheckedCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityCreateOrConnectWithoutConversationsInput = {
@@ -1646,6 +2140,13 @@ export type OpportunityUpdateWithoutConversationsInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1668,6 +2169,7 @@ export type OpportunityUpdateWithoutConversationsInput = {
   reports?: Prisma.OpportunityReportUpdateManyWithoutOpportunityNestedInput
   statusHistory?: Prisma.OpportunityStatusHistoryUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityUncheckedUpdateWithoutConversationsInput = {
@@ -1677,6 +2179,13 @@ export type OpportunityUncheckedUpdateWithoutConversationsInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1697,6 +2206,7 @@ export type OpportunityUncheckedUpdateWithoutConversationsInput = {
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutOpportunityNestedInput
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUncheckedUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityCreateWithoutProposalsInput = {
@@ -1704,6 +2214,13 @@ export type OpportunityCreateWithoutProposalsInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1726,6 +2243,7 @@ export type OpportunityCreateWithoutProposalsInput = {
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutOpportunityInput
   statusHistory?: Prisma.OpportunityStatusHistoryCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityUncheckedCreateWithoutProposalsInput = {
@@ -1735,6 +2253,13 @@ export type OpportunityUncheckedCreateWithoutProposalsInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1755,6 +2280,7 @@ export type OpportunityUncheckedCreateWithoutProposalsInput = {
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutOpportunityInput
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedCreateNestedManyWithoutOpportunityInput
   conversations?: Prisma.ConversationUncheckedCreateNestedManyWithoutOpportunityInput
+  images?: Prisma.OpportunityImageUncheckedCreateNestedManyWithoutOpportunityInput
 }
 
 export type OpportunityCreateOrConnectWithoutProposalsInput = {
@@ -1778,6 +2304,13 @@ export type OpportunityUpdateWithoutProposalsInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1800,6 +2333,7 @@ export type OpportunityUpdateWithoutProposalsInput = {
   reports?: Prisma.OpportunityReportUpdateManyWithoutOpportunityNestedInput
   statusHistory?: Prisma.OpportunityStatusHistoryUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityUncheckedUpdateWithoutProposalsInput = {
@@ -1809,6 +2343,13 @@ export type OpportunityUncheckedUpdateWithoutProposalsInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1829,6 +2370,7 @@ export type OpportunityUncheckedUpdateWithoutProposalsInput = {
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutOpportunityNestedInput
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUncheckedUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityCreateManyOwnerInput = {
@@ -1837,6 +2379,13 @@ export type OpportunityCreateManyOwnerInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1860,6 +2409,13 @@ export type OpportunityUpdateWithoutOwnerInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1882,6 +2438,7 @@ export type OpportunityUpdateWithoutOwnerInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityUncheckedUpdateWithoutOwnerInput = {
@@ -1890,6 +2447,13 @@ export type OpportunityUncheckedUpdateWithoutOwnerInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1911,6 +2475,7 @@ export type OpportunityUncheckedUpdateWithoutOwnerInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUncheckedUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityUncheckedUpdateManyWithoutOwnerInput = {
@@ -1919,6 +2484,13 @@ export type OpportunityUncheckedUpdateManyWithoutOwnerInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1943,6 +2515,13 @@ export type OpportunityCreateManyCategoryInput = {
   type: $Enums.OpportunityType
   status?: $Enums.OpportunityStatus
   moderationStatus?: $Enums.ModerationStatus
+  propertyVerificationState?: $Enums.PropertyVerificationState | null
+  propertyType?: string | null
+  propertyListingType?: string | null
+  contactPreference?: string | null
+  authorityDeclaration?: string | null
+  listingRulesAccepted?: boolean
+  verificationNotes?: string | null
   title: string
   slug: string
   summary: string
@@ -1966,6 +2545,13 @@ export type OpportunityUpdateWithoutCategoryInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1988,6 +2574,7 @@ export type OpportunityUpdateWithoutCategoryInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityUncheckedUpdateWithoutCategoryInput = {
@@ -1996,6 +2583,13 @@ export type OpportunityUncheckedUpdateWithoutCategoryInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2017,6 +2611,7 @@ export type OpportunityUncheckedUpdateWithoutCategoryInput = {
   statusHistory?: Prisma.OpportunityStatusHistoryUncheckedUpdateManyWithoutOpportunityNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutOpportunityNestedInput
   conversations?: Prisma.ConversationUncheckedUpdateManyWithoutOpportunityNestedInput
+  images?: Prisma.OpportunityImageUncheckedUpdateManyWithoutOpportunityNestedInput
 }
 
 export type OpportunityUncheckedUpdateManyWithoutCategoryInput = {
@@ -2025,6 +2620,13 @@ export type OpportunityUncheckedUpdateManyWithoutCategoryInput = {
   type?: Prisma.EnumOpportunityTypeFieldUpdateOperationsInput | $Enums.OpportunityType
   status?: Prisma.EnumOpportunityStatusFieldUpdateOperationsInput | $Enums.OpportunityStatus
   moderationStatus?: Prisma.EnumModerationStatusFieldUpdateOperationsInput | $Enums.ModerationStatus
+  propertyVerificationState?: Prisma.NullableEnumPropertyVerificationStateFieldUpdateOperationsInput | $Enums.PropertyVerificationState | null
+  propertyType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  propertyListingType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contactPreference?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  authorityDeclaration?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  listingRulesAccepted?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  verificationNotes?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.StringFieldUpdateOperationsInput | string
   slug?: Prisma.StringFieldUpdateOperationsInput | string
   summary?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2054,6 +2656,7 @@ export type OpportunityCountOutputType = {
   statusHistory: number
   proposals: number
   conversations: number
+  images: number
 }
 
 export type OpportunityCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2062,6 +2665,7 @@ export type OpportunityCountOutputTypeSelect<ExtArgs extends runtime.Types.Exten
   statusHistory?: boolean | OpportunityCountOutputTypeCountStatusHistoryArgs
   proposals?: boolean | OpportunityCountOutputTypeCountProposalsArgs
   conversations?: boolean | OpportunityCountOutputTypeCountConversationsArgs
+  images?: boolean | OpportunityCountOutputTypeCountImagesArgs
 }
 
 /**
@@ -2109,6 +2713,13 @@ export type OpportunityCountOutputTypeCountConversationsArgs<ExtArgs extends run
   where?: Prisma.ConversationWhereInput
 }
 
+/**
+ * OpportunityCountOutputType without action
+ */
+export type OpportunityCountOutputTypeCountImagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.OpportunityImageWhereInput
+}
+
 
 export type OpportunitySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -2117,6 +2728,13 @@ export type OpportunitySelect<ExtArgs extends runtime.Types.Extensions.InternalA
   type?: boolean
   status?: boolean
   moderationStatus?: boolean
+  propertyVerificationState?: boolean
+  propertyType?: boolean
+  propertyListingType?: boolean
+  contactPreference?: boolean
+  authorityDeclaration?: boolean
+  listingRulesAccepted?: boolean
+  verificationNotes?: boolean
   title?: boolean
   slug?: boolean
   summary?: boolean
@@ -2140,6 +2758,7 @@ export type OpportunitySelect<ExtArgs extends runtime.Types.Extensions.InternalA
   statusHistory?: boolean | Prisma.Opportunity$statusHistoryArgs<ExtArgs>
   proposals?: boolean | Prisma.Opportunity$proposalsArgs<ExtArgs>
   conversations?: boolean | Prisma.Opportunity$conversationsArgs<ExtArgs>
+  images?: boolean | Prisma.Opportunity$imagesArgs<ExtArgs>
   _count?: boolean | Prisma.OpportunityCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["opportunity"]>
 
@@ -2150,6 +2769,13 @@ export type OpportunitySelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   type?: boolean
   status?: boolean
   moderationStatus?: boolean
+  propertyVerificationState?: boolean
+  propertyType?: boolean
+  propertyListingType?: boolean
+  contactPreference?: boolean
+  authorityDeclaration?: boolean
+  listingRulesAccepted?: boolean
+  verificationNotes?: boolean
   title?: boolean
   slug?: boolean
   summary?: boolean
@@ -2177,6 +2803,13 @@ export type OpportunitySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   type?: boolean
   status?: boolean
   moderationStatus?: boolean
+  propertyVerificationState?: boolean
+  propertyType?: boolean
+  propertyListingType?: boolean
+  contactPreference?: boolean
+  authorityDeclaration?: boolean
+  listingRulesAccepted?: boolean
+  verificationNotes?: boolean
   title?: boolean
   slug?: boolean
   summary?: boolean
@@ -2204,6 +2837,13 @@ export type OpportunitySelectScalar = {
   type?: boolean
   status?: boolean
   moderationStatus?: boolean
+  propertyVerificationState?: boolean
+  propertyType?: boolean
+  propertyListingType?: boolean
+  contactPreference?: boolean
+  authorityDeclaration?: boolean
+  listingRulesAccepted?: boolean
+  verificationNotes?: boolean
   title?: boolean
   slug?: boolean
   summary?: boolean
@@ -2222,7 +2862,7 @@ export type OpportunitySelectScalar = {
   updatedAt?: boolean
 }
 
-export type OpportunityOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerId" | "categoryId" | "type" | "status" | "moderationStatus" | "title" | "slug" | "summary" | "description" | "location" | "remote" | "budgetMinMinor" | "budgetMaxMinor" | "currency" | "skills" | "publishedAt" | "pausedAt" | "closedAt" | "archivedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["opportunity"]>
+export type OpportunityOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ownerId" | "categoryId" | "type" | "status" | "moderationStatus" | "propertyVerificationState" | "propertyType" | "propertyListingType" | "contactPreference" | "authorityDeclaration" | "listingRulesAccepted" | "verificationNotes" | "title" | "slug" | "summary" | "description" | "location" | "remote" | "budgetMinMinor" | "budgetMaxMinor" | "currency" | "skills" | "publishedAt" | "pausedAt" | "closedAt" | "archivedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["opportunity"]>
 export type OpportunityInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   category?: boolean | Prisma.Opportunity$categoryArgs<ExtArgs>
@@ -2231,6 +2871,7 @@ export type OpportunityInclude<ExtArgs extends runtime.Types.Extensions.Internal
   statusHistory?: boolean | Prisma.Opportunity$statusHistoryArgs<ExtArgs>
   proposals?: boolean | Prisma.Opportunity$proposalsArgs<ExtArgs>
   conversations?: boolean | Prisma.Opportunity$conversationsArgs<ExtArgs>
+  images?: boolean | Prisma.Opportunity$imagesArgs<ExtArgs>
   _count?: boolean | Prisma.OpportunityCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type OpportunityIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2252,6 +2893,7 @@ export type $OpportunityPayload<ExtArgs extends runtime.Types.Extensions.Interna
     statusHistory: Prisma.$OpportunityStatusHistoryPayload<ExtArgs>[]
     proposals: Prisma.$ProposalPayload<ExtArgs>[]
     conversations: Prisma.$ConversationPayload<ExtArgs>[]
+    images: Prisma.$OpportunityImagePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2260,6 +2902,13 @@ export type $OpportunityPayload<ExtArgs extends runtime.Types.Extensions.Interna
     type: $Enums.OpportunityType
     status: $Enums.OpportunityStatus
     moderationStatus: $Enums.ModerationStatus
+    propertyVerificationState: $Enums.PropertyVerificationState | null
+    propertyType: string | null
+    propertyListingType: string | null
+    contactPreference: string | null
+    authorityDeclaration: string | null
+    listingRulesAccepted: boolean
+    verificationNotes: string | null
     title: string
     slug: string
     summary: string
@@ -2677,6 +3326,7 @@ export interface Prisma__OpportunityClient<T, Null = never, ExtArgs extends runt
   statusHistory<T extends Prisma.Opportunity$statusHistoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Opportunity$statusHistoryArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OpportunityStatusHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   proposals<T extends Prisma.Opportunity$proposalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Opportunity$proposalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProposalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   conversations<T extends Prisma.Opportunity$conversationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Opportunity$conversationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  images<T extends Prisma.Opportunity$imagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Opportunity$imagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OpportunityImagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2712,6 +3362,13 @@ export interface OpportunityFieldRefs {
   readonly type: Prisma.FieldRef<"Opportunity", 'OpportunityType'>
   readonly status: Prisma.FieldRef<"Opportunity", 'OpportunityStatus'>
   readonly moderationStatus: Prisma.FieldRef<"Opportunity", 'ModerationStatus'>
+  readonly propertyVerificationState: Prisma.FieldRef<"Opportunity", 'PropertyVerificationState'>
+  readonly propertyType: Prisma.FieldRef<"Opportunity", 'String'>
+  readonly propertyListingType: Prisma.FieldRef<"Opportunity", 'String'>
+  readonly contactPreference: Prisma.FieldRef<"Opportunity", 'String'>
+  readonly authorityDeclaration: Prisma.FieldRef<"Opportunity", 'String'>
+  readonly listingRulesAccepted: Prisma.FieldRef<"Opportunity", 'Boolean'>
+  readonly verificationNotes: Prisma.FieldRef<"Opportunity", 'String'>
   readonly title: Prisma.FieldRef<"Opportunity", 'String'>
   readonly slug: Prisma.FieldRef<"Opportunity", 'String'>
   readonly summary: Prisma.FieldRef<"Opportunity", 'String'>
@@ -3265,6 +3922,30 @@ export type Opportunity$conversationsArgs<ExtArgs extends runtime.Types.Extensio
   take?: number
   skip?: number
   distinct?: Prisma.ConversationScalarFieldEnum | Prisma.ConversationScalarFieldEnum[]
+}
+
+/**
+ * Opportunity.images
+ */
+export type Opportunity$imagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the OpportunityImage
+   */
+  select?: Prisma.OpportunityImageSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the OpportunityImage
+   */
+  omit?: Prisma.OpportunityImageOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.OpportunityImageInclude<ExtArgs> | null
+  where?: Prisma.OpportunityImageWhereInput
+  orderBy?: Prisma.OpportunityImageOrderByWithRelationInput | Prisma.OpportunityImageOrderByWithRelationInput[]
+  cursor?: Prisma.OpportunityImageWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.OpportunityImageScalarFieldEnum | Prisma.OpportunityImageScalarFieldEnum[]
 }
 
 /**

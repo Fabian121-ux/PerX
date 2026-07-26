@@ -184,15 +184,38 @@ export type ReviewVisibility = (typeof ReviewVisibility)[keyof typeof ReviewVisi
 export const NotificationType = {
   SYSTEM: 'SYSTEM',
   MESSAGE: 'MESSAGE',
+  NEW_MESSAGE: 'NEW_MESSAGE',
+  MESSAGE_REQUEST_RECEIVED: 'MESSAGE_REQUEST_RECEIVED',
   PROPOSAL: 'PROPOSAL',
+  OPPORTUNITY_RESPONSE: 'OPPORTUNITY_RESPONSE',
+  PROPOSAL_UPDATE: 'PROPOSAL_UPDATE',
   DEAL: 'DEAL',
+  DEAL_UPDATE: 'DEAL_UPDATE',
   REVIEW: 'REVIEW',
   MODERATION: 'MODERATION',
+  MODERATION_UPDATE: 'MODERATION_UPDATE',
   SUPPORT: 'SUPPORT',
-  CONNECTION: 'CONNECTION'
+  SUPPORT_REPLY: 'SUPPORT_REPLY',
+  CONNECTION: 'CONNECTION',
+  CONNECTION_REQUEST_RECEIVED: 'CONNECTION_REQUEST_RECEIVED',
+  CONNECTION_REQUEST_ACCEPTED: 'CONNECTION_REQUEST_ACCEPTED',
+  CONNECTION_REQUEST_DECLINED: 'CONNECTION_REQUEST_DECLINED'
 } as const
 
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]
+
+
+export const PropertyVerificationState = {
+  DRAFT: 'DRAFT',
+  PENDING_VERIFICATION: 'PENDING_VERIFICATION',
+  VERIFIED: 'VERIFIED',
+  PUBLISHED: 'PUBLISHED',
+  REJECTED: 'REJECTED',
+  PAUSED: 'PAUSED',
+  ARCHIVED: 'ARCHIVED'
+} as const
+
+export type PropertyVerificationState = (typeof PropertyVerificationState)[keyof typeof PropertyVerificationState]
 
 
 export const ConnectionStatus = {

@@ -137,12 +137,32 @@ enum ReviewVisibility {
 enum NotificationType {
   SYSTEM
   MESSAGE
+  NEW_MESSAGE
+  MESSAGE_REQUEST_RECEIVED
   PROPOSAL
+  OPPORTUNITY_RESPONSE
+  PROPOSAL_UPDATE
   DEAL
+  DEAL_UPDATE
   REVIEW
   MODERATION
+  MODERATION_UPDATE
   SUPPORT
+  SUPPORT_REPLY
   CONNECTION
+  CONNECTION_REQUEST_RECEIVED
+  CONNECTION_REQUEST_ACCEPTED
+  CONNECTION_REQUEST_DECLINED
+}
+
+enum PropertyVerificationState {
+  DRAFT
+  PENDING_VERIFICATION
+  VERIFIED
+  PUBLISHED
+  REJECTED
+  PAUSED
+  ARCHIVED
 }
 
 enum ConnectionStatus {
@@ -323,41 +343,69 @@ model OpportunityCategory {
 }
 
 model Opportunity {
-  id               String                     @id @default(cuid())
-  ownerId          String
-  categoryId       String?
-  type             OpportunityType
-  status           OpportunityStatus          @default(DRAFT)
-  moderationStatus ModerationStatus           @default(PENDING)
-  title            String
-  slug             String                     @unique
-  summary          String
-  description      String
-  location         String?
-  remote           Boolean                    @default(true)
-  budgetMinMinor   BigInt?
-  budgetMaxMinor   BigInt?
-  currency         String                     @default("NGN")
-  skills           String[]                   @default([])
-  publishedAt      DateTime?
-  pausedAt         DateTime?
-  closedAt         DateTime?
-  archivedAt       DateTime?
-  createdAt        DateTime                   @default(now())
-  updatedAt        DateTime                   @updatedAt
-  owner            User                       @relation("OpportunityOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  category         OpportunityCategory?       @relation(fields: [categoryId], references: [id])
-  bookmarks        OpportunityBookmark[]
-  reports          OpportunityReport[]
-  statusHistory    OpportunityStatusHistory[]
-  proposals        Proposal[]
-  conversations    Conversation[]
+  id                        String                     @id @default(cuid())
+  ownerId                   String
+  categoryId                String?
+  type                      OpportunityType
+  status                    OpportunityStatus          @default(DRAFT)
+  moderationStatus          ModerationStatus           @default(PENDING)
+  propertyVerificationState PropertyVerificationState?
+  propertyType              String?
+  propertyListingType       String?
+  contactPreference         String?
+  authorityDeclaration      String?
+  listingRulesAccepted      Boolean                    @default(false)
+  verificationNotes         String?
+  title                     String
+  slug                      String                     @unique
+  summary                   String
+  description               String
+  location                  String?
+  remote                    Boolean                    @default(true)
+  budgetMinMinor            BigInt?
+  budgetMaxMinor            BigInt?
+  currency                  String                     @default("NGN")
+  skills                    String[]                   @default([])
+  publishedAt               DateTime?
+  pausedAt                  DateTime?
+  closedAt                  DateTime?
+  archivedAt                DateTime?
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  owner                     User                       @relation("OpportunityOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  category                  OpportunityCategory?       @relation(fields: [categoryId], references: [id])
+  bookmarks                 OpportunityBookmark[]
+  reports                   OpportunityReport[]
+  statusHistory             OpportunityStatusHistory[]
+  proposals                 Proposal[]
+  conversations             Conversation[]
+  images                    OpportunityImage[]
 
   @@index([status, moderationStatus, publishedAt])
   @@index([ownerId, status])
   @@index([ownerId, status, updatedAt])
   @@index([type])
   @@index([categoryId])
+  @@index([type, status, moderationStatus, publishedAt])
+  @@index([propertyVerificationState])
+}
+
+model OpportunityImage {
+  id            String      @id @default(cuid())
+  opportunityId String
+  uploaderId    String
+  url           String
+  storageKey    String
+  mimeType      String
+  byteSize      Int
+  altText       String?
+  isCover       Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityId])
+  @@index([uploaderId])
+  @@index([opportunityId, isCover])
 }
 
 model OpportunityBookmark {
@@ -695,11 +743,14 @@ model Notification {
   type      NotificationType
   title     String
   body      String
+  actionUrl String?
+  metadata  Json?
   readAt    DateTime?
   createdAt DateTime         @default(now())
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, readAt, createdAt])
+  @@index([userId, type, createdAt])
 }
 
 model AuditLog {

@@ -1,6 +1,30 @@
 import { z } from "zod";
 
 export const emailSchema = z.string().email().max(255).toLowerCase();
+export const reservedUsernames = new Set([
+  "admin",
+  "api",
+  "app",
+  "categories",
+  "discover",
+  "help",
+  "how-it-works",
+  "login",
+  "logout",
+  "notifications",
+  "opportunities",
+  "password-recovery",
+  "preview",
+  "privacy",
+  "reset-password",
+  "settings",
+  "sign-in",
+  "sign-up",
+  "support",
+  "terms",
+  "trust-safety",
+  "u",
+]);
 export const usernameSchema = z
   .string()
   .trim()
@@ -10,7 +34,10 @@ export const usernameSchema = z
     /^[a-zA-Z0-9_-]+$/,
     "Username can only contain letters, numbers, underscores, and hyphens.",
   )
-  .toLowerCase();
+  .toLowerCase()
+  .refine((value) => !reservedUsernames.has(value), {
+    message: "This username is reserved.",
+  });
 
 export const passwordSchema = z
   .string()

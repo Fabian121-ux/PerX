@@ -13,6 +13,7 @@ const errors: Record<string, string> = {
   "database-not-configured": "Database configuration is missing.",
   "check-fields": "Please check your inputs and try again.",
   "server-error": "An unexpected server error occurred.",
+  "username-taken": "That username is already taken.",
 };
 
 export default async function ProfileEditPage({
@@ -52,10 +53,15 @@ export default async function ProfileEditPage({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Full name">
-              <Input defaultValue={profile?.name} disabled />
+              <Input defaultValue={profile?.name} name="name" required />
             </Field>
             <Field label="Username">
-              <Input defaultValue={profile?.username} disabled />
+              <Input
+                defaultValue={profile?.username}
+                name="username"
+                pattern="[A-Za-z0-9_-]{3,30}"
+                required
+              />
             </Field>
           </div>
 

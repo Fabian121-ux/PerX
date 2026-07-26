@@ -62,6 +62,7 @@ export const ModelName = {
   VerificationRequest: 'VerificationRequest',
   OpportunityCategory: 'OpportunityCategory',
   Opportunity: 'Opportunity',
+  OpportunityImage: 'OpportunityImage',
   OpportunityBookmark: 'OpportunityBookmark',
   OpportunityReport: 'OpportunityReport',
   OpportunityStatusHistory: 'OpportunityStatusHistory',
@@ -254,6 +255,13 @@ export const OpportunityScalarFieldEnum = {
   type: 'type',
   status: 'status',
   moderationStatus: 'moderationStatus',
+  propertyVerificationState: 'propertyVerificationState',
+  propertyType: 'propertyType',
+  propertyListingType: 'propertyListingType',
+  contactPreference: 'contactPreference',
+  authorityDeclaration: 'authorityDeclaration',
+  listingRulesAccepted: 'listingRulesAccepted',
+  verificationNotes: 'verificationNotes',
   title: 'title',
   slug: 'slug',
   summary: 'summary',
@@ -273,6 +281,22 @@ export const OpportunityScalarFieldEnum = {
 } as const
 
 export type OpportunityScalarFieldEnum = (typeof OpportunityScalarFieldEnum)[keyof typeof OpportunityScalarFieldEnum]
+
+
+export const OpportunityImageScalarFieldEnum = {
+  id: 'id',
+  opportunityId: 'opportunityId',
+  uploaderId: 'uploaderId',
+  url: 'url',
+  storageKey: 'storageKey',
+  mimeType: 'mimeType',
+  byteSize: 'byteSize',
+  altText: 'altText',
+  isCover: 'isCover',
+  createdAt: 'createdAt'
+} as const
+
+export type OpportunityImageScalarFieldEnum = (typeof OpportunityImageScalarFieldEnum)[keyof typeof OpportunityImageScalarFieldEnum]
 
 
 export const OpportunityBookmarkScalarFieldEnum = {
@@ -591,6 +615,8 @@ export const NotificationScalarFieldEnum = {
   type: 'type',
   title: 'title',
   body: 'body',
+  actionUrl: 'actionUrl',
+  metadata: 'metadata',
   readAt: 'readAt',
   createdAt: 'createdAt'
 } as const

@@ -32,6 +32,10 @@ export const prismaProvider: PerXDataProvider = {
       return getPrisma().opportunity.findMany({
         include: {
           category: true,
+          images: {
+            orderBy: [{ isCover: "desc" }, { createdAt: "asc" }],
+            take: 4,
+          },
           owner: {
             select: {
               id: true,
@@ -65,6 +69,10 @@ export const prismaProvider: PerXDataProvider = {
       return getPrisma().opportunity.findFirst({
         include: {
           category: true,
+          images: {
+            orderBy: [{ isCover: "desc" }, { createdAt: "asc" }],
+            take: 4,
+          },
           owner: {
             select: {
               id: true,
@@ -180,7 +188,13 @@ export const prismaProvider: PerXDataProvider = {
           imageUrl: true,
           name: true,
           opportunities: {
-            include: { category: true },
+            include: {
+              category: true,
+              images: {
+                orderBy: [{ isCover: "desc" }, { createdAt: "asc" }],
+                take: 4,
+              },
+            },
             orderBy: { publishedAt: "desc" },
             take: 8,
             where: {

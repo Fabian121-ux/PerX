@@ -8,8 +8,11 @@ import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { parseMoneyToMinor } from "@/lib/money";
 import {
+  contactPreferenceOptions,
   findOption,
   opportunityCategoryOptions,
+  propertyListingTypeOptions,
+  propertyTypeOptions,
   reportReasonOptions,
 } from "@/lib/options";
 import { hasCapability } from "@/lib/permissions/capabilities";
@@ -32,8 +35,65 @@ function revalidateOpportunityViews(slug?: string) {
   revalidatePath("/app/manage");
   revalidatePath("/app/opportunities");
   revalidatePath("/app/discover");
+  revalidatePath("/app/real-estate");
+  revalidatePath("/app/services");
+  revalidatePath("/app/market");
+  revalidatePath("/app/logistics");
+  revalidatePath("/app/travel-stay");
   revalidatePath("/discover");
   if (slug) revalidatePath(`/opportunities/${slug}`);
+}
+
+function propertyPublishRedirect(target: "new" | string, error: string) {
+  if (target === "new") redirect(`/app/opportunities/new?error=${error}&type=PROPERTY&category=real-estate`);
+  redirect(`/app/opportunities/${target}/edit?error=${error}`);
+}
+
+function propertyFieldsFromFormData(formData: FormData) {
+  return {
+    authorityDeclaration: String(formData.get("authorityDeclaration") ?? "").trim(),
+    contactPreference: String(formData.get("contactPreference") ?? ""),
+    listingRulesAccepted: formData.get("listingRulesAccepted") === "on",
+    propertyListingType: String(formData.get("propertyListingType") ?? ""),
+    propertyType: String(formData.get("propertyType") ?? ""),
+  };
+}
+
+async function assertPropertyPublishReady({
+  formData,
+  opportunityId,
+  target,
+}: {
+  formData: FormData;
+  opportunityId?: string;
+  target: "new" | string;
+}) {
+  const fields = propertyFieldsFromFormData(formData);
+  if (!findOption(propertyTypeOptions, fields.propertyType)) {
+    propertyPublishRedirect(target, "property-type");
+  }
+  if (!findOption(propertyListingTypeOptions, fields.propertyListingType)) {
+    propertyPublishRedirect(target, "property-listing-type");
+  }
+  if (!findOption(contactPreferenceOptions, fields.contactPreference)) {
+    propertyPublishRedirect(target, "contact-preference");
+  }
+  if (fields.authorityDeclaration.length < 20) {
+    propertyPublishRedirect(target, "authority-declaration");
+  }
+  if (!fields.listingRulesAccepted) {
+    propertyPublishRedirect(target, "listing-rules");
+  }
+
+  if (opportunityId) {
+    const cover = await getPrisma().opportunityImage.findFirst({
+      select: { id: true },
+      where: { isCover: true, opportunityId },
+    });
+    if (!cover) propertyPublishRedirect(target, "property-image");
+  } else {
+    propertyPublishRedirect(target, "property-draft-first");
+  }
 }
 
 export async function createOpportunityAction(formData: FormData) {
@@ -53,6 +113,7 @@ export async function createOpportunityAction(formData: FormData) {
     description: formData.get("description"),
     intent: formData.get("intent") || "draft",
     location: formData.get("location"),
+    ...propertyFieldsFromFormData(formData),
     remote: formData.get("remote") === "on",
     skills: formData.get("skills"),
     summary: formData.get("summary"),
@@ -105,6 +166,10 @@ export async function createOpportunityAction(formData: FormData) {
   const budgetMax = parsed.data.budgetMax
     ? parseMoneyToMinor(parsed.data.budgetMax, currency)
     : null;
+  if (parsed.data.type === "PROPERTY" && parsed.data.intent === "publish") {
+    await assertPropertyPublishReady({ formData, target: "new" });
+  }
+
   const status = parsed.data.intent === "publish" ? "PUBLISHED" : "DRAFT";
   const moderationStatus =
     status === "PUBLISHED"
@@ -124,7 +189,18 @@ export async function createOpportunityAction(formData: FormData) {
       location: parsed.data.location,
       moderationStatus,
       ownerId: user.id,
+      authorityDeclaration: parsed.data.authorityDeclaration || null,
+      contactPreference: parsed.data.contactPreference || null,
       publishedAt: status === "PUBLISHED" ? new Date() : null,
+      propertyListingType: parsed.data.propertyListingType || null,
+      propertyType: parsed.data.propertyType || null,
+      propertyVerificationState:
+        parsed.data.type === "PROPERTY"
+          ? status === "PUBLISHED"
+            ? "PENDING_VERIFICATION"
+            : "DRAFT"
+          : null,
+      listingRulesAccepted: parsed.data.listingRulesAccepted,
       remote: parsed.data.remote,
       skills:
         parsed.data.skills
@@ -153,8 +229,14 @@ export async function createOpportunityAction(formData: FormData) {
     entityType: "opportunity",
   });
   revalidateOpportunityViews(opportunity.slug);
+  revalidatePath(`/u/${user.username}`);
+  if (category.slug) revalidatePath(`/categories/${category.slug}`);
 
-  redirect("/app/opportunities");
+  redirect(
+    parsed.data.type === "PROPERTY"
+      ? `/app/opportunities/${opportunity.id}/edit?created=1`
+      : "/app/manage?created=1",
+  );
 }
 
 export async function updateOpportunityAction(
@@ -167,6 +249,7 @@ export async function updateOpportunityAction(
   }
 
   const opportunity = await getPrisma().opportunity.findFirst({
+    include: { category: true },
     where: { id: opportunityId, ownerId: user.id },
   });
   if (!opportunity) redirect("/app/manage?error=not-found");
@@ -179,6 +262,7 @@ export async function updateOpportunityAction(
     description: formData.get("description"),
     intent: formData.get("intent") || opportunity.status.toLowerCase(),
     location: formData.get("location"),
+    ...propertyFieldsFromFormData(formData),
     remote: formData.get("remote") === "on",
     skills: formData.get("skills"),
     summary: formData.get("summary"),
@@ -224,6 +308,15 @@ export async function updateOpportunityAction(
     : null;
   const publishing = parsed.data.intent === "publish";
   const nextStatus = publishing ? "PUBLISHED" : opportunity.status;
+  const storedStatus =
+    parsed.data.type === "PROPERTY" && publishing ? "DRAFT" : nextStatus;
+  if (parsed.data.type === "PROPERTY" && publishing) {
+    await assertPropertyPublishReady({
+      formData,
+      opportunityId,
+      target: opportunityId,
+    });
+  }
 
   await getPrisma().$transaction(async (tx) => {
     await tx.opportunity.update({
@@ -235,22 +328,35 @@ export async function updateOpportunityAction(
         description: parsed.data.description,
         location: parsed.data.location,
         moderationStatus:
-          nextStatus === "PUBLISHED"
+          nextStatus === "PUBLISHED" && parsed.data.type !== "PROPERTY"
             ? policy.outcome === "ALLOW"
               ? "APPROVED"
               : "FLAGGED"
-            : opportunity.moderationStatus,
+            : parsed.data.type === "PROPERTY" && publishing
+              ? "PENDING"
+              : opportunity.moderationStatus,
+        authorityDeclaration: parsed.data.authorityDeclaration || null,
+        contactPreference: parsed.data.contactPreference || null,
         publishedAt:
-          nextStatus === "PUBLISHED"
+          nextStatus === "PUBLISHED" && parsed.data.type !== "PROPERTY"
             ? opportunity.publishedAt ?? new Date()
             : opportunity.publishedAt,
+        propertyListingType: parsed.data.propertyListingType || null,
+        propertyType: parsed.data.propertyType || null,
+        propertyVerificationState:
+          parsed.data.type === "PROPERTY"
+            ? publishing
+              ? "PENDING_VERIFICATION"
+              : opportunity.propertyVerificationState ?? "DRAFT"
+            : null,
+        listingRulesAccepted: parsed.data.listingRulesAccepted,
         remote: parsed.data.remote,
         skills:
           parsed.data.skills
             ?.split(",")
             .map((skill) => skill.trim())
             .filter(Boolean) ?? [],
-        status: nextStatus,
+        status: storedStatus,
         summary: parsed.data.summary,
         title: parsed.data.title,
         type: parsed.data.type,
@@ -263,7 +369,7 @@ export async function updateOpportunityAction(
         fromStatus: opportunity.status,
         note: "Owner updated opportunity content.",
         opportunityId,
-        toStatus: nextStatus,
+        toStatus: storedStatus,
       },
     });
     await tx.auditLog.create({
@@ -272,13 +378,26 @@ export async function updateOpportunityAction(
         actorId: user.id,
         entityId: opportunityId,
         entityType: "opportunity",
-        metadata: { fromStatus: opportunity.status, toStatus: nextStatus },
+        metadata: {
+          fromStatus: opportunity.status,
+          toStatus: storedStatus,
+          verificationState:
+            parsed.data.type === "PROPERTY" && publishing
+              ? "PENDING_VERIFICATION"
+              : null,
+        },
       },
     });
   });
 
   revalidateOpportunityViews(opportunity.slug);
-  redirect("/app/manage?updated=1");
+  revalidatePath(`/u/${user.username}`);
+  revalidatePath(`/categories/${category.slug}`);
+  redirect(
+    parsed.data.type === "PROPERTY" && publishing
+      ? "/app/manage?submitted=verification"
+      : "/app/manage?updated=1",
+  );
 }
 
 export async function publishOpportunityAction(opportunityId: string) {
@@ -305,6 +424,7 @@ async function transitionOpportunity(
   const user = await requireUser();
   const opportunity = await getPrisma().opportunity.findFirst({
     where: { id: opportunityId, ownerId: user.id },
+    include: { category: true, images: true },
   });
   if (!opportunity) redirect("/app/manage?error=not-found");
 
@@ -322,6 +442,43 @@ async function transitionOpportunity(
     redirect("/app/manage?error=policy");
   }
 
+  if (toStatus === "PUBLISHED" && opportunity.type === "PROPERTY") {
+    const hasCover = opportunity.images.some((image) => image.isCover);
+    if (
+      !hasCover ||
+      !opportunity.propertyType ||
+      !opportunity.propertyListingType ||
+      !opportunity.contactPreference ||
+      !opportunity.authorityDeclaration ||
+      !opportunity.listingRulesAccepted
+    ) {
+      redirect("/app/manage?error=property-requirements");
+    }
+
+    if (opportunity.propertyVerificationState !== "VERIFIED") {
+      await getPrisma().opportunity.update({
+        data: {
+          moderationStatus: "PENDING",
+          propertyVerificationState: "PENDING_VERIFICATION",
+          status: "DRAFT",
+        },
+        where: { id: opportunityId },
+      });
+      await writeAuditLog({
+        action: "opportunity.property_verification_submitted",
+        actorId: user.id,
+        entityId: opportunityId,
+        entityType: "opportunity",
+      });
+      revalidateOpportunityViews(opportunity.slug);
+      revalidatePath(`/u/${user.username}`);
+      if (opportunity.category?.slug) {
+        revalidatePath(`/categories/${opportunity.category.slug}`);
+      }
+      redirect("/app/manage?submitted=verification");
+    }
+  }
+
   await getPrisma().$transaction(async (tx) => {
     await tx.opportunity.update({
       data: {
@@ -333,6 +490,16 @@ async function transitionOpportunity(
               ? "APPROVED"
               : "FLAGGED"
             : opportunity.moderationStatus,
+        propertyVerificationState:
+          opportunity.type === "PROPERTY"
+            ? toStatus === "PUBLISHED"
+              ? "PUBLISHED"
+              : toStatus === "PAUSED"
+                ? "PAUSED"
+                : toStatus === "ARCHIVED"
+                  ? "ARCHIVED"
+                  : opportunity.propertyVerificationState
+            : null,
         pausedAt: toStatus === "PAUSED" ? new Date() : null,
         publishedAt:
           toStatus === "PUBLISHED"
@@ -362,6 +529,10 @@ async function transitionOpportunity(
   });
 
   revalidateOpportunityViews(opportunity.slug);
+  revalidatePath(`/u/${user.username}`);
+  if (opportunity.category?.slug) {
+    revalidatePath(`/categories/${opportunity.category.slug}`);
+  }
   redirect("/app/manage");
 }
 
@@ -389,6 +560,7 @@ export async function deleteOpportunityAction(opportunityId: string) {
   });
 
   revalidateOpportunityViews(opportunity.slug);
+  revalidatePath(`/u/${user.username}`);
   redirect("/app/manage");
 }
 
@@ -409,6 +581,13 @@ export async function duplicateOpportunityAction(opportunityId: string) {
       location: opportunity.location,
       moderationStatus: "PENDING",
       ownerId: user.id,
+      authorityDeclaration: opportunity.authorityDeclaration,
+      contactPreference: opportunity.contactPreference,
+      listingRulesAccepted: opportunity.listingRulesAccepted,
+      propertyListingType: opportunity.propertyListingType,
+      propertyType: opportunity.propertyType,
+      propertyVerificationState:
+        opportunity.type === "PROPERTY" ? "DRAFT" : null,
       remote: opportunity.remote,
       skills: opportunity.skills,
       slug: `${slugify(opportunity.title)}-copy-${Date.now().toString(36)}`,

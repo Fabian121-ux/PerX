@@ -95,7 +95,6 @@ export default async function PublicProfilePage({
                   allowMessagesFromConnections={
                     normalized.allowMessagesFromConnections
                   }
-                  allowMessagesFromMembers={normalized.allowMessagesFromMembers}
                   relationship={relationship}
                   targetUserId={normalized.id}
                   username={username}
@@ -424,7 +423,6 @@ async function getProfileRelationship(viewerId: string, targetUserId: string) {
 function ProfilePrimaryAction({
   allowConnectionRequests,
   allowMessagesFromConnections,
-  allowMessagesFromMembers,
   relationship,
   targetUserId,
   username,
@@ -432,7 +430,6 @@ function ProfilePrimaryAction({
 }: {
   allowConnectionRequests: boolean;
   allowMessagesFromConnections: boolean;
-  allowMessagesFromMembers: boolean;
   relationship: Awaited<ReturnType<typeof getProfileRelationship>> | null;
   targetUserId: string;
   username: string;
@@ -456,17 +453,6 @@ function ProfilePrimaryAction({
   }
 
   if (relationship.status === "ACCEPTED" && allowMessagesFromConnections) {
-    return (
-      <form action={async () => { "use server"; await startConversationAction(targetUserId); }}>
-        <Button type="submit">
-          <Mail aria-hidden className="mr-2" size={16} />
-          Message
-        </Button>
-      </form>
-    );
-  }
-
-  if (allowMessagesFromMembers) {
     return (
       <form action={async () => { "use server"; await startConversationAction(targetUserId); }}>
         <Button type="submit">

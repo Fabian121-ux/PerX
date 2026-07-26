@@ -7,7 +7,7 @@ import { getPrisma } from "@/lib/db/prisma";
 import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { requireUser } from "@/lib/auth/session";
-import { profileSchema } from "@/lib/validation/auth";
+import { profileSetupSchema } from "@/lib/validation/auth";
 
 function completeness(input: {
   headline: string;
@@ -44,12 +44,14 @@ export async function updateProfileAction(formData: FormData) {
   if (!hasDatabaseUrl())
     redirect("/app/profile/edit?error=database-not-configured");
 
-  const parsed = profileSchema.safeParse({
+  const parsed = profileSetupSchema.safeParse({
     biography: formData.get("biography"),
     headline: formData.get("headline"),
     location: formData.get("location"),
+    name: formData.get("name"),
     profileImageUrl: formData.get("profileImageUrl"),
     skills: formData.get("skills"),
+    username: formData.get("username"),
     websiteUrl: formData.get("websiteUrl"),
     isDiscoverable: checkboxValue(formData, "isDiscoverable", true),
     showLocation: checkboxValue(formData, "showLocation", true),
@@ -69,6 +71,14 @@ export async function updateProfileAction(formData: FormData) {
   });
   if (!parsed.success) redirect("/app/profile/edit?error=check-fields");
 
+  const existingUsername = await getPrisma().user.findUnique({
+    select: { id: true },
+    where: { username: parsed.data.username },
+  });
+  if (existingUsername && existingUsername.id !== user.id) {
+    redirect("/app/profile/edit?error=username-taken");
+  }
+
   const skillList =
     parsed.data.skills
       ?.split(",")
@@ -80,7 +90,11 @@ export async function updateProfileAction(formData: FormData) {
   try {
     await getPrisma().$transaction(async (tx) => {
       await tx.user.update({
-        data: { imageUrl: parsed.data.profileImageUrl || null },
+        data: {
+          imageUrl: parsed.data.profileImageUrl || null,
+          name: parsed.data.name,
+          username: parsed.data.username,
+        },
         where: { id: user.id },
       });
 
@@ -149,5 +163,7 @@ export async function updateProfileAction(formData: FormData) {
   revalidatePath("/app/profile/edit");
   revalidatePath("/app/people");
   revalidatePath(`/u/${user.username}`);
+  revalidatePath(`/u/${parsed.data.username}`);
+  revalidatePath("/app/messages");
   redirect("/app/profile/edit?success=true");
 }

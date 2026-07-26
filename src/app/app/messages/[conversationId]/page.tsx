@@ -131,6 +131,16 @@ async function markConversationRead(
         skipDuplicates: true,
       });
     }
+
+    await tx.notification.updateMany({
+      data: { readAt: new Date() },
+      where: {
+        actionUrl: `/app/messages/${conversationId}`,
+        readAt: null,
+        type: { in: ["MESSAGE", "NEW_MESSAGE"] },
+        userId,
+      },
+    });
   });
 }
 
