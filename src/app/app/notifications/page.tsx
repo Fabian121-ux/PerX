@@ -226,7 +226,7 @@ function NotificationCard({
           >
             {notification.body}
           </p>
-          {!action.available && action.reason !== "missing" ? (
+          {!action.available && action.label !== "No action available" ? (
             <p className="mt-2 text-xs font-bold text-[color:var(--px-warning)]">
               {action.label}
             </p>

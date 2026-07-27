@@ -123,6 +123,7 @@ function toWorkspaceConversation(
         otherParticipantIds.every((participantId) =>
           msg.readReceipts?.some((receipt) => receipt.userId === participantId),
         ),
+      replyTo: toWorkspaceReply((msg as any).replyTo),
       senderId: msg.senderId,
       senderName:
         msg.senderId === user.id
@@ -174,7 +175,10 @@ async function markConversationRead(
     await tx.notification.updateMany({
       data: { readAt: new Date() },
       where: {
-        actionUrl: `/app/messages/${conversationId}`,
+        OR: [
+          { actionUrl: `/app/messages/${conversationId}` },
+          { actionUrl: { startsWith: `/app/messages/${conversationId}?` } },
+        ],
         readAt: null,
         type: { in: ["MESSAGE", "NEW_MESSAGE"] },
         userId,
@@ -185,13 +189,16 @@ async function markConversationRead(
 
 export default async function ConversationPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ conversationId: string }>;
+  searchParams: Promise<{ message?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
   const { conversationId } = await params;
+  const { message: highlightMessageId } = await searchParams;
   const conversations = await getConversations(user.id);
   const selected = conversations.find(
     (conversation) => conversation.id === conversationId,
@@ -214,6 +221,18 @@ export default async function ConversationPage({
       conversations={workspaceConversations}
       currentUserId={user.id}
       defaultConversationId={conversationId}
+      highlightMessageId={highlightMessageId}
     />
   );
+}
+
+function toWorkspaceReply(replyTo: any) {
+  if (!replyTo) return null;
+  return {
+    body: replyTo.deletedAt ? "" : replyTo.body,
+    deletedAt: replyTo.deletedAt ? replyTo.deletedAt.toISOString?.() ?? String(replyTo.deletedAt) : null,
+    id: replyTo.id,
+    senderId: replyTo.senderId,
+    senderName: replyTo.sender?.name ?? replyTo.sender?.username ?? "Participant",
+  };
 }

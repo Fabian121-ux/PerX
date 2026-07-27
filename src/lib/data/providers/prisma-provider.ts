@@ -150,7 +150,18 @@ export const prismaProvider: PerXDataProvider = {
       return getPrisma().conversation.findMany({
         include: {
           messages: {
-            include: { readReceipts: { select: { userId: true } } },
+            include: {
+              readReceipts: { select: { userId: true } },
+              replyTo: {
+                select: {
+                  body: true,
+                  deletedAt: true,
+                  id: true,
+                  sender: { select: { id: true, name: true, username: true } },
+                  senderId: true,
+                },
+              },
+            },
             orderBy: { createdAt: "desc" },
             take: 1,
           },
@@ -191,6 +202,15 @@ export const prismaProvider: PerXDataProvider = {
         take: 50,
         include: {
           readReceipts: { select: { userId: true } },
+          replyTo: {
+            select: {
+              body: true,
+              deletedAt: true,
+              id: true,
+              sender: { select: { id: true, name: true, username: true } },
+              senderId: true,
+            },
+          },
           sender: true,
         },
       });

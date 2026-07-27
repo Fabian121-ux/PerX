@@ -106,6 +106,7 @@ function toWorkspaceConversation(conversation: unknown, user: CurrentUser): Work
               otherParticipantIds.every((participantId) =>
                 latestMessage.readReceipts?.some((receipt) => receipt.userId === participantId),
               ),
+            replyTo: toWorkspaceReply((latestMessage as any).replyTo),
             senderId: latestMessage.senderId,
             senderName: latestMessage.senderId === user.id ? user.name : otherParticipant?.name ?? "Participant",
           },
@@ -134,4 +135,15 @@ export default async function MessagesPage() {
   const workspaceConversations = conversations.map((conversation: any) => toWorkspaceConversation(conversation, user));
 
   return <MessageWorkspace conversations={workspaceConversations} currentUserId={user.id} />;
+}
+
+function toWorkspaceReply(replyTo: any) {
+  if (!replyTo) return null;
+  return {
+    body: replyTo.deletedAt ? "" : replyTo.body,
+    deletedAt: replyTo.deletedAt ? replyTo.deletedAt.toISOString?.() ?? String(replyTo.deletedAt) : null,
+    id: replyTo.id,
+    senderId: replyTo.senderId,
+    senderName: replyTo.sender?.name ?? replyTo.sender?.username ?? "Participant",
+  };
 }

@@ -479,21 +479,25 @@ model ConversationParticipant {
 }
 
 model Message {
-  id             String               @id @default(cuid())
-  conversationId String
-  senderId       String
-  body           String
-  editedAt       DateTime?
-  deletedAt      DateTime?
-  deletedById    String?
-  createdAt      DateTime             @default(now())
-  conversation   Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User                 @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  attachments    MessageAttachment[]
-  edits          MessageEdit[]
-  readReceipts   MessageReadReceipt[]
+  id               String               @id @default(cuid())
+  conversationId   String
+  senderId         String
+  replyToMessageId String?
+  body             String
+  editedAt         DateTime?
+  deletedAt        DateTime?
+  deletedById      String?
+  createdAt        DateTime             @default(now())
+  conversation     Conversation         @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  replyTo          Message?             @relation("MessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+  replies          Message[]            @relation("MessageReplies")
+  sender           User                 @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  attachments      MessageAttachment[]
+  edits            MessageEdit[]
+  readReceipts     MessageReadReceipt[]
 
   @@index([conversationId, createdAt])
+  @@index([replyToMessageId])
   @@index([senderId, createdAt])
   @@index([editedAt])
 }

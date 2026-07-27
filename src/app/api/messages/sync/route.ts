@@ -34,6 +34,15 @@ export async function GET(request: Request) {
       messages: {
         include: {
           readReceipts: { select: { userId: true } },
+          replyTo: {
+            select: {
+              body: true,
+              deletedAt: true,
+              id: true,
+              sender: { select: { id: true, name: true, username: true } },
+              senderId: true,
+            },
+          },
           sender: { select: { id: true, imageUrl: true, name: true, username: true } },
         },
         orderBy: { createdAt: "desc" },
@@ -110,6 +119,15 @@ export async function GET(request: Request) {
             otherParticipantIds.every((participantId) =>
               message.readReceipts.some((receipt) => receipt.userId === participantId),
             ),
+          replyTo: message.replyTo
+            ? {
+                body: message.replyTo.deletedAt ? "" : message.replyTo.body,
+                deletedAt: message.replyTo.deletedAt?.toISOString() ?? null,
+                id: message.replyTo.id,
+                senderId: message.replyTo.senderId,
+                senderName: message.replyTo.sender.name ?? message.replyTo.sender.username ?? "Participant",
+              }
+            : null,
           senderId: message.senderId,
           senderImageUrl:
             message.sender.imageUrl ?? null,

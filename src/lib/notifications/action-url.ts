@@ -15,6 +15,7 @@ export type NotificationActionResolution =
 
 type NotificationForAction = {
   actionUrl: string | null;
+  metadata?: unknown;
   type: string;
 };
 
@@ -78,6 +79,7 @@ function pathSegments(path: string) {
 async function isDestinationAvailable(userId: string, path: string) {
   const prisma = getPrisma();
   const segments = pathSegments(path);
+  const url = new URL(path, "https://perx.local");
 
   if (approvedExactPaths.has(path.split("?")[0] ?? path)) return true;
 
@@ -91,7 +93,20 @@ async function isDestinationAvailable(userId: string, path: string) {
         },
       },
     });
-    return Boolean(participant);
+    if (!participant) return false;
+
+    const messageId = url.searchParams.get("message");
+    if (!messageId) return true;
+
+    const message = await prisma.message.findFirst({
+      select: { id: true },
+      where: {
+        conversationId: segments[2],
+        deletedAt: null,
+        id: messageId,
+      },
+    });
+    return Boolean(message);
   }
 
   if (segments[0] === "u" && segments[1]) {
@@ -146,16 +161,36 @@ async function isDestinationAvailable(userId: string, path: string) {
   return false;
 }
 
+function actionUrlFromMetadata(notification: NotificationForAction) {
+  if (!["MESSAGE", "NEW_MESSAGE"].includes(notification.type)) return null;
+  if (!notification.metadata || typeof notification.metadata !== "object") return null;
+  const metadata = notification.metadata as {
+    conversationId?: unknown;
+    messageId?: unknown;
+  };
+  if (
+    typeof metadata.conversationId !== "string" ||
+    typeof metadata.messageId !== "string"
+  ) {
+    return null;
+  }
+  return `/app/messages/${metadata.conversationId}?message=${metadata.messageId}`;
+}
+
 export async function resolveNotificationAction(
   userId: string,
   notification: NotificationForAction,
 ): Promise<NotificationActionResolution> {
-  const normalized = normalizeNotificationActionUrl(notification.actionUrl);
-  if (!notification.actionUrl) {
+  const rawActionUrl =
+    notification.actionUrl ?? actionUrlFromMetadata(notification);
+  const normalized = normalizeNotificationActionUrl(rawActionUrl);
+  if (!rawActionUrl) {
     return {
       available: false,
       href: null,
-      label: "No action available",
+      label: ["MESSAGE", "NEW_MESSAGE"].includes(notification.type)
+        ? "This message is no longer available."
+        : "No action available",
       reason: "missing",
     };
   }
@@ -173,7 +208,9 @@ export async function resolveNotificationAction(
     return {
       available: false,
       href: null,
-      label: "This item is no longer available.",
+      label: ["MESSAGE", "NEW_MESSAGE"].includes(notification.type)
+        ? "This message is no longer available."
+        : "This item is no longer available.",
       reason: "unavailable",
     };
   }

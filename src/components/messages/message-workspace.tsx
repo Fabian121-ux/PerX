@@ -1,7 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent, type ReactNode } from "react";
-import { ArrowLeft, Check, CheckCheck, Clock3, FileText, Loader2, Paperclip, Pencil, Phone, Search, Send, ShieldCheck, Video } from "lucide-react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type FormEvent,
+} from "react";
+import {
+  ArrowLeft,
+  Check,
+  CheckCheck,
+  Clock3,
+  Copy,
+  Info,
+  Loader2,
+  MoreVertical,
+  Pencil,
+  Reply,
+  Search,
+  Send,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +33,14 @@ import {
   sendMessageAction,
 } from "@/features/messages/actions";
 
+type ReplyPreview = {
+  body: string;
+  deletedAt?: string | null;
+  id: string;
+  senderId: string;
+  senderName: string;
+};
+
 export type WorkspaceMessage = {
   body: string;
   createdAt: string;
@@ -18,6 +48,7 @@ export type WorkspaceMessage = {
   editedAt?: string | null;
   id: string;
   readByOtherParticipants?: boolean;
+  replyTo?: ReplyPreview | null;
   senderId: string;
   senderImageUrl?: string | null;
   senderName: string;
@@ -31,10 +62,10 @@ export type WorkspaceConversation = {
   lastMessage?: string;
   messages: WorkspaceMessage[];
   opportunityTitle?: string;
-  participantName: string;
   participantImageUrl?: string | null;
-  participantRole?: string;
+  participantName: string;
   participantPresence?: "hidden" | "online" | "recent" | "offline";
+  participantRole?: string;
   participantUsername?: string;
   timestamp?: string;
   trustScore?: number;
@@ -46,24 +77,43 @@ export function MessageWorkspace({
   conversations,
   currentUserId,
   defaultConversationId,
+  highlightMessageId,
 }: {
   backHref?: string;
   conversations: WorkspaceConversation[];
   currentUserId: string;
   defaultConversationId?: string;
+  highlightMessageId?: string;
 }) {
   const [activeId, setActiveId] = useState(defaultConversationId ?? conversations[0]?.id ?? "");
   const [mobileDetailOpen, setMobileDetailOpen] = useState(Boolean(defaultConversationId));
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [editDraft, setEditDraft] = useState("");
   const [editingMessageId, setEditingMessageId] = useState("");
   const [editError, setEditError] = useState("");
   const [sendError, setSendError] = useState("");
+  const [replyTarget, setReplyTarget] = useState<WorkspaceMessage | null>(null);
+  const [highlightedMessageId, setHighlightedMessageId] = useState(highlightMessageId ?? "");
   const [syncedConversations, setSyncedConversations] = useState(() => conversations);
   const [localMessages, setLocalMessages] = useState<Record<string, WorkspaceMessage[]>>({});
   const [isPending, startTransition] = useTransition();
   const [isEditPending, startEditTransition] = useTransition();
   const historyRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    const node = listRef.current;
+    if (!node) return;
+    const key = "perx:messages:list-scroll";
+    const saved = Number(window.sessionStorage.getItem(key) ?? 0);
+    if (saved > 0) node.scrollTop = saved;
+
+    const save = () => window.sessionStorage.setItem(key, String(node.scrollTop));
+    node.addEventListener("scroll", save, { passive: true });
+    return () => node.removeEventListener("scroll", save);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -83,7 +133,7 @@ export function MessageWorkspace({
           setSyncedConversations(payload.conversations);
         }
       } catch {
-        // Polling is a freshness aid only; persisted messages remain available after refresh.
+        // Polling is the fallback freshness path; persisted messages remain available after refresh.
       }
     };
 
@@ -100,15 +150,28 @@ export function MessageWorkspace({
     syncedConversations[0];
   const messages = useMemo(() => {
     if (!activeConversation) return [];
-    return [...(activeConversation.messages ?? []), ...(localMessages[activeConversation.id] ?? [])];
+    return [
+      ...(activeConversation.messages ?? []),
+      ...(localMessages[activeConversation.id] ?? []),
+    ];
   }, [activeConversation, localMessages]);
 
   useEffect(() => {
+    if (highlightedMessageId) return;
     historyRef.current?.scrollTo({
       behavior: "smooth",
       top: historyRef.current.scrollHeight,
     });
-  }, [activeConversation?.id, messages.length]);
+  }, [activeConversation?.id, highlightedMessageId, messages.length]);
+
+  useEffect(() => {
+    if (!highlightedMessageId) return;
+    const target = messageRefs.current[highlightedMessageId];
+    if (!target) return;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    const timeout = window.setTimeout(() => setHighlightedMessageId(""), 2200);
+    return () => window.clearTimeout(timeout);
+  }, [highlightedMessageId, messages.length]);
 
   useEffect(() => {
     if (!activeConversation?.id) return;
@@ -117,19 +180,21 @@ export function MessageWorkspace({
     });
   }, [activeConversation?.id, messages.length]);
 
-  const sendMessage = (event: FormEvent) => {
-    event.preventDefault();
+  const sendMessage = (event?: FormEvent) => {
+    event?.preventDefault();
     if (!draft.trim() || !activeConversation || isPending) return;
 
     const body = draft.trim();
     const conversationId = activeConversation.id;
     const messageId = `local-${Date.now()}`;
+    const localReply = replyTarget ? toReplyPreview(replyTarget) : null;
     setSendError("");
 
     const message: WorkspaceMessage = {
       body,
       createdAt: new Date().toISOString(),
       id: messageId,
+      replyTo: localReply,
       senderId: currentUserId,
       senderName: "You",
       status: "sending",
@@ -140,14 +205,17 @@ export function MessageWorkspace({
       [conversationId]: [...(value[conversationId] ?? []), message],
     }));
     setDraft("");
+    setReplyTarget(null);
 
     startTransition(async () => {
-      const result = await sendMessageAction(conversationId, body);
+      const result = await sendMessageAction(conversationId, body, localReply?.id ?? null);
       if (result.error) {
         setLocalMessages((value) => ({
           ...value,
           [conversationId]: (value[conversationId] ?? []).filter((m) => m.id !== messageId),
         }));
+        setDraft(body);
+        setReplyTarget(replyTarget);
         setSendError(result.error);
       } else {
         setLocalMessages((value) => ({
@@ -183,16 +251,24 @@ export function MessageWorkspace({
     });
   };
 
+  const jumpToMessage = (messageId: string) => {
+    setHighlightedMessageId(messageId);
+    const target = messageRefs.current[messageId];
+    if (!target) {
+      setSendError("Original message is outside the loaded history. Refresh the conversation to load more context.");
+    }
+  };
+
   if (!syncedConversations.length) {
     return (
-      <section className="grid min-h-[58dvh] place-items-center rounded-[28px] bg-[color:var(--px-surface)] p-8 text-center shadow-sm ring-1 ring-[color:var(--px-border)]">
+      <section className="grid min-h-[58dvh] place-items-center rounded-[24px] bg-[color:var(--px-surface)] p-8 text-center shadow-sm ring-1 ring-[color:var(--px-border)]">
         <div className="max-w-md">
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)]">
             <ShieldCheck size={24} />
           </div>
           <h1 className="mt-5 text-2xl font-black text-[color:var(--px-text)]">No conversations yet</h1>
           <p className="mt-3 text-sm leading-6 text-[color:var(--px-text-muted)]">
-            A conversation appears when an opportunity connection or proposal creates a shared workspace.
+            Conversations open after accepted connections or approved opportunity workflows.
           </p>
         </div>
       </section>
@@ -200,16 +276,19 @@ export function MessageWorkspace({
   }
 
   return (
-    <section className="grid h-[min(720px,calc(100dvh-6rem))] min-h-[520px] overflow-hidden rounded-[24px] bg-[color:var(--px-surface)] shadow-[var(--px-shadow)] ring-1 ring-[color:var(--px-border)] lg:grid-cols-[320px_minmax(0,1fr)_300px]">
+    <section className="relative grid h-[min(760px,calc(100dvh-5.5rem))] min-h-[540px] max-w-full overflow-hidden rounded-[24px] bg-[color:var(--px-surface)] shadow-[var(--px-shadow)] ring-1 ring-[color:var(--px-border)] lg:grid-cols-[320px_minmax(0,1fr)] 2xl:grid-cols-[320px_minmax(0,1fr)_320px]">
       <aside className={`${mobileDetailOpen ? "hidden lg:flex" : "flex"} min-h-0 flex-col border-r border-[color:var(--px-border)] bg-[color:var(--px-surface)]`}>
         <div className="border-b border-[color:var(--px-border)] p-4">
           <div className="flex items-center justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <h1 className="text-xl font-black text-[color:var(--px-text)]">Messages</h1>
-              <p className="text-xs text-[color:var(--px-text-muted)]">Communication only. Deal state lives in deals.</p>
+              <p className="truncate text-xs text-[color:var(--px-text-muted)]">Private chats with connected PerX members.</p>
             </div>
             {backHref ? (
-              <Link className="rounded-full border border-[color:var(--px-border)] px-3 py-1.5 text-xs font-bold text-[color:var(--px-primary)]" href={backHref}>
+              <Link
+                className="rounded-full border border-[color:var(--px-border)] px-3 py-1.5 text-xs font-bold text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                href={backHref}
+              >
                 Back
               </Link>
             ) : null}
@@ -217,17 +296,22 @@ export function MessageWorkspace({
           <label className="mt-4 flex h-11 items-center gap-2 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-muted)] px-3">
             <Search size={17} className="text-[color:var(--px-text-muted)]" />
             <span className="sr-only">Search conversations</span>
-            <input className="min-w-0 flex-1 bg-transparent text-sm text-[color:var(--px-text)] outline-none placeholder:text-[color:var(--px-text-muted)]" placeholder="Search conversations..." />
+            <input
+              className="min-w-0 flex-1 bg-transparent text-sm text-[color:var(--px-text)] outline-none placeholder:text-[color:var(--px-text-muted)]"
+              placeholder="Search conversations..."
+            />
           </label>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-3">
+        <div className="min-h-0 flex-1 overflow-y-auto p-3" ref={listRef}>
           {syncedConversations.map((conversation) => {
             const active = conversation.id === activeConversation?.id;
             return (
               <button
-                className={`flex w-full items-start gap-3 rounded-2xl p-3 text-left transition ${
-                  active ? "bg-[color:var(--px-primary-soft)] ring-1 ring-[color:var(--px-primary)]/25" : "hover:bg-[color:var(--px-surface-soft)]"
+                className={`flex w-full min-w-0 items-start gap-3 rounded-2xl p-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${
+                  active
+                    ? "bg-[color:var(--px-primary-soft)] ring-1 ring-[color:var(--px-primary)]/25"
+                    : "hover:bg-[color:var(--px-surface-soft)]"
                 }`}
                 key={conversation.id}
                 onClick={() => {
@@ -244,14 +328,17 @@ export function MessageWorkspace({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-sm font-bold text-[color:var(--px-text)]">{conversation.participantName}</p>
-                    <span className="shrink-0 text-[10px] font-semibold text-[color:var(--px-text-muted)]">{conversation.timestamp ?? "now"}</span>
+                    <span className="shrink-0 text-[10px] font-semibold text-[color:var(--px-text-muted)]">{formatConversationTime(conversation.timestamp)}</span>
                   </div>
                   <p className="truncate text-xs font-semibold text-[color:var(--px-primary)]">{conversation.opportunityTitle ?? conversation.context}</p>
                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-[color:var(--px-text-muted)]">{conversation.lastMessage ?? "No messages yet."}</p>
                 </div>
                 {conversation.unreadCount ? (
-                  <span className="grid h-5 min-w-5 place-items-center rounded-full bg-[color:var(--px-warning)] px-1.5 text-[10px] font-black text-white">
-                    {conversation.unreadCount}
+                  <span
+                    aria-label={`${conversation.unreadCount} unread message${conversation.unreadCount === 1 ? "" : "s"}`}
+                    className="grid h-5 min-w-5 place-items-center rounded-full bg-[color:var(--px-warning)] px-1.5 text-[10px] font-black text-white"
+                  >
+                    {conversation.unreadCount > 99 ? "99+" : conversation.unreadCount}
                   </span>
                 ) : null}
               </button>
@@ -261,142 +348,131 @@ export function MessageWorkspace({
       </aside>
 
       {activeConversation ? (
-        <div className={`${mobileDetailOpen ? "flex" : "hidden lg:flex"} min-h-0 flex-col bg-[color:var(--px-page)]`}>
-          <div className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4">
+        <main className={`${mobileDetailOpen ? "flex" : "hidden lg:flex"} min-w-0 min-h-0 flex-col bg-[color:var(--px-page)]`}>
+          <div className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 sm:px-4">
             <div className="flex min-w-0 items-center gap-3">
-              <button className="grid h-10 w-10 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] lg:hidden" onClick={() => setMobileDetailOpen(false)} type="button" aria-label="Back to conversations">
+              <button
+                aria-label="Back to conversations"
+                className="grid h-10 w-10 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:hidden"
+                onClick={() => setMobileDetailOpen(false)}
+                type="button"
+              >
                 <ArrowLeft size={18} />
               </button>
-              <Avatar
-                imageUrl={activeConversation.participantImageUrl}
-                name={activeConversation.participantName}
-                presence={activeConversation.participantPresence}
-              />
-              <div className="min-w-0">
+              <button
+                className="contents"
+                onClick={() => setDetailsOpen(true)}
+                type="button"
+              >
+                <Avatar
+                  imageUrl={activeConversation.participantImageUrl}
+                  name={activeConversation.participantName}
+                  presence={activeConversation.participantPresence}
+                />
+              </button>
+              <button
+                className="min-w-0 text-left focus:outline-none focus-visible:rounded-md focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                onClick={() => setDetailsOpen(true)}
+                type="button"
+              >
                 <h2 className="truncate text-sm font-black text-[color:var(--px-text)]">{activeConversation.participantName}</h2>
                 <p className="truncate text-xs text-[color:var(--px-text-muted)]">
                   {presenceLabel(activeConversation.participantPresence) ??
                     activeConversation.participantRole ??
                     activeConversation.opportunityTitle ??
-                    "perX conversation"}
+                    "PerX conversation"}
                 </p>
-              </div>
+              </button>
             </div>
-            <div className="flex items-center gap-2">
-              <span
-                aria-label="Voice calls are not active in beta"
-                className="grid h-10 w-10 place-items-center rounded-full text-[color:var(--px-text-muted)] opacity-60"
-                title="Voice calls are not active in beta"
-              >
-                <Phone aria-hidden size={17} />
-              </span>
-              <span
-                aria-label="Video calls are not active in beta"
-                className="grid h-10 w-10 place-items-center rounded-full text-[color:var(--px-text-muted)] opacity-60"
-                title="Video calls are not active in beta"
-              >
-                <Video aria-hidden size={17} />
-              </span>
-            </div>
+            <button
+              aria-label="Open conversation details"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              onClick={() => setDetailsOpen(true)}
+              type="button"
+            >
+              <Info aria-hidden size={18} />
+            </button>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-4" ref={historyRef}>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4" ref={historyRef}>
             <div className="mx-auto flex max-w-3xl flex-col gap-4">
               <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4">
                 <p className="text-xs font-bold uppercase tracking-wide text-[color:var(--px-primary)]">Context</p>
-                <p className="mt-1 text-sm font-bold text-[color:var(--px-text)]">{activeConversation.opportunityTitle ?? activeConversation.context ?? "Professional opportunity conversation"}</p>
-                <p className="mt-2 text-xs leading-5 text-[color:var(--px-text-muted)]">Messaging does not control money, escrow or release states. Use deal actions for transaction changes.</p>
+                <p className="mt-1 text-sm font-bold text-[color:var(--px-text)]">{activeConversation.opportunityTitle ?? activeConversation.context ?? "Professional conversation"}</p>
+                <p className="mt-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
+                  Messaging is separate from escrow and deal state. No custody, transfer, or release action happens in chat.
+                </p>
               </div>
 
-              {messages.map((message) => {
-                const mine = message.senderId === currentUserId;
-                const editing = editingMessageId === message.id;
-                return (
-                  <div className={`flex ${mine ? "justify-end" : "justify-start"}`} key={message.id}>
-                    <div className={`max-w-[82%] overflow-hidden rounded-3xl px-4 py-3 shadow-sm ${mine ? "rounded-br-md bg-[color:var(--px-primary)] text-white" : "rounded-bl-md bg-[color:var(--px-surface)] text-[color:var(--px-text)] ring-1 ring-[color:var(--px-border)]"}`}>
-                      <div className="mb-1 flex items-center justify-between gap-3">
-                        <p className={`text-[10px] font-black uppercase tracking-wide ${mine ? "text-blue-100" : "text-[color:var(--px-primary)]"}`}>{message.senderName}</p>
-                        {mine && !message.id.startsWith("local-") && !message.deletedAt ? (
-                          <button
-                            aria-label="Edit message"
-                            className={`rounded-full p-1 ${mine ? "text-blue-100 hover:bg-white/10" : "text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)]"}`}
-                            onClick={() => startEditing(message)}
-                            type="button"
-                          >
-                            <Pencil aria-hidden size={13} />
-                          </button>
-                        ) : null}
-                      </div>
-                      {message.deletedAt ? (
-                        <p className="text-sm italic leading-6 opacity-80">This message was deleted.</p>
-                      ) : editing ? (
-                        <div className="grid gap-2">
-                          <label className="sr-only" htmlFor={`edit-${message.id}`}>
-                            Edit message
-                          </label>
-                          <textarea
-                            className="min-h-20 rounded-xl border border-white/30 bg-white/95 px-3 py-2 text-sm leading-6 text-slate-950 outline-none focus:ring-2 focus:ring-white"
-                            id={`edit-${message.id}`}
-                            maxLength={2000}
-                            onChange={(event) => setEditDraft(event.target.value)}
-                            value={editDraft}
-                          />
-                          {editError ? (
-                            <p className="text-xs font-semibold text-red-100">{editError}</p>
-                          ) : null}
-                          <div className="flex justify-end gap-2">
-                            <button
-                              className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-bold text-white"
-                              onClick={cancelEditing}
-                              type="button"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[color:var(--px-primary)] disabled:opacity-60"
-                              disabled={!editDraft.trim() || isEditPending}
-                              onClick={() => saveEdit(message)}
-                              type="button"
-                            >
-                              {isEditPending ? "Saving..." : "Save"}
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p>
-                      )}
-                      <div className={`mt-2 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-blue-100" : "text-[color:var(--px-text-muted)]"}`}>
-                        {message.editedAt ? <span>Edited</span> : null}
-                        <span>{new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                        {mine ? <MessageStateIcon message={message} /> : null}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {messages.map((message) => (
+                <MessageBubble
+                  currentUserId={currentUserId}
+                  editingMessageId={editingMessageId}
+                  editDraft={editDraft}
+                  editError={editError}
+                  highlighted={highlightedMessageId === message.id}
+                  isEditPending={isEditPending}
+                  jumpToMessage={jumpToMessage}
+                  key={message.id}
+                  message={message}
+                  onCancelEdit={cancelEditing}
+                  onChangeEdit={setEditDraft}
+                  onReply={() => setReplyTarget(message)}
+                  onSaveEdit={saveEdit}
+                  onStartEdit={startEditing}
+                  refCallback={(node) => {
+                    messageRefs.current[message.id] = node;
+                  }}
+                />
+              ))}
             </div>
           </div>
 
           <form className="shrink-0 border-t border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-3" onSubmit={sendMessage}>
-            <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-2">
-              <span
-                aria-label="Attachments are not active in beta"
-                className="grid h-10 w-10 place-items-center rounded-xl text-[color:var(--px-text-muted)] opacity-60"
-                title="Attachments are not active in beta"
-              >
-                <Paperclip aria-hidden size={18} />
-              </span>
-              <label className="sr-only" htmlFor="message-draft">Message</label>
-              <textarea
-                className="max-h-32 min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-sm text-[color:var(--px-text)] outline-none placeholder:text-[color:var(--px-text-muted)]"
-                id="message-draft"
-                onChange={(event) => setDraft(event.target.value)}
-                placeholder="Type a message..."
-                value={draft}
-              />
-              <button className="grid h-10 w-10 place-items-center rounded-xl bg-[color:var(--px-primary)] text-white transition hover:bg-[color:var(--px-primary-strong)] disabled:opacity-50" disabled={!draft.trim() || isPending} type="submit" aria-label="Send message">
-                {isPending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-              </button>
+            <div className="mx-auto grid max-w-3xl gap-2">
+              {replyTarget ? (
+                <div className="flex items-start justify-between gap-3 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-primary-soft)] p-3">
+                  <div className="min-w-0 border-l-4 border-[color:var(--px-primary)] pl-3">
+                    <p className="text-xs font-black text-[color:var(--px-primary)]">Replying to {replyTarget.senderName}</p>
+                    <p className="mt-1 truncate text-sm text-[color:var(--px-text-muted)]">{messageExcerpt(replyTarget)}</p>
+                  </div>
+                  <button
+                    aria-label="Cancel reply"
+                    className="grid h-8 w-8 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    onClick={() => setReplyTarget(null)}
+                    type="button"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : null}
+              <div className="flex items-end gap-2 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-2">
+                <label className="sr-only" htmlFor="message-draft">Message</label>
+                <textarea
+                  className="max-h-36 min-h-11 flex-1 resize-none bg-transparent px-2 py-2 text-sm text-[color:var(--px-text)] outline-none placeholder:text-[color:var(--px-text-muted)]"
+                  id="message-draft"
+                  maxLength={2000}
+                  onChange={(event) => setDraft(event.target.value)}
+                  onInput={autoResize}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      sendMessage();
+                    }
+                  }}
+                  placeholder="Type a message..."
+                  rows={1}
+                  value={draft}
+                />
+                <button
+                  aria-label="Send message"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[color:var(--px-primary)] text-white transition hover:bg-[color:var(--px-primary-strong)] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  disabled={!draft.trim() || isPending}
+                  type="submit"
+                >
+                  {isPending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
+                </button>
+              </div>
             </div>
             {sendError ? (
               <p className="mx-auto mt-2 max-w-3xl text-sm font-semibold text-[color:var(--px-error)]">
@@ -404,51 +480,291 @@ export function MessageWorkspace({
               </p>
             ) : null}
           </form>
-        </div>
+        </main>
       ) : null}
 
-      <aside className="hidden min-h-0 flex-col gap-4 overflow-y-auto border-l border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4 lg:flex">
-        {activeConversation ? (
-          <>
-            <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-5 text-center ring-1 ring-[color:var(--px-border)]">
-              <Avatar
-                imageUrl={activeConversation.participantImageUrl}
-                name={activeConversation.participantName}
-                presence={activeConversation.participantPresence}
-                size="lg"
-              />
-              <h3 className="mt-3 font-black text-[color:var(--px-text)]">{activeConversation.participantName}</h3>
-              <p className="text-xs text-[color:var(--px-text-muted)]">@{activeConversation.participantUsername ?? "perx-member"}</p>
-              {activeConversation.trustScore ? <Badge className="mt-3 bg-green-50 text-green-800">Trust {activeConversation.trustScore}</Badge> : null}
-            </div>
-
-            <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-4 ring-1 ring-[color:var(--px-border)]">
-              <h3 className="font-bold text-[color:var(--px-text)]">Deal tools</h3>
-              <div className="mt-3 grid gap-2">
-                <ToolStatus icon={<FileText size={16} />} label="No linked proposal" />
-                {activeConversation.dealHref ? (
-                  <Link className="flex items-center gap-2 rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-3 py-2 text-sm font-bold text-white" href={activeConversation.dealHref}>
-                    <ShieldCheck size={16} />
-                    Deal workspace
-                  </Link>
-                ) : (
-                  <ToolStatus icon={<ShieldCheck size={16} />} label="No deal workspace" />
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-4 ring-1 ring-[color:var(--px-border)]">
-              <h3 className="font-bold text-[color:var(--px-text)]">Shared files</h3>
-              <div className="mt-3 grid gap-2 text-xs text-[color:var(--px-text-muted)]">
-                <p className="rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface)] p-3">
-                  No shared files are attached to this conversation.
-                </p>
-              </div>
-            </div>
-          </>
-        ) : null}
-      </aside>
+      <ConversationDetails
+        conversation={activeConversation}
+        onClose={() => setDetailsOpen(false)}
+        open={detailsOpen}
+      />
     </section>
+  );
+}
+
+function MessageBubble({
+  currentUserId,
+  editingMessageId,
+  editDraft,
+  editError,
+  highlighted,
+  isEditPending,
+  jumpToMessage,
+  message,
+  onCancelEdit,
+  onChangeEdit,
+  onReply,
+  onSaveEdit,
+  onStartEdit,
+  refCallback,
+}: {
+  currentUserId: string;
+  editingMessageId: string;
+  editDraft: string;
+  editError: string;
+  highlighted: boolean;
+  isEditPending: boolean;
+  jumpToMessage: (messageId: string) => void;
+  message: WorkspaceMessage;
+  onCancelEdit: () => void;
+  onChangeEdit: (value: string) => void;
+  onReply: () => void;
+  onSaveEdit: (message: WorkspaceMessage) => void;
+  onStartEdit: (message: WorkspaceMessage) => void;
+  refCallback: (node: HTMLDivElement | null) => void;
+}) {
+  const mine = message.senderId === currentUserId;
+  const editing = editingMessageId === message.id;
+  const isLocal = message.id.startsWith("local-");
+  const canEdit = mine && !isLocal && !message.deletedAt;
+
+  return (
+    <div
+      className={`flex scroll-mt-24 ${mine ? "justify-end" : "justify-start"}`}
+      ref={refCallback}
+    >
+      <div
+        className={`group max-w-[min(82%,42rem)] overflow-visible rounded-3xl px-4 py-3 shadow-sm transition ${
+          mine
+            ? "rounded-br-md bg-[color:var(--px-primary)] text-white"
+            : "rounded-bl-md bg-[color:var(--px-surface)] text-[color:var(--px-text)] ring-1 ring-[color:var(--px-border)]"
+        } ${highlighted ? "ring-4 ring-[color:var(--px-warning)]" : ""}`}
+      >
+        <div className="mb-1 flex items-center justify-between gap-3">
+          <p className={`truncate text-[10px] font-black uppercase tracking-wide ${mine ? "text-blue-100" : "text-[color:var(--px-primary)]"}`}>{message.senderName}</p>
+          {!message.deletedAt ? (
+            <MessageActionMenu
+              canEdit={canEdit}
+              mine={mine}
+              message={message}
+              onReply={onReply}
+              onStartEdit={() => onStartEdit(message)}
+            />
+          ) : null}
+        </div>
+
+        {message.replyTo ? (
+          <button
+            className={`mb-2 block w-full rounded-2xl border-l-4 p-3 text-left focus:outline-none focus-visible:ring-2 ${
+              mine
+                ? "border-white/70 bg-white/10 focus-visible:ring-white"
+                : "border-[color:var(--px-primary)] bg-[color:var(--px-muted)] focus-visible:ring-[color:var(--px-focus)]"
+            }`}
+            onClick={() => jumpToMessage(message.replyTo?.id ?? "")}
+            type="button"
+          >
+            <p className={`text-xs font-black ${mine ? "text-white" : "text-[color:var(--px-primary)]"}`}>{message.replyTo.senderName}</p>
+            <p className={`mt-1 line-clamp-2 text-xs leading-5 ${mine ? "text-blue-50" : "text-[color:var(--px-text-muted)]"}`}>{messageExcerpt(message.replyTo)}</p>
+          </button>
+        ) : null}
+
+        {message.deletedAt ? (
+          <p className="text-sm italic leading-6 opacity-80">This message was deleted.</p>
+        ) : editing ? (
+          <div className="grid gap-2">
+            <label className="sr-only" htmlFor={`edit-${message.id}`}>
+              Edit message
+            </label>
+            <textarea
+              className="min-h-20 resize-none rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-3 py-2 text-sm leading-6 text-[color:var(--px-text)] caret-[color:var(--px-primary)] outline-none placeholder:text-[color:var(--px-text-muted)] focus:ring-2 focus:ring-[color:var(--px-focus)]"
+              id={`edit-${message.id}`}
+              maxLength={2000}
+              onChange={(event) => onChangeEdit(event.target.value)}
+              onInput={autoResize}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  onCancelEdit();
+                }
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  onSaveEdit(message);
+                }
+              }}
+              rows={2}
+              value={editDraft}
+            />
+            {editError ? (
+              <p className="text-xs font-semibold text-[color:var(--px-error)]">{editError}</p>
+            ) : null}
+            <div className="flex justify-end gap-2">
+              <button
+                className="rounded-lg border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-1.5 text-xs font-bold text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                onClick={onCancelEdit}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="rounded-lg bg-[color:var(--px-primary)] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                disabled={!editDraft.trim() || isEditPending}
+                onClick={() => onSaveEdit(message)}
+                type="button"
+              >
+                {isEditPending ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p>
+        )}
+        <div className={`mt-2 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-blue-100" : "text-[color:var(--px-text-muted)]"}`}>
+          {message.editedAt ? <span>Edited</span> : null}
+          <span>{formatMessageTime(message.createdAt)}</span>
+          {mine ? <MessageStateIcon message={message} /> : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MessageActionMenu({
+  canEdit,
+  message,
+  mine,
+  onReply,
+  onStartEdit,
+}: {
+  canEdit: boolean;
+  message: WorkspaceMessage;
+  mine: boolean;
+  onReply: () => void;
+  onStartEdit: () => void;
+}) {
+  return (
+    <details className="relative">
+      <summary
+        aria-label="Message actions"
+        className={`grid h-7 w-7 list-none place-items-center rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 ${
+          mine
+            ? "text-blue-100 hover:bg-white/10 focus-visible:ring-white"
+            : "text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)] focus-visible:ring-[color:var(--px-focus)]"
+        }`}
+      >
+        <MoreVertical aria-hidden size={15} />
+      </summary>
+      <div className="absolute right-0 z-30 mt-1 grid min-w-36 gap-1 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-1 text-[color:var(--px-text)] shadow-lg">
+        <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]" onClick={onReply} type="button">
+          <Reply aria-hidden size={14} />
+          Reply
+        </button>
+        {canEdit ? (
+          <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]" onClick={onStartEdit} type="button">
+            <Pencil aria-hidden size={14} />
+            Edit
+          </button>
+        ) : null}
+        <button
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
+          onClick={() => void navigator.clipboard?.writeText(message.body)}
+          type="button"
+        >
+          <Copy aria-hidden size={14} />
+          Copy
+        </button>
+      </div>
+    </details>
+  );
+}
+
+function ConversationDetails({
+  conversation,
+  onClose,
+  open,
+}: {
+  conversation?: WorkspaceConversation;
+  onClose: () => void;
+  open: boolean;
+}) {
+  if (!conversation) return null;
+
+  const profileHref = conversation.participantUsername
+    ? `/u/${conversation.participantUsername}`
+    : null;
+
+  const content = (
+    <div className="flex min-h-0 flex-col gap-4 overflow-y-auto bg-[color:var(--px-surface)] p-4">
+      <div className="flex items-center justify-between gap-3 2xl:hidden">
+        <h3 className="font-black text-[color:var(--px-text)]">Details</h3>
+        <button
+          aria-label="Close conversation details"
+          className="grid h-9 w-9 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+          onClick={onClose}
+          type="button"
+        >
+          <X size={17} />
+        </button>
+      </div>
+
+      <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-5 text-center ring-1 ring-[color:var(--px-border)]">
+        <Avatar
+          imageUrl={conversation.participantImageUrl}
+          name={conversation.participantName}
+          presence={conversation.participantPresence}
+          size="lg"
+        />
+        <h3 className="mt-3 truncate font-black text-[color:var(--px-text)]">{conversation.participantName}</h3>
+        <p className="truncate text-xs text-[color:var(--px-text-muted)]">@{conversation.participantUsername ?? "perx-member"}</p>
+        <p className="mt-2 text-xs text-[color:var(--px-text-muted)]">{presenceLabel(conversation.participantPresence) ?? conversation.participantRole ?? "PerX member"}</p>
+        {conversation.trustScore ? <Badge className="mt-3 bg-green-50 text-green-800">Trust {conversation.trustScore}</Badge> : null}
+        {profileHref ? (
+          <Link
+            className="mt-4 inline-flex min-h-10 items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            href={profileHref}
+          >
+            View full profile
+          </Link>
+        ) : null}
+      </div>
+
+      <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-4 ring-1 ring-[color:var(--px-border)]">
+        <h3 className="font-bold text-[color:var(--px-text)]">Deal</h3>
+        <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
+          Deal workspaces are separate from chat. Real custody, transfers, and protected-funds actions are not active in beta.
+        </p>
+        {conversation.dealHref ? (
+          <Link
+            className="mt-3 inline-flex min-h-10 items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            href={conversation.dealHref}
+          >
+            Open deal
+          </Link>
+        ) : (
+          <p className="mt-3 rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface)] p-3 text-sm font-semibold text-[color:var(--px-text-muted)]">
+            No deal is linked to this conversation.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <aside className="hidden min-h-0 border-l border-[color:var(--px-border)] 2xl:flex">
+        {content}
+      </aside>
+      {open ? (
+        <div className="absolute inset-0 z-40 bg-black/30 2xl:hidden" role="presentation" onClick={onClose}>
+          <aside
+            aria-label="Conversation details"
+            className="ml-auto h-full w-full max-w-sm overflow-hidden shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {content}
+          </aside>
+        </div>
+      ) : null}
+    </>
   );
 }
 
@@ -474,7 +790,7 @@ function Avatar({
 
   return (
     <div className="relative shrink-0">
-      <div className={`${dimensions} grid place-items-center rounded-full bg-[color:var(--px-primary)] font-black text-white ring-2 ring-[color:var(--px-surface)]`}>
+      <div className={`${dimensions} grid overflow-hidden place-items-center rounded-full bg-[color:var(--px-primary)] font-black text-white ring-2 ring-[color:var(--px-surface)]`}>
         {imageUrl && !imageFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -504,10 +820,58 @@ function Avatar({
   );
 }
 
+function autoResize(event: FormEvent<HTMLTextAreaElement>) {
+  const target = event.currentTarget;
+  target.style.height = "auto";
+  target.style.height = `${Math.min(target.scrollHeight, 160)}px`;
+}
+
+function toReplyPreview(message: WorkspaceMessage): ReplyPreview {
+  return {
+    body: message.body,
+    deletedAt: message.deletedAt,
+    id: message.id,
+    senderId: message.senderId,
+    senderName: message.senderName,
+  };
+}
+
+function messageExcerpt(message: ReplyPreview | WorkspaceMessage) {
+  if (message.deletedAt) return "Original message unavailable";
+  const normalized = message.body.replace(/\s+/g, " ").trim();
+  if (!normalized) return "Original message unavailable";
+  return normalized.length > 96 ? `${normalized.slice(0, 96)}...` : normalized;
+}
+
 function presenceLabel(presence?: "hidden" | "online" | "recent" | "offline") {
   if (presence === "online") return "Online";
   if (presence === "recent") return "Recently active";
   return null;
+}
+
+function formatMessageTime(value?: string) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function formatConversationTime(value?: string) {
+  if (!value) return "new";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const thatDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayDiff = Math.round((today.getTime() - thatDay.getTime()) / 86_400_000);
+
+  if (dayDiff === 0) return formatMessageTime(value);
+  if (dayDiff === 1) return "Yesterday";
+  return new Intl.DateTimeFormat(undefined, { day: "2-digit", month: "short" }).format(date);
 }
 
 function MessageStateIcon({ message }: { message: WorkspaceMessage }) {
@@ -521,13 +885,4 @@ function MessageStateIcon({ message }: { message: WorkspaceMessage }) {
     return <CheckCheck aria-label="Read" className="text-green-200" size={14} />;
   }
   return <Check aria-label="Sent" size={13} />;
-}
-
-function ToolStatus({ icon, label }: { icon: ReactNode; label: string }) {
-  return (
-    <div className="flex w-full items-center gap-2 rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface)] px-3 py-2 text-sm font-bold text-[color:var(--px-text-muted)]">
-      {icon}
-      {label}
-    </div>
-  );
 }

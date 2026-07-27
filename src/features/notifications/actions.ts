@@ -42,7 +42,7 @@ export async function markAllNotificationsAsReadAction() {
 export async function openNotificationAction(id: string) {
   const user = await requireUser();
   const notification = await getPrisma().notification.findFirst({
-    select: { actionUrl: true, id: true, type: true },
+    select: { actionUrl: true, id: true, metadata: true, type: true },
     where: { id, userId: user.id },
   });
 

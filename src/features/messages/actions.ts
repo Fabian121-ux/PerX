@@ -14,6 +14,7 @@ import { evaluatePolicy, isPolicyBlocking } from "@/lib/policy/enforcement";
 const sendMessageSchema = z.object({
   conversationId: z.string().cuid(),
   body: z.string().trim().min(1, "Message cannot be empty.").max(2000, "Message is too long."),
+  replyToMessageId: z.string().cuid().optional().nullable(),
 });
 
 const editMessageSchema = z.object({
@@ -28,7 +29,11 @@ function hashMessageBody(body: string) {
   return crypto.createHash("sha256").update(body).digest("hex");
 }
 
-export async function sendMessageAction(conversationId: string, body: string) {
+export async function sendMessageAction(
+  conversationId: string,
+  body: string,
+  replyToMessageId?: string | null,
+) {
   const user = await requireUser();
 
   if (getResolvedDataMode() === "mock") {
@@ -39,7 +44,7 @@ export async function sendMessageAction(conversationId: string, body: string) {
     throw new Error("Database not configured.");
   }
 
-  const parsed = sendMessageSchema.safeParse({ conversationId, body });
+  const parsed = sendMessageSchema.safeParse({ conversationId, body, replyToMessageId });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid message." };
   }
@@ -111,6 +116,21 @@ export async function sendMessageAction(conversationId: string, body: string) {
     }
     if (duplicate) return { success: true };
 
+    let replyTarget: { id: string } | null = null;
+    if (parsed.data.replyToMessageId) {
+      replyTarget = await getPrisma().message.findFirst({
+        select: { id: true },
+        where: {
+          conversationId: parsed.data.conversationId,
+          id: parsed.data.replyToMessageId,
+        },
+      });
+
+      if (!replyTarget) {
+        return { error: "The message you are replying to is unavailable." };
+      }
+    }
+
     const policy = evaluatePolicy({
       actorId: user.id,
       content: parsed.data.body,
@@ -136,14 +156,18 @@ export async function sendMessageAction(conversationId: string, body: string) {
       };
     }
 
+    let createdMessageId = "";
+
     await getPrisma().$transaction(async (tx) => {
       const message = await tx.message.create({
         data: {
           body: parsed.data.body.trim(),
           conversationId: parsed.data.conversationId,
+          replyToMessageId: replyTarget?.id ?? null,
           senderId: user.id,
         },
       });
+      createdMessageId = message.id;
 
       await tx.conversation.update({
         where: { id: parsed.data.conversationId },
@@ -161,9 +185,13 @@ export async function sendMessageAction(conversationId: string, body: string) {
 
       await tx.notification.createMany({
         data: otherParticipantIds.map((participantId) => ({
-          actionUrl: `/app/messages/${parsed.data.conversationId}`,
+          actionUrl: `/app/messages/${parsed.data.conversationId}?message=${message.id}`,
           body: `${user.name} sent you a message.`,
-          metadata: { conversationId: parsed.data.conversationId, senderId: user.id },
+          metadata: {
+            conversationId: parsed.data.conversationId,
+            messageId: message.id,
+            senderId: user.id,
+          },
           title: "New message",
           type: "NEW_MESSAGE" as const,
           userId: participantId,
@@ -174,7 +202,7 @@ export async function sendMessageAction(conversationId: string, body: string) {
     revalidatePath("/app/messages");
     revalidatePath(`/app/messages/${parsed.data.conversationId}`);
     revalidatePath("/app/notifications");
-    return { success: true };
+    return { messageId: createdMessageId, success: true };
   } catch (error) {
     console.error("Failed to send message:", error);
     return { error: "Failed to send message." };
@@ -330,7 +358,10 @@ export async function markConversationReadAction(conversationId: string) {
     await tx.notification.updateMany({
       data: { readAt: new Date() },
       where: {
-        actionUrl: `/app/messages/${parsed.data}`,
+        OR: [
+          { actionUrl: `/app/messages/${parsed.data}` },
+          { actionUrl: { startsWith: `/app/messages/${parsed.data}?` } },
+        ],
         readAt: null,
         type: { in: ["MESSAGE", "NEW_MESSAGE"] },
         userId: user.id,
