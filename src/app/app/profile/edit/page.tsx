@@ -39,7 +39,7 @@ export default async function ProfileEditPage({
       title="Edit profile"
     >
       <Card>
-        <form action={updateProfileAction} className="grid gap-4">
+        <form action={updateProfileAction} className="grid gap-4 pb-20 sm:pb-0">
           {error && (
             <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
               {error}
@@ -153,7 +153,7 @@ export default async function ProfileEditPage({
               name="showLastActiveTime"
             />
           </div>
-          <Button type="submit">Save changes</Button>
+          <Button className="w-full sm:w-auto" type="submit">Save changes</Button>
         </form>
       </Card>
     </AppSection>

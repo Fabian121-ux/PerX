@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   CheckCircle2
 } from "lucide-react";
+import { calculateTrustSummary } from "@/lib/trust/engine";
 
 export default async function ActivityDashboardPage() {
   const user = await getCurrentUser();
@@ -46,7 +47,13 @@ export default async function ActivityDashboardPage() {
     }
   });
 
-  const trustScore = user.profile?.trustScore ?? 0;
+  const trust = calculateTrustSummary({
+    averageRating: user.profile?.averageRating ?? 0,
+    completedDeals: user.profile?.completedDeals ?? 0,
+    emailVerifiedAt: user.emailVerifiedAt ?? null,
+    profileCompleteness: user.profile?.profileCompleteness ?? 0,
+    verificationStatus: user.verificationStatus,
+  });
   const profileCompleteness = user.profile?.profileCompleteness ?? 0;
 
   const hasActivity = listingsCount > 0 || proposalsSentCount > 0 || activeDealsCount > 0;
@@ -76,7 +83,7 @@ export default async function ActivityDashboardPage() {
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard title="Profile Completion" value={`${profileCompleteness}%`} icon={CheckCircle2} href="/app/profile" />
-        <MetricCard title="Trust Score" value={trustScore > 0 ? trustScore : "New"} icon={ShieldCheck} href="/app/trust" />
+        <MetricCard title="Trust" value={trust.shortLabel} icon={ShieldCheck} href="/app/trust" />
         <MetricCard title="Active Agreements" value={activeDealsCount} icon={Handshake} href="/app/deals" />
         <MetricCard title="Completed Agreements" value={completedDealsCount} icon={Handshake} href="/app/deals" />
         

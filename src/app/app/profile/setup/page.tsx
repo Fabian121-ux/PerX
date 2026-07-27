@@ -1,9 +1,7 @@
 import {
   BriefcaseBusiness,
-  Building2,
   Handshake,
   Search,
-  ShoppingBag,
   UserRoundPlus,
 } from "lucide-react";
 
@@ -36,11 +34,6 @@ const activityChoices = [
     label: "Hire someone",
   },
   {
-    href: "/app/discover?type=BUSINESS",
-    icon: Building2,
-    label: "Register a business",
-  },
-  {
     href: "/app/discover?type=PARTNERSHIP",
     icon: Handshake,
     label: "Find a partner",
@@ -49,16 +42,6 @@ const activityChoices = [
     href: "/app/opportunities/new",
     icon: BriefcaseBusiness,
     label: "Post an opportunity",
-  },
-  {
-    href: "/app/discover?type=BUSINESS",
-    icon: Building2,
-    label: "Explore businesses",
-  },
-  {
-    href: "/app/discover?type=MARKETPLACE",
-    icon: ShoppingBag,
-    label: "Buy or sell goods",
   },
 ];
 
@@ -89,7 +72,7 @@ export default async function ProfileSetupPage({
     >
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <Card>
-          <form action={setupProfileAction} className="grid gap-4">
+          <form action={setupProfileAction} className="grid gap-4 pb-20 sm:pb-0">
             {error ? (
               <div className="rounded-[var(--px-radius-sm)] bg-red-50 p-3 text-sm font-semibold text-red-700">
                 {error}
@@ -201,7 +184,7 @@ export default async function ProfileSetupPage({
                 name="showLastActiveTime"
               />
             </div>
-            <Button type="submit">Save profile</Button>
+            <Button className="w-full sm:w-auto" type="submit">Save profile</Button>
           </form>
         </Card>
 

@@ -19,9 +19,10 @@ import { ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
 import { Input } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
-import { demoProfiles } from "@/lib/data/demo";
 import { getOpportunityFeedResult } from "@/lib/data/opportunities";
+import { getPublicPeopleDirectory } from "@/lib/data/people";
 import { getCurrentUser } from "@/lib/auth/session";
+import { trustBadgeClassName } from "@/lib/trust/engine";
 
 export const dynamic = "force-dynamic";
 
@@ -444,7 +445,14 @@ async function FeaturedOpportunities({
   );
 }
 
-function FeaturedPeople({ discoveryHref }: { discoveryHref: string }) {
+async function FeaturedPeople({ discoveryHref }: { discoveryHref: string }) {
+  const peopleResult = await getPublicPeopleDirectory({}, { limit: 4 }).catch(
+    () => ({
+      nextCursor: null,
+      people: [],
+    }),
+  );
+
   return (
     <section className="bg-[color:var(--px-surface)] py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -462,33 +470,52 @@ function FeaturedPeople({ discoveryHref }: { discoveryHref: string }) {
           </ButtonLink>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          {demoProfiles.map((profile) => (
-            <Card className="flex items-start gap-4" key={profile.username}>
-              <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-[color:var(--px-primary)] text-base font-black text-white">
-                {profile.name
-                  .split(" ")
-                  .map((part) => part[0])
-                  .join("")
-                  .slice(0, 2)}
-              </div>
+          {peopleResult.people.length ? (
+            peopleResult.people.map((profile) => (
+            <Card className="flex min-w-0 items-start gap-4" key={profile.username}>
+              {profile.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  alt={`${profile.name} profile photo`}
+                  className="h-14 w-14 shrink-0 rounded-full bg-[color:var(--px-muted)] object-cover"
+                  src={profile.imageUrl}
+                />
+              ) : (
+                <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-[color:var(--px-primary)] text-base font-black text-white">
+                  {profile.name
+                    .split(" ")
+                    .map((part) => part[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </div>
+              )}
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="font-black text-[color:var(--px-text)]">
                     {profile.name}
                   </h3>
-                  <Badge className="border-green-200 bg-green-50 text-green-800">
-                    Trust {profile.trustScore}
+                  <Badge className={trustBadgeClassName(profile.trust.level)}>
+                    {profile.trust.shortLabel}
                   </Badge>
                 </div>
                 <p className="mt-1 text-sm font-semibold text-[color:var(--px-text-muted)]">
-                  {profile.headline}
+                  {profile.roles[0] ?? "PerX member"}
                 </p>
                 <p className="mt-3 line-clamp-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
-                  {profile.biography}
+                  {profile.headline}
                 </p>
               </div>
             </Card>
-          ))}
+            ))
+          ) : (
+            <div className="md:col-span-2">
+              <EmptyState
+                body="No new people to recommend yet. More members will appear here as the PerX community grows."
+                title="No featured people yet"
+              />
+            </div>
+          )}
         </div>
       </div>
     </section>

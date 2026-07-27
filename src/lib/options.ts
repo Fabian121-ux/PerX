@@ -126,18 +126,26 @@ export const reportReasonValues = [
   "SPAM",
   "SCAM_OR_FRAUD",
   "HARASSMENT",
+  "THREAT_OR_SAFETY",
+  "IMPERSONATION",
   "PROHIBITED_CONTENT",
-  "MISLEADING_CLAIMS",
+  "PRIVACY_CONCERN",
+  "MISLEADING_INFORMATION",
   "UNSAFE_PAYMENT",
+  "OTHER",
 ] as const;
 
 export const reportReasonOptions = [
-  { label: "Spam or repetitive posting", value: "SPAM" },
-  { label: "Scam or fraud concern", value: "SCAM_OR_FRAUD" },
-  { label: "Harassment or abuse", value: "HARASSMENT" },
-  { label: "Prohibited goods or services", value: "PROHIBITED_CONTENT" },
-  { label: "Misleading claims", value: "MISLEADING_CLAIMS" },
-  { label: "Unsafe payment request", value: "UNSAFE_PAYMENT" },
+  { label: "Spam", value: "SPAM" },
+  { label: "Scam or fraud", value: "SCAM_OR_FRAUD" },
+  { label: "Harassment", value: "HARASSMENT" },
+  { label: "Threat or safety concern", value: "THREAT_OR_SAFETY" },
+  { label: "Impersonation", value: "IMPERSONATION" },
+  { label: "Prohibited content", value: "PROHIBITED_CONTENT" },
+  { label: "Suspicious payment request", value: "UNSAFE_PAYMENT" },
+  { label: "Privacy concern", value: "PRIVACY_CONCERN" },
+  { label: "Misleading information", value: "MISLEADING_INFORMATION" },
+  { label: "Other", value: "OTHER" },
 ] as const;
 
 export const supportCategoryValues = [

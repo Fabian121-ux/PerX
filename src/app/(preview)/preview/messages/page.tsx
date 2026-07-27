@@ -13,7 +13,6 @@ export default function PreviewMessagesPage() {
     participantRole: "Client · verified opportunity owner",
     participantUsername: conversation.participantUsername,
     timestamp: "2m",
-    trustScore: 86,
     unreadCount: 2,
   }));
 

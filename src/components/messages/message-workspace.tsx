@@ -14,6 +14,7 @@ import {
   CheckCheck,
   Clock3,
   Copy,
+  Flag,
   Info,
   Loader2,
   MoreVertical,
@@ -25,8 +26,6 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-
-import { Badge } from "@/components/ui/badge";
 import {
   editMessageAction,
   markConversationReadAction,
@@ -62,13 +61,13 @@ export type WorkspaceConversation = {
   lastMessage?: string;
   messages: WorkspaceMessage[];
   opportunityTitle?: string;
+  participantId?: string | null;
   participantImageUrl?: string | null;
   participantName: string;
   participantPresence?: "hidden" | "online" | "recent" | "offline";
   participantRole?: string;
   participantUsername?: string;
   timestamp?: string;
-  trustScore?: number;
   unreadCount?: number;
 };
 
@@ -97,6 +96,7 @@ export function MessageWorkspace({
   const [highlightedMessageId, setHighlightedMessageId] = useState(highlightMessageId ?? "");
   const [syncedConversations, setSyncedConversations] = useState(() => conversations);
   const [localMessages, setLocalMessages] = useState<Record<string, WorkspaceMessage[]>>({});
+  const [liveState, setLiveState] = useState<"connecting" | "live" | "reconnecting" | "fallback">("connecting");
   const [isPending, startTransition] = useTransition();
   const [isEditPending, startEditTransition] = useTransition();
   const historyRef = useRef<HTMLDivElement>(null);
@@ -117,6 +117,8 @@ export function MessageWorkspace({
 
   useEffect(() => {
     let active = true;
+    let eventSource: EventSource | null = null;
+    let fallbackInterval: number | null = null;
     const sync = async () => {
       try {
         const response = await fetch(
@@ -137,11 +139,60 @@ export function MessageWorkspace({
       }
     };
 
-    sync();
-    const interval = window.setInterval(sync, 4000);
+    const startFallback = () => {
+      if (fallbackInterval !== null) return;
+      setLiveState((state) => (state === "live" ? "reconnecting" : "fallback"));
+      void sync();
+      fallbackInterval = window.setInterval(sync, 5000);
+    };
+
+    if (typeof EventSource === "undefined") {
+      startFallback();
+    } else {
+      const url = activeId
+        ? `/api/messages/events?conversationId=${encodeURIComponent(activeId)}`
+        : "/api/messages/events";
+      eventSource = new EventSource(url);
+      eventSource.addEventListener("open", () => {
+        if (!active) return;
+        setLiveState("live");
+        if (fallbackInterval !== null) {
+          window.clearInterval(fallbackInterval);
+          fallbackInterval = null;
+        }
+      });
+      eventSource.addEventListener("conversations", (event) => {
+        if (!active) return;
+        const payload = JSON.parse((event as MessageEvent).data) as {
+          conversations?: WorkspaceConversation[];
+        };
+        if (payload.conversations) {
+          setSyncedConversations(payload.conversations);
+          setLiveState("live");
+          window.dispatchEvent(new Event("perx-unread-refresh"));
+        }
+      });
+      eventSource.addEventListener("stream-error", () => {
+        if (!active) return;
+        setLiveState("reconnecting");
+        startFallback();
+      });
+      eventSource.addEventListener("unavailable", () => {
+        if (!active) return;
+        eventSource?.close();
+        startFallback();
+      });
+      eventSource.onerror = () => {
+        if (!active) return;
+        setLiveState("reconnecting");
+        startFallback();
+      };
+    }
+
     return () => {
       active = false;
-      window.clearInterval(interval);
+      eventSource?.close();
+      if (fallbackInterval !== null) window.clearInterval(fallbackInterval);
     };
   }, [activeId]);
 
@@ -284,6 +335,19 @@ export function MessageWorkspace({
               <h1 className="text-xl font-black text-[color:var(--px-text)]">Messages</h1>
               <p className="truncate text-xs text-[color:var(--px-text-muted)]">Private chats with connected PerX members.</p>
             </div>
+            <span
+              className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${
+                liveState === "live"
+                  ? "bg-green-50 text-green-800"
+                  : "bg-amber-50 text-amber-900"
+              }`}
+            >
+              {liveState === "live"
+                ? "Live"
+                : liveState === "connecting"
+                  ? "Connecting"
+                  : "Reconnecting"}
+            </span>
             {backHref ? (
               <Link
                 className="rounded-full border border-[color:var(--px-border)] px-3 py-1.5 text-xs font-bold text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
@@ -406,6 +470,7 @@ export function MessageWorkspace({
 
               {messages.map((message) => (
                 <MessageBubble
+                  conversationId={activeConversation.id}
                   currentUserId={currentUserId}
                   editingMessageId={editingMessageId}
                   editDraft={editDraft}
@@ -493,6 +558,7 @@ export function MessageWorkspace({
 }
 
 function MessageBubble({
+  conversationId,
   currentUserId,
   editingMessageId,
   editDraft,
@@ -508,6 +574,7 @@ function MessageBubble({
   onStartEdit,
   refCallback,
 }: {
+  conversationId: string;
   currentUserId: string;
   editingMessageId: string;
   editDraft: string;
@@ -545,6 +612,7 @@ function MessageBubble({
           {!message.deletedAt ? (
             <MessageActionMenu
               canEdit={canEdit}
+              conversationId={conversationId}
               mine={mine}
               message={message}
               onReply={onReply}
@@ -630,12 +698,14 @@ function MessageBubble({
 
 function MessageActionMenu({
   canEdit,
+  conversationId,
   message,
   mine,
   onReply,
   onStartEdit,
 }: {
   canEdit: boolean;
+  conversationId: string;
   message: WorkspaceMessage;
   mine: boolean;
   onReply: () => void;
@@ -672,6 +742,19 @@ function MessageActionMenu({
           <Copy aria-hidden size={14} />
           Copy
         </button>
+        {!message.id.startsWith("local-") ? (
+          <Link
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
+            href={`/app/reports/new?targetType=MESSAGE&targetId=${encodeURIComponent(
+              message.id,
+            )}&conversationId=${encodeURIComponent(
+              conversationId,
+            )}&messageId=${encodeURIComponent(message.id)}`}
+          >
+            <Flag aria-hidden size={14} />
+            Report
+          </Link>
+        ) : null}
       </div>
     </details>
   );
@@ -716,13 +799,22 @@ function ConversationDetails({
         <h3 className="mt-3 truncate font-black text-[color:var(--px-text)]">{conversation.participantName}</h3>
         <p className="truncate text-xs text-[color:var(--px-text-muted)]">@{conversation.participantUsername ?? "perx-member"}</p>
         <p className="mt-2 text-xs text-[color:var(--px-text-muted)]">{presenceLabel(conversation.participantPresence) ?? conversation.participantRole ?? "PerX member"}</p>
-        {conversation.trustScore ? <Badge className="mt-3 bg-green-50 text-green-800">Trust {conversation.trustScore}</Badge> : null}
         {profileHref ? (
           <Link
             className="mt-4 inline-flex min-h-10 items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={profileHref}
           >
             View full profile
+          </Link>
+        ) : null}
+        {conversation.participantId ? (
+          <Link
+            className="mt-2 inline-flex min-h-10 items-center rounded-[var(--px-radius-sm)] border border-[color:var(--px-border-strong)] px-4 text-sm font-bold text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            href={`/app/reports/new?targetType=USER&targetId=${encodeURIComponent(
+              conversation.participantId,
+            )}`}
+          >
+            Report profile
           </Link>
         ) : null}
       </div>

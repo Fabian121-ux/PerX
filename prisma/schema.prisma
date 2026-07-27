@@ -129,6 +129,25 @@ enum ReportStatus {
   DISMISSED
 }
 
+enum UserReportTargetType {
+  MESSAGE
+  CONVERSATION
+  USER
+  OPPORTUNITY
+  DEAL
+  REVIEW
+  REAL_ESTATE_LISTING
+  OTHER_CONTENT
+}
+
+enum UserReportStatus {
+  SUBMITTED
+  IN_REVIEW
+  ACTION_TAKEN
+  RESOLVED
+  DISMISSED
+}
+
 enum ReviewVisibility {
   PUBLIC
   HIDDEN
@@ -202,6 +221,7 @@ model User {
   opportunities         Opportunity[]             @relation("OpportunityOwner")
   bookmarks             OpportunityBookmark[]
   reports               OpportunityReport[]       @relation("Reporter")
+  userReports           UserReport[]              @relation("UserReportReporter")
   proposals             Proposal[]                @relation("ProposalSender")
   conversations         ConversationParticipant[]
   messages              Message[]
@@ -435,6 +455,27 @@ model OpportunityReport {
   reporter      User         @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
+}
+
+model UserReport {
+  id                    String               @id @default(cuid())
+  reporterId            String
+  targetType            UserReportTargetType
+  targetId              String
+  category              String
+  details               String?
+  status                UserReportStatus     @default(SUBMITTED)
+  contextConversationId String?
+  contextMessageId      String?
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+  reporter              User                 @relation("UserReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@unique([reporterId, targetType, targetId, status])
+  @@index([reporterId, status, createdAt])
+  @@index([targetType, targetId])
+  @@index([status, createdAt])
+  @@index([category, status])
 }
 
 model OpportunityStatusHistory {

@@ -11,6 +11,7 @@ import { getServerEnv, hasDatabaseUrl } from "@/lib/env";
 export type CurrentUser = {
   id: string;
   email: string;
+  emailVerifiedAt?: Date | null;
   name: string;
   username: string;
   roles: RoleName[];
@@ -24,8 +25,10 @@ export type CurrentUser = {
     location?: string;
     profileImageUrl?: string | null;
     skills?: string[];
-    trustScore: number;
+    averageRating?: number;
+    completedDeals?: number;
     profileCompleteness: number;
+    trustScore: number;
     isDiscoverable?: boolean;
     showLocation?: boolean;
     showSkills?: boolean;
@@ -132,6 +135,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
           accountClassification: true,
           createdAt: true,
           email: true,
+          emailVerifiedAt: true,
           id: true,
           imageUrl: true,
           isActive: true,
@@ -139,6 +143,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
           profile: {
             select: {
               biography: true,
+              averageRating: true,
+              completedDeals: true,
               headline: true,
               location: true,
               profileCompleteness: true,
@@ -166,7 +172,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   }
 
   return {
-    email: session.user.email,
+          email: session.user.email,
+          emailVerifiedAt: session.user.emailVerifiedAt,
     id: session.user.id,
     name: session.user.name,
     username: session.user.username,
@@ -176,7 +183,9 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     createdAt: session.user.createdAt,
     profile: session.user.profile
       ? {
-          headline: session.user.profile.headline,
+            averageRating: Number(session.user.profile.averageRating),
+            completedDeals: session.user.profile.completedDeals,
+            headline: session.user.profile.headline,
           biography: session.user.profile.biography,
           location: session.user.profile.location,
           profileImageUrl: session.user.profile.profileImageUrl,

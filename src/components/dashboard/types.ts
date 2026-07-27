@@ -1,4 +1,5 @@
 import type { CurrentUser } from "@/lib/auth/session";
+import type { PublicTrustSummary } from "@/lib/trust/engine";
 
 export interface DashboardConnection {
   id: string;
@@ -32,7 +33,7 @@ export interface DashboardRecommendedProfile {
   username: string;
   headline: string;
   role: string;
-  trustScore: number;
+  trust: PublicTrustSummary;
   avatarUrl?: string;
 }
 
@@ -55,7 +56,7 @@ export interface DashboardOpportunity {
 export interface HomeDashboardData {
   user: CurrentUser;
   connections: DashboardConnection[];
-  trustScore: number | null;
+  trust: PublicTrustSummary;
   activeDealsCount: number;
   activeDealsDetail?: string;
   openProposalsCount: number;

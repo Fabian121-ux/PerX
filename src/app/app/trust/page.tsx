@@ -4,6 +4,7 @@ import { getPrisma } from "@/lib/db/prisma";
 import { Card, EmptyState } from "@/components/ui/card";
 import { ShieldCheck, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { calculateTrustSummary, trustBadgeClassName } from "@/lib/trust/engine";
 
 export default async function TrustDashboardPage() {
   const user = await getCurrentUser();
@@ -20,7 +21,13 @@ export default async function TrustDashboardPage() {
     orderBy: { createdAt: "desc" }
   });
 
-  const trustScore = user.profile?.trustScore ?? 0;
+  const trust = calculateTrustSummary({
+    averageRating: user.profile?.averageRating ?? 0,
+    completedDeals: user.profile?.completedDeals ?? 0,
+    emailVerifiedAt: user.emailVerifiedAt ?? null,
+    profileCompleteness: user.profile?.profileCompleteness ?? 0,
+    verificationStatus: user.verificationStatus,
+  });
 
   return (
     <AppSection
@@ -33,8 +40,11 @@ export default async function TrustDashboardPage() {
             <ShieldCheck size={32} />
           </div>
           <div>
-            <p className="text-sm font-semibold text-[color:var(--px-primary)] uppercase tracking-wide">Trust Score</p>
-            <h2 className="text-3xl font-black text-[color:var(--px-text)]">{trustScore} <span className="text-sm font-medium text-[color:var(--px-text-muted)]">/ 100</span></h2>
+            <p className="text-sm font-semibold text-[color:var(--px-primary)] uppercase tracking-wide">Trust level</p>
+            <h2 className="text-3xl font-black text-[color:var(--px-text)]">{trust.label}</h2>
+            <p className="mt-1 text-sm text-[color:var(--px-text-muted)]">
+              {trust.description}
+            </p>
           </div>
         </Card>
         
@@ -48,6 +58,43 @@ export default async function TrustDashboardPage() {
           <p className="text-2xl font-black text-[color:var(--px-text)]">{reviews.length}</p>
         </Card>
       </div>
+
+      <Card className="mb-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-[color:var(--px-text)]">
+              Public trust summary
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-[color:var(--px-text-muted)]">
+              PerX uses broad trust levels during beta. Numeric scores are not
+              shown until enough verified evidence exists and the methodology is
+              approved.
+            </p>
+          </div>
+          <Badge className={trustBadgeClassName(trust.level)}>
+            {trust.shortLabel}
+          </Badge>
+        </div>
+        <div className="mt-4 grid gap-2">
+          {trust.evidence.length ? (
+            trust.evidence.map((item) => (
+              <div
+                className="rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface-soft)] px-3 py-2 text-sm font-semibold text-[color:var(--px-text-muted)]"
+                key={item}
+              >
+                {item}
+              </div>
+            ))
+          ) : (
+            <p className="rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface-soft)] px-3 py-2 text-sm text-[color:var(--px-text-muted)]">
+              Not enough verified activity yet.
+            </p>
+          )}
+        </div>
+        <p className="mt-4 text-xs text-[color:var(--px-text-muted)]">
+          Calculation version: {trust.calculationVersion}
+        </p>
+      </Card>
 
       <div className="grid gap-8 lg:grid-cols-2">
         <div>

@@ -252,6 +252,7 @@ export type UserWhereInput = {
   opportunities?: Prisma.OpportunityListRelationFilter
   bookmarks?: Prisma.OpportunityBookmarkListRelationFilter
   reports?: Prisma.OpportunityReportListRelationFilter
+  userReports?: Prisma.UserReportListRelationFilter
   proposals?: Prisma.ProposalListRelationFilter
   conversations?: Prisma.ConversationParticipantListRelationFilter
   messages?: Prisma.MessageListRelationFilter
@@ -293,6 +294,7 @@ export type UserOrderByWithRelationInput = {
   opportunities?: Prisma.OpportunityOrderByRelationAggregateInput
   bookmarks?: Prisma.OpportunityBookmarkOrderByRelationAggregateInput
   reports?: Prisma.OpportunityReportOrderByRelationAggregateInput
+  userReports?: Prisma.UserReportOrderByRelationAggregateInput
   proposals?: Prisma.ProposalOrderByRelationAggregateInput
   conversations?: Prisma.ConversationParticipantOrderByRelationAggregateInput
   messages?: Prisma.MessageOrderByRelationAggregateInput
@@ -337,6 +339,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   opportunities?: Prisma.OpportunityListRelationFilter
   bookmarks?: Prisma.OpportunityBookmarkListRelationFilter
   reports?: Prisma.OpportunityReportListRelationFilter
+  userReports?: Prisma.UserReportListRelationFilter
   proposals?: Prisma.ProposalListRelationFilter
   conversations?: Prisma.ConversationParticipantListRelationFilter
   messages?: Prisma.MessageListRelationFilter
@@ -416,6 +419,7 @@ export type UserCreateInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -457,6 +461,7 @@ export type UserUncheckedCreateInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -498,6 +503,7 @@ export type UserUpdateInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -539,6 +545,7 @@ export type UserUncheckedUpdateInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -776,6 +783,20 @@ export type UserUpdateOneRequiredWithoutReportsNestedInput = {
   upsert?: Prisma.UserUpsertWithoutReportsInput
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutReportsInput, Prisma.UserUpdateWithoutReportsInput>, Prisma.UserUncheckedUpdateWithoutReportsInput>
+}
+
+export type UserCreateNestedOneWithoutUserReportsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUserReportsInput, Prisma.UserUncheckedCreateWithoutUserReportsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUserReportsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutUserReportsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUserReportsInput, Prisma.UserUncheckedCreateWithoutUserReportsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUserReportsInput
+  upsert?: Prisma.UserUpsertWithoutUserReportsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutUserReportsInput, Prisma.UserUpdateWithoutUserReportsInput>, Prisma.UserUncheckedUpdateWithoutUserReportsInput>
 }
 
 export type UserCreateNestedOneWithoutConversationsInput = {
@@ -1065,6 +1086,7 @@ export type UserCreateWithoutSessionsInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -1105,6 +1127,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -1161,6 +1184,7 @@ export type UserUpdateWithoutSessionsInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -1201,6 +1225,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -1241,6 +1266,7 @@ export type UserCreateWithoutRolesInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -1281,6 +1307,7 @@ export type UserUncheckedCreateWithoutRolesInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -1337,6 +1364,7 @@ export type UserUpdateWithoutRolesInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -1377,6 +1405,7 @@ export type UserUncheckedUpdateWithoutRolesInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -1417,6 +1446,7 @@ export type UserCreateWithoutProfileInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -1457,6 +1487,7 @@ export type UserUncheckedCreateWithoutProfileInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -1513,6 +1544,7 @@ export type UserUpdateWithoutProfileInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -1553,6 +1585,7 @@ export type UserUncheckedUpdateWithoutProfileInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -1593,6 +1626,7 @@ export type UserCreateWithoutOpportunitiesInput = {
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -1633,6 +1667,7 @@ export type UserUncheckedCreateWithoutOpportunitiesInput = {
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -1689,6 +1724,7 @@ export type UserUpdateWithoutOpportunitiesInput = {
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -1729,6 +1765,7 @@ export type UserUncheckedUpdateWithoutOpportunitiesInput = {
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -1769,6 +1806,7 @@ export type UserCreateWithoutBookmarksInput = {
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -1809,6 +1847,7 @@ export type UserUncheckedCreateWithoutBookmarksInput = {
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -1865,6 +1904,7 @@ export type UserUpdateWithoutBookmarksInput = {
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -1905,6 +1945,7 @@ export type UserUncheckedUpdateWithoutBookmarksInput = {
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -1945,6 +1986,7 @@ export type UserCreateWithoutReportsInput = {
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -1985,6 +2027,7 @@ export type UserUncheckedCreateWithoutReportsInput = {
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -2041,6 +2084,7 @@ export type UserUpdateWithoutReportsInput = {
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -2081,6 +2125,187 @@ export type UserUncheckedUpdateWithoutReportsInput = {
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
+  proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
+  conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+  messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  deals?: Prisma.DealParticipantUncheckedUpdateManyWithoutUserNestedInput
+  deliveries?: Prisma.DeliveryUncheckedUpdateManyWithoutSubmitterNestedInput
+  approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
+  releases?: Prisma.ReleaseUncheckedUpdateManyWithoutActorNestedInput
+  refunds?: Prisma.RefundUncheckedUpdateManyWithoutActorNestedInput
+  disputesOpened?: Prisma.DisputeUncheckedUpdateManyWithoutOpenedByNestedInput
+  reviewsGiven?: Prisma.ReviewUncheckedUpdateManyWithoutAuthorNestedInput
+  reviewsReceived?: Prisma.ReviewUncheckedUpdateManyWithoutSubjectNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorNestedInput
+  moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
+  connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
+  connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
+  supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
+  ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
+}
+
+export type UserCreateWithoutUserReportsInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name: string
+  username: string
+  accountClassification?: $Enums.AccountClassification
+  imageUrl?: string | null
+  imageStorageKey?: string | null
+  emailVerifiedAt?: Date | string | null
+  verificationStatus?: $Enums.VerificationStatus
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
+  profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
+  opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
+  bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
+  reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
+  conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
+  messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  deals?: Prisma.DealParticipantCreateNestedManyWithoutUserInput
+  deliveries?: Prisma.DeliveryCreateNestedManyWithoutSubmitterInput
+  approvals?: Prisma.ApprovalCreateNestedManyWithoutActorInput
+  releases?: Prisma.ReleaseCreateNestedManyWithoutActorInput
+  refunds?: Prisma.RefundCreateNestedManyWithoutActorInput
+  disputesOpened?: Prisma.DisputeCreateNestedManyWithoutOpenedByInput
+  reviewsGiven?: Prisma.ReviewCreateNestedManyWithoutAuthorInput
+  reviewsReceived?: Prisma.ReviewCreateNestedManyWithoutSubjectInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorInput
+  moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
+  connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
+  connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
+  supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
+  ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
+}
+
+export type UserUncheckedCreateWithoutUserReportsInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name: string
+  username: string
+  accountClassification?: $Enums.AccountClassification
+  imageUrl?: string | null
+  imageStorageKey?: string | null
+  emailVerifiedAt?: Date | string | null
+  verificationStatus?: $Enums.VerificationStatus
+  isActive?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
+  profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
+  opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
+  bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
+  reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
+  conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+  messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  deals?: Prisma.DealParticipantUncheckedCreateNestedManyWithoutUserInput
+  deliveries?: Prisma.DeliveryUncheckedCreateNestedManyWithoutSubmitterInput
+  approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
+  releases?: Prisma.ReleaseUncheckedCreateNestedManyWithoutActorInput
+  refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutActorInput
+  disputesOpened?: Prisma.DisputeUncheckedCreateNestedManyWithoutOpenedByInput
+  reviewsGiven?: Prisma.ReviewUncheckedCreateNestedManyWithoutAuthorInput
+  reviewsReceived?: Prisma.ReviewUncheckedCreateNestedManyWithoutSubjectInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorInput
+  moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
+  connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
+  connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
+  supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
+  ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
+}
+
+export type UserCreateOrConnectWithoutUserReportsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutUserReportsInput, Prisma.UserUncheckedCreateWithoutUserReportsInput>
+}
+
+export type UserUpsertWithoutUserReportsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutUserReportsInput, Prisma.UserUncheckedUpdateWithoutUserReportsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutUserReportsInput, Prisma.UserUncheckedCreateWithoutUserReportsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutUserReportsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutUserReportsInput, Prisma.UserUncheckedUpdateWithoutUserReportsInput>
+}
+
+export type UserUpdateWithoutUserReportsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
+  profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
+  opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
+  bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
+  reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
+  conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
+  messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  deals?: Prisma.DealParticipantUpdateManyWithoutUserNestedInput
+  deliveries?: Prisma.DeliveryUpdateManyWithoutSubmitterNestedInput
+  approvals?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
+  releases?: Prisma.ReleaseUpdateManyWithoutActorNestedInput
+  refunds?: Prisma.RefundUpdateManyWithoutActorNestedInput
+  disputesOpened?: Prisma.DisputeUpdateManyWithoutOpenedByNestedInput
+  reviewsGiven?: Prisma.ReviewUpdateManyWithoutAuthorNestedInput
+  reviewsReceived?: Prisma.ReviewUpdateManyWithoutSubjectNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutActorNestedInput
+  moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
+  connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
+  connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
+  supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
+  ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutUserReportsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
+  profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
+  opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
+  bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
+  reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -2122,6 +2347,7 @@ export type UserCreateWithoutConversationsInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   deals?: Prisma.DealParticipantCreateNestedManyWithoutUserInput
@@ -2162,6 +2388,7 @@ export type UserUncheckedCreateWithoutConversationsInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   deals?: Prisma.DealParticipantUncheckedCreateNestedManyWithoutUserInput
@@ -2218,6 +2445,7 @@ export type UserUpdateWithoutConversationsInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   deals?: Prisma.DealParticipantUpdateManyWithoutUserNestedInput
@@ -2258,6 +2486,7 @@ export type UserUncheckedUpdateWithoutConversationsInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   deals?: Prisma.DealParticipantUncheckedUpdateManyWithoutUserNestedInput
@@ -2298,6 +2527,7 @@ export type UserCreateWithoutMessagesInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   deals?: Prisma.DealParticipantCreateNestedManyWithoutUserInput
@@ -2338,6 +2568,7 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   deals?: Prisma.DealParticipantUncheckedCreateNestedManyWithoutUserInput
@@ -2394,6 +2625,7 @@ export type UserUpdateWithoutMessagesInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   deals?: Prisma.DealParticipantUpdateManyWithoutUserNestedInput
@@ -2434,6 +2666,7 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   deals?: Prisma.DealParticipantUncheckedUpdateManyWithoutUserNestedInput
@@ -2474,6 +2707,7 @@ export type UserCreateWithoutProposalsInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
   deals?: Prisma.DealParticipantCreateNestedManyWithoutUserInput
@@ -2514,6 +2748,7 @@ export type UserUncheckedCreateWithoutProposalsInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
   deals?: Prisma.DealParticipantUncheckedCreateNestedManyWithoutUserInput
@@ -2570,6 +2805,7 @@ export type UserUpdateWithoutProposalsInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
   deals?: Prisma.DealParticipantUpdateManyWithoutUserNestedInput
@@ -2610,6 +2846,7 @@ export type UserUncheckedUpdateWithoutProposalsInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
   deals?: Prisma.DealParticipantUncheckedUpdateManyWithoutUserNestedInput
@@ -2650,6 +2887,7 @@ export type UserCreateWithoutDealsInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -2690,6 +2928,7 @@ export type UserUncheckedCreateWithoutDealsInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -2746,6 +2985,7 @@ export type UserUpdateWithoutDealsInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -2786,6 +3026,7 @@ export type UserUncheckedUpdateWithoutDealsInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -2826,6 +3067,7 @@ export type UserCreateWithoutDeliveriesInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -2866,6 +3108,7 @@ export type UserUncheckedCreateWithoutDeliveriesInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -2922,6 +3165,7 @@ export type UserUpdateWithoutDeliveriesInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -2962,6 +3206,7 @@ export type UserUncheckedUpdateWithoutDeliveriesInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3002,6 +3247,7 @@ export type UserCreateWithoutApprovalsInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -3042,6 +3288,7 @@ export type UserUncheckedCreateWithoutApprovalsInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3098,6 +3345,7 @@ export type UserUpdateWithoutApprovalsInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -3138,6 +3386,7 @@ export type UserUncheckedUpdateWithoutApprovalsInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3178,6 +3427,7 @@ export type UserCreateWithoutReleasesInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -3218,6 +3468,7 @@ export type UserUncheckedCreateWithoutReleasesInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3274,6 +3525,7 @@ export type UserUpdateWithoutReleasesInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -3314,6 +3566,7 @@ export type UserUncheckedUpdateWithoutReleasesInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3354,6 +3607,7 @@ export type UserCreateWithoutRefundsInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -3394,6 +3648,7 @@ export type UserUncheckedCreateWithoutRefundsInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3450,6 +3705,7 @@ export type UserUpdateWithoutRefundsInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -3490,6 +3746,7 @@ export type UserUncheckedUpdateWithoutRefundsInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3530,6 +3787,7 @@ export type UserCreateWithoutDisputesOpenedInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -3570,6 +3828,7 @@ export type UserUncheckedCreateWithoutDisputesOpenedInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3626,6 +3885,7 @@ export type UserUpdateWithoutDisputesOpenedInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -3666,6 +3926,7 @@ export type UserUncheckedUpdateWithoutDisputesOpenedInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3706,6 +3967,7 @@ export type UserCreateWithoutReviewsGivenInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -3746,6 +4008,7 @@ export type UserUncheckedCreateWithoutReviewsGivenInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3791,6 +4054,7 @@ export type UserCreateWithoutReviewsReceivedInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -3831,6 +4095,7 @@ export type UserUncheckedCreateWithoutReviewsReceivedInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3887,6 +4152,7 @@ export type UserUpdateWithoutReviewsGivenInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -3927,6 +4193,7 @@ export type UserUncheckedUpdateWithoutReviewsGivenInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3978,6 +4245,7 @@ export type UserUpdateWithoutReviewsReceivedInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -4018,6 +4286,7 @@ export type UserUncheckedUpdateWithoutReviewsReceivedInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -4058,6 +4327,7 @@ export type UserCreateWithoutNotificationsInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -4098,6 +4368,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -4154,6 +4425,7 @@ export type UserUpdateWithoutNotificationsInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -4194,6 +4466,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -4234,6 +4507,7 @@ export type UserCreateWithoutAuditLogsInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -4274,6 +4548,7 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -4330,6 +4605,7 @@ export type UserUpdateWithoutAuditLogsInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -4370,6 +4646,7 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -4410,6 +4687,7 @@ export type UserCreateWithoutModerationActionsInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -4450,6 +4728,7 @@ export type UserUncheckedCreateWithoutModerationActionsInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -4506,6 +4785,7 @@ export type UserUpdateWithoutModerationActionsInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -4546,6 +4826,7 @@ export type UserUncheckedUpdateWithoutModerationActionsInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -4586,6 +4867,7 @@ export type UserCreateWithoutConnectionsSentInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -4626,6 +4908,7 @@ export type UserUncheckedCreateWithoutConnectionsSentInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -4671,6 +4954,7 @@ export type UserCreateWithoutConnectionsReceivedInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -4711,6 +4995,7 @@ export type UserUncheckedCreateWithoutConnectionsReceivedInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -4767,6 +5052,7 @@ export type UserUpdateWithoutConnectionsSentInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -4807,6 +5093,7 @@ export type UserUncheckedUpdateWithoutConnectionsSentInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -4858,6 +5145,7 @@ export type UserUpdateWithoutConnectionsReceivedInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -4898,6 +5186,7 @@ export type UserUncheckedUpdateWithoutConnectionsReceivedInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -4938,6 +5227,7 @@ export type UserCreateWithoutProfileBookmarksInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -4978,6 +5268,7 @@ export type UserUncheckedCreateWithoutProfileBookmarksInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -5034,6 +5325,7 @@ export type UserUpdateWithoutProfileBookmarksInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -5074,6 +5366,7 @@ export type UserUncheckedUpdateWithoutProfileBookmarksInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -5114,6 +5407,7 @@ export type UserCreateWithoutSupportTicketsInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -5154,6 +5448,7 @@ export type UserUncheckedCreateWithoutSupportTicketsInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -5210,6 +5505,7 @@ export type UserUpdateWithoutSupportTicketsInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -5250,6 +5546,7 @@ export type UserUncheckedUpdateWithoutSupportTicketsInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -5290,6 +5587,7 @@ export type UserCreateWithoutTicketMessagesInput = {
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
@@ -5330,6 +5628,7 @@ export type UserUncheckedCreateWithoutTicketMessagesInput = {
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
   reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
   proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
   conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
   messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
@@ -5386,6 +5685,7 @@ export type UserUpdateWithoutTicketMessagesInput = {
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
@@ -5426,6 +5726,7 @@ export type UserUncheckedUpdateWithoutTicketMessagesInput = {
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
   reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
   proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
   conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
   messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -5457,6 +5758,7 @@ export type UserCountOutputType = {
   opportunities: number
   bookmarks: number
   reports: number
+  userReports: number
   proposals: number
   conversations: number
   messages: number
@@ -5484,6 +5786,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   opportunities?: boolean | UserCountOutputTypeCountOpportunitiesArgs
   bookmarks?: boolean | UserCountOutputTypeCountBookmarksArgs
   reports?: boolean | UserCountOutputTypeCountReportsArgs
+  userReports?: boolean | UserCountOutputTypeCountUserReportsArgs
   proposals?: boolean | UserCountOutputTypeCountProposalsArgs
   conversations?: boolean | UserCountOutputTypeCountConversationsArgs
   messages?: boolean | UserCountOutputTypeCountMessagesArgs
@@ -5548,6 +5851,13 @@ export type UserCountOutputTypeCountBookmarksArgs<ExtArgs extends runtime.Types.
  */
 export type UserCountOutputTypeCountReportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.OpportunityReportWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountUserReportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserReportWhereInput
 }
 
 /**
@@ -5704,6 +6014,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   opportunities?: boolean | Prisma.User$opportunitiesArgs<ExtArgs>
   bookmarks?: boolean | Prisma.User$bookmarksArgs<ExtArgs>
   reports?: boolean | Prisma.User$reportsArgs<ExtArgs>
+  userReports?: boolean | Prisma.User$userReportsArgs<ExtArgs>
   proposals?: boolean | Prisma.User$proposalsArgs<ExtArgs>
   conversations?: boolean | Prisma.User$conversationsArgs<ExtArgs>
   messages?: boolean | Prisma.User$messagesArgs<ExtArgs>
@@ -5782,6 +6093,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   opportunities?: boolean | Prisma.User$opportunitiesArgs<ExtArgs>
   bookmarks?: boolean | Prisma.User$bookmarksArgs<ExtArgs>
   reports?: boolean | Prisma.User$reportsArgs<ExtArgs>
+  userReports?: boolean | Prisma.User$userReportsArgs<ExtArgs>
   proposals?: boolean | Prisma.User$proposalsArgs<ExtArgs>
   conversations?: boolean | Prisma.User$conversationsArgs<ExtArgs>
   messages?: boolean | Prisma.User$messagesArgs<ExtArgs>
@@ -5815,6 +6127,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     opportunities: Prisma.$OpportunityPayload<ExtArgs>[]
     bookmarks: Prisma.$OpportunityBookmarkPayload<ExtArgs>[]
     reports: Prisma.$OpportunityReportPayload<ExtArgs>[]
+    userReports: Prisma.$UserReportPayload<ExtArgs>[]
     proposals: Prisma.$ProposalPayload<ExtArgs>[]
     conversations: Prisma.$ConversationParticipantPayload<ExtArgs>[]
     messages: Prisma.$MessagePayload<ExtArgs>[]
@@ -6249,6 +6562,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   opportunities<T extends Prisma.User$opportunitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$opportunitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OpportunityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   bookmarks<T extends Prisma.User$bookmarksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$bookmarksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OpportunityBookmarkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reports<T extends Prisma.User$reportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$reportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OpportunityReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  userReports<T extends Prisma.User$userReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$userReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   proposals<T extends Prisma.User$proposalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$proposalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProposalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   conversations<T extends Prisma.User$conversationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$conversationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   messages<T extends Prisma.User$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$MessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -6839,6 +7153,30 @@ export type User$reportsArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
   take?: number
   skip?: number
   distinct?: Prisma.OpportunityReportScalarFieldEnum | Prisma.OpportunityReportScalarFieldEnum[]
+}
+
+/**
+ * User.userReports
+ */
+export type User$userReportsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserReport
+   */
+  select?: Prisma.UserReportSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserReport
+   */
+  omit?: Prisma.UserReportOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserReportInclude<ExtArgs> | null
+  where?: Prisma.UserReportWhereInput
+  orderBy?: Prisma.UserReportOrderByWithRelationInput | Prisma.UserReportOrderByWithRelationInput[]
+  cursor?: Prisma.UserReportWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserReportScalarFieldEnum | Prisma.UserReportScalarFieldEnum[]
 }
 
 /**

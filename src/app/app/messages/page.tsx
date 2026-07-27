@@ -40,6 +40,7 @@ type DbConversationLike = {
     userId: string;
     lastReadAt?: Date | null;
   }[];
+  proposals?: { deal?: { id: string; status: string } | null }[];
 };
 
 function getPresenceState(showPresence: boolean, lastSeenAt?: Date | null) {
@@ -70,7 +71,6 @@ function toWorkspaceConversation(conversation: unknown, user: CurrentUser): Work
       participantName: conversation.participantName,
       participantUsername: conversation.participantUsername,
       timestamp: "2m",
-      trustScore: 86,
       unreadCount: 1,
     };
   }
@@ -91,6 +91,9 @@ function toWorkspaceConversation(conversation: unknown, user: CurrentUser): Work
 
   return {
     context: dbConversation.opportunity?.title ?? "Professional conversation",
+    dealHref: dbConversation.proposals?.find((proposal) => proposal.deal)?.deal
+      ? `/app/deals/${dbConversation.proposals.find((proposal) => proposal.deal)?.deal?.id}`
+      : undefined,
     id: dbConversation.id,
     lastMessage: latestMessage?.body ?? "No messages yet.",
     messages: latestMessage
@@ -113,6 +116,9 @@ function toWorkspaceConversation(conversation: unknown, user: CurrentUser): Work
         ]
       : [],
     opportunityTitle: dbConversation.opportunity?.title ?? undefined,
+    participantId: dbConversation.participants.find(
+      (participant) => participant.userId !== user.id,
+    )?.userId ?? null,
     participantImageUrl: otherParticipant?.imageUrl ?? otherParticipant?.profile?.profileImageUrl ?? null,
     participantName: otherParticipant?.name ?? dbConversation.opportunity?.title ?? "Conversation",
     participantPresence: getPresenceState(
@@ -122,7 +128,6 @@ function toWorkspaceConversation(conversation: unknown, user: CurrentUser): Work
     participantRole: "Opportunity participant",
     participantUsername: otherParticipant?.username ?? undefined,
     timestamp: latestMessage ? latestMessage.createdAt.toLocaleDateString() : "new",
-    trustScore: undefined,
     unreadCount,
   };
 }

@@ -1,10 +1,9 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 
-import { BrandSymbol } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 
 export function MobileNav({
@@ -16,11 +15,11 @@ export function MobileNav({
     <Dialog.Root>
       <Dialog.Trigger asChild>
         <Button
-          aria-label="Open navigation"
-          className="md:hidden"
+          aria-label="Open navigation menu"
+          className="h-11 w-11 rounded-xl p-0 md:hidden"
           variant="secondary"
         >
-          <BrandSymbol className="h-5 w-8" decorative />
+          <Menu aria-hidden size={22} />
         </Button>
       </Dialog.Trigger>
       <Dialog.Portal>
@@ -33,7 +32,7 @@ export function MobileNav({
             <Dialog.Close asChild>
               <button
                 aria-label="Close navigation"
-                className="grid h-10 w-10 place-items-center rounded-full text-[color:var(--px-text-muted)] transition hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                className="grid h-11 w-11 place-items-center rounded-xl text-[color:var(--px-text-muted)] transition hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                 type="button"
               >
                 <X aria-hidden size={18} />

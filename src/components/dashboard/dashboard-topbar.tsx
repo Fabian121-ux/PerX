@@ -1,13 +1,12 @@
 "use client";
 
-import { Bell, MessageSquare, Search, ShieldCheck } from "lucide-react";
+import { Bell, Menu, MessageSquare, Search, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 import type { CurrentUser } from "@/lib/auth/session";
 import { CreateMenu } from "./create-menu";
 import { AccountMenu } from "./account-menu";
 import { ThemeToggle } from "./theme-toggle";
-import { BrandSymbol } from "@/components/brand-logo";
 import type { UnreadCounts } from "@/lib/data/unread-counts";
 
 function formatBadgeCount(value: number) {
@@ -52,11 +51,11 @@ export function DashboardTopbar({
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4 lg:gap-6">
         <button
           onClick={onMenuClick}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white transition-colors hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:hidden"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text)] shadow-sm transition hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:hidden"
           aria-label="Open navigation menu"
           type="button"
         >
-          <BrandSymbol className="h-7 w-10" dark />
+          <Menu aria-hidden size={22} />
         </button>
 
         {previewMode ? (

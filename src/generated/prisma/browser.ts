@@ -88,6 +88,11 @@ export type OpportunityBookmark = Prisma.OpportunityBookmarkModel
  */
 export type OpportunityReport = Prisma.OpportunityReportModel
 /**
+ * Model UserReport
+ *
+ */
+export type UserReport = Prisma.UserReportModel
+/**
  * Model OpportunityStatusHistory
  *
  */

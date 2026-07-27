@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getAppRoute, getEnvironment } from "@/lib/navigation/app-routes";
 import { ShieldCheck } from "lucide-react";
+import { trustBadgeClassName } from "@/lib/trust/engine";
 import type { DashboardRecommendedProfile } from "./types";
 
 export function RecommendedProfiles({
@@ -47,7 +48,7 @@ export function RecommendedProfiles({
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--px-primary)] text-xl font-bold text-white ring-2 ring-[color:var(--px-primary)]/35">
                   {getInitials(profile.name)}
                 </div>
-                {profile.trustScore > 80 && (
+                {["ESTABLISHED", "STRONG"].includes(profile.trust.level) && (
                   <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-[color:var(--px-surface)] ring-2 ring-[color:var(--px-primary)]">
                     <ShieldCheck
                       size={12}
@@ -65,6 +66,13 @@ export function RecommendedProfiles({
               <p className="mt-2 line-clamp-2 text-xs text-[color:var(--px-text-muted)]">
                 {profile.headline}
               </p>
+              <span
+                className={`mt-3 inline-flex rounded-full border px-2 py-1 text-[11px] font-bold ${trustBadgeClassName(
+                  profile.trust.level,
+                )}`}
+              >
+                {profile.trust.shortLabel}
+              </span>
               <Link
                 className="mt-4 w-full rounded-full bg-[color:var(--px-primary)] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                 href={`/u/${profile.username}`}

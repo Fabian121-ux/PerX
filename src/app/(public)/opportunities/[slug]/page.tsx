@@ -27,6 +27,7 @@ import { getOpportunityBySlugResult } from "@/lib/data/opportunities";
 import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { formatBudgetRange } from "@/lib/money";
 import { reportReasonOptions } from "@/lib/options";
+import { calculateTrustSummary, trustBadgeClassName } from "@/lib/trust/engine";
 
 export default async function OpportunityDetailPage({
   params,
@@ -52,8 +53,13 @@ export default async function OpportunityDetailPage({
 
   const image = getTemporaryOpportunityImage(opportunity.slug);
   const ownerName = opportunity.owner?.name ?? "perX member";
-  const trustScore =
-    opportunity.owner?.profile?.trustScore ?? opportunity.owner?.trustScore;
+  const trust = calculateTrustSummary({
+    averageRating: opportunity.owner?.profile?.averageRating ?? 0,
+    completedDeals: opportunity.owner?.profile?.completedDeals ?? 0,
+    emailVerifiedAt: opportunity.owner?.emailVerifiedAt ?? null,
+    profileCompleteness: opportunity.owner?.profile?.profileCompleteness ?? 0,
+    verificationStatus: opportunity.owner?.verificationStatus ?? null,
+  });
 
   return (
     <PublicPageShell>
@@ -119,10 +125,10 @@ export default async function OpportunityDetailPage({
                   {getInitials(ownerName)}
                   <span>{ownerName}</span>
                 </Link>
-                {trustScore ? (
-                  <Badge className="border-green-200 bg-green-50 text-green-800">
+                {opportunity.owner ? (
+                  <Badge className={trustBadgeClassName(trust.level)}>
                     <ShieldCheck aria-hidden className="mr-1" size={13} />
-                    Trust {trustScore}
+                    {trust.shortLabel}
                   </Badge>
                 ) : null}
               </div>

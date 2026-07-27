@@ -17,6 +17,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
 import { Field, Input, Select } from "@/components/ui/form";
+import {
+  trustBadgeClassName,
+  type PublicTrustSummary,
+} from "@/lib/trust/engine";
 
 type DiscoverOpportunity = Parameters<typeof OpportunityCard>[0]["opportunity"];
 
@@ -27,9 +31,10 @@ type DiscoverCategory = {
 
 type DiscoverProfile = {
   headline: string;
+  imageUrl?: string | null;
   name: string;
   role: string;
-  trustScore: number;
+  trust: PublicTrustSummary;
   username: string;
 };
 
@@ -245,8 +250,8 @@ export function DiscoverExperience({
               <p className="text-sm font-bold text-[color:var(--px-text)]">
                 {resultCount} results
               </p>
-              <p className="text-xs text-[color:var(--px-text-muted)]">
-                Sorted by trust, relevance and recent activity
+                <p className="text-xs text-[color:var(--px-text-muted)]">
+                Sorted by relevance and recent activity
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -278,7 +283,6 @@ export function DiscoverExperience({
                 >
                   <option value="relevance">Relevant</option>
                   <option value="recent">Recent</option>
-                  <option value="trust">Trust</option>
                 </Select>
                 <Button size="sm" type="submit" variant="secondary">
                   Sort
@@ -420,11 +424,11 @@ export function DiscoverExperience({
                         {profile.name}
                       </p>
                       <p className="truncate text-xs text-[color:var(--px-text-muted)]">
-                        {profile.role}
+                      {profile.role}
                       </p>
                     </div>
-                    <Badge className="bg-green-50 text-green-800">
-                      Trust {profile.trustScore}
+                    <Badge className={trustBadgeClassName(profile.trust.level)}>
+                      {profile.trust.shortLabel}
                     </Badge>
                   </div>
                 ))}
@@ -482,9 +486,18 @@ function PersonDiscoveryCard({
     <Card className="flex min-h-[230px] flex-col justify-between gap-5">
       <div>
         <div className="flex items-start gap-3">
-          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-[color:var(--px-primary)] text-base font-black text-white">
-            {initials}
-          </div>
+          {profile.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              alt={`${profile.name} profile photo`}
+              className="h-14 w-14 shrink-0 rounded-full bg-[color:var(--px-muted)] object-cover"
+              src={profile.imageUrl}
+            />
+          ) : (
+            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-[color:var(--px-primary)] text-base font-black text-white">
+              {initials}
+            </div>
+          )}
           <div className="min-w-0">
             <h2 className="text-lg font-black text-[color:var(--px-text)]">
               {profile.name}
@@ -496,9 +509,9 @@ function PersonDiscoveryCard({
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
           <Badge>{profile.role}</Badge>
-          <Badge className="border-green-200 bg-green-50 text-green-800">
+          <Badge className={trustBadgeClassName(profile.trust.level)}>
             <ShieldCheck aria-hidden className="mr-1" size={13} />
-            Trust {profile.trustScore}
+            {profile.trust.label}
           </Badge>
         </div>
       </div>

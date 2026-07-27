@@ -398,6 +398,7 @@ export const ModelName = {
   OpportunityImage: 'OpportunityImage',
   OpportunityBookmark: 'OpportunityBookmark',
   OpportunityReport: 'OpportunityReport',
+  UserReport: 'UserReport',
   OpportunityStatusHistory: 'OpportunityStatusHistory',
   Conversation: 'Conversation',
   ConversationParticipant: 'ConversationParticipant',
@@ -445,7 +446,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "role" | "userRole" | "profile" | "profileSkill" | "portfolioItem" | "workHistory" | "verificationRequest" | "opportunityCategory" | "opportunity" | "opportunityImage" | "opportunityBookmark" | "opportunityReport" | "opportunityStatusHistory" | "conversation" | "conversationParticipant" | "message" | "messageEdit" | "messageAttachment" | "messageReadReceipt" | "blockedUser" | "proposal" | "proposalMilestone" | "proposalStatusHistory" | "deal" | "dealParticipant" | "dealMilestone" | "delivery" | "approval" | "release" | "refund" | "dispute" | "ledgerEntry" | "escrowStatusHistory" | "review" | "trustSignal" | "notification" | "adminBroadcast" | "broadcastDelivery" | "auditLog" | "moderationAction" | "connection" | "profileBookmark" | "supportTicket" | "ticketMessage"
+    modelProps: "user" | "session" | "role" | "userRole" | "profile" | "profileSkill" | "portfolioItem" | "workHistory" | "verificationRequest" | "opportunityCategory" | "opportunity" | "opportunityImage" | "opportunityBookmark" | "opportunityReport" | "userReport" | "opportunityStatusHistory" | "conversation" | "conversationParticipant" | "message" | "messageEdit" | "messageAttachment" | "messageReadReceipt" | "blockedUser" | "proposal" | "proposalMilestone" | "proposalStatusHistory" | "deal" | "dealParticipant" | "dealMilestone" | "delivery" | "approval" | "release" | "refund" | "dispute" | "ledgerEntry" | "escrowStatusHistory" | "review" | "trustSignal" | "notification" | "adminBroadcast" | "broadcastDelivery" | "auditLog" | "moderationAction" | "connection" | "profileBookmark" | "supportTicket" | "ticketMessage"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1482,6 +1483,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.OpportunityReportCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.OpportunityReportCountAggregateOutputType> | number
+        }
+      }
+    }
+    UserReport: {
+      payload: Prisma.$UserReportPayload<ExtArgs>
+      fields: Prisma.UserReportFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.UserReportFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserReportPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.UserReportFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserReportPayload>
+        }
+        findFirst: {
+          args: Prisma.UserReportFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserReportPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.UserReportFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserReportPayload>
+        }
+        findMany: {
+          args: Prisma.UserReportFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserReportPayload>[]
+        }
+        create: {
+          args: Prisma.UserReportCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserReportPayload>
+        }
+        createMany: {
+          args: Prisma.UserReportCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.UserReportCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserReportPayload>[]
+        }
+        delete: {
+          args: Prisma.UserReportDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserReportPayload>
+        }
+        update: {
+          args: Prisma.UserReportUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserReportPayload>
+        }
+        deleteMany: {
+          args: Prisma.UserReportDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.UserReportUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.UserReportUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserReportPayload>[]
+        }
+        upsert: {
+          args: Prisma.UserReportUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UserReportPayload>
+        }
+        aggregate: {
+          args: Prisma.UserReportAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUserReport>
+        }
+        groupBy: {
+          args: Prisma.UserReportGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserReportGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.UserReportCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.UserReportCountAggregateOutputType> | number
         }
       }
     }
@@ -4104,6 +4179,23 @@ export const OpportunityReportScalarFieldEnum = {
 export type OpportunityReportScalarFieldEnum = (typeof OpportunityReportScalarFieldEnum)[keyof typeof OpportunityReportScalarFieldEnum]
 
 
+export const UserReportScalarFieldEnum = {
+  id: 'id',
+  reporterId: 'reporterId',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  category: 'category',
+  details: 'details',
+  status: 'status',
+  contextConversationId: 'contextConversationId',
+  contextMessageId: 'contextMessageId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserReportScalarFieldEnum = (typeof UserReportScalarFieldEnum)[keyof typeof UserReportScalarFieldEnum]
+
+
 export const OpportunityStatusHistoryScalarFieldEnum = {
   id: 'id',
   opportunityId: 'opportunityId',
@@ -4766,6 +4858,34 @@ export type ListEnumReportStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
 
 
 /**
+ * Reference to a field of type 'UserReportTargetType'
+ */
+export type EnumUserReportTargetTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserReportTargetType'>
+
+
+
+/**
+ * Reference to a field of type 'UserReportTargetType[]'
+ */
+export type ListEnumUserReportTargetTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserReportTargetType[]'>
+
+
+
+/**
+ * Reference to a field of type 'UserReportStatus'
+ */
+export type EnumUserReportStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserReportStatus'>
+
+
+
+/**
+ * Reference to a field of type 'UserReportStatus[]'
+ */
+export type ListEnumUserReportStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserReportStatus[]'>
+
+
+
+/**
  * Reference to a field of type 'ConversationStatus'
  */
 export type EnumConversationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ConversationStatus'>
@@ -5070,6 +5190,7 @@ export type GlobalOmitConfig = {
   opportunityImage?: Prisma.OpportunityImageOmit
   opportunityBookmark?: Prisma.OpportunityBookmarkOmit
   opportunityReport?: Prisma.OpportunityReportOmit
+  userReport?: Prisma.UserReportOmit
   opportunityStatusHistory?: Prisma.OpportunityStatusHistoryOmit
   conversation?: Prisma.ConversationOmit
   conversationParticipant?: Prisma.ConversationParticipantOmit

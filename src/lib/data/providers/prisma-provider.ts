@@ -39,10 +39,19 @@ export const prismaProvider: PerXDataProvider = {
           owner: {
             select: {
               id: true,
+              emailVerifiedAt: true,
               imageUrl: true,
               name: true,
-              profile: { select: { profileImageUrl: true, trustScore: true } },
+              profile: {
+                select: {
+                  averageRating: true,
+                  completedDeals: true,
+                  profileCompleteness: true,
+                  profileImageUrl: true,
+                },
+              },
               username: true,
+              verificationStatus: true,
             },
           },
         },
@@ -76,11 +85,20 @@ export const prismaProvider: PerXDataProvider = {
           owner: {
             select: {
               id: true,
+              emailVerifiedAt: true,
               imageUrl: true,
               name: true,
-              profile: { select: { profileImageUrl: true, trustScore: true } },
+              profile: {
+                select: {
+                  averageRating: true,
+                  completedDeals: true,
+                  profileCompleteness: true,
+                  profileImageUrl: true,
+                },
+              },
               roles: { include: { role: true } },
               username: true,
+              verificationStatus: true,
             },
           },
         },
@@ -190,6 +208,12 @@ export const prismaProvider: PerXDataProvider = {
               },
             },
           },
+          proposals: {
+            orderBy: { createdAt: "desc" },
+            select: { deal: { select: { id: true, status: true } } },
+            take: 1,
+            where: { deal: { isNot: null } },
+          },
         },
         orderBy: { updatedAt: "desc" },
         where: { participants: { some: { userId } } },
@@ -222,6 +246,7 @@ export const prismaProvider: PerXDataProvider = {
       return getPrisma().user.findFirst({
         select: {
           createdAt: true,
+          emailVerifiedAt: true,
           id: true,
           imageUrl: true,
           name: true,

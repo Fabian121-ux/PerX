@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { OpportunityCard } from "@/components/opportunity-card";
 import { removeOpportunityBookmarkAction, removeProfileBookmarkAction } from "@/features/saved/actions";
 import { BookmarkMinus } from "lucide-react";
+import { calculateTrustSummary, trustBadgeClassName } from "@/lib/trust/engine";
 
 export default async function SavedItemsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const user = await getCurrentUser();
@@ -19,7 +20,30 @@ export default async function SavedItemsPage({ searchParams }: { searchParams: P
     where: { userId: user.id },
     include: {
       opportunity: {
-        include: { owner: true }
+        include: {
+          category: true,
+          images: {
+            orderBy: [{ isCover: "desc" }, { createdAt: "asc" }],
+            take: 4,
+          },
+          owner: {
+            select: {
+              emailVerifiedAt: true,
+              imageUrl: true,
+              name: true,
+              profile: {
+                select: {
+                  averageRating: true,
+                  completedDeals: true,
+                  profileCompleteness: true,
+                  profileImageUrl: true,
+                },
+              },
+              username: true,
+              verificationStatus: true,
+            },
+          },
+        }
       }
     },
     orderBy: { createdAt: "desc" }
@@ -29,7 +53,20 @@ export default async function SavedItemsPage({ searchParams }: { searchParams: P
     where: { userId: user.id },
     include: {
       profile: {
-        include: { user: true }
+        select: {
+          averageRating: true,
+          completedDeals: true,
+          headline: true,
+          profileCompleteness: true,
+          user: {
+            select: {
+              emailVerifiedAt: true,
+              name: true,
+              username: true,
+              verificationStatus: true,
+            },
+          },
+        }
       }
     },
     orderBy: { createdAt: "desc" }
@@ -79,7 +116,16 @@ export default async function SavedItemsPage({ searchParams }: { searchParams: P
 
         {currentTab === "profiles" && (
           savedProfiles.length > 0 ? (
-            savedProfiles.map(bookmark => (
+            savedProfiles.map(bookmark => {
+              const trust = calculateTrustSummary({
+                averageRating: String(bookmark.profile.averageRating),
+                completedDeals: bookmark.profile.completedDeals,
+                emailVerifiedAt: bookmark.profile.user.emailVerifiedAt,
+                profileCompleteness: bookmark.profile.profileCompleteness,
+                verificationStatus: bookmark.profile.user.verificationStatus,
+              });
+
+              return (
               <Card key={bookmark.id} className="relative flex flex-col gap-4">
                 <Link href={`/u/${bookmark.profile.user.username}`} className="flex items-center gap-4 hover:opacity-80 transition-opacity">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color:var(--px-primary-soft)] font-bold text-[color:var(--px-primary)] text-lg">
@@ -88,7 +134,7 @@ export default async function SavedItemsPage({ searchParams }: { searchParams: P
                   <div>
                     <h3 className="font-semibold text-[color:var(--px-text)]">{bookmark.profile.user.name}</h3>
                     <p className="text-sm text-[color:var(--px-text-muted)]">{bookmark.profile.headline || "PerX Member"}</p>
-                    {bookmark.profile.trustScore > 0 && <span className="mt-1 inline-block rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-semibold text-[color:var(--px-success)]">Trust {bookmark.profile.trustScore}</span>}
+                    <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-xs font-semibold ${trustBadgeClassName(trust.level)}`}>{trust.shortLabel}</span>
                   </div>
                 </Link>
                 <div className="mt-auto pt-4 border-t border-[color:var(--px-border)] flex justify-end">
@@ -99,7 +145,8 @@ export default async function SavedItemsPage({ searchParams }: { searchParams: P
                   </form>
                 </div>
               </Card>
-            ))
+              );
+            })
           ) : (
             <div className="col-span-full">
               <EmptyState title="No saved profiles" body="Profiles you save will appear here." action={<Link href="/app/network" className="text-sm font-bold text-[color:var(--px-primary)] hover:underline">Find people</Link>} />

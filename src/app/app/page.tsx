@@ -6,6 +6,7 @@ import { getOpportunityFeed } from "@/lib/data/opportunities";
 import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { HomeDashboard } from "@/components/dashboard/home-dashboard";
 import type { HomeDashboardData } from "@/components/dashboard/types";
+import { calculateTrustSummary } from "@/lib/trust/engine";
 
 function getTimeAgo(dateString: string | Date | undefined) {
   if (!dateString) return "recently";
@@ -29,10 +30,14 @@ export default async function DashboardPage() {
   // Pick top 5 opportunities for recommended
   const topOpps = recentOpps.slice(0, 5);
 
-  const mockDashboardData: HomeDashboardData = {
+  const dashboardData: HomeDashboardData = {
     user,
     connections: [],
-    trustScore: user.profile?.trustScore ?? 0,
+    trust: calculateTrustSummary({
+      emailVerifiedAt: user.emailVerifiedAt ?? null,
+      profileCompleteness: user.profile?.profileCompleteness ?? 0,
+      verificationStatus: user.verificationStatus,
+    }),
     activeDealsCount: metrics.deals,
     activeDealsDetail: "In progress",
     openProposalsCount: metrics.proposals,
@@ -60,5 +65,5 @@ export default async function DashboardPage() {
     opportunityTrends: [],
   };
 
-  return <HomeDashboard data={mockDashboardData} />;
+  return <HomeDashboard data={dashboardData} />;
 }

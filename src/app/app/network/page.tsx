@@ -12,6 +12,20 @@ import {
   startConversationAction,
 } from "@/features/network/actions";
 
+const networkUserSelect = {
+  id: true,
+  imageUrl: true,
+  name: true,
+  profile: {
+    select: {
+      headline: true,
+      profileImageUrl: true,
+      profileCompleteness: true,
+    },
+  },
+  username: true,
+} as const;
+
 export default async function NetworkPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const user = await getCurrentUser();
   if (!user) return null;
@@ -25,8 +39,8 @@ export default async function NetworkPage({ searchParams }: { searchParams: Prom
       OR: [{ requesterId: user.id }, { receiverId: user.id }],
     },
     include: {
-      requester: { include: { profile: true } },
-      receiver: { include: { profile: true } },
+      requester: { select: networkUserSelect },
+      receiver: { select: networkUserSelect },
     },
   });
 
@@ -36,11 +50,10 @@ export default async function NetworkPage({ searchParams }: { searchParams: Prom
       receiverId: user.id,
     },
     include: {
-      requester: { include: { profile: true } },
+      requester: { select: networkUserSelect },
     },
   });
 
-  // Get users to suggest (not connected, not pending, high trust score)
   const existingConnectionIds = await getPrisma().connection.findMany({
     where: {
       OR: [{ requesterId: user.id }, { receiverId: user.id }],
@@ -49,13 +62,19 @@ export default async function NetworkPage({ searchParams }: { searchParams: Prom
 
   const suggestions = await getPrisma().user.findMany({
     where: {
+      accountClassification: "PUBLIC_BETA_USER",
       id: { notIn: [...existingConnectionIds, user.id] },
       isActive: true,
-      profile: { trustScore: { gt: 50 } }
+      profile: {
+        is: {
+          isDiscoverable: true,
+          profileCompleteness: { gte: 40 },
+        },
+      },
     },
-    include: { profile: true },
+    select: networkUserSelect,
     take: 10,
-    orderBy: { profile: { trustScore: "desc" } }
+    orderBy: [{ profile: { profileCompleteness: "desc" } }, { createdAt: "desc" }],
   });
 
   return (

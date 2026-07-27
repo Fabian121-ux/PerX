@@ -49,6 +49,7 @@ type DbConversationLike = {
     } | null;
     userId: string;
   }[];
+  proposals?: { deal?: { id: string; status: string } | null }[];
 };
 
 type DbMessageLike = {
@@ -92,7 +93,6 @@ function toWorkspaceConversation(
       participantName: conversation.participantName,
       participantUsername: conversation.participantUsername,
       timestamp: "2m",
-      trustScore: 86,
       unreadCount: 0,
     };
   }
@@ -110,6 +110,9 @@ function toWorkspaceConversation(
 
   return {
     context: dbConversation.opportunity?.title ?? "Professional conversation",
+    dealHref: dbConversation.proposals?.find((proposal) => proposal.deal)?.deal
+      ? `/app/deals/${dbConversation.proposals.find((proposal) => proposal.deal)?.deal?.id}`
+      : undefined,
     id: dbConversation.id,
     lastMessage: latestMessage?.body ?? "No messages yet.",
     messages: dbConversation.messages.map(msg => ({
@@ -131,6 +134,9 @@ function toWorkspaceConversation(
           : (otherParticipant?.name ?? "Participant"),
     })),
     opportunityTitle: dbConversation.opportunity?.title ?? undefined,
+    participantId: dbConversation.participants.find(
+      (participant) => participant.userId !== user.id,
+    )?.userId ?? null,
     participantImageUrl: otherParticipant?.imageUrl ?? otherParticipant?.profile?.profileImageUrl ?? null,
     participantName:
       otherParticipant?.name ??
@@ -145,7 +151,6 @@ function toWorkspaceConversation(
     timestamp: latestMessage
       ? latestMessage.createdAt.toLocaleDateString()
       : "new",
-    trustScore: undefined,
     unreadCount: 0,
   };
 }

@@ -7,9 +7,10 @@ import {
   previewProposals
 } from "@/lib/data/preview";
 import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
+import { calculateTrustSummary } from "@/lib/trust/engine";
 
 export default function PreviewDashboardPage() {
-  const mockDashboardData: HomeDashboardData = {
+  const previewDashboardData: HomeDashboardData = {
     user: {
       id: previewUser.id,
       email: previewUser.email,
@@ -23,17 +24,22 @@ export default function PreviewDashboardPage() {
       { id: "amara-nwosu", name: "Amara Nwosu", username: "amara-nwosu", role: "Brand Strategist", headline: "Positioning health startups", isOnline: true },
       { id: "tunde-bello", name: "Tunde Bello", username: "tunde-bello", role: "Startup Advisor", headline: "Connecting capital and talent", isOnline: false },
     ],
-    trustScore: previewUser.trustScore,
+    trust: calculateTrustSummary({
+      completedDeals: 2,
+      emailVerifiedAt: new Date().toISOString(),
+      profileCompleteness: 90,
+      verificationStatus: "VERIFIED",
+    }),
     activeDealsCount: previewDeals.filter(d => ["FUNDED", "IN_PROGRESS", "SUBMITTED", "UNDER_REVIEW"].includes(d.status)).length || 3,
     activeDealsDetail: "2 milestones in progress",
     openProposalsCount: previewProposals.filter(p => p.status === "SENT").length || 7,
     openProposalsDetail: "3 awaiting response",
     recommendedProfiles: [
-      { id: "maya-client", name: "Maya Chen", username: "maya-client", role: "Startup Founder", headline: "Building cross-border services", trustScore: 86 },
-      { id: "david-okafor", name: "David Okafor", username: "david-okafor", role: "Full-stack Developer", headline: "Scaling marketplace MVPs", trustScore: 92 },
-      { id: "amara-nwosu", name: "Amara Nwosu", username: "amara-nwosu", role: "Brand Strategist", headline: "Positioning health startups", trustScore: 78 },
-      { id: "tunde-bello", name: "Tunde Bello", username: "tunde-bello", role: "Startup Advisor", headline: "Connecting capital and talent", trustScore: 95 },
-      { id: "sofia-martins", name: "Sofia Martins", username: "sofia-martins", role: "Product Designer", headline: "Designing trust-led platforms", trustScore: 88 },
+      { id: "maya-client", name: "Maya Chen", username: "maya-client", role: "Startup Founder", headline: "Building cross-border services", trust: calculateTrustSummary({ completedDeals: 1, emailVerifiedAt: new Date().toISOString(), profileCompleteness: 86 }) },
+      { id: "david-okafor", name: "David Okafor", username: "david-okafor", role: "Full-stack Developer", headline: "Scaling marketplace MVPs", trust: calculateTrustSummary({ completedDeals: 3, emailVerifiedAt: new Date().toISOString(), profileCompleteness: 92, verificationStatus: "VERIFIED" }) },
+      { id: "amara-nwosu", name: "Amara Nwosu", username: "amara-nwosu", role: "Brand Strategist", headline: "Positioning health startups", trust: calculateTrustSummary({ emailVerifiedAt: new Date().toISOString(), profileCompleteness: 78 }) },
+      { id: "tunde-bello", name: "Tunde Bello", username: "tunde-bello", role: "Startup Advisor", headline: "Connecting capital and talent", trust: calculateTrustSummary({ completedDeals: 5, averageRating: 4.7, emailVerifiedAt: new Date().toISOString(), profileCompleteness: 95, verificationStatus: "VERIFIED" }) },
+      { id: "sofia-martins", name: "Sofia Martins", username: "sofia-martins", role: "Product Designer", headline: "Designing trust-led platforms", trust: calculateTrustSummary({ completedDeals: 1, emailVerifiedAt: new Date().toISOString(), profileCompleteness: 88 }) },
     ],
     recommendedOpportunities: previewOpportunities.map((opp) => {
       const image = getTemporaryOpportunityImage(opp.slug);
@@ -66,5 +72,5 @@ export default function PreviewDashboardPage() {
     ],
   };
 
-  return <HomeDashboard data={mockDashboardData} />;
+  return <HomeDashboard data={previewDashboardData} />;
 }

@@ -20,10 +20,19 @@ export async function getPublishedSectionOpportunities({
       owner: {
         select: {
           id: true,
+          emailVerifiedAt: true,
           imageUrl: true,
           name: true,
-          profile: { select: { profileImageUrl: true, trustScore: true } },
+          profile: {
+            select: {
+              averageRating: true,
+              completedDeals: true,
+              profileCompleteness: true,
+              profileImageUrl: true,
+            },
+          },
           username: true,
+          verificationStatus: true,
         },
       },
     },

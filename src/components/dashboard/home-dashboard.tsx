@@ -72,13 +72,9 @@ export function HomeDashboard({ data }: { data: HomeDashboardData }) {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <DashboardMetricCard
-            title="Trust Score"
-            value={data.trustScore !== null ? `${data.trustScore}/100` : "New"}
-            detail={
-              data.trustScore && data.trustScore > 80
-                ? "Strong profile"
-                : "Building reputation"
-            }
+            title="Trust"
+            value={data.trust.shortLabel}
+            detail={data.trust.description}
             actionLabel="View breakdown"
             href={getHref("reviews")}
             icon={

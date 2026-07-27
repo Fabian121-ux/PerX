@@ -1,6 +1,7 @@
 import { DiscoverExperience } from "@/components/discover/discover-experience";
 import { demoCategories } from "@/lib/data/demo";
 import { previewOpportunities } from "@/lib/data/preview";
+import { calculateTrustSummary } from "@/lib/trust/engine";
 
 export default async function PreviewDiscoverPage({
   searchParams,
@@ -32,28 +33,46 @@ export default async function PreviewDiscoverPage({
       headline: "Building cross-border services",
       name: "Maya Chen",
       role: "Startup Founder",
-      trustScore: 86,
+      trust: calculateTrustSummary({
+        completedDeals: 1,
+        emailVerifiedAt: new Date().toISOString(),
+        profileCompleteness: 86,
+      }),
       username: "maya-client",
     },
     {
       headline: "Scaling marketplace MVPs",
       name: "David Okafor",
       role: "Full-stack Developer",
-      trustScore: 92,
+      trust: calculateTrustSummary({
+        completedDeals: 3,
+        emailVerifiedAt: new Date().toISOString(),
+        profileCompleteness: 92,
+        verificationStatus: "VERIFIED",
+      }),
       username: "david-okafor",
     },
     {
       headline: "Positioning health startups",
       name: "Amara Nwosu",
       role: "Brand Strategist",
-      trustScore: 78,
+      trust: calculateTrustSummary({
+        emailVerifiedAt: new Date().toISOString(),
+        profileCompleteness: 78,
+      }),
       username: "amara-nwosu",
     },
     {
       headline: "Connecting capital and talent",
       name: "Tunde Bello",
       role: "Startup Advisor",
-      trustScore: 95,
+      trust: calculateTrustSummary({
+        averageRating: 4.7,
+        completedDeals: 5,
+        emailVerifiedAt: new Date().toISOString(),
+        profileCompleteness: 95,
+        verificationStatus: "VERIFIED",
+      }),
       username: "tunde-bello",
     },
   ];

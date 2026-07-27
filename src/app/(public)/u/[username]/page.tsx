@@ -23,6 +23,7 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { getPublicProfileResult } from "@/lib/data/profiles";
 import { getPrisma } from "@/lib/db/prisma";
+import { calculateTrustSummary, trustBadgeClassName } from "@/lib/trust/engine";
 
 export default async function PublicProfilePage({
   params,
@@ -61,21 +62,21 @@ export default async function PublicProfilePage({
             <div className="perx-hero-card h-28" />
             <div className="px-5 pb-6 sm:px-6">
               <div className="-mt-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div className="flex items-end gap-4">
+                <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
                   {normalized.profileImageUrl ? (
                     <img
                       alt={`${normalized.name} profile photo`}
-                      className="h-24 w-24 shrink-0 rounded-[22px] border-4 border-[color:var(--px-surface)] bg-[color:var(--px-muted)] object-cover shadow-[var(--px-shadow)]"
+                      className="h-20 w-20 shrink-0 rounded-[18px] border-4 border-[color:var(--px-surface)] bg-[color:var(--px-muted)] object-cover shadow-[var(--px-shadow)] sm:h-24 sm:w-24 sm:rounded-[22px]"
                       src={normalized.profileImageUrl}
                     />
                   ) : (
-                    <div className="grid h-24 w-24 shrink-0 place-items-center rounded-[22px] border-4 border-[color:var(--px-surface)] bg-[color:var(--px-primary)] text-2xl font-black text-white shadow-[var(--px-shadow)]">
+                    <div className="grid h-20 w-20 shrink-0 place-items-center rounded-[18px] border-4 border-[color:var(--px-surface)] bg-[color:var(--px-primary)] text-xl font-black text-white shadow-[var(--px-shadow)] sm:h-24 sm:w-24 sm:rounded-[22px] sm:text-2xl">
                       {getInitials(normalized.name)}
                     </div>
                   )}
-                  <div className="pb-1">
+                  <div className="min-w-0 pb-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h1 className="text-3xl font-black text-[color:var(--px-text)]">
+                      <h1 className="min-w-0 break-words text-2xl font-black text-[color:var(--px-text)] sm:text-3xl">
                         {normalized.name}
                       </h1>
                       {normalized.isVerified ? (
@@ -85,7 +86,7 @@ export default async function PublicProfilePage({
                         </Badge>
                       ) : null}
                     </div>
-                    <p className="mt-1 text-lg font-semibold text-[color:var(--px-text-muted)]">
+                    <p className="mt-1 break-words text-base font-semibold text-[color:var(--px-text-muted)] sm:text-lg">
                       {normalized.headline}
                     </p>
                   </div>
@@ -118,6 +119,14 @@ export default async function PublicProfilePage({
                   {normalized.averageRating
                     ? `${normalized.averageRating.toFixed(1)} rating`
                     : "Reviews building"}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 ${trustBadgeClassName(
+                    normalized.trust.level,
+                  )}`}
+                >
+                  <ShieldCheck aria-hidden size={14} />
+                  {normalized.trust.label}
                 </span>
               </div>
 
@@ -296,16 +305,57 @@ export default async function PublicProfilePage({
             </div>
           </Card>
 
+          {viewer && viewer.id !== normalized.id ? (
+            <Card>
+              <h2 className="font-black text-[color:var(--px-text)]">
+                Safety
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
+                Report this profile if it appears abusive, misleading, or
+                unsafe.
+              </p>
+              <ButtonLink
+                className="mt-4 w-full"
+                href={`/app/reports/new?targetType=USER&targetId=${encodeURIComponent(
+                  normalized.id,
+                )}`}
+                variant="secondary"
+              >
+                Report profile
+              </ButtonLink>
+            </Card>
+          ) : null}
+
           <Card>
             <h2 className="font-black text-[color:var(--px-text)]">Trust</h2>
-            <div className="mt-4 rounded-[18px] border border-green-200 bg-green-50 p-5 text-center">
-              <ShieldCheck className="mx-auto text-green-700" size={24} />
-              <p className="mt-2 text-sm font-bold text-green-800">
-                Trust score
+            <div
+              className={`mt-4 rounded-[18px] border p-5 text-center ${trustBadgeClassName(
+                normalized.trust.level,
+              )}`}
+            >
+              <ShieldCheck className="mx-auto" size={24} />
+              <p className="mt-2 text-sm font-bold">
+                {normalized.trust.label}
               </p>
-              <p className="mt-1 text-4xl font-black text-green-950">
-                {normalized.trustScore}
+              <p className="mt-2 text-xs leading-5">
+                {normalized.trust.description}
               </p>
+            </div>
+            <div className="mt-4 grid gap-2">
+              {normalized.trust.evidence.length ? (
+                normalized.trust.evidence.slice(0, 4).map((item) => (
+                  <span
+                    className="rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--px-text-muted)]"
+                    key={item}
+                  >
+                    {item}
+                  </span>
+                ))
+              ) : (
+                <p className="text-sm text-[color:var(--px-text-muted)]">
+                  Trust information is still building.
+                </p>
+              )}
             </div>
             <div className="mt-4 grid gap-2">
               {normalized.roles.map((role) => (
@@ -383,7 +433,17 @@ function normalizeProfile(profile: any) {
       : [],
     roles,
     skills: details.showSkills === false ? [] : skills,
-    trustScore: Number(details.trustScore ?? profile.trustScore ?? 0),
+    trust: calculateTrustSummary({
+      averageRating,
+      completedDeals: Number(
+        details.completedDeals ?? profile.completedDeals ?? 0,
+      ),
+      emailVerifiedAt: profile.emailVerifiedAt ?? null,
+      profileCompleteness: Number(
+        details.profileCompleteness ?? profile.profileCompleteness ?? 0,
+      ),
+      verificationStatus: profile.verificationStatus,
+    }),
     workHistory: Array.isArray(details.workHistory) ? details.workHistory : [],
   };
 }
@@ -437,7 +497,7 @@ function ProfilePrimaryAction({
 }) {
   if (!viewerSignedIn) {
     return (
-      <ButtonLink href={`/sign-in?next=/u/${username}`}>
+      <ButtonLink className="w-full sm:w-auto" href={`/sign-in?next=/u/${username}`}>
         <Mail aria-hidden className="mr-2" size={16} />
         Contact
       </ButtonLink>
@@ -445,17 +505,17 @@ function ProfilePrimaryAction({
   }
 
   if (!relationship) {
-    return <ButtonLink href="/app/profile">View private profile</ButtonLink>;
+    return <ButtonLink className="w-full sm:w-auto" href="/app/profile">View private profile</ButtonLink>;
   }
 
   if (relationship.blocked || relationship.status === "BLOCKED") {
-    return <Button disabled>Unavailable</Button>;
+    return <Button className="w-full sm:w-auto" disabled>Unavailable</Button>;
   }
 
   if (relationship.status === "ACCEPTED" && allowMessagesFromConnections) {
     return (
       <form action={async () => { "use server"; await startConversationAction(targetUserId); }}>
-        <Button type="submit">
+        <Button className="w-full sm:w-auto" type="submit">
           <Mail aria-hidden className="mr-2" size={16} />
           Message
         </Button>
@@ -464,7 +524,7 @@ function ProfilePrimaryAction({
   }
 
   if (relationship.status === "PENDING" && relationship.connectionDirection === "outgoing") {
-    return <Button disabled variant="secondary">Request sent</Button>;
+    return <Button className="w-full sm:w-auto" disabled variant="secondary">Request sent</Button>;
   }
 
   if (
@@ -474,7 +534,7 @@ function ProfilePrimaryAction({
   ) {
     return (
       <form action={async () => { "use server"; await acceptConnectionAction(relationship.connectionId!); }}>
-        <Button type="submit">Accept connection</Button>
+        <Button className="w-full sm:w-auto" type="submit">Accept connection</Button>
       </form>
     );
   }
@@ -482,12 +542,12 @@ function ProfilePrimaryAction({
   if (allowConnectionRequests) {
     return (
       <form action={async () => { "use server"; await requestConnectionAction(targetUserId); }}>
-        <Button type="submit">Connect</Button>
+        <Button className="w-full sm:w-auto" type="submit">Connect</Button>
       </form>
     );
   }
 
-  return <Button disabled variant="secondary">Connections closed</Button>;
+  return <Button className="w-full sm:w-auto" disabled variant="secondary">Connections closed</Button>;
 }
 
 function getInitials(name: string) {

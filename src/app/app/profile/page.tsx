@@ -4,6 +4,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/session";
 import { Badge } from "@/components/ui/badge";
+import { calculateTrustSummary, trustBadgeClassName } from "@/lib/trust/engine";
 
 export default async function ProfilePage() {
   const user = await requireUser();
@@ -29,19 +30,26 @@ export default async function ProfilePage() {
   }
 
   const joinDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'Unknown';
+  const trust = calculateTrustSummary({
+    averageRating: user.profile.averageRating ?? 0,
+    completedDeals: user.profile.completedDeals ?? 0,
+    emailVerifiedAt: user.emailVerifiedAt ?? null,
+    profileCompleteness: user.profile.profileCompleteness,
+    verificationStatus: user.verificationStatus,
+  });
 
   return (
     <AppSection
       title="Your Profile"
       description="Manage your public identity and account settings."
     >
-      <div className="grid gap-6 md:grid-cols-[1fr_300px]">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="flex flex-col gap-6">
           <Card className="overflow-hidden">
-            <div className="h-32 bg-[color:var(--px-primary-soft)]" />
-            <div className="px-6 pb-6">
-              <div className="relative -mt-16 mb-4 flex justify-between">
-                <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-4 border-[color:var(--px-surface)] bg-[color:var(--px-muted)]">
+            <div className="h-24 bg-[color:var(--px-primary-soft)] sm:h-32" />
+            <div className="px-4 pb-6 sm:px-6">
+              <div className="relative -mt-12 mb-4 flex flex-col gap-4 sm:-mt-16 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-[color:var(--px-surface)] bg-[color:var(--px-muted)] sm:h-32 sm:w-32">
                   {user.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={user.imageUrl} alt={user.name} className="h-full w-full object-cover" />
@@ -49,14 +57,16 @@ export default async function ProfilePage() {
                     <UserRound size={48} className="text-[color:var(--px-text-muted)]" />
                   )}
                 </div>
-                <div className="mt-16 flex gap-2">
-                  <ButtonLink variant="outline" href="/app/profile/edit">Edit profile</ButtonLink>
-                  <ButtonLink href="/app/settings">Account settings</ButtonLink>
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                  <ButtonLink className="w-full sm:w-auto" variant="outline" href="/app/profile/edit">Edit profile</ButtonLink>
+                  <ButtonLink className="w-full sm:w-auto" href="/app/settings">Account settings</ButtonLink>
                 </div>
               </div>
               
-              <div className="mb-1 flex items-center gap-2">
-                <h1 className="text-2xl font-bold">{user.name}</h1>
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <h1 className="min-w-0 break-words text-2xl font-bold text-[color:var(--px-text)]">
+                  {user.name}
+                </h1>
                 {user.verificationStatus === "VERIFIED" && (
                   <CheckCircle2 size={20} className="text-blue-500" aria-label="Verified User" />
                 )}
@@ -64,24 +74,24 @@ export default async function ProfilePage() {
                   <Badge className="bg-[color:var(--px-error)] text-white">Admin</Badge>
                 )}
               </div>
-              <p className="mb-4 text-lg text-[color:var(--px-text-muted)]">@{user.username}</p>
+              <p className="mb-4 break-all text-lg text-[color:var(--px-text-muted)]">@{user.username}</p>
               
               <p className="mb-6 font-medium">{user.profile.headline}</p>
               
-              <div className="flex flex-wrap gap-4 text-sm text-[color:var(--px-text-muted)]">
+              <div className="flex flex-wrap gap-3 text-sm text-[color:var(--px-text-muted)]">
                 {user.profile.location && (
-                  <div className="flex items-center gap-1.5">
+                  <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[color:var(--px-surface-soft)] px-3 py-1.5">
                     <MapPin size={16} />
-                    <span>{user.profile.location}</span>
+                    <span className="truncate">{user.profile.location}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-1.5">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--px-surface-soft)] px-3 py-1.5">
                   <Calendar size={16} />
                   <span>Joined {joinDate}</span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 ${trustBadgeClassName(trust.level)}`}>
                   <ShieldCheck size={16} className="text-[color:var(--px-gold)]" />
-                  <span>Trust Score: {user.profile.trustScore}</span>
+                  <span>{trust.label}</span>
                 </div>
               </div>
             </div>
@@ -90,7 +100,7 @@ export default async function ProfilePage() {
           {user.profile.biography && (
             <Card>
               <h2 className="mb-4 text-lg font-bold">About</h2>
-              <p className="whitespace-pre-wrap text-[color:var(--px-text)]">{user.profile.biography}</p>
+              <p className="whitespace-pre-wrap break-words text-[color:var(--px-text)]">{user.profile.biography}</p>
             </Card>
           )}
         </div>

@@ -173,6 +173,31 @@ export const ReportStatus = {
 export type ReportStatus = (typeof ReportStatus)[keyof typeof ReportStatus]
 
 
+export const UserReportTargetType = {
+  MESSAGE: 'MESSAGE',
+  CONVERSATION: 'CONVERSATION',
+  USER: 'USER',
+  OPPORTUNITY: 'OPPORTUNITY',
+  DEAL: 'DEAL',
+  REVIEW: 'REVIEW',
+  REAL_ESTATE_LISTING: 'REAL_ESTATE_LISTING',
+  OTHER_CONTENT: 'OTHER_CONTENT'
+} as const
+
+export type UserReportTargetType = (typeof UserReportTargetType)[keyof typeof UserReportTargetType]
+
+
+export const UserReportStatus = {
+  SUBMITTED: 'SUBMITTED',
+  IN_REVIEW: 'IN_REVIEW',
+  ACTION_TAKEN: 'ACTION_TAKEN',
+  RESOLVED: 'RESOLVED',
+  DISMISSED: 'DISMISSED'
+} as const
+
+export type UserReportStatus = (typeof UserReportStatus)[keyof typeof UserReportStatus]
+
+
 export const ReviewVisibility = {
   PUBLIC: 'PUBLIC',
   HIDDEN: 'HIDDEN'

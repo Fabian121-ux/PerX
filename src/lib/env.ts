@@ -89,7 +89,7 @@ function isStrictDeploymentEnvironment(env: NodeJS.ProcessEnv) {
   );
 }
 
-function isProductionRuntime(env: NodeJS.ProcessEnv) {
+export function isProductionRuntime(env: NodeJS.ProcessEnv = process.env) {
   return (
     env.NODE_ENV === "production" ||
     env.VERCEL_ENV === "production" ||

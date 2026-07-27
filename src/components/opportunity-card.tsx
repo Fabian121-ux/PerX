@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { formatBudgetRange } from "@/lib/money";
 import { bookmarkOpportunityAction } from "@/features/opportunities/actions";
+import { calculateTrustSummary, trustBadgeClassName } from "@/lib/trust/engine";
 
 type OpportunityCardProps = {
   href?: string;
@@ -33,12 +34,28 @@ type OpportunityCardProps = {
     publishedAt?: Date | string | null;
     skills?: string[];
     category?: { name: string; slug: string } | null;
-    owner?: { name: string; username?: string; profile?: { trustScore?: number } | null; trustScore?: number } | null;
+    owner?: {
+      emailVerifiedAt?: Date | string | null;
+      name: string;
+      profile?: {
+        averageRating?: unknown;
+        completedDeals?: number | string | null;
+        profileCompleteness?: number | string | null;
+      } | null;
+      username?: string;
+      verificationStatus?: string | null;
+    } | null;
   };
 };
 
 export function OpportunityCard({ href, opportunity }: OpportunityCardProps) {
-  const trustScore = opportunity.owner?.profile?.trustScore ?? opportunity.owner?.trustScore;
+  const trust = calculateTrustSummary({
+    averageRating: String(opportunity.owner?.profile?.averageRating ?? 0),
+    completedDeals: opportunity.owner?.profile?.completedDeals ?? 0,
+    emailVerifiedAt: opportunity.owner?.emailVerifiedAt ?? null,
+    profileCompleteness: opportunity.owner?.profile?.profileCompleteness ?? 0,
+    verificationStatus: opportunity.owner?.verificationStatus ?? null,
+  });
   const temporaryImage = getTemporaryOpportunityImage(opportunity.slug);
   const coverImage =
     opportunity.images?.find((image) => image.isCover) ?? opportunity.images?.[0];
@@ -101,10 +118,10 @@ export function OpportunityCard({ href, opportunity }: OpportunityCardProps) {
             <Badge className="capitalize">
               {opportunity.type.replaceAll("_", " ").toLowerCase()}
             </Badge>
-            {trustScore ? (
-              <Badge className="border-green-200 bg-green-50 text-green-800">
+            {opportunity.owner ? (
+              <Badge className={trustBadgeClassName(trust.level)}>
                 <ShieldCheck aria-hidden className="mr-1" size={13} />
-                Trust {trustScore}
+                {trust.shortLabel}
               </Badge>
             ) : null}
           </div>

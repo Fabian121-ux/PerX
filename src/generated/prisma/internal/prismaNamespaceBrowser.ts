@@ -65,6 +65,7 @@ export const ModelName = {
   OpportunityImage: 'OpportunityImage',
   OpportunityBookmark: 'OpportunityBookmark',
   OpportunityReport: 'OpportunityReport',
+  UserReport: 'UserReport',
   OpportunityStatusHistory: 'OpportunityStatusHistory',
   Conversation: 'Conversation',
   ConversationParticipant: 'ConversationParticipant',
@@ -325,6 +326,23 @@ export const OpportunityReportScalarFieldEnum = {
 } as const
 
 export type OpportunityReportScalarFieldEnum = (typeof OpportunityReportScalarFieldEnum)[keyof typeof OpportunityReportScalarFieldEnum]
+
+
+export const UserReportScalarFieldEnum = {
+  id: 'id',
+  reporterId: 'reporterId',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  category: 'category',
+  details: 'details',
+  status: 'status',
+  contextConversationId: 'contextConversationId',
+  contextMessageId: 'contextMessageId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserReportScalarFieldEnum = (typeof UserReportScalarFieldEnum)[keyof typeof UserReportScalarFieldEnum]
 
 
 export const OpportunityStatusHistoryScalarFieldEnum = {

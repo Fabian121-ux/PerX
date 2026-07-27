@@ -15,6 +15,7 @@ import {
 import { requireUser } from "@/lib/auth/session";
 import { getPeopleDirectory, type PeopleDirectoryEntry } from "@/lib/data/people";
 import { roleLabels } from "@/lib/permissions/capabilities";
+import { trustBadgeClassName } from "@/lib/trust/engine";
 
 export const dynamic = "force-dynamic";
 
@@ -81,7 +82,7 @@ export default async function PeoplePage({
                   ))}
               </Select>
             </label>
-            <Button type="submit" variant="secondary">
+            <Button className="w-full lg:w-auto" type="submit" variant="secondary">
               Search
             </Button>
           </form>
@@ -159,7 +160,9 @@ function PeopleCard({ person }: { person: PeopleDirectoryEntry }) {
         {person.roles.slice(0, 2).map((role) => (
           <Badge key={role}>{role}</Badge>
         ))}
-        {person.trustScore > 0 ? <Badge>Trust {person.trustScore}</Badge> : null}
+        <Badge className={trustBadgeClassName(person.trust.level)}>
+          {person.trust.shortLabel}
+        </Badge>
       </div>
 
       {person.skills.length ? (
@@ -175,14 +178,14 @@ function PeopleCard({ person }: { person: PeopleDirectoryEntry }) {
         </div>
       ) : null}
 
-      <div className="mt-auto flex flex-wrap gap-2">
-        <ButtonLink href={`/u/${person.username}`} size="sm" variant="secondary">
+      <div className="mt-auto flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <ButtonLink className="w-full sm:w-auto" href={`/u/${person.username}`} size="sm" variant="secondary">
           View profile
         </ButtonLink>
         <ConnectionAction person={person} />
         {person.canStartConversation ? (
           <form action={async () => { "use server"; await startConversationAction(person.id); }}>
-            <Button size="sm" type="submit">
+            <Button className="w-full sm:w-auto" size="sm" type="submit">
               <MessageCircle aria-hidden className="mr-2" size={15} />
               Message
             </Button>
@@ -195,26 +198,26 @@ function PeopleCard({ person }: { person: PeopleDirectoryEntry }) {
 
 function ConnectionAction({ person }: { person: PeopleDirectoryEntry }) {
   if (person.connectionState === "ACCEPTED") {
-    return <Button disabled size="sm" variant="secondary">Connected</Button>;
+    return <Button className="w-full sm:w-auto" disabled size="sm" variant="secondary">Connected</Button>;
   }
   if (person.connectionState === "PENDING" && person.connectionDirection === "outgoing") {
-    return <Button disabled size="sm" variant="secondary">Request sent</Button>;
+    return <Button className="w-full sm:w-auto" disabled size="sm" variant="secondary">Request sent</Button>;
   }
   if (person.connectionState === "PENDING" && person.connectionDirection === "incoming" && person.connectionId) {
     return (
       <form action={async () => { "use server"; await acceptConnectionAction(person.connectionId!); }}>
-        <Button size="sm" type="submit">Accept</Button>
+        <Button className="w-full sm:w-auto" size="sm" type="submit">Accept</Button>
       </form>
     );
   }
   if (person.connectionState === "BLOCKED") {
-    return <Button disabled size="sm" variant="secondary">Blocked</Button>;
+    return <Button className="w-full sm:w-auto" disabled size="sm" variant="secondary">Blocked</Button>;
   }
   if (!person.canRequestConnection) return null;
 
   return (
     <form action={async () => { "use server"; await requestConnectionAction(person.id); }}>
-      <Button size="sm" type="submit" variant="secondary">
+      <Button className="w-full sm:w-auto" size="sm" type="submit" variant="secondary">
         <UserRoundPlus aria-hidden className="mr-2" size={15} />
         Connect
       </Button>
