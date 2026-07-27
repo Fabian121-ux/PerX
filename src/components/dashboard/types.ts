@@ -59,8 +59,21 @@ export interface HomeDashboardData {
   trust: PublicTrustSummary;
   activeDealsCount: number;
   activeDealsDetail?: string;
+  connectionRequestsCount: number;
+  draftsCount: number;
+  notificationsCount: number;
   openProposalsCount: number;
   openProposalsDetail?: string;
+  publishedItemsCount: number;
+  unreadMessagesCount: number;
+  onboarding: {
+    dismissed: boolean;
+    items: Array<{
+      complete: boolean;
+      href: string;
+      label: string;
+    }>;
+  };
   recommendedProfiles: DashboardRecommendedProfile[];
   recommendedOpportunities: DashboardOpportunity[];
   activityFeed: DashboardActivity[];

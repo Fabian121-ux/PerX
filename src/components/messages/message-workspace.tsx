@@ -31,6 +31,7 @@ import {
   markConversationReadAction,
   sendMessageAction,
 } from "@/features/messages/actions";
+import { blockUserAction } from "@/features/network/actions";
 
 type ReplyPreview = {
   body: string;
@@ -461,10 +462,13 @@ export function MessageWorkspace({
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4" ref={historyRef}>
             <div className="mx-auto flex max-w-3xl flex-col gap-4">
               <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-[color:var(--px-primary)]">Context</p>
+                <p className="text-xs font-bold uppercase tracking-wide text-[color:var(--px-primary)]">Safety reminder</p>
                 <p className="mt-1 text-sm font-bold text-[color:var(--px-text)]">{activeConversation.opportunityTitle ?? activeConversation.context ?? "Professional conversation"}</p>
                 <p className="mt-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
-                  Messaging is separate from escrow and deal state. No custody, transfer, or release action happens in chat.
+                  Keep important conversations and agreements on PerX. This helps preserve records that may support dispute resolution, safety reviews and account protection.{" "}
+                  <Link className="font-bold text-[color:var(--px-primary)] hover:underline" href="/trust-safety">
+                    Trust & Safety
+                  </Link>
                 </p>
               </div>
 
@@ -808,14 +812,24 @@ function ConversationDetails({
           </Link>
         ) : null}
         {conversation.participantId ? (
-          <Link
-            className="mt-2 inline-flex min-h-10 items-center rounded-[var(--px-radius-sm)] border border-[color:var(--px-border-strong)] px-4 text-sm font-bold text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-            href={`/app/reports/new?targetType=USER&targetId=${encodeURIComponent(
-              conversation.participantId,
-            )}`}
-          >
-            Report profile
-          </Link>
+          <div className="mt-2 flex flex-col gap-2">
+            <Link
+              className="inline-flex min-h-10 items-center justify-center rounded-[var(--px-radius-sm)] border border-[color:var(--px-border-strong)] px-4 text-sm font-bold text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              href={`/app/reports/new?targetType=USER&targetId=${encodeURIComponent(
+                conversation.participantId,
+              )}`}
+            >
+              Report profile
+            </Link>
+            <form action={blockUserAction.bind(null, conversation.participantId)}>
+              <button
+                className="inline-flex min-h-10 w-full items-center justify-center rounded-[var(--px-radius-sm)] border border-red-200 px-4 text-sm font-bold text-red-700 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                type="submit"
+              >
+                Block
+              </button>
+            </form>
+          </div>
         ) : null}
       </div>
 

@@ -17,6 +17,7 @@ export const RoleName = {
   INVESTOR: 'INVESTOR',
   PROPERTY_OWNER: 'PROPERTY_OWNER',
   ADMIN: 'ADMIN',
+  MASTER_ADMIN: 'MASTER_ADMIN',
   INTERNAL_TESTER: 'INTERNAL_TESTER'
 } as const
 
@@ -196,6 +197,75 @@ export const UserReportStatus = {
 } as const
 
 export type UserReportStatus = (typeof UserReportStatus)[keyof typeof UserReportStatus]
+
+
+export const ModerationCaseStatus = {
+  NEW: 'NEW',
+  TRIAGED: 'TRIAGED',
+  ASSIGNED: 'ASSIGNED',
+  IN_REVIEW: 'IN_REVIEW',
+  NEEDS_INFORMATION: 'NEEDS_INFORMATION',
+  ACTION_REQUIRED: 'ACTION_REQUIRED',
+  ESCALATED: 'ESCALATED',
+  RESOLVED: 'RESOLVED',
+  DISMISSED: 'DISMISSED',
+  APPEALED: 'APPEALED',
+  CLOSED: 'CLOSED'
+} as const
+
+export type ModerationCaseStatus = (typeof ModerationCaseStatus)[keyof typeof ModerationCaseStatus]
+
+
+export const ModerationCaseSource = {
+  USER_REPORT: 'USER_REPORT',
+  MESSAGE_REPORT: 'MESSAGE_REPORT',
+  CONVERSATION_REPORT: 'CONVERSATION_REPORT',
+  LISTING_REPORT: 'LISTING_REPORT',
+  DEAL_DISPUTE: 'DEAL_DISPUTE',
+  POLICY_FLAG: 'POLICY_FLAG',
+  SUPPORT_CASE: 'SUPPORT_CASE',
+  SECURITY_INVESTIGATION: 'SECURITY_INVESTIGATION'
+} as const
+
+export type ModerationCaseSource = (typeof ModerationCaseSource)[keyof typeof ModerationCaseSource]
+
+
+export const EnforcementActionType = {
+  WARNING: 'WARNING',
+  MESSAGING_RESTRICTION: 'MESSAGING_RESTRICTION',
+  CONNECTION_REQUEST_RESTRICTION: 'CONNECTION_REQUEST_RESTRICTION',
+  PUBLISHING_RESTRICTION: 'PUBLISHING_RESTRICTION',
+  VERIFICATION_REQUIRED: 'VERIFICATION_REQUIRED',
+  TEMPORARY_SUSPENSION: 'TEMPORARY_SUSPENSION',
+  INDEFINITE_SUSPENSION: 'INDEFINITE_SUSPENSION',
+  DEACTIVATION: 'DEACTIVATION',
+  PERMANENT_BAN: 'PERMANENT_BAN',
+  SESSION_REVOCATION: 'SESSION_REVOCATION',
+  RESTORATION: 'RESTORATION'
+} as const
+
+export type EnforcementActionType = (typeof EnforcementActionType)[keyof typeof EnforcementActionType]
+
+
+export const EnforcementActionStatus = {
+  ACTIVE: 'ACTIVE',
+  EXPIRED: 'EXPIRED',
+  REVERSED: 'REVERSED'
+} as const
+
+export type EnforcementActionStatus = (typeof EnforcementActionStatus)[keyof typeof EnforcementActionStatus]
+
+
+export const EnforcementAppealStatus = {
+  SUBMITTED: 'SUBMITTED',
+  IN_REVIEW: 'IN_REVIEW',
+  UPHELD: 'UPHELD',
+  MODIFIED: 'MODIFIED',
+  REVERSED: 'REVERSED',
+  DISMISSED: 'DISMISSED'
+} as const
+
+export type EnforcementAppealStatus = (typeof EnforcementAppealStatus)[keyof typeof EnforcementAppealStatus]
 
 
 export const ReviewVisibility = {

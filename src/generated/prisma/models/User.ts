@@ -36,6 +36,15 @@ export type UserMinAggregateOutputType = {
   emailVerifiedAt: Date | null
   verificationStatus: $Enums.VerificationStatus | null
   isActive: boolean | null
+  messagingRestrictedUntil: Date | null
+  connectionRequestsRestrictedUntil: Date | null
+  publishingRestrictedUntil: Date | null
+  suspendedAt: Date | null
+  suspendedUntil: Date | null
+  deactivatedAt: Date | null
+  bannedAt: Date | null
+  enforcementReasonPublic: string | null
+  onboardingDismissedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -52,6 +61,15 @@ export type UserMaxAggregateOutputType = {
   emailVerifiedAt: Date | null
   verificationStatus: $Enums.VerificationStatus | null
   isActive: boolean | null
+  messagingRestrictedUntil: Date | null
+  connectionRequestsRestrictedUntil: Date | null
+  publishingRestrictedUntil: Date | null
+  suspendedAt: Date | null
+  suspendedUntil: Date | null
+  deactivatedAt: Date | null
+  bannedAt: Date | null
+  enforcementReasonPublic: string | null
+  onboardingDismissedAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -68,6 +86,15 @@ export type UserCountAggregateOutputType = {
   emailVerifiedAt: number
   verificationStatus: number
   isActive: number
+  messagingRestrictedUntil: number
+  connectionRequestsRestrictedUntil: number
+  publishingRestrictedUntil: number
+  suspendedAt: number
+  suspendedUntil: number
+  deactivatedAt: number
+  bannedAt: number
+  enforcementReasonPublic: number
+  onboardingDismissedAt: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -86,6 +113,15 @@ export type UserMinAggregateInputType = {
   emailVerifiedAt?: true
   verificationStatus?: true
   isActive?: true
+  messagingRestrictedUntil?: true
+  connectionRequestsRestrictedUntil?: true
+  publishingRestrictedUntil?: true
+  suspendedAt?: true
+  suspendedUntil?: true
+  deactivatedAt?: true
+  bannedAt?: true
+  enforcementReasonPublic?: true
+  onboardingDismissedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -102,6 +138,15 @@ export type UserMaxAggregateInputType = {
   emailVerifiedAt?: true
   verificationStatus?: true
   isActive?: true
+  messagingRestrictedUntil?: true
+  connectionRequestsRestrictedUntil?: true
+  publishingRestrictedUntil?: true
+  suspendedAt?: true
+  suspendedUntil?: true
+  deactivatedAt?: true
+  bannedAt?: true
+  enforcementReasonPublic?: true
+  onboardingDismissedAt?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -118,6 +163,15 @@ export type UserCountAggregateInputType = {
   emailVerifiedAt?: true
   verificationStatus?: true
   isActive?: true
+  messagingRestrictedUntil?: true
+  connectionRequestsRestrictedUntil?: true
+  publishingRestrictedUntil?: true
+  suspendedAt?: true
+  suspendedUntil?: true
+  deactivatedAt?: true
+  bannedAt?: true
+  enforcementReasonPublic?: true
+  onboardingDismissedAt?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -207,6 +261,15 @@ export type UserGroupByOutputType = {
   emailVerifiedAt: Date | null
   verificationStatus: $Enums.VerificationStatus
   isActive: boolean
+  messagingRestrictedUntil: Date | null
+  connectionRequestsRestrictedUntil: Date | null
+  publishingRestrictedUntil: Date | null
+  suspendedAt: Date | null
+  suspendedUntil: Date | null
+  deactivatedAt: Date | null
+  bannedAt: Date | null
+  enforcementReasonPublic: string | null
+  onboardingDismissedAt: Date | null
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -244,6 +307,15 @@ export type UserWhereInput = {
   emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFilter<"User"> | $Enums.VerificationStatus
   isActive?: Prisma.BoolFilter<"User"> | boolean
+  messagingRestrictedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  publishingRestrictedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  suspendedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  suspendedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  deactivatedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  bannedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  enforcementReasonPublic?: Prisma.StringNullableFilter<"User"> | string | null
+  onboardingDismissedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   sessions?: Prisma.SessionListRelationFilter
@@ -269,6 +341,8 @@ export type UserWhereInput = {
   moderationActions?: Prisma.ModerationActionListRelationFilter
   connectionsSent?: Prisma.ConnectionListRelationFilter
   connectionsReceived?: Prisma.ConnectionListRelationFilter
+  blocksMade?: Prisma.BlockedUserListRelationFilter
+  blocksReceived?: Prisma.BlockedUserListRelationFilter
   profileBookmarks?: Prisma.ProfileBookmarkListRelationFilter
   supportTickets?: Prisma.SupportTicketListRelationFilter
   ticketMessages?: Prisma.TicketMessageListRelationFilter
@@ -286,6 +360,15 @@ export type UserOrderByWithRelationInput = {
   emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  messagingRestrictedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  connectionRequestsRestrictedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishingRestrictedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  suspendedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  deactivatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  bannedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  enforcementReasonPublic?: Prisma.SortOrderInput | Prisma.SortOrder
+  onboardingDismissedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   sessions?: Prisma.SessionOrderByRelationAggregateInput
@@ -311,6 +394,8 @@ export type UserOrderByWithRelationInput = {
   moderationActions?: Prisma.ModerationActionOrderByRelationAggregateInput
   connectionsSent?: Prisma.ConnectionOrderByRelationAggregateInput
   connectionsReceived?: Prisma.ConnectionOrderByRelationAggregateInput
+  blocksMade?: Prisma.BlockedUserOrderByRelationAggregateInput
+  blocksReceived?: Prisma.BlockedUserOrderByRelationAggregateInput
   profileBookmarks?: Prisma.ProfileBookmarkOrderByRelationAggregateInput
   supportTickets?: Prisma.SupportTicketOrderByRelationAggregateInput
   ticketMessages?: Prisma.TicketMessageOrderByRelationAggregateInput
@@ -331,6 +416,15 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFilter<"User"> | $Enums.VerificationStatus
   isActive?: Prisma.BoolFilter<"User"> | boolean
+  messagingRestrictedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  publishingRestrictedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  suspendedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  suspendedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  deactivatedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  bannedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  enforcementReasonPublic?: Prisma.StringNullableFilter<"User"> | string | null
+  onboardingDismissedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   sessions?: Prisma.SessionListRelationFilter
@@ -356,6 +450,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   moderationActions?: Prisma.ModerationActionListRelationFilter
   connectionsSent?: Prisma.ConnectionListRelationFilter
   connectionsReceived?: Prisma.ConnectionListRelationFilter
+  blocksMade?: Prisma.BlockedUserListRelationFilter
+  blocksReceived?: Prisma.BlockedUserListRelationFilter
   profileBookmarks?: Prisma.ProfileBookmarkListRelationFilter
   supportTickets?: Prisma.SupportTicketListRelationFilter
   ticketMessages?: Prisma.TicketMessageListRelationFilter
@@ -373,6 +469,15 @@ export type UserOrderByWithAggregationInput = {
   emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  messagingRestrictedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  connectionRequestsRestrictedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  publishingRestrictedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  suspendedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
+  deactivatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  bannedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  enforcementReasonPublic?: Prisma.SortOrderInput | Prisma.SortOrder
+  onboardingDismissedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -395,6 +500,15 @@ export type UserScalarWhereWithAggregatesInput = {
   emailVerifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusWithAggregatesFilter<"User"> | $Enums.VerificationStatus
   isActive?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
+  messagingRestrictedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  publishingRestrictedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  suspendedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  suspendedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  deactivatedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  bannedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  enforcementReasonPublic?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  onboardingDismissedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -411,6 +525,15 @@ export type UserCreateInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -436,6 +559,8 @@ export type UserCreateInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -453,6 +578,15 @@ export type UserUncheckedCreateInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -478,6 +612,8 @@ export type UserUncheckedCreateInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -495,6 +631,15 @@ export type UserUpdateInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -520,6 +665,8 @@ export type UserUpdateInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -537,6 +684,15 @@ export type UserUncheckedUpdateInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -562,6 +718,8 @@ export type UserUncheckedUpdateInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -579,6 +737,15 @@ export type UserCreateManyInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -595,6 +762,15 @@ export type UserUpdateManyMutationInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -611,6 +787,15 @@ export type UserUncheckedUpdateManyInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -627,6 +812,15 @@ export type UserCountOrderByAggregateInput = {
   emailVerifiedAt?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  messagingRestrictedUntil?: Prisma.SortOrder
+  connectionRequestsRestrictedUntil?: Prisma.SortOrder
+  publishingRestrictedUntil?: Prisma.SortOrder
+  suspendedAt?: Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrder
+  deactivatedAt?: Prisma.SortOrder
+  bannedAt?: Prisma.SortOrder
+  enforcementReasonPublic?: Prisma.SortOrder
+  onboardingDismissedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -643,6 +837,15 @@ export type UserMaxOrderByAggregateInput = {
   emailVerifiedAt?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  messagingRestrictedUntil?: Prisma.SortOrder
+  connectionRequestsRestrictedUntil?: Prisma.SortOrder
+  publishingRestrictedUntil?: Prisma.SortOrder
+  suspendedAt?: Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrder
+  deactivatedAt?: Prisma.SortOrder
+  bannedAt?: Prisma.SortOrder
+  enforcementReasonPublic?: Prisma.SortOrder
+  onboardingDismissedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -659,6 +862,15 @@ export type UserMinOrderByAggregateInput = {
   emailVerifiedAt?: Prisma.SortOrder
   verificationStatus?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  messagingRestrictedUntil?: Prisma.SortOrder
+  connectionRequestsRestrictedUntil?: Prisma.SortOrder
+  publishingRestrictedUntil?: Prisma.SortOrder
+  suspendedAt?: Prisma.SortOrder
+  suspendedUntil?: Prisma.SortOrder
+  deactivatedAt?: Prisma.SortOrder
+  bannedAt?: Prisma.SortOrder
+  enforcementReasonPublic?: Prisma.SortOrder
+  onboardingDismissedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -825,6 +1037,34 @@ export type UserUpdateOneRequiredWithoutMessagesNestedInput = {
   upsert?: Prisma.UserUpsertWithoutMessagesInput
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutMessagesInput, Prisma.UserUpdateWithoutMessagesInput>, Prisma.UserUncheckedUpdateWithoutMessagesInput>
+}
+
+export type UserCreateNestedOneWithoutBlocksMadeInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBlocksMadeInput, Prisma.UserUncheckedCreateWithoutBlocksMadeInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBlocksMadeInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserCreateNestedOneWithoutBlocksReceivedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBlocksReceivedInput, Prisma.UserUncheckedCreateWithoutBlocksReceivedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBlocksReceivedInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutBlocksMadeNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBlocksMadeInput, Prisma.UserUncheckedCreateWithoutBlocksMadeInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBlocksMadeInput
+  upsert?: Prisma.UserUpsertWithoutBlocksMadeInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutBlocksMadeInput, Prisma.UserUpdateWithoutBlocksMadeInput>, Prisma.UserUncheckedUpdateWithoutBlocksMadeInput>
+}
+
+export type UserUpdateOneRequiredWithoutBlocksReceivedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutBlocksReceivedInput, Prisma.UserUncheckedCreateWithoutBlocksReceivedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutBlocksReceivedInput
+  upsert?: Prisma.UserUpsertWithoutBlocksReceivedInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutBlocksReceivedInput, Prisma.UserUpdateWithoutBlocksReceivedInput>, Prisma.UserUncheckedUpdateWithoutBlocksReceivedInput>
 }
 
 export type UserCreateNestedOneWithoutProposalsInput = {
@@ -1079,6 +1319,15 @@ export type UserCreateWithoutSessionsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
@@ -1103,6 +1352,8 @@ export type UserCreateWithoutSessionsInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -1120,6 +1371,15 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
@@ -1144,6 +1404,8 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -1177,6 +1439,15 @@ export type UserUpdateWithoutSessionsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
@@ -1201,6 +1472,8 @@ export type UserUpdateWithoutSessionsInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -1218,6 +1491,15 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
@@ -1242,6 +1524,8 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -1259,6 +1543,15 @@ export type UserCreateWithoutRolesInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -1283,6 +1576,8 @@ export type UserCreateWithoutRolesInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -1300,6 +1595,15 @@ export type UserUncheckedCreateWithoutRolesInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -1324,6 +1628,8 @@ export type UserUncheckedCreateWithoutRolesInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -1357,6 +1663,15 @@ export type UserUpdateWithoutRolesInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -1381,6 +1696,8 @@ export type UserUpdateWithoutRolesInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -1398,6 +1715,15 @@ export type UserUncheckedUpdateWithoutRolesInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -1422,6 +1748,8 @@ export type UserUncheckedUpdateWithoutRolesInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -1439,6 +1767,15 @@ export type UserCreateWithoutProfileInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -1463,6 +1800,8 @@ export type UserCreateWithoutProfileInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -1480,6 +1819,15 @@ export type UserUncheckedCreateWithoutProfileInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -1504,6 +1852,8 @@ export type UserUncheckedCreateWithoutProfileInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -1537,6 +1887,15 @@ export type UserUpdateWithoutProfileInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -1561,6 +1920,8 @@ export type UserUpdateWithoutProfileInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -1578,6 +1939,15 @@ export type UserUncheckedUpdateWithoutProfileInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -1602,6 +1972,8 @@ export type UserUncheckedUpdateWithoutProfileInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -1619,6 +1991,15 @@ export type UserCreateWithoutOpportunitiesInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -1643,6 +2024,8 @@ export type UserCreateWithoutOpportunitiesInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -1660,6 +2043,15 @@ export type UserUncheckedCreateWithoutOpportunitiesInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -1684,6 +2076,8 @@ export type UserUncheckedCreateWithoutOpportunitiesInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -1717,6 +2111,15 @@ export type UserUpdateWithoutOpportunitiesInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -1741,6 +2144,8 @@ export type UserUpdateWithoutOpportunitiesInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -1758,6 +2163,15 @@ export type UserUncheckedUpdateWithoutOpportunitiesInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -1782,6 +2196,8 @@ export type UserUncheckedUpdateWithoutOpportunitiesInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -1799,6 +2215,15 @@ export type UserCreateWithoutBookmarksInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -1823,6 +2248,8 @@ export type UserCreateWithoutBookmarksInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -1840,6 +2267,15 @@ export type UserUncheckedCreateWithoutBookmarksInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -1864,6 +2300,8 @@ export type UserUncheckedCreateWithoutBookmarksInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -1897,6 +2335,15 @@ export type UserUpdateWithoutBookmarksInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -1921,6 +2368,8 @@ export type UserUpdateWithoutBookmarksInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -1938,6 +2387,15 @@ export type UserUncheckedUpdateWithoutBookmarksInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -1962,6 +2420,8 @@ export type UserUncheckedUpdateWithoutBookmarksInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -1979,6 +2439,15 @@ export type UserCreateWithoutReportsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -2003,6 +2472,8 @@ export type UserCreateWithoutReportsInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -2020,6 +2491,15 @@ export type UserUncheckedCreateWithoutReportsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -2044,6 +2524,8 @@ export type UserUncheckedCreateWithoutReportsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -2077,6 +2559,15 @@ export type UserUpdateWithoutReportsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -2101,6 +2592,8 @@ export type UserUpdateWithoutReportsInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -2118,6 +2611,15 @@ export type UserUncheckedUpdateWithoutReportsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -2142,6 +2644,8 @@ export type UserUncheckedUpdateWithoutReportsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -2159,6 +2663,15 @@ export type UserCreateWithoutUserReportsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -2183,6 +2696,8 @@ export type UserCreateWithoutUserReportsInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -2200,6 +2715,15 @@ export type UserUncheckedCreateWithoutUserReportsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -2224,6 +2748,8 @@ export type UserUncheckedCreateWithoutUserReportsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -2257,6 +2783,15 @@ export type UserUpdateWithoutUserReportsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -2281,6 +2816,8 @@ export type UserUpdateWithoutUserReportsInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -2298,6 +2835,15 @@ export type UserUncheckedUpdateWithoutUserReportsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -2322,6 +2868,8 @@ export type UserUncheckedUpdateWithoutUserReportsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -2339,6 +2887,15 @@ export type UserCreateWithoutConversationsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -2363,6 +2920,8 @@ export type UserCreateWithoutConversationsInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -2380,6 +2939,15 @@ export type UserUncheckedCreateWithoutConversationsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -2404,6 +2972,8 @@ export type UserUncheckedCreateWithoutConversationsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -2437,6 +3007,15 @@ export type UserUpdateWithoutConversationsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -2461,6 +3040,8 @@ export type UserUpdateWithoutConversationsInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -2478,6 +3059,15 @@ export type UserUncheckedUpdateWithoutConversationsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -2502,6 +3092,8 @@ export type UserUncheckedUpdateWithoutConversationsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -2519,6 +3111,15 @@ export type UserCreateWithoutMessagesInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -2543,6 +3144,8 @@ export type UserCreateWithoutMessagesInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -2560,6 +3163,15 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -2584,6 +3196,8 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -2617,6 +3231,15 @@ export type UserUpdateWithoutMessagesInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -2641,6 +3264,8 @@ export type UserUpdateWithoutMessagesInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -2658,6 +3283,15 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -2682,6 +3316,456 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
+  supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
+  ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
+}
+
+export type UserCreateWithoutBlocksMadeInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name: string
+  username: string
+  accountClassification?: $Enums.AccountClassification
+  imageUrl?: string | null
+  imageStorageKey?: string | null
+  emailVerifiedAt?: Date | string | null
+  verificationStatus?: $Enums.VerificationStatus
+  isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
+  profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
+  opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
+  bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
+  reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
+  proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
+  conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
+  messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  deals?: Prisma.DealParticipantCreateNestedManyWithoutUserInput
+  deliveries?: Prisma.DeliveryCreateNestedManyWithoutSubmitterInput
+  approvals?: Prisma.ApprovalCreateNestedManyWithoutActorInput
+  releases?: Prisma.ReleaseCreateNestedManyWithoutActorInput
+  refunds?: Prisma.RefundCreateNestedManyWithoutActorInput
+  disputesOpened?: Prisma.DisputeCreateNestedManyWithoutOpenedByInput
+  reviewsGiven?: Prisma.ReviewCreateNestedManyWithoutAuthorInput
+  reviewsReceived?: Prisma.ReviewCreateNestedManyWithoutSubjectInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorInput
+  moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
+  connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
+  connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
+  profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
+  supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
+  ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
+}
+
+export type UserUncheckedCreateWithoutBlocksMadeInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name: string
+  username: string
+  accountClassification?: $Enums.AccountClassification
+  imageUrl?: string | null
+  imageStorageKey?: string | null
+  emailVerifiedAt?: Date | string | null
+  verificationStatus?: $Enums.VerificationStatus
+  isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
+  profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
+  opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
+  bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
+  reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
+  proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
+  conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+  messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  deals?: Prisma.DealParticipantUncheckedCreateNestedManyWithoutUserInput
+  deliveries?: Prisma.DeliveryUncheckedCreateNestedManyWithoutSubmitterInput
+  approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
+  releases?: Prisma.ReleaseUncheckedCreateNestedManyWithoutActorInput
+  refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutActorInput
+  disputesOpened?: Prisma.DisputeUncheckedCreateNestedManyWithoutOpenedByInput
+  reviewsGiven?: Prisma.ReviewUncheckedCreateNestedManyWithoutAuthorInput
+  reviewsReceived?: Prisma.ReviewUncheckedCreateNestedManyWithoutSubjectInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorInput
+  moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
+  connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
+  connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
+  supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
+  ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
+}
+
+export type UserCreateOrConnectWithoutBlocksMadeInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutBlocksMadeInput, Prisma.UserUncheckedCreateWithoutBlocksMadeInput>
+}
+
+export type UserCreateWithoutBlocksReceivedInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name: string
+  username: string
+  accountClassification?: $Enums.AccountClassification
+  imageUrl?: string | null
+  imageStorageKey?: string | null
+  emailVerifiedAt?: Date | string | null
+  verificationStatus?: $Enums.VerificationStatus
+  isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
+  profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
+  opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
+  bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
+  reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
+  proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
+  conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
+  messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  deals?: Prisma.DealParticipantCreateNestedManyWithoutUserInput
+  deliveries?: Prisma.DeliveryCreateNestedManyWithoutSubmitterInput
+  approvals?: Prisma.ApprovalCreateNestedManyWithoutActorInput
+  releases?: Prisma.ReleaseCreateNestedManyWithoutActorInput
+  refunds?: Prisma.RefundCreateNestedManyWithoutActorInput
+  disputesOpened?: Prisma.DisputeCreateNestedManyWithoutOpenedByInput
+  reviewsGiven?: Prisma.ReviewCreateNestedManyWithoutAuthorInput
+  reviewsReceived?: Prisma.ReviewCreateNestedManyWithoutSubjectInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorInput
+  moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
+  connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
+  connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
+  supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
+  ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
+}
+
+export type UserUncheckedCreateWithoutBlocksReceivedInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name: string
+  username: string
+  accountClassification?: $Enums.AccountClassification
+  imageUrl?: string | null
+  imageStorageKey?: string | null
+  emailVerifiedAt?: Date | string | null
+  verificationStatus?: $Enums.VerificationStatus
+  isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
+  profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
+  opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
+  bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
+  reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
+  proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
+  conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+  messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  deals?: Prisma.DealParticipantUncheckedCreateNestedManyWithoutUserInput
+  deliveries?: Prisma.DeliveryUncheckedCreateNestedManyWithoutSubmitterInput
+  approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
+  releases?: Prisma.ReleaseUncheckedCreateNestedManyWithoutActorInput
+  refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutActorInput
+  disputesOpened?: Prisma.DisputeUncheckedCreateNestedManyWithoutOpenedByInput
+  reviewsGiven?: Prisma.ReviewUncheckedCreateNestedManyWithoutAuthorInput
+  reviewsReceived?: Prisma.ReviewUncheckedCreateNestedManyWithoutSubjectInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorInput
+  moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
+  connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
+  connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
+  supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
+  ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
+}
+
+export type UserCreateOrConnectWithoutBlocksReceivedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutBlocksReceivedInput, Prisma.UserUncheckedCreateWithoutBlocksReceivedInput>
+}
+
+export type UserUpsertWithoutBlocksMadeInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutBlocksMadeInput, Prisma.UserUncheckedUpdateWithoutBlocksMadeInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutBlocksMadeInput, Prisma.UserUncheckedCreateWithoutBlocksMadeInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutBlocksMadeInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutBlocksMadeInput, Prisma.UserUncheckedUpdateWithoutBlocksMadeInput>
+}
+
+export type UserUpdateWithoutBlocksMadeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
+  profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
+  opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
+  bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
+  reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
+  proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
+  conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
+  messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  deals?: Prisma.DealParticipantUpdateManyWithoutUserNestedInput
+  deliveries?: Prisma.DeliveryUpdateManyWithoutSubmitterNestedInput
+  approvals?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
+  releases?: Prisma.ReleaseUpdateManyWithoutActorNestedInput
+  refunds?: Prisma.RefundUpdateManyWithoutActorNestedInput
+  disputesOpened?: Prisma.DisputeUpdateManyWithoutOpenedByNestedInput
+  reviewsGiven?: Prisma.ReviewUpdateManyWithoutAuthorNestedInput
+  reviewsReceived?: Prisma.ReviewUpdateManyWithoutSubjectNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutActorNestedInput
+  moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
+  connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
+  connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
+  supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
+  ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutBlocksMadeInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
+  profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
+  opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
+  bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
+  reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
+  proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
+  conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+  messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  deals?: Prisma.DealParticipantUncheckedUpdateManyWithoutUserNestedInput
+  deliveries?: Prisma.DeliveryUncheckedUpdateManyWithoutSubmitterNestedInput
+  approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
+  releases?: Prisma.ReleaseUncheckedUpdateManyWithoutActorNestedInput
+  refunds?: Prisma.RefundUncheckedUpdateManyWithoutActorNestedInput
+  disputesOpened?: Prisma.DisputeUncheckedUpdateManyWithoutOpenedByNestedInput
+  reviewsGiven?: Prisma.ReviewUncheckedUpdateManyWithoutAuthorNestedInput
+  reviewsReceived?: Prisma.ReviewUncheckedUpdateManyWithoutSubjectNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorNestedInput
+  moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
+  connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
+  connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
+  supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
+  ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
+}
+
+export type UserUpsertWithoutBlocksReceivedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutBlocksReceivedInput, Prisma.UserUncheckedUpdateWithoutBlocksReceivedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutBlocksReceivedInput, Prisma.UserUncheckedCreateWithoutBlocksReceivedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutBlocksReceivedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutBlocksReceivedInput, Prisma.UserUncheckedUpdateWithoutBlocksReceivedInput>
+}
+
+export type UserUpdateWithoutBlocksReceivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
+  profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
+  opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
+  bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
+  reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
+  proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
+  conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
+  messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  deals?: Prisma.DealParticipantUpdateManyWithoutUserNestedInput
+  deliveries?: Prisma.DeliveryUpdateManyWithoutSubmitterNestedInput
+  approvals?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
+  releases?: Prisma.ReleaseUpdateManyWithoutActorNestedInput
+  refunds?: Prisma.RefundUpdateManyWithoutActorNestedInput
+  disputesOpened?: Prisma.DisputeUpdateManyWithoutOpenedByNestedInput
+  reviewsGiven?: Prisma.ReviewUpdateManyWithoutAuthorNestedInput
+  reviewsReceived?: Prisma.ReviewUpdateManyWithoutSubjectNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutActorNestedInput
+  moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
+  connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
+  connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
+  supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
+  ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutBlocksReceivedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
+  profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
+  opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
+  bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
+  reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
+  proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
+  conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+  messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  deals?: Prisma.DealParticipantUncheckedUpdateManyWithoutUserNestedInput
+  deliveries?: Prisma.DeliveryUncheckedUpdateManyWithoutSubmitterNestedInput
+  approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
+  releases?: Prisma.ReleaseUncheckedUpdateManyWithoutActorNestedInput
+  refunds?: Prisma.RefundUncheckedUpdateManyWithoutActorNestedInput
+  disputesOpened?: Prisma.DisputeUncheckedUpdateManyWithoutOpenedByNestedInput
+  reviewsGiven?: Prisma.ReviewUncheckedUpdateManyWithoutAuthorNestedInput
+  reviewsReceived?: Prisma.ReviewUncheckedUpdateManyWithoutSubjectNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorNestedInput
+  moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
+  connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
+  connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -2699,6 +3783,15 @@ export type UserCreateWithoutProposalsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -2723,6 +3816,8 @@ export type UserCreateWithoutProposalsInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -2740,6 +3835,15 @@ export type UserUncheckedCreateWithoutProposalsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -2764,6 +3868,8 @@ export type UserUncheckedCreateWithoutProposalsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -2797,6 +3903,15 @@ export type UserUpdateWithoutProposalsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -2821,6 +3936,8 @@ export type UserUpdateWithoutProposalsInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -2838,6 +3955,15 @@ export type UserUncheckedUpdateWithoutProposalsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -2862,6 +3988,8 @@ export type UserUncheckedUpdateWithoutProposalsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -2879,6 +4007,15 @@ export type UserCreateWithoutDealsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -2903,6 +4040,8 @@ export type UserCreateWithoutDealsInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -2920,6 +4059,15 @@ export type UserUncheckedCreateWithoutDealsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -2944,6 +4092,8 @@ export type UserUncheckedCreateWithoutDealsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -2977,6 +4127,15 @@ export type UserUpdateWithoutDealsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -3001,6 +4160,8 @@ export type UserUpdateWithoutDealsInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -3018,6 +4179,15 @@ export type UserUncheckedUpdateWithoutDealsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -3042,6 +4212,8 @@ export type UserUncheckedUpdateWithoutDealsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3059,6 +4231,15 @@ export type UserCreateWithoutDeliveriesInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -3083,6 +4264,8 @@ export type UserCreateWithoutDeliveriesInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -3100,6 +4283,15 @@ export type UserUncheckedCreateWithoutDeliveriesInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -3124,6 +4316,8 @@ export type UserUncheckedCreateWithoutDeliveriesInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3157,6 +4351,15 @@ export type UserUpdateWithoutDeliveriesInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -3181,6 +4384,8 @@ export type UserUpdateWithoutDeliveriesInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -3198,6 +4403,15 @@ export type UserUncheckedUpdateWithoutDeliveriesInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -3222,6 +4436,8 @@ export type UserUncheckedUpdateWithoutDeliveriesInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3239,6 +4455,15 @@ export type UserCreateWithoutApprovalsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -3263,6 +4488,8 @@ export type UserCreateWithoutApprovalsInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -3280,6 +4507,15 @@ export type UserUncheckedCreateWithoutApprovalsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -3304,6 +4540,8 @@ export type UserUncheckedCreateWithoutApprovalsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3337,6 +4575,15 @@ export type UserUpdateWithoutApprovalsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -3361,6 +4608,8 @@ export type UserUpdateWithoutApprovalsInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -3378,6 +4627,15 @@ export type UserUncheckedUpdateWithoutApprovalsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -3402,6 +4660,8 @@ export type UserUncheckedUpdateWithoutApprovalsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3419,6 +4679,15 @@ export type UserCreateWithoutReleasesInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -3443,6 +4712,8 @@ export type UserCreateWithoutReleasesInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -3460,6 +4731,15 @@ export type UserUncheckedCreateWithoutReleasesInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -3484,6 +4764,8 @@ export type UserUncheckedCreateWithoutReleasesInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3517,6 +4799,15 @@ export type UserUpdateWithoutReleasesInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -3541,6 +4832,8 @@ export type UserUpdateWithoutReleasesInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -3558,6 +4851,15 @@ export type UserUncheckedUpdateWithoutReleasesInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -3582,6 +4884,8 @@ export type UserUncheckedUpdateWithoutReleasesInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3599,6 +4903,15 @@ export type UserCreateWithoutRefundsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -3623,6 +4936,8 @@ export type UserCreateWithoutRefundsInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -3640,6 +4955,15 @@ export type UserUncheckedCreateWithoutRefundsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -3664,6 +4988,8 @@ export type UserUncheckedCreateWithoutRefundsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3697,6 +5023,15 @@ export type UserUpdateWithoutRefundsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -3721,6 +5056,8 @@ export type UserUpdateWithoutRefundsInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -3738,6 +5075,15 @@ export type UserUncheckedUpdateWithoutRefundsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -3762,6 +5108,8 @@ export type UserUncheckedUpdateWithoutRefundsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3779,6 +5127,15 @@ export type UserCreateWithoutDisputesOpenedInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -3803,6 +5160,8 @@ export type UserCreateWithoutDisputesOpenedInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -3820,6 +5179,15 @@ export type UserUncheckedCreateWithoutDisputesOpenedInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -3844,6 +5212,8 @@ export type UserUncheckedCreateWithoutDisputesOpenedInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -3877,6 +5247,15 @@ export type UserUpdateWithoutDisputesOpenedInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -3901,6 +5280,8 @@ export type UserUpdateWithoutDisputesOpenedInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -3918,6 +5299,15 @@ export type UserUncheckedUpdateWithoutDisputesOpenedInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -3942,6 +5332,8 @@ export type UserUncheckedUpdateWithoutDisputesOpenedInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -3959,6 +5351,15 @@ export type UserCreateWithoutReviewsGivenInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -3983,6 +5384,8 @@ export type UserCreateWithoutReviewsGivenInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -4000,6 +5403,15 @@ export type UserUncheckedCreateWithoutReviewsGivenInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -4024,6 +5436,8 @@ export type UserUncheckedCreateWithoutReviewsGivenInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -4046,6 +5460,15 @@ export type UserCreateWithoutReviewsReceivedInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -4070,6 +5493,8 @@ export type UserCreateWithoutReviewsReceivedInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -4087,6 +5512,15 @@ export type UserUncheckedCreateWithoutReviewsReceivedInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -4111,6 +5545,8 @@ export type UserUncheckedCreateWithoutReviewsReceivedInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -4144,6 +5580,15 @@ export type UserUpdateWithoutReviewsGivenInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -4168,6 +5613,8 @@ export type UserUpdateWithoutReviewsGivenInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -4185,6 +5632,15 @@ export type UserUncheckedUpdateWithoutReviewsGivenInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -4209,6 +5665,8 @@ export type UserUncheckedUpdateWithoutReviewsGivenInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -4237,6 +5695,15 @@ export type UserUpdateWithoutReviewsReceivedInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -4261,6 +5728,8 @@ export type UserUpdateWithoutReviewsReceivedInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -4278,6 +5747,15 @@ export type UserUncheckedUpdateWithoutReviewsReceivedInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -4302,6 +5780,8 @@ export type UserUncheckedUpdateWithoutReviewsReceivedInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -4319,6 +5799,15 @@ export type UserCreateWithoutNotificationsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -4343,6 +5832,8 @@ export type UserCreateWithoutNotificationsInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -4360,6 +5851,15 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -4384,6 +5884,8 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -4417,6 +5919,15 @@ export type UserUpdateWithoutNotificationsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -4441,6 +5952,8 @@ export type UserUpdateWithoutNotificationsInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -4458,6 +5971,15 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -4482,6 +6004,8 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -4499,6 +6023,15 @@ export type UserCreateWithoutAuditLogsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -4523,6 +6056,8 @@ export type UserCreateWithoutAuditLogsInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -4540,6 +6075,15 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -4564,6 +6108,8 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -4597,6 +6143,15 @@ export type UserUpdateWithoutAuditLogsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -4621,6 +6176,8 @@ export type UserUpdateWithoutAuditLogsInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -4638,6 +6195,15 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -4662,6 +6228,8 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -4679,6 +6247,15 @@ export type UserCreateWithoutModerationActionsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -4703,6 +6280,8 @@ export type UserCreateWithoutModerationActionsInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -4720,6 +6299,15 @@ export type UserUncheckedCreateWithoutModerationActionsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -4744,6 +6332,8 @@ export type UserUncheckedCreateWithoutModerationActionsInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -4777,6 +6367,15 @@ export type UserUpdateWithoutModerationActionsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -4801,6 +6400,8 @@ export type UserUpdateWithoutModerationActionsInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -4818,6 +6419,15 @@ export type UserUncheckedUpdateWithoutModerationActionsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -4842,6 +6452,8 @@ export type UserUncheckedUpdateWithoutModerationActionsInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -4859,6 +6471,15 @@ export type UserCreateWithoutConnectionsSentInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -4883,6 +6504,8 @@ export type UserCreateWithoutConnectionsSentInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorInput
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -4900,6 +6523,15 @@ export type UserUncheckedCreateWithoutConnectionsSentInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -4924,6 +6556,8 @@ export type UserUncheckedCreateWithoutConnectionsSentInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorInput
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -4946,6 +6580,15 @@ export type UserCreateWithoutConnectionsReceivedInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -4970,6 +6613,8 @@ export type UserCreateWithoutConnectionsReceivedInput = {
   auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorInput
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
@@ -4987,6 +6632,15 @@ export type UserUncheckedCreateWithoutConnectionsReceivedInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -5011,6 +6665,8 @@ export type UserUncheckedCreateWithoutConnectionsReceivedInput = {
   auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorInput
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
@@ -5044,6 +6700,15 @@ export type UserUpdateWithoutConnectionsSentInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -5068,6 +6733,8 @@ export type UserUpdateWithoutConnectionsSentInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutActorNestedInput
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -5085,6 +6752,15 @@ export type UserUncheckedUpdateWithoutConnectionsSentInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -5109,6 +6785,8 @@ export type UserUncheckedUpdateWithoutConnectionsSentInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorNestedInput
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -5137,6 +6815,15 @@ export type UserUpdateWithoutConnectionsReceivedInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -5161,6 +6848,8 @@ export type UserUpdateWithoutConnectionsReceivedInput = {
   auditLogs?: Prisma.AuditLogUpdateManyWithoutActorNestedInput
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
@@ -5178,6 +6867,15 @@ export type UserUncheckedUpdateWithoutConnectionsReceivedInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -5202,6 +6900,8 @@ export type UserUncheckedUpdateWithoutConnectionsReceivedInput = {
   auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorNestedInput
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
@@ -5219,6 +6919,15 @@ export type UserCreateWithoutProfileBookmarksInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -5244,6 +6953,8 @@ export type UserCreateWithoutProfileBookmarksInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
 }
@@ -5260,6 +6971,15 @@ export type UserUncheckedCreateWithoutProfileBookmarksInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -5285,6 +7005,8 @@ export type UserUncheckedCreateWithoutProfileBookmarksInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
 }
@@ -5317,6 +7039,15 @@ export type UserUpdateWithoutProfileBookmarksInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -5342,6 +7073,8 @@ export type UserUpdateWithoutProfileBookmarksInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
 }
@@ -5358,6 +7091,15 @@ export type UserUncheckedUpdateWithoutProfileBookmarksInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -5383,6 +7125,8 @@ export type UserUncheckedUpdateWithoutProfileBookmarksInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
@@ -5399,6 +7143,15 @@ export type UserCreateWithoutSupportTicketsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -5424,6 +7177,8 @@ export type UserCreateWithoutSupportTicketsInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
 }
@@ -5440,6 +7195,15 @@ export type UserUncheckedCreateWithoutSupportTicketsInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -5465,6 +7229,8 @@ export type UserUncheckedCreateWithoutSupportTicketsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
 }
@@ -5497,6 +7263,15 @@ export type UserUpdateWithoutSupportTicketsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -5522,6 +7297,8 @@ export type UserUpdateWithoutSupportTicketsInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
 }
@@ -5538,6 +7315,15 @@ export type UserUncheckedUpdateWithoutSupportTicketsInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -5563,6 +7349,8 @@ export type UserUncheckedUpdateWithoutSupportTicketsInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
 }
@@ -5579,6 +7367,15 @@ export type UserCreateWithoutTicketMessagesInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
@@ -5604,6 +7401,8 @@ export type UserCreateWithoutTicketMessagesInput = {
   moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
 }
@@ -5620,6 +7419,15 @@ export type UserUncheckedCreateWithoutTicketMessagesInput = {
   emailVerifiedAt?: Date | string | null
   verificationStatus?: $Enums.VerificationStatus
   isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
@@ -5645,6 +7453,8 @@ export type UserUncheckedCreateWithoutTicketMessagesInput = {
   moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
   connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
   connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
   supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
 }
@@ -5677,6 +7487,15 @@ export type UserUpdateWithoutTicketMessagesInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
@@ -5702,6 +7521,8 @@ export type UserUpdateWithoutTicketMessagesInput = {
   moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
 }
@@ -5718,6 +7539,15 @@ export type UserUncheckedUpdateWithoutTicketMessagesInput = {
   emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
@@ -5743,6 +7573,8 @@ export type UserUncheckedUpdateWithoutTicketMessagesInput = {
   moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
   connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
   connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
   profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
   supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
 }
@@ -5775,6 +7607,8 @@ export type UserCountOutputType = {
   moderationActions: number
   connectionsSent: number
   connectionsReceived: number
+  blocksMade: number
+  blocksReceived: number
   profileBookmarks: number
   supportTickets: number
   ticketMessages: number
@@ -5803,6 +7637,8 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   moderationActions?: boolean | UserCountOutputTypeCountModerationActionsArgs
   connectionsSent?: boolean | UserCountOutputTypeCountConnectionsSentArgs
   connectionsReceived?: boolean | UserCountOutputTypeCountConnectionsReceivedArgs
+  blocksMade?: boolean | UserCountOutputTypeCountBlocksMadeArgs
+  blocksReceived?: boolean | UserCountOutputTypeCountBlocksReceivedArgs
   profileBookmarks?: boolean | UserCountOutputTypeCountProfileBookmarksArgs
   supportTickets?: boolean | UserCountOutputTypeCountSupportTicketsArgs
   ticketMessages?: boolean | UserCountOutputTypeCountTicketMessagesArgs
@@ -5975,6 +7811,20 @@ export type UserCountOutputTypeCountConnectionsReceivedArgs<ExtArgs extends runt
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountBlocksMadeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BlockedUserWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountBlocksReceivedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.BlockedUserWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountProfileBookmarksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ProfileBookmarkWhereInput
 }
@@ -6006,6 +7856,15 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   emailVerifiedAt?: boolean
   verificationStatus?: boolean
   isActive?: boolean
+  messagingRestrictedUntil?: boolean
+  connectionRequestsRestrictedUntil?: boolean
+  publishingRestrictedUntil?: boolean
+  suspendedAt?: boolean
+  suspendedUntil?: boolean
+  deactivatedAt?: boolean
+  bannedAt?: boolean
+  enforcementReasonPublic?: boolean
+  onboardingDismissedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
@@ -6031,6 +7890,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   moderationActions?: boolean | Prisma.User$moderationActionsArgs<ExtArgs>
   connectionsSent?: boolean | Prisma.User$connectionsSentArgs<ExtArgs>
   connectionsReceived?: boolean | Prisma.User$connectionsReceivedArgs<ExtArgs>
+  blocksMade?: boolean | Prisma.User$blocksMadeArgs<ExtArgs>
+  blocksReceived?: boolean | Prisma.User$blocksReceivedArgs<ExtArgs>
   profileBookmarks?: boolean | Prisma.User$profileBookmarksArgs<ExtArgs>
   supportTickets?: boolean | Prisma.User$supportTicketsArgs<ExtArgs>
   ticketMessages?: boolean | Prisma.User$ticketMessagesArgs<ExtArgs>
@@ -6049,6 +7910,15 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   emailVerifiedAt?: boolean
   verificationStatus?: boolean
   isActive?: boolean
+  messagingRestrictedUntil?: boolean
+  connectionRequestsRestrictedUntil?: boolean
+  publishingRestrictedUntil?: boolean
+  suspendedAt?: boolean
+  suspendedUntil?: boolean
+  deactivatedAt?: boolean
+  bannedAt?: boolean
+  enforcementReasonPublic?: boolean
+  onboardingDismissedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -6065,6 +7935,15 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   emailVerifiedAt?: boolean
   verificationStatus?: boolean
   isActive?: boolean
+  messagingRestrictedUntil?: boolean
+  connectionRequestsRestrictedUntil?: boolean
+  publishingRestrictedUntil?: boolean
+  suspendedAt?: boolean
+  suspendedUntil?: boolean
+  deactivatedAt?: boolean
+  bannedAt?: boolean
+  enforcementReasonPublic?: boolean
+  onboardingDismissedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -6081,11 +7960,20 @@ export type UserSelectScalar = {
   emailVerifiedAt?: boolean
   verificationStatus?: boolean
   isActive?: boolean
+  messagingRestrictedUntil?: boolean
+  connectionRequestsRestrictedUntil?: boolean
+  publishingRestrictedUntil?: boolean
+  suspendedAt?: boolean
+  suspendedUntil?: boolean
+  deactivatedAt?: boolean
+  bannedAt?: boolean
+  enforcementReasonPublic?: boolean
+  onboardingDismissedAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "name" | "username" | "accountClassification" | "imageUrl" | "imageStorageKey" | "emailVerifiedAt" | "verificationStatus" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "name" | "username" | "accountClassification" | "imageUrl" | "imageStorageKey" | "emailVerifiedAt" | "verificationStatus" | "isActive" | "messagingRestrictedUntil" | "connectionRequestsRestrictedUntil" | "publishingRestrictedUntil" | "suspendedAt" | "suspendedUntil" | "deactivatedAt" | "bannedAt" | "enforcementReasonPublic" | "onboardingDismissedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   roles?: boolean | Prisma.User$rolesArgs<ExtArgs>
@@ -6110,6 +7998,8 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   moderationActions?: boolean | Prisma.User$moderationActionsArgs<ExtArgs>
   connectionsSent?: boolean | Prisma.User$connectionsSentArgs<ExtArgs>
   connectionsReceived?: boolean | Prisma.User$connectionsReceivedArgs<ExtArgs>
+  blocksMade?: boolean | Prisma.User$blocksMadeArgs<ExtArgs>
+  blocksReceived?: boolean | Prisma.User$blocksReceivedArgs<ExtArgs>
   profileBookmarks?: boolean | Prisma.User$profileBookmarksArgs<ExtArgs>
   supportTickets?: boolean | Prisma.User$supportTicketsArgs<ExtArgs>
   ticketMessages?: boolean | Prisma.User$ticketMessagesArgs<ExtArgs>
@@ -6144,6 +8034,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     moderationActions: Prisma.$ModerationActionPayload<ExtArgs>[]
     connectionsSent: Prisma.$ConnectionPayload<ExtArgs>[]
     connectionsReceived: Prisma.$ConnectionPayload<ExtArgs>[]
+    blocksMade: Prisma.$BlockedUserPayload<ExtArgs>[]
+    blocksReceived: Prisma.$BlockedUserPayload<ExtArgs>[]
     profileBookmarks: Prisma.$ProfileBookmarkPayload<ExtArgs>[]
     supportTickets: Prisma.$SupportTicketPayload<ExtArgs>[]
     ticketMessages: Prisma.$TicketMessagePayload<ExtArgs>[]
@@ -6160,6 +8052,15 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     emailVerifiedAt: Date | null
     verificationStatus: $Enums.VerificationStatus
     isActive: boolean
+    messagingRestrictedUntil: Date | null
+    connectionRequestsRestrictedUntil: Date | null
+    publishingRestrictedUntil: Date | null
+    suspendedAt: Date | null
+    suspendedUntil: Date | null
+    deactivatedAt: Date | null
+    bannedAt: Date | null
+    enforcementReasonPublic: string | null
+    onboardingDismissedAt: Date | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -6579,6 +8480,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   moderationActions<T extends Prisma.User$moderationActionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$moderationActionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ModerationActionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   connectionsSent<T extends Prisma.User$connectionsSentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$connectionsSentArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConnectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   connectionsReceived<T extends Prisma.User$connectionsReceivedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$connectionsReceivedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConnectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  blocksMade<T extends Prisma.User$blocksMadeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$blocksMadeArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BlockedUserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  blocksReceived<T extends Prisma.User$blocksReceivedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$blocksReceivedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$BlockedUserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   profileBookmarks<T extends Prisma.User$profileBookmarksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$profileBookmarksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProfileBookmarkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   supportTickets<T extends Prisma.User$supportTicketsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$supportTicketsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SupportTicketPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   ticketMessages<T extends Prisma.User$ticketMessagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ticketMessagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TicketMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -6622,6 +8525,15 @@ export interface UserFieldRefs {
   readonly emailVerifiedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly verificationStatus: Prisma.FieldRef<"User", 'VerificationStatus'>
   readonly isActive: Prisma.FieldRef<"User", 'Boolean'>
+  readonly messagingRestrictedUntil: Prisma.FieldRef<"User", 'DateTime'>
+  readonly connectionRequestsRestrictedUntil: Prisma.FieldRef<"User", 'DateTime'>
+  readonly publishingRestrictedUntil: Prisma.FieldRef<"User", 'DateTime'>
+  readonly suspendedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly suspendedUntil: Prisma.FieldRef<"User", 'DateTime'>
+  readonly deactivatedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly bannedAt: Prisma.FieldRef<"User", 'DateTime'>
+  readonly enforcementReasonPublic: Prisma.FieldRef<"User", 'String'>
+  readonly onboardingDismissedAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }
@@ -7561,6 +9473,54 @@ export type User$connectionsReceivedArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.ConnectionScalarFieldEnum | Prisma.ConnectionScalarFieldEnum[]
+}
+
+/**
+ * User.blocksMade
+ */
+export type User$blocksMadeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BlockedUser
+   */
+  select?: Prisma.BlockedUserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BlockedUser
+   */
+  omit?: Prisma.BlockedUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserInclude<ExtArgs> | null
+  where?: Prisma.BlockedUserWhereInput
+  orderBy?: Prisma.BlockedUserOrderByWithRelationInput | Prisma.BlockedUserOrderByWithRelationInput[]
+  cursor?: Prisma.BlockedUserWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BlockedUserScalarFieldEnum | Prisma.BlockedUserScalarFieldEnum[]
+}
+
+/**
+ * User.blocksReceived
+ */
+export type User$blocksReceivedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the BlockedUser
+   */
+  select?: Prisma.BlockedUserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the BlockedUser
+   */
+  omit?: Prisma.BlockedUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserInclude<ExtArgs> | null
+  where?: Prisma.BlockedUserWhereInput
+  orderBy?: Prisma.BlockedUserOrderByWithRelationInput | Prisma.BlockedUserOrderByWithRelationInput[]
+  cursor?: Prisma.BlockedUserWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.BlockedUserScalarFieldEnum | Prisma.BlockedUserScalarFieldEnum[]
 }
 
 /**

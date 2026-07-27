@@ -25,6 +25,7 @@ import {
 import { requireUser } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import {
+  repairResolvableMessageNotificationActions,
   resolveNotificationAction,
   type NotificationActionResolution,
 } from "@/lib/notifications/action-url";
@@ -65,6 +66,7 @@ export default async function NotificationsPage({
     ? params.type ?? ""
     : "";
   const typeFilter = activeFilter && activeFilter !== "unread" ? filterTypes[activeFilter] : undefined;
+  await repairResolvableMessageNotificationActions(user.id);
 
   const notifications = await getPrisma().notification.findMany({
     orderBy: { createdAt: "desc" },

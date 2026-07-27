@@ -96,6 +96,37 @@ describe("notification action URLs", () => {
     });
   });
 
+  it("rejects general messages route for a message notification", async () => {
+    const action = await resolveNotificationAction("user-1", {
+      actionUrl: "/app/messages",
+      type: "NEW_MESSAGE",
+    });
+
+    expect(action).toEqual({
+      available: false,
+      href: null,
+      label: "This message is no longer available.",
+      reason: "unavailable",
+    });
+  });
+
+  it("can derive safe message-request destinations from legacy metadata", async () => {
+    prismaMocks.conversationParticipantFindUnique.mockResolvedValue({ id: "participant-1" });
+    prismaMocks.messageFindFirst.mockResolvedValue({ id: "message-1" });
+
+    const action = await resolveNotificationAction("user-1", {
+      actionUrl: null,
+      metadata: { conversationId: "conversation-1", messageId: "message-1" },
+      type: "MESSAGE_REQUEST_RECEIVED",
+    });
+
+    expect(action).toMatchObject({
+      available: true,
+      href: "/app/messages/conversation-1?message=message-1",
+      label: "View message",
+    });
+  });
+
   it("can derive safe message destinations from legacy metadata", async () => {
     prismaMocks.conversationParticipantFindUnique.mockResolvedValue({ id: "participant-1" });
     prismaMocks.messageFindFirst.mockResolvedValue({ id: "message-1" });
@@ -117,6 +148,8 @@ describe("notification action URLs", () => {
 describe("broadcast capability", () => {
   it("allows admins to create broadcasts without granting the capability to members", () => {
     expect(hasCapability(["ADMIN"], "broadcasts:create")).toBe(true);
+    expect(hasCapability(["MASTER_ADMIN"], "enforcement:manage")).toBe(true);
+    expect(hasCapability(["MASTER_ADMIN"], "master:admin")).toBe(true);
     expect(hasCapability(["MEMBER"], "broadcasts:create")).toBe(false);
   });
 });

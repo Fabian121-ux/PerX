@@ -66,6 +66,11 @@ export const ModelName = {
   OpportunityBookmark: 'OpportunityBookmark',
   OpportunityReport: 'OpportunityReport',
   UserReport: 'UserReport',
+  ModerationCase: 'ModerationCase',
+  ModerationCaseEvent: 'ModerationCaseEvent',
+  ModerationMessageScope: 'ModerationMessageScope',
+  EnforcementAction: 'EnforcementAction',
+  EnforcementAppeal: 'EnforcementAppeal',
   OpportunityStatusHistory: 'OpportunityStatusHistory',
   Conversation: 'Conversation',
   ConversationParticipant: 'ConversationParticipant',
@@ -128,6 +133,15 @@ export const UserScalarFieldEnum = {
   emailVerifiedAt: 'emailVerifiedAt',
   verificationStatus: 'verificationStatus',
   isActive: 'isActive',
+  messagingRestrictedUntil: 'messagingRestrictedUntil',
+  connectionRequestsRestrictedUntil: 'connectionRequestsRestrictedUntil',
+  publishingRestrictedUntil: 'publishingRestrictedUntil',
+  suspendedAt: 'suspendedAt',
+  suspendedUntil: 'suspendedUntil',
+  deactivatedAt: 'deactivatedAt',
+  bannedAt: 'bannedAt',
+  enforcementReasonPublic: 'enforcementReasonPublic',
+  onboardingDismissedAt: 'onboardingDismissedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -343,6 +357,98 @@ export const UserReportScalarFieldEnum = {
 } as const
 
 export type UserReportScalarFieldEnum = (typeof UserReportScalarFieldEnum)[keyof typeof UserReportScalarFieldEnum]
+
+
+export const ModerationCaseScalarFieldEnum = {
+  id: 'id',
+  source: 'source',
+  status: 'status',
+  priority: 'priority',
+  category: 'category',
+  title: 'title',
+  summary: 'summary',
+  targetType: 'targetType',
+  targetId: 'targetId',
+  reporterId: 'reporterId',
+  reportedUserId: 'reportedUserId',
+  assignedAdminId: 'assignedAdminId',
+  linkedReportId: 'linkedReportId',
+  linkedOpportunityReportId: 'linkedOpportunityReportId',
+  conversationId: 'conversationId',
+  messageId: 'messageId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ModerationCaseScalarFieldEnum = (typeof ModerationCaseScalarFieldEnum)[keyof typeof ModerationCaseScalarFieldEnum]
+
+
+export const ModerationCaseEventScalarFieldEnum = {
+  id: 'id',
+  caseId: 'caseId',
+  actorId: 'actorId',
+  type: 'type',
+  reason: 'reason',
+  note: 'note',
+  previousStatus: 'previousStatus',
+  nextStatus: 'nextStatus',
+  createdAt: 'createdAt'
+} as const
+
+export type ModerationCaseEventScalarFieldEnum = (typeof ModerationCaseEventScalarFieldEnum)[keyof typeof ModerationCaseEventScalarFieldEnum]
+
+
+export const ModerationMessageScopeScalarFieldEnum = {
+  id: 'id',
+  caseId: 'caseId',
+  conversationId: 'conversationId',
+  messageId: 'messageId',
+  revealedById: 'revealedById',
+  reason: 'reason',
+  scope: 'scope',
+  timeRangeStart: 'timeRangeStart',
+  timeRangeEnd: 'timeRangeEnd',
+  createdAt: 'createdAt'
+} as const
+
+export type ModerationMessageScopeScalarFieldEnum = (typeof ModerationMessageScopeScalarFieldEnum)[keyof typeof ModerationMessageScopeScalarFieldEnum]
+
+
+export const EnforcementActionScalarFieldEnum = {
+  id: 'id',
+  caseId: 'caseId',
+  actorId: 'actorId',
+  targetUserId: 'targetUserId',
+  type: 'type',
+  status: 'status',
+  reason: 'reason',
+  userFacingExplanation: 'userFacingExplanation',
+  internalNote: 'internalNote',
+  previousState: 'previousState',
+  newState: 'newState',
+  expiresAt: 'expiresAt',
+  appealAllowed: 'appealAllowed',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EnforcementActionScalarFieldEnum = (typeof EnforcementActionScalarFieldEnum)[keyof typeof EnforcementActionScalarFieldEnum]
+
+
+export const EnforcementAppealScalarFieldEnum = {
+  id: 'id',
+  enforcementActionId: 'enforcementActionId',
+  caseId: 'caseId',
+  appellantId: 'appellantId',
+  reviewerId: 'reviewerId',
+  status: 'status',
+  body: 'body',
+  resolution: 'resolution',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type EnforcementAppealScalarFieldEnum = (typeof EnforcementAppealScalarFieldEnum)[keyof typeof EnforcementAppealScalarFieldEnum]
 
 
 export const OpportunityStatusHistoryScalarFieldEnum = {

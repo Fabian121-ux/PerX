@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/form";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import {
   acceptConnectionAction,
   requestConnectionAction,
@@ -185,10 +186,15 @@ function PeopleCard({ person }: { person: PeopleDirectoryEntry }) {
         <ConnectionAction person={person} />
         {person.canStartConversation ? (
           <form action={async () => { "use server"; await startConversationAction(person.id); }}>
-            <Button className="w-full sm:w-auto" size="sm" type="submit">
+            <PendingSubmitButton
+              className="w-full sm:w-auto"
+              pendingLabel="Opening conversation..."
+              size="sm"
+              type="submit"
+            >
               <MessageCircle aria-hidden className="mr-2" size={15} />
               Message
-            </Button>
+            </PendingSubmitButton>
           </form>
         ) : null}
       </div>
@@ -206,7 +212,7 @@ function ConnectionAction({ person }: { person: PeopleDirectoryEntry }) {
   if (person.connectionState === "PENDING" && person.connectionDirection === "incoming" && person.connectionId) {
     return (
       <form action={async () => { "use server"; await acceptConnectionAction(person.connectionId!); }}>
-        <Button className="w-full sm:w-auto" size="sm" type="submit">Accept</Button>
+        <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Accepting..." size="sm" type="submit">Accept request</PendingSubmitButton>
       </form>
     );
   }
@@ -217,10 +223,10 @@ function ConnectionAction({ person }: { person: PeopleDirectoryEntry }) {
 
   return (
     <form action={async () => { "use server"; await requestConnectionAction(person.id); }}>
-      <Button className="w-full sm:w-auto" size="sm" type="submit" variant="secondary">
+      <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Sending request..." size="sm" type="submit" variant="secondary">
         <UserRoundPlus aria-hidden className="mr-2" size={15} />
         Connect
-      </Button>
+      </PendingSubmitButton>
     </form>
   );
 }

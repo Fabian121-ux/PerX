@@ -60,6 +60,11 @@ export const prismaProvider: PerXDataProvider = {
         where: {
           moderationStatus: "APPROVED",
           status: "PUBLISHED",
+          owner: {
+            accountClassification: "PUBLIC_BETA_USER",
+            isActive: true,
+            profile: { is: { isDiscoverable: true } },
+          },
           ...(category ? { category: { slug: category } } : {}),
           ...(isOpportunityType(type) ? { type } : {}),
           ...(q
@@ -106,6 +111,11 @@ export const prismaProvider: PerXDataProvider = {
           moderationStatus: "APPROVED",
           slug,
           status: "PUBLISHED",
+          owner: {
+            accountClassification: "PUBLIC_BETA_USER",
+            isActive: true,
+            profile: { is: { isDiscoverable: true } },
+          },
         },
       });
     },
@@ -165,6 +175,22 @@ export const prismaProvider: PerXDataProvider = {
       });
     },
     getConversations: async (userId: string) => {
+      const blocks = await getPrisma().blockedUser.findMany({
+        select: { blockedUserId: true, blockerUserId: true },
+        where: {
+          OR: [{ blockerUserId: userId }, { blockedUserId: userId }],
+        },
+      });
+      const blockedUserIds = [
+        ...new Set(
+          blocks.map((block) =>
+            block.blockerUserId === userId
+              ? block.blockedUserId
+              : block.blockerUserId,
+          ),
+        ),
+      ];
+
       return getPrisma().conversation.findMany({
         include: {
           messages: {
@@ -216,7 +242,15 @@ export const prismaProvider: PerXDataProvider = {
           },
         },
         orderBy: { updatedAt: "desc" },
-        where: { participants: { some: { userId } } },
+        where: {
+          status: "ACTIVE",
+          participants: {
+            every: blockedUserIds.length
+              ? { userId: { notIn: blockedUserIds } }
+              : {},
+            some: { userId },
+          },
+        },
       });
     },
     getConversationMessages: async (conversationId: string) => {

@@ -16,6 +16,7 @@ import {
   reportReasonOptions,
 } from "@/lib/options";
 import { hasCapability } from "@/lib/permissions/capabilities";
+import { assertCanPublish } from "@/lib/account/enforcement";
 import { requireUser } from "@/lib/auth/session";
 import {
   opportunityFormSchema,
@@ -32,6 +33,7 @@ function slugify(value: string) {
 }
 
 function revalidateOpportunityViews(slug?: string) {
+  revalidatePath("/app");
   revalidatePath("/app/manage");
   revalidatePath("/app/opportunities");
   revalidatePath("/app/discover");
@@ -122,6 +124,10 @@ export async function createOpportunityAction(formData: FormData) {
   });
 
   if (!parsed.success) redirect("/app/opportunities/new?error=check-fields");
+  if (parsed.data.intent === "publish") {
+    const restriction = await assertCanPublish(user.id);
+    if (restriction) redirect("/app/manage?error=publishing-restricted");
+  }
 
   const categoryOption = findOption(opportunityCategoryOptions, parsed.data.category);
   if (!categoryOption) redirect("/app/opportunities/new?error=check-fields");
@@ -271,6 +277,10 @@ export async function updateOpportunityAction(
   });
 
   if (!parsed.success) redirect(`/app/opportunities/${opportunityId}/edit?error=check-fields`);
+  if (parsed.data.intent === "publish") {
+    const restriction = await assertCanPublish(user.id);
+    if (restriction) redirect("/app/manage?error=publishing-restricted");
+  }
 
   const categoryOption = findOption(opportunityCategoryOptions, parsed.data.category);
   if (!categoryOption) redirect(`/app/opportunities/${opportunityId}/edit?error=check-fields`);
@@ -427,6 +437,10 @@ async function transitionOpportunity(
     include: { category: true, images: true },
   });
   if (!opportunity) redirect("/app/manage?error=not-found");
+  if (toStatus === "PUBLISHED") {
+    const restriction = await assertCanPublish(user.id);
+    if (restriction) redirect("/app/manage?error=publishing-restricted");
+  }
 
   const policy =
     toStatus === "PUBLISHED"

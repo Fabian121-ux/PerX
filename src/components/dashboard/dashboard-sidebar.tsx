@@ -76,7 +76,7 @@ function SidebarLink({
 
 function canShowSidebarItem(item: SidebarItem, userRoles?: readonly string[]) {
   if (item.href !== "/admin") return true;
-  return Boolean(userRoles?.includes("ADMIN"));
+  return Boolean(userRoles?.includes("ADMIN") || userRoles?.includes("MASTER_ADMIN"));
 }
 
 function getRenderedHref(href: string, pathname: string) {
@@ -152,10 +152,12 @@ export function DashboardSidebar({
   return (
     <aside className="perx-sidebar relative z-20 flex h-dvh w-[224px] shrink-0 flex-col border-r border-white/10 text-white shadow-[18px_0_44px_rgba(2,10,26,0.22)]">
       <div className="flex h-[86px] shrink-0 items-center px-5">
-        <BrandLogo
-          className="h-10 max-w-[152px] drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]"
-          dark
-        />
+        <Link aria-label="PerX Home" href="/app">
+          <BrandLogo
+            className="h-10 max-w-[152px] drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]"
+            dark
+          />
+        </Link>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-5 pt-1">

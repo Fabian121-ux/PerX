@@ -31,6 +31,10 @@ vi.mock("../../src/lib/db/prisma", () => ({
   getPrisma: () => mockPrismaClient,
 }));
 
+vi.mock("../../src/lib/auth/password", () => ({
+  hashPassword: vi.fn().mockResolvedValue("hashed-password-for-test"),
+}));
+
 describe("bootstrapProductionAdmin", () => {
   const originalEnv = process.env;
 
@@ -50,6 +54,7 @@ describe("bootstrapProductionAdmin", () => {
 
     mockPrismaClient.role.upsert.mockImplementation(async (args) => {
       if (args.where.name === "ADMIN") return { id: "role_admin", name: "ADMIN" };
+      if (args.where.name === "MASTER_ADMIN") return { id: "role_master_admin", name: "MASTER_ADMIN" };
       if (args.where.name === "MEMBER") return { id: "role_member", name: "MEMBER" };
       if (args.where.name === "INTERNAL_TESTER") return { id: "role_tester", name: "INTERNAL_TESTER" };
       return { id: "role_other", name: args.where.name };
@@ -146,7 +151,7 @@ describe("bootstrapProductionAdmin", () => {
         data: { accountClassification: "INTERNAL_ADMIN" },
       })
     );
-    expect(mockPrismaClient.userRole.create).toHaveBeenCalledTimes(3);
+    expect(mockPrismaClient.userRole.create).toHaveBeenCalledTimes(4);
     // Verify session revocation
     expect(mockPrismaClient.session.deleteMany).toHaveBeenCalledWith({ where: { userId: "user_123" } });
   });
@@ -155,13 +160,23 @@ describe("bootstrapProductionAdmin", () => {
     mockPrismaClient.user.findUnique.mockResolvedValue({
       id: "user_123",
       email: "admin@example.com",
-      roles: [{ roleId: "role_admin" }, { roleId: "role_member" }, { roleId: "role_tester" }], // Already has roles
+      roles: [
+        { roleId: "role_admin" },
+        { roleId: "role_master_admin" },
+        { roleId: "role_member" },
+        { roleId: "role_tester" },
+      ],
     });
 
     mockPrismaClient.user.update.mockResolvedValueOnce({
       id: "user_123",
       email: "admin@example.com",
-      roles: [{ roleId: "role_admin" }, { roleId: "role_member" }, { roleId: "role_tester" }],
+      roles: [
+        { roleId: "role_admin" },
+        { roleId: "role_master_admin" },
+        { roleId: "role_member" },
+        { roleId: "role_tester" },
+      ],
     });
 
     const result = await bootstrapProductionAdmin();
@@ -174,7 +189,12 @@ describe("bootstrapProductionAdmin", () => {
     mockPrismaClient.user.findUnique.mockResolvedValue({
       id: "user_123",
       email: "admin@example.com",
-      roles: [{ roleId: "role_admin" }, { roleId: "role_member" }, { roleId: "role_tester" }],
+      roles: [
+        { roleId: "role_admin" },
+        { roleId: "role_master_admin" },
+        { roleId: "role_member" },
+        { roleId: "role_tester" },
+      ],
     });
     mockPrismaClient.user.update.mockResolvedValueOnce({
       id: "user_123",

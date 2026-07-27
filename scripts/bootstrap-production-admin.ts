@@ -175,6 +175,16 @@ export async function bootstrapProductionAdmin() {
         where: { name: "ADMIN" },
       });
 
+      const masterAdminRole = await tx.role.upsert({
+        create: {
+          description: "Master administrative authority for role, enforcement, trust, and audit operations.",
+          label: "Master Admin",
+          name: "MASTER_ADMIN",
+        },
+        update: {},
+        where: { name: "MASTER_ADMIN" },
+      });
+
       const memberRole = await tx.role.upsert({
         create: {
           description: "Standard user access.",
@@ -211,6 +221,16 @@ export async function bootstrapProductionAdmin() {
           await tx.userRole.create({
             data: {
               roleId: adminRole.id,
+              userId: user.id,
+            },
+          });
+        }
+
+        const hasMasterAdminRole = user.roles.some((r) => r.roleId === masterAdminRole.id);
+        if (!hasMasterAdminRole) {
+          await tx.userRole.create({
+            data: {
+              roleId: masterAdminRole.id,
               userId: user.id,
             },
           });
@@ -265,7 +285,12 @@ export async function bootstrapProductionAdmin() {
               },
             },
             roles: {
-              create: [{ roleId: adminRole.id }, { roleId: memberRole.id }, { roleId: internalTesterRole.id }],
+              create: [
+                { roleId: adminRole.id },
+                { roleId: masterAdminRole.id },
+                { roleId: memberRole.id },
+                { roleId: internalTesterRole.id },
+              ],
             },
           },
           include: { roles: true },

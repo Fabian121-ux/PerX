@@ -5,6 +5,10 @@ import { redirect } from "next/navigation";
 
 import { getPrisma } from "@/lib/db/prisma";
 import { requireUser } from "@/lib/auth/session";
+import {
+  assertCanMessage,
+  assertCanRequestConnection,
+} from "@/lib/account/enforcement";
 import { writeAuditLog } from "@/lib/logging/audit";
 
 type PairLockClient = {
@@ -33,6 +37,8 @@ async function hasBlockBetween(a: string, b: string) {
 
 export async function requestConnectionAction(targetUserId: string) {
   const user = await requireUser();
+  const restriction = await assertCanRequestConnection(user.id);
+  if (restriction) throw new Error(restriction);
 
   if (user.id === targetUserId) {
     throw new Error("Cannot connect with yourself");
@@ -302,6 +308,8 @@ export async function disconnectAction(connectionId: string) {
   revalidatePath("/app/people");
   revalidatePath("/app/network");
   revalidatePath("/app/connections");
+  revalidatePath("/app/messages");
+  revalidatePath("/app/settings/blocked");
 }
 
 export async function blockUserAction(targetUserId: string) {
@@ -340,6 +348,8 @@ export async function blockUserAction(targetUserId: string) {
   revalidatePath("/app/people");
   revalidatePath("/app/network");
   revalidatePath("/app/connections");
+  revalidatePath("/app/messages");
+  revalidatePath("/app/settings/blocked");
 }
 
 export async function unblockUserAction(targetUserId: string) {
@@ -363,6 +373,8 @@ export async function unblockUserAction(targetUserId: string) {
 
 export async function startConversationAction(targetUserId: string) {
   const user = await requireUser();
+  const restriction = await assertCanMessage(user.id);
+  if (restriction) throw new Error(restriction);
 
   if (user.id === targetUserId) {
     throw new Error("Cannot message yourself");

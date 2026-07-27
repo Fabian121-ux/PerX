@@ -2,12 +2,17 @@
 
 import {
   Bookmark,
+  Bell,
+  BriefcaseBusiness,
   CheckCircle2,
   Handshake,
   MessageSquare,
+  PlusCircle,
   ShieldCheck,
   FileText,
   Search,
+  UsersRound,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -23,6 +28,7 @@ import { RecommendedProfiles } from "./recommended-profiles";
 import { RecommendedOpportunities } from "./recommended-opportunities";
 import { ActivityFeed } from "./activity-feed";
 import { Card } from "@/components/ui/card";
+import { dismissOnboardingChecklistAction } from "@/features/onboarding/actions";
 
 export function HomeDashboard({ data }: { data: HomeDashboardData }) {
   const pathname = usePathname();
@@ -50,27 +56,100 @@ export function HomeDashboard({ data }: { data: HomeDashboardData }) {
         <Card className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
           <div>
             <p className="text-sm font-bold uppercase tracking-wide text-[color:var(--px-primary)]">
-              Welcome
+              Home
             </p>
             <h1 className="mt-2 text-3xl font-black text-[color:var(--px-text)]">
               Welcome, {data.user.name.split(" ")[0]}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--px-text-muted)]">
-              Search, respond to opportunities, manage proposals and keep your
-              agreement workspaces clear.
+              Your PerX home shows what needs attention and gives you fast
+              paths to discovery, services, people, messages, and posts.
             </p>
           </div>
           <Link
             className="inline-flex min-h-11 items-center justify-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white transition hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={getHref("discover")}
           >
-            Search PerX
+            Discover
           </Link>
         </Card>
+
+        {!data.onboarding.dismissed &&
+        data.onboarding.items.some((item) => !item.complete) ? (
+          <Card className="border-[color:var(--px-primary)]/30 bg-[color:var(--px-primary-soft)]">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-wide text-[color:var(--px-primary)]">
+                  First steps
+                </p>
+                <h2 className="mt-1 text-lg font-black text-[color:var(--px-text)]">
+                  Set up your PerX presence
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-[color:var(--px-text-muted)]">
+                  Complete these when you are ready. Dismissing the checklist
+                  stores the preference on your account.
+                </p>
+              </div>
+              <form action={dismissOnboardingChecklistAction}>
+                <button
+                  aria-label="Dismiss first steps"
+                  className="grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition hover:bg-[color:var(--px-surface)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  type="submit"
+                >
+                  <X aria-hidden size={18} />
+                </button>
+              </form>
+            </div>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {data.onboarding.items.map((item) => (
+                <Link
+                  className="flex min-h-11 items-center gap-3 rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface)] px-3 py-2 text-sm font-semibold text-[color:var(--px-text)] ring-1 ring-[color:var(--px-border)] transition hover:border-[color:var(--px-primary)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  href={item.href}
+                  key={item.label}
+                >
+                  <CheckCircle2
+                    aria-hidden
+                    className={
+                      item.complete
+                        ? "text-emerald-600"
+                        : "text-[color:var(--px-text-muted)]"
+                    }
+                    size={17}
+                  />
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          </Card>
+        ) : null}
 
         <TrustHeroCard />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <DashboardMetricCard
+            title="Unread messages"
+            value={data.unreadMessagesCount}
+            detail="Unread conversations"
+            actionLabel="Open messages"
+            href={getHref("messages")}
+            icon={<MessageSquare size={20} />}
+          />
+          <DashboardMetricCard
+            title="Notifications"
+            value={data.notificationsCount}
+            detail="Unread updates"
+            actionLabel="View notifications"
+            href={getHref("notifications")}
+            icon={<Bell size={20} />}
+          />
+          <DashboardMetricCard
+            title="Requests"
+            value={data.connectionRequestsCount}
+            detail="Incoming connection requests"
+            actionLabel="Review requests"
+            href="/app/connections/requests"
+            icon={<UsersRound size={20} />}
+          />
           <DashboardMetricCard
             title="Trust"
             value={data.trust.shortLabel}
@@ -82,10 +161,10 @@ export function HomeDashboard({ data }: { data: HomeDashboardData }) {
             }
           />
           <DashboardMetricCard
-            title="Agreements"
+            title="Deals"
             value={data.activeDealsCount}
             detail={data.activeDealsDetail || "In progress"}
-            actionLabel="View agreements"
+            actionLabel="View deals"
             href={getHref("deals")}
             icon={<Handshake size={20} />}
           />
@@ -96,6 +175,22 @@ export function HomeDashboard({ data }: { data: HomeDashboardData }) {
             actionLabel="Review proposals"
             href={getHref("proposals_sent")}
             icon={<FileText size={20} />}
+          />
+          <DashboardMetricCard
+            title="Drafts"
+            value={data.draftsCount}
+            detail="Saved unpublished posts"
+            actionLabel="Manage drafts"
+            href="/app/manage?status=DRAFT"
+            icon={<FileText size={20} />}
+          />
+          <DashboardMetricCard
+            title="Published"
+            value={data.publishedItemsCount}
+            detail="Live posts"
+            actionLabel="Manage posts"
+            href={getHref("manage")}
+            icon={<BriefcaseBusiness size={20} />}
           />
         </div>
 
@@ -120,10 +215,16 @@ export function HomeDashboard({ data }: { data: HomeDashboardData }) {
           value={data.user.profile?.profileCompleteness ?? 0}
         />
         <WorkspaceQueueCard
-          body="Recent conversations will appear when a proposal or listing creates a shared workspace."
+          body="Open your real conversation list directly. Message counts are separate from notifications."
           href={getHref("messages")}
           icon={<MessageSquare aria-hidden size={18} />}
           title="Recent messages"
+        />
+        <WorkspaceQueueCard
+          body="Create opportunities, services, property listings, and other implemented PerX posts."
+          href="/app/opportunities/new"
+          icon={<PlusCircle aria-hidden size={18} />}
+          title="Create content"
         />
         <WorkspaceQueueCard
           body="Saved people, opportunities and listings will appear here after you save them."

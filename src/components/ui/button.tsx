@@ -20,7 +20,7 @@ const sizes = {
   icon: "h-11 w-11 p-0",
 };
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: keyof typeof variants;
   size?: keyof typeof sizes;
 };

@@ -5,6 +5,7 @@ export const roleLabels = {
   FREELANCER: "Freelancer",
   INVESTOR: "Investor",
   MEMBER: "Member",
+  MASTER_ADMIN: "Master Admin",
   PROPERTY_OWNER: "Property Owner",
   INTERNAL_TESTER: "Internal Tester",
 } as const;
@@ -14,13 +15,16 @@ export type RoleName = keyof typeof roleLabels;
 export type Capability =
   | "admin:access"
   | "admin:moderate"
+  | "appeals:review"
   | "audit:read"
   | "broadcasts:create"
   | "conversation:read:participant"
   | "deal:transition:participant"
   | "deals:review"
   | "deal:view:participant"
+  | "enforcement:manage"
   | "internal:tester"
+  | "master:admin"
   | "opportunity:create"
   | "opportunity:moderate"
   | "opportunity:update:own"
@@ -32,10 +36,44 @@ export type Capability =
   | "review:create:eligible"
   | "settings:manage"
   | "support:manage"
+  | "trust:configure"
+  | "trust:read"
+  | "trust:recalculate"
+  | "trust:review"
   | "users:manage"
   | "users:read";
 
 const capabilitiesByRole: Record<RoleName, Capability[]> = {
+  MASTER_ADMIN: [
+    "admin:access",
+    "admin:moderate",
+    "appeals:review",
+    "audit:read",
+    "broadcasts:create",
+    "conversation:read:participant",
+    "deal:transition:participant",
+    "deals:review",
+    "deal:view:participant",
+    "enforcement:manage",
+    "master:admin",
+    "messages:moderate",
+    "opportunity:create",
+    "opportunity:moderate",
+    "opportunity:update:own",
+    "policies:manage",
+    "proposal:create",
+    "proposal:decide:received",
+    "reports:review",
+    "review:create:eligible",
+    "settings:manage",
+    "support:manage",
+    "trust:configure",
+    "trust:read",
+    "trust:recalculate",
+    "trust:review",
+    "users:manage",
+    "users:read",
+  ],
   ADMIN: [
     "admin:access",
     "admin:moderate",

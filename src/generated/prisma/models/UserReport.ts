@@ -231,6 +231,7 @@ export type UserReportWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"UserReport"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserReport"> | Date | string
   reporter?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  moderationCases?: Prisma.ModerationCaseListRelationFilter
 }
 
 export type UserReportOrderByWithRelationInput = {
@@ -246,6 +247,7 @@ export type UserReportOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   reporter?: Prisma.UserOrderByWithRelationInput
+  moderationCases?: Prisma.ModerationCaseOrderByRelationAggregateInput
 }
 
 export type UserReportWhereUniqueInput = Prisma.AtLeast<{
@@ -265,6 +267,7 @@ export type UserReportWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"UserReport"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserReport"> | Date | string
   reporter?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  moderationCases?: Prisma.ModerationCaseListRelationFilter
 }, "id" | "reporterId_targetType_targetId_status">
 
 export type UserReportOrderByWithAggregationInput = {
@@ -313,6 +316,7 @@ export type UserReportCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   reporter: Prisma.UserCreateNestedOneWithoutUserReportsInput
+  moderationCases?: Prisma.ModerationCaseCreateNestedManyWithoutLinkedReportInput
 }
 
 export type UserReportUncheckedCreateInput = {
@@ -327,6 +331,7 @@ export type UserReportUncheckedCreateInput = {
   contextMessageId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  moderationCases?: Prisma.ModerationCaseUncheckedCreateNestedManyWithoutLinkedReportInput
 }
 
 export type UserReportUpdateInput = {
@@ -341,6 +346,7 @@ export type UserReportUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   reporter?: Prisma.UserUpdateOneRequiredWithoutUserReportsNestedInput
+  moderationCases?: Prisma.ModerationCaseUpdateManyWithoutLinkedReportNestedInput
 }
 
 export type UserReportUncheckedUpdateInput = {
@@ -355,6 +361,7 @@ export type UserReportUncheckedUpdateInput = {
   contextMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  moderationCases?: Prisma.ModerationCaseUncheckedUpdateManyWithoutLinkedReportNestedInput
 }
 
 export type UserReportCreateManyInput = {
@@ -457,6 +464,11 @@ export type UserReportMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
 }
 
+export type UserReportNullableScalarRelationFilter = {
+  is?: Prisma.UserReportWhereInput | null
+  isNot?: Prisma.UserReportWhereInput | null
+}
+
 export type UserReportCreateNestedManyWithoutReporterInput = {
   create?: Prisma.XOR<Prisma.UserReportCreateWithoutReporterInput, Prisma.UserReportUncheckedCreateWithoutReporterInput> | Prisma.UserReportCreateWithoutReporterInput[] | Prisma.UserReportUncheckedCreateWithoutReporterInput[]
   connectOrCreate?: Prisma.UserReportCreateOrConnectWithoutReporterInput | Prisma.UserReportCreateOrConnectWithoutReporterInput[]
@@ -507,6 +519,22 @@ export type EnumUserReportStatusFieldUpdateOperationsInput = {
   set?: $Enums.UserReportStatus
 }
 
+export type UserReportCreateNestedOneWithoutModerationCasesInput = {
+  create?: Prisma.XOR<Prisma.UserReportCreateWithoutModerationCasesInput, Prisma.UserReportUncheckedCreateWithoutModerationCasesInput>
+  connectOrCreate?: Prisma.UserReportCreateOrConnectWithoutModerationCasesInput
+  connect?: Prisma.UserReportWhereUniqueInput
+}
+
+export type UserReportUpdateOneWithoutModerationCasesNestedInput = {
+  create?: Prisma.XOR<Prisma.UserReportCreateWithoutModerationCasesInput, Prisma.UserReportUncheckedCreateWithoutModerationCasesInput>
+  connectOrCreate?: Prisma.UserReportCreateOrConnectWithoutModerationCasesInput
+  upsert?: Prisma.UserReportUpsertWithoutModerationCasesInput
+  disconnect?: Prisma.UserReportWhereInput | boolean
+  delete?: Prisma.UserReportWhereInput | boolean
+  connect?: Prisma.UserReportWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserReportUpdateToOneWithWhereWithoutModerationCasesInput, Prisma.UserReportUpdateWithoutModerationCasesInput>, Prisma.UserReportUncheckedUpdateWithoutModerationCasesInput>
+}
+
 export type UserReportCreateWithoutReporterInput = {
   id?: string
   targetType: $Enums.UserReportTargetType
@@ -518,6 +546,7 @@ export type UserReportCreateWithoutReporterInput = {
   contextMessageId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  moderationCases?: Prisma.ModerationCaseCreateNestedManyWithoutLinkedReportInput
 }
 
 export type UserReportUncheckedCreateWithoutReporterInput = {
@@ -531,6 +560,7 @@ export type UserReportUncheckedCreateWithoutReporterInput = {
   contextMessageId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  moderationCases?: Prisma.ModerationCaseUncheckedCreateNestedManyWithoutLinkedReportInput
 }
 
 export type UserReportCreateOrConnectWithoutReporterInput = {
@@ -576,6 +606,78 @@ export type UserReportScalarWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"UserReport"> | Date | string
 }
 
+export type UserReportCreateWithoutModerationCasesInput = {
+  id?: string
+  targetType: $Enums.UserReportTargetType
+  targetId: string
+  category: string
+  details?: string | null
+  status?: $Enums.UserReportStatus
+  contextConversationId?: string | null
+  contextMessageId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  reporter: Prisma.UserCreateNestedOneWithoutUserReportsInput
+}
+
+export type UserReportUncheckedCreateWithoutModerationCasesInput = {
+  id?: string
+  reporterId: string
+  targetType: $Enums.UserReportTargetType
+  targetId: string
+  category: string
+  details?: string | null
+  status?: $Enums.UserReportStatus
+  contextConversationId?: string | null
+  contextMessageId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+}
+
+export type UserReportCreateOrConnectWithoutModerationCasesInput = {
+  where: Prisma.UserReportWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserReportCreateWithoutModerationCasesInput, Prisma.UserReportUncheckedCreateWithoutModerationCasesInput>
+}
+
+export type UserReportUpsertWithoutModerationCasesInput = {
+  update: Prisma.XOR<Prisma.UserReportUpdateWithoutModerationCasesInput, Prisma.UserReportUncheckedUpdateWithoutModerationCasesInput>
+  create: Prisma.XOR<Prisma.UserReportCreateWithoutModerationCasesInput, Prisma.UserReportUncheckedCreateWithoutModerationCasesInput>
+  where?: Prisma.UserReportWhereInput
+}
+
+export type UserReportUpdateToOneWithWhereWithoutModerationCasesInput = {
+  where?: Prisma.UserReportWhereInput
+  data: Prisma.XOR<Prisma.UserReportUpdateWithoutModerationCasesInput, Prisma.UserReportUncheckedUpdateWithoutModerationCasesInput>
+}
+
+export type UserReportUpdateWithoutModerationCasesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  targetType?: Prisma.EnumUserReportTargetTypeFieldUpdateOperationsInput | $Enums.UserReportTargetType
+  targetId?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserReportStatusFieldUpdateOperationsInput | $Enums.UserReportStatus
+  contextConversationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contextMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  reporter?: Prisma.UserUpdateOneRequiredWithoutUserReportsNestedInput
+}
+
+export type UserReportUncheckedUpdateWithoutModerationCasesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  reporterId?: Prisma.StringFieldUpdateOperationsInput | string
+  targetType?: Prisma.EnumUserReportTargetTypeFieldUpdateOperationsInput | $Enums.UserReportTargetType
+  targetId?: Prisma.StringFieldUpdateOperationsInput | string
+  category?: Prisma.StringFieldUpdateOperationsInput | string
+  details?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumUserReportStatusFieldUpdateOperationsInput | $Enums.UserReportStatus
+  contextConversationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  contextMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 export type UserReportCreateManyReporterInput = {
   id?: string
   targetType: $Enums.UserReportTargetType
@@ -600,6 +702,7 @@ export type UserReportUpdateWithoutReporterInput = {
   contextMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  moderationCases?: Prisma.ModerationCaseUpdateManyWithoutLinkedReportNestedInput
 }
 
 export type UserReportUncheckedUpdateWithoutReporterInput = {
@@ -613,6 +716,7 @@ export type UserReportUncheckedUpdateWithoutReporterInput = {
   contextMessageId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  moderationCases?: Prisma.ModerationCaseUncheckedUpdateManyWithoutLinkedReportNestedInput
 }
 
 export type UserReportUncheckedUpdateManyWithoutReporterInput = {
@@ -629,6 +733,35 @@ export type UserReportUncheckedUpdateManyWithoutReporterInput = {
 }
 
 
+/**
+ * Count Type UserReportCountOutputType
+ */
+
+export type UserReportCountOutputType = {
+  moderationCases: number
+}
+
+export type UserReportCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  moderationCases?: boolean | UserReportCountOutputTypeCountModerationCasesArgs
+}
+
+/**
+ * UserReportCountOutputType without action
+ */
+export type UserReportCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserReportCountOutputType
+   */
+  select?: Prisma.UserReportCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * UserReportCountOutputType without action
+ */
+export type UserReportCountOutputTypeCountModerationCasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ModerationCaseWhereInput
+}
+
 
 export type UserReportSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -643,6 +776,8 @@ export type UserReportSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   createdAt?: boolean
   updatedAt?: boolean
   reporter?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  moderationCases?: boolean | Prisma.UserReport$moderationCasesArgs<ExtArgs>
+  _count?: boolean | Prisma.UserReportCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["userReport"]>
 
 export type UserReportSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -692,6 +827,8 @@ export type UserReportSelectScalar = {
 export type UserReportOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "reporterId" | "targetType" | "targetId" | "category" | "details" | "status" | "contextConversationId" | "contextMessageId" | "createdAt" | "updatedAt", ExtArgs["result"]["userReport"]>
 export type UserReportInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   reporter?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  moderationCases?: boolean | Prisma.UserReport$moderationCasesArgs<ExtArgs>
+  _count?: boolean | Prisma.UserReportCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserReportIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   reporter?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -704,6 +841,7 @@ export type $UserReportPayload<ExtArgs extends runtime.Types.Extensions.Internal
   name: "UserReport"
   objects: {
     reporter: Prisma.$UserPayload<ExtArgs>
+    moderationCases: Prisma.$ModerationCasePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1112,6 +1250,7 @@ readonly fields: UserReportFieldRefs;
 export interface Prisma__UserReportClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   reporter<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  moderationCases<T extends Prisma.UserReport$moderationCasesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserReport$moderationCasesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ModerationCasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1550,6 +1689,30 @@ export type UserReportDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Limit how many UserReports to delete.
    */
   limit?: number
+}
+
+/**
+ * UserReport.moderationCases
+ */
+export type UserReport$moderationCasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ModerationCase
+   */
+  select?: Prisma.ModerationCaseSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ModerationCase
+   */
+  omit?: Prisma.ModerationCaseOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ModerationCaseInclude<ExtArgs> | null
+  where?: Prisma.ModerationCaseWhereInput
+  orderBy?: Prisma.ModerationCaseOrderByWithRelationInput | Prisma.ModerationCaseOrderByWithRelationInput[]
+  cursor?: Prisma.ModerationCaseWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ModerationCaseScalarFieldEnum | Prisma.ModerationCaseScalarFieldEnum[]
 }
 
 /**

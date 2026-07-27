@@ -3,6 +3,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
+import Link from "next/link";
 import type { CurrentUser } from "@/lib/auth/session";
 
 import {
@@ -115,10 +116,14 @@ export function MobileDashboardDrawer({
         <Dialog.Content className="perx-sidebar fixed inset-y-0 left-0 z-50 flex h-full w-[min(20rem,calc(100vw-2rem))] flex-col border-r border-white/10 p-4 shadow-2xl focus:outline-none lg:hidden">
           <Dialog.Title className="sr-only">Navigation menu</Dialog.Title>
           <div className="flex h-14 shrink-0 items-center justify-between">
-            <BrandLogo
-              className="h-9 drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]"
-              dark
-            />
+            <Dialog.Close asChild>
+              <Link aria-label="PerX Home" href="/app">
+                <BrandLogo
+                  className="h-9 drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]"
+                  dark
+                />
+              </Link>
+            </Dialog.Close>
             <Dialog.Close asChild>
               <button
                 className="flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"

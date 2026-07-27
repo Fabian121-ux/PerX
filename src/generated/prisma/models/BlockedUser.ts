@@ -182,6 +182,8 @@ export type BlockedUserWhereInput = {
   blockedUserId?: Prisma.StringFilter<"BlockedUser"> | string
   reason?: Prisma.StringNullableFilter<"BlockedUser"> | string | null
   createdAt?: Prisma.DateTimeFilter<"BlockedUser"> | Date | string
+  blocker?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  blockedUser?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type BlockedUserOrderByWithRelationInput = {
@@ -190,6 +192,8 @@ export type BlockedUserOrderByWithRelationInput = {
   blockedUserId?: Prisma.SortOrder
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+  blocker?: Prisma.UserOrderByWithRelationInput
+  blockedUser?: Prisma.UserOrderByWithRelationInput
 }
 
 export type BlockedUserWhereUniqueInput = Prisma.AtLeast<{
@@ -202,6 +206,8 @@ export type BlockedUserWhereUniqueInput = Prisma.AtLeast<{
   blockedUserId?: Prisma.StringFilter<"BlockedUser"> | string
   reason?: Prisma.StringNullableFilter<"BlockedUser"> | string | null
   createdAt?: Prisma.DateTimeFilter<"BlockedUser"> | Date | string
+  blocker?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  blockedUser?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id" | "blockerUserId_blockedUserId">
 
 export type BlockedUserOrderByWithAggregationInput = {
@@ -228,10 +234,10 @@ export type BlockedUserScalarWhereWithAggregatesInput = {
 
 export type BlockedUserCreateInput = {
   id?: string
-  blockerUserId: string
-  blockedUserId: string
   reason?: string | null
   createdAt?: Date | string
+  blocker: Prisma.UserCreateNestedOneWithoutBlocksMadeInput
+  blockedUser: Prisma.UserCreateNestedOneWithoutBlocksReceivedInput
 }
 
 export type BlockedUserUncheckedCreateInput = {
@@ -244,10 +250,10 @@ export type BlockedUserUncheckedCreateInput = {
 
 export type BlockedUserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  blockerUserId?: Prisma.StringFieldUpdateOperationsInput | string
-  blockedUserId?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  blocker?: Prisma.UserUpdateOneRequiredWithoutBlocksMadeNestedInput
+  blockedUser?: Prisma.UserUpdateOneRequiredWithoutBlocksReceivedNestedInput
 }
 
 export type BlockedUserUncheckedUpdateInput = {
@@ -268,8 +274,6 @@ export type BlockedUserCreateManyInput = {
 
 export type BlockedUserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  blockerUserId?: Prisma.StringFieldUpdateOperationsInput | string
-  blockedUserId?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -280,6 +284,16 @@ export type BlockedUserUncheckedUpdateManyInput = {
   blockedUserId?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type BlockedUserListRelationFilter = {
+  every?: Prisma.BlockedUserWhereInput
+  some?: Prisma.BlockedUserWhereInput
+  none?: Prisma.BlockedUserWhereInput
+}
+
+export type BlockedUserOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type BlockedUserBlockerUserIdBlockedUserIdCompoundUniqueInput = {
@@ -311,6 +325,237 @@ export type BlockedUserMinOrderByAggregateInput = {
   createdAt?: Prisma.SortOrder
 }
 
+export type BlockedUserCreateNestedManyWithoutBlockerInput = {
+  create?: Prisma.XOR<Prisma.BlockedUserCreateWithoutBlockerInput, Prisma.BlockedUserUncheckedCreateWithoutBlockerInput> | Prisma.BlockedUserCreateWithoutBlockerInput[] | Prisma.BlockedUserUncheckedCreateWithoutBlockerInput[]
+  connectOrCreate?: Prisma.BlockedUserCreateOrConnectWithoutBlockerInput | Prisma.BlockedUserCreateOrConnectWithoutBlockerInput[]
+  createMany?: Prisma.BlockedUserCreateManyBlockerInputEnvelope
+  connect?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+}
+
+export type BlockedUserCreateNestedManyWithoutBlockedUserInput = {
+  create?: Prisma.XOR<Prisma.BlockedUserCreateWithoutBlockedUserInput, Prisma.BlockedUserUncheckedCreateWithoutBlockedUserInput> | Prisma.BlockedUserCreateWithoutBlockedUserInput[] | Prisma.BlockedUserUncheckedCreateWithoutBlockedUserInput[]
+  connectOrCreate?: Prisma.BlockedUserCreateOrConnectWithoutBlockedUserInput | Prisma.BlockedUserCreateOrConnectWithoutBlockedUserInput[]
+  createMany?: Prisma.BlockedUserCreateManyBlockedUserInputEnvelope
+  connect?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+}
+
+export type BlockedUserUncheckedCreateNestedManyWithoutBlockerInput = {
+  create?: Prisma.XOR<Prisma.BlockedUserCreateWithoutBlockerInput, Prisma.BlockedUserUncheckedCreateWithoutBlockerInput> | Prisma.BlockedUserCreateWithoutBlockerInput[] | Prisma.BlockedUserUncheckedCreateWithoutBlockerInput[]
+  connectOrCreate?: Prisma.BlockedUserCreateOrConnectWithoutBlockerInput | Prisma.BlockedUserCreateOrConnectWithoutBlockerInput[]
+  createMany?: Prisma.BlockedUserCreateManyBlockerInputEnvelope
+  connect?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+}
+
+export type BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput = {
+  create?: Prisma.XOR<Prisma.BlockedUserCreateWithoutBlockedUserInput, Prisma.BlockedUserUncheckedCreateWithoutBlockedUserInput> | Prisma.BlockedUserCreateWithoutBlockedUserInput[] | Prisma.BlockedUserUncheckedCreateWithoutBlockedUserInput[]
+  connectOrCreate?: Prisma.BlockedUserCreateOrConnectWithoutBlockedUserInput | Prisma.BlockedUserCreateOrConnectWithoutBlockedUserInput[]
+  createMany?: Prisma.BlockedUserCreateManyBlockedUserInputEnvelope
+  connect?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+}
+
+export type BlockedUserUpdateManyWithoutBlockerNestedInput = {
+  create?: Prisma.XOR<Prisma.BlockedUserCreateWithoutBlockerInput, Prisma.BlockedUserUncheckedCreateWithoutBlockerInput> | Prisma.BlockedUserCreateWithoutBlockerInput[] | Prisma.BlockedUserUncheckedCreateWithoutBlockerInput[]
+  connectOrCreate?: Prisma.BlockedUserCreateOrConnectWithoutBlockerInput | Prisma.BlockedUserCreateOrConnectWithoutBlockerInput[]
+  upsert?: Prisma.BlockedUserUpsertWithWhereUniqueWithoutBlockerInput | Prisma.BlockedUserUpsertWithWhereUniqueWithoutBlockerInput[]
+  createMany?: Prisma.BlockedUserCreateManyBlockerInputEnvelope
+  set?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  disconnect?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  delete?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  connect?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  update?: Prisma.BlockedUserUpdateWithWhereUniqueWithoutBlockerInput | Prisma.BlockedUserUpdateWithWhereUniqueWithoutBlockerInput[]
+  updateMany?: Prisma.BlockedUserUpdateManyWithWhereWithoutBlockerInput | Prisma.BlockedUserUpdateManyWithWhereWithoutBlockerInput[]
+  deleteMany?: Prisma.BlockedUserScalarWhereInput | Prisma.BlockedUserScalarWhereInput[]
+}
+
+export type BlockedUserUpdateManyWithoutBlockedUserNestedInput = {
+  create?: Prisma.XOR<Prisma.BlockedUserCreateWithoutBlockedUserInput, Prisma.BlockedUserUncheckedCreateWithoutBlockedUserInput> | Prisma.BlockedUserCreateWithoutBlockedUserInput[] | Prisma.BlockedUserUncheckedCreateWithoutBlockedUserInput[]
+  connectOrCreate?: Prisma.BlockedUserCreateOrConnectWithoutBlockedUserInput | Prisma.BlockedUserCreateOrConnectWithoutBlockedUserInput[]
+  upsert?: Prisma.BlockedUserUpsertWithWhereUniqueWithoutBlockedUserInput | Prisma.BlockedUserUpsertWithWhereUniqueWithoutBlockedUserInput[]
+  createMany?: Prisma.BlockedUserCreateManyBlockedUserInputEnvelope
+  set?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  disconnect?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  delete?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  connect?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  update?: Prisma.BlockedUserUpdateWithWhereUniqueWithoutBlockedUserInput | Prisma.BlockedUserUpdateWithWhereUniqueWithoutBlockedUserInput[]
+  updateMany?: Prisma.BlockedUserUpdateManyWithWhereWithoutBlockedUserInput | Prisma.BlockedUserUpdateManyWithWhereWithoutBlockedUserInput[]
+  deleteMany?: Prisma.BlockedUserScalarWhereInput | Prisma.BlockedUserScalarWhereInput[]
+}
+
+export type BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput = {
+  create?: Prisma.XOR<Prisma.BlockedUserCreateWithoutBlockerInput, Prisma.BlockedUserUncheckedCreateWithoutBlockerInput> | Prisma.BlockedUserCreateWithoutBlockerInput[] | Prisma.BlockedUserUncheckedCreateWithoutBlockerInput[]
+  connectOrCreate?: Prisma.BlockedUserCreateOrConnectWithoutBlockerInput | Prisma.BlockedUserCreateOrConnectWithoutBlockerInput[]
+  upsert?: Prisma.BlockedUserUpsertWithWhereUniqueWithoutBlockerInput | Prisma.BlockedUserUpsertWithWhereUniqueWithoutBlockerInput[]
+  createMany?: Prisma.BlockedUserCreateManyBlockerInputEnvelope
+  set?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  disconnect?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  delete?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  connect?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  update?: Prisma.BlockedUserUpdateWithWhereUniqueWithoutBlockerInput | Prisma.BlockedUserUpdateWithWhereUniqueWithoutBlockerInput[]
+  updateMany?: Prisma.BlockedUserUpdateManyWithWhereWithoutBlockerInput | Prisma.BlockedUserUpdateManyWithWhereWithoutBlockerInput[]
+  deleteMany?: Prisma.BlockedUserScalarWhereInput | Prisma.BlockedUserScalarWhereInput[]
+}
+
+export type BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput = {
+  create?: Prisma.XOR<Prisma.BlockedUserCreateWithoutBlockedUserInput, Prisma.BlockedUserUncheckedCreateWithoutBlockedUserInput> | Prisma.BlockedUserCreateWithoutBlockedUserInput[] | Prisma.BlockedUserUncheckedCreateWithoutBlockedUserInput[]
+  connectOrCreate?: Prisma.BlockedUserCreateOrConnectWithoutBlockedUserInput | Prisma.BlockedUserCreateOrConnectWithoutBlockedUserInput[]
+  upsert?: Prisma.BlockedUserUpsertWithWhereUniqueWithoutBlockedUserInput | Prisma.BlockedUserUpsertWithWhereUniqueWithoutBlockedUserInput[]
+  createMany?: Prisma.BlockedUserCreateManyBlockedUserInputEnvelope
+  set?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  disconnect?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  delete?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  connect?: Prisma.BlockedUserWhereUniqueInput | Prisma.BlockedUserWhereUniqueInput[]
+  update?: Prisma.BlockedUserUpdateWithWhereUniqueWithoutBlockedUserInput | Prisma.BlockedUserUpdateWithWhereUniqueWithoutBlockedUserInput[]
+  updateMany?: Prisma.BlockedUserUpdateManyWithWhereWithoutBlockedUserInput | Prisma.BlockedUserUpdateManyWithWhereWithoutBlockedUserInput[]
+  deleteMany?: Prisma.BlockedUserScalarWhereInput | Prisma.BlockedUserScalarWhereInput[]
+}
+
+export type BlockedUserCreateWithoutBlockerInput = {
+  id?: string
+  reason?: string | null
+  createdAt?: Date | string
+  blockedUser: Prisma.UserCreateNestedOneWithoutBlocksReceivedInput
+}
+
+export type BlockedUserUncheckedCreateWithoutBlockerInput = {
+  id?: string
+  blockedUserId: string
+  reason?: string | null
+  createdAt?: Date | string
+}
+
+export type BlockedUserCreateOrConnectWithoutBlockerInput = {
+  where: Prisma.BlockedUserWhereUniqueInput
+  create: Prisma.XOR<Prisma.BlockedUserCreateWithoutBlockerInput, Prisma.BlockedUserUncheckedCreateWithoutBlockerInput>
+}
+
+export type BlockedUserCreateManyBlockerInputEnvelope = {
+  data: Prisma.BlockedUserCreateManyBlockerInput | Prisma.BlockedUserCreateManyBlockerInput[]
+  skipDuplicates?: boolean
+}
+
+export type BlockedUserCreateWithoutBlockedUserInput = {
+  id?: string
+  reason?: string | null
+  createdAt?: Date | string
+  blocker: Prisma.UserCreateNestedOneWithoutBlocksMadeInput
+}
+
+export type BlockedUserUncheckedCreateWithoutBlockedUserInput = {
+  id?: string
+  blockerUserId: string
+  reason?: string | null
+  createdAt?: Date | string
+}
+
+export type BlockedUserCreateOrConnectWithoutBlockedUserInput = {
+  where: Prisma.BlockedUserWhereUniqueInput
+  create: Prisma.XOR<Prisma.BlockedUserCreateWithoutBlockedUserInput, Prisma.BlockedUserUncheckedCreateWithoutBlockedUserInput>
+}
+
+export type BlockedUserCreateManyBlockedUserInputEnvelope = {
+  data: Prisma.BlockedUserCreateManyBlockedUserInput | Prisma.BlockedUserCreateManyBlockedUserInput[]
+  skipDuplicates?: boolean
+}
+
+export type BlockedUserUpsertWithWhereUniqueWithoutBlockerInput = {
+  where: Prisma.BlockedUserWhereUniqueInput
+  update: Prisma.XOR<Prisma.BlockedUserUpdateWithoutBlockerInput, Prisma.BlockedUserUncheckedUpdateWithoutBlockerInput>
+  create: Prisma.XOR<Prisma.BlockedUserCreateWithoutBlockerInput, Prisma.BlockedUserUncheckedCreateWithoutBlockerInput>
+}
+
+export type BlockedUserUpdateWithWhereUniqueWithoutBlockerInput = {
+  where: Prisma.BlockedUserWhereUniqueInput
+  data: Prisma.XOR<Prisma.BlockedUserUpdateWithoutBlockerInput, Prisma.BlockedUserUncheckedUpdateWithoutBlockerInput>
+}
+
+export type BlockedUserUpdateManyWithWhereWithoutBlockerInput = {
+  where: Prisma.BlockedUserScalarWhereInput
+  data: Prisma.XOR<Prisma.BlockedUserUpdateManyMutationInput, Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerInput>
+}
+
+export type BlockedUserScalarWhereInput = {
+  AND?: Prisma.BlockedUserScalarWhereInput | Prisma.BlockedUserScalarWhereInput[]
+  OR?: Prisma.BlockedUserScalarWhereInput[]
+  NOT?: Prisma.BlockedUserScalarWhereInput | Prisma.BlockedUserScalarWhereInput[]
+  id?: Prisma.StringFilter<"BlockedUser"> | string
+  blockerUserId?: Prisma.StringFilter<"BlockedUser"> | string
+  blockedUserId?: Prisma.StringFilter<"BlockedUser"> | string
+  reason?: Prisma.StringNullableFilter<"BlockedUser"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"BlockedUser"> | Date | string
+}
+
+export type BlockedUserUpsertWithWhereUniqueWithoutBlockedUserInput = {
+  where: Prisma.BlockedUserWhereUniqueInput
+  update: Prisma.XOR<Prisma.BlockedUserUpdateWithoutBlockedUserInput, Prisma.BlockedUserUncheckedUpdateWithoutBlockedUserInput>
+  create: Prisma.XOR<Prisma.BlockedUserCreateWithoutBlockedUserInput, Prisma.BlockedUserUncheckedCreateWithoutBlockedUserInput>
+}
+
+export type BlockedUserUpdateWithWhereUniqueWithoutBlockedUserInput = {
+  where: Prisma.BlockedUserWhereUniqueInput
+  data: Prisma.XOR<Prisma.BlockedUserUpdateWithoutBlockedUserInput, Prisma.BlockedUserUncheckedUpdateWithoutBlockedUserInput>
+}
+
+export type BlockedUserUpdateManyWithWhereWithoutBlockedUserInput = {
+  where: Prisma.BlockedUserScalarWhereInput
+  data: Prisma.XOR<Prisma.BlockedUserUpdateManyMutationInput, Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserInput>
+}
+
+export type BlockedUserCreateManyBlockerInput = {
+  id?: string
+  blockedUserId: string
+  reason?: string | null
+  createdAt?: Date | string
+}
+
+export type BlockedUserCreateManyBlockedUserInput = {
+  id?: string
+  blockerUserId: string
+  reason?: string | null
+  createdAt?: Date | string
+}
+
+export type BlockedUserUpdateWithoutBlockerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  blockedUser?: Prisma.UserUpdateOneRequiredWithoutBlocksReceivedNestedInput
+}
+
+export type BlockedUserUncheckedUpdateWithoutBlockerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  blockedUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type BlockedUserUncheckedUpdateManyWithoutBlockerInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  blockedUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type BlockedUserUpdateWithoutBlockedUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  blocker?: Prisma.UserUpdateOneRequiredWithoutBlocksMadeNestedInput
+}
+
+export type BlockedUserUncheckedUpdateWithoutBlockedUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  blockerUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type BlockedUserUncheckedUpdateManyWithoutBlockedUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  blockerUserId?: Prisma.StringFieldUpdateOperationsInput | string
+  reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
 
 
 export type BlockedUserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -319,6 +564,8 @@ export type BlockedUserSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   blockedUserId?: boolean
   reason?: boolean
   createdAt?: boolean
+  blocker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  blockedUser?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["blockedUser"]>
 
 export type BlockedUserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -327,6 +574,8 @@ export type BlockedUserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   blockedUserId?: boolean
   reason?: boolean
   createdAt?: boolean
+  blocker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  blockedUser?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["blockedUser"]>
 
 export type BlockedUserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -335,6 +584,8 @@ export type BlockedUserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   blockedUserId?: boolean
   reason?: boolean
   createdAt?: boolean
+  blocker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  blockedUser?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["blockedUser"]>
 
 export type BlockedUserSelectScalar = {
@@ -346,10 +597,25 @@ export type BlockedUserSelectScalar = {
 }
 
 export type BlockedUserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "blockerUserId" | "blockedUserId" | "reason" | "createdAt", ExtArgs["result"]["blockedUser"]>
+export type BlockedUserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  blocker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  blockedUser?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+}
+export type BlockedUserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  blocker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  blockedUser?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+}
+export type BlockedUserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  blocker?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  blockedUser?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+}
 
 export type $BlockedUserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "BlockedUser"
-  objects: {}
+  objects: {
+    blocker: Prisma.$UserPayload<ExtArgs>
+    blockedUser: Prisma.$UserPayload<ExtArgs>
+  }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     blockerUserId: string
@@ -750,6 +1016,8 @@ readonly fields: BlockedUserFieldRefs;
  */
 export interface Prisma__BlockedUserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
+  blocker<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  blockedUser<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -801,6 +1069,10 @@ export type BlockedUserFindUniqueArgs<ExtArgs extends runtime.Types.Extensions.I
    */
   omit?: Prisma.BlockedUserOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserInclude<ExtArgs> | null
+  /**
    * Filter, which BlockedUser to fetch.
    */
   where: Prisma.BlockedUserWhereUniqueInput
@@ -819,6 +1091,10 @@ export type BlockedUserFindUniqueOrThrowArgs<ExtArgs extends runtime.Types.Exten
    */
   omit?: Prisma.BlockedUserOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserInclude<ExtArgs> | null
+  /**
    * Filter, which BlockedUser to fetch.
    */
   where: Prisma.BlockedUserWhereUniqueInput
@@ -836,6 +1112,10 @@ export type BlockedUserFindFirstArgs<ExtArgs extends runtime.Types.Extensions.In
    * Omit specific fields from the BlockedUser
    */
   omit?: Prisma.BlockedUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserInclude<ExtArgs> | null
   /**
    * Filter, which BlockedUser to fetch.
    */
@@ -885,6 +1165,10 @@ export type BlockedUserFindFirstOrThrowArgs<ExtArgs extends runtime.Types.Extens
    */
   omit?: Prisma.BlockedUserOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserInclude<ExtArgs> | null
+  /**
    * Filter, which BlockedUser to fetch.
    */
   where?: Prisma.BlockedUserWhereInput
@@ -932,6 +1216,10 @@ export type BlockedUserFindManyArgs<ExtArgs extends runtime.Types.Extensions.Int
    * Omit specific fields from the BlockedUser
    */
   omit?: Prisma.BlockedUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserInclude<ExtArgs> | null
   /**
    * Filter, which BlockedUsers to fetch.
    */
@@ -981,6 +1269,10 @@ export type BlockedUserCreateArgs<ExtArgs extends runtime.Types.Extensions.Inter
    */
   omit?: Prisma.BlockedUserOmit<ExtArgs> | null
   /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserInclude<ExtArgs> | null
+  /**
    * The data needed to create a BlockedUser.
    */
   data: Prisma.XOR<Prisma.BlockedUserCreateInput, Prisma.BlockedUserUncheckedCreateInput>
@@ -1014,6 +1306,10 @@ export type BlockedUserCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Ext
    */
   data: Prisma.BlockedUserCreateManyInput | Prisma.BlockedUserCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1028,6 +1324,10 @@ export type BlockedUserUpdateArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the BlockedUser
    */
   omit?: Prisma.BlockedUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserInclude<ExtArgs> | null
   /**
    * The data needed to update a BlockedUser.
    */
@@ -1080,6 +1380,10 @@ export type BlockedUserUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Ext
    * Limit how many BlockedUsers to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -1094,6 +1398,10 @@ export type BlockedUserUpsertArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the BlockedUser
    */
   omit?: Prisma.BlockedUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserInclude<ExtArgs> | null
   /**
    * The filter to search for the BlockedUser to update in case it exists.
    */
@@ -1120,6 +1428,10 @@ export type BlockedUserDeleteArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Omit specific fields from the BlockedUser
    */
   omit?: Prisma.BlockedUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserInclude<ExtArgs> | null
   /**
    * Filter which BlockedUser to delete.
    */
@@ -1152,4 +1464,8 @@ export type BlockedUserDefaultArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Omit specific fields from the BlockedUser
    */
   omit?: Prisma.BlockedUserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.BlockedUserInclude<ExtArgs> | null
 }

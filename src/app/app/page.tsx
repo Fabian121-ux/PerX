@@ -7,6 +7,8 @@ import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { HomeDashboard } from "@/components/dashboard/home-dashboard";
 import type { HomeDashboardData } from "@/components/dashboard/types";
 import { calculateTrustSummary } from "@/lib/trust/engine";
+import { getPrisma } from "@/lib/db/prisma";
+import { getUnreadCounts } from "@/lib/data/unread-counts";
 
 function getTimeAgo(dateString: string | Date | undefined) {
   if (!dateString) return "recently";
@@ -25,7 +27,31 @@ export default async function DashboardPage() {
   }
 
   const metrics = await getDashboardMetrics(user.id);
-  const recentOpps = await getOpportunityFeed();
+  const [
+    recentOpps,
+    unreadCounts,
+    connectionActivityCount,
+    connectionRequestsCount,
+    draftsCount,
+    publishedItemsCount,
+  ] = await Promise.all([
+    getOpportunityFeed(),
+    getUnreadCounts(user.id),
+    getPrisma().connection.count({
+      where: {
+        OR: [{ requesterId: user.id }, { receiverId: user.id }],
+      },
+    }),
+    getPrisma().connection.count({
+      where: { receiverId: user.id, status: "PENDING" },
+    }),
+    getPrisma().opportunity.count({
+      where: { ownerId: user.id, status: "DRAFT" },
+    }),
+    getPrisma().opportunity.count({
+      where: { ownerId: user.id, status: "PUBLISHED" },
+    }),
+  ]);
 
   // Pick top 5 opportunities for recommended
   const topOpps = recentOpps.slice(0, 5);
@@ -40,8 +66,48 @@ export default async function DashboardPage() {
     }),
     activeDealsCount: metrics.deals,
     activeDealsDetail: "In progress",
+    connectionRequestsCount,
+    draftsCount,
+    notificationsCount: unreadCounts.notifications,
     openProposalsCount: metrics.proposals,
     openProposalsDetail: "Awaiting response",
+    publishedItemsCount,
+    unreadMessagesCount: unreadCounts.messages,
+    onboarding: {
+      dismissed: Boolean(user.onboardingDismissedAt),
+      items: [
+        {
+          complete: (user.profile?.profileCompleteness ?? 0) >= 70,
+          href: "/app/profile/edit",
+          label: "Complete your profile",
+        },
+        {
+          complete: Boolean(user.imageUrl || user.profile?.profileImageUrl),
+          href: "/app/profile/edit",
+          label: "Add a profile image",
+        },
+        {
+          complete: Boolean(user.profile?.skills?.length),
+          href: "/app/profile/edit",
+          label: "Select skills or interests",
+        },
+        {
+          complete: connectionActivityCount > 0,
+          href: "/app/people",
+          label: "Find people",
+        },
+        {
+          complete: publishedItemsCount > 0,
+          href: "/app/opportunities/new",
+          label: "Publish your first item",
+        },
+        {
+          complete: connectionActivityCount > 0,
+          href: "/app/people",
+          label: "Send a connection request",
+        },
+      ],
+    },
     recommendedProfiles: [],
     recommendedOpportunities: topOpps.map((opp: any) => {
       const image = getTemporaryOpportunityImage(opp.slug);

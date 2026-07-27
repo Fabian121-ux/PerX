@@ -109,6 +109,22 @@ export default async function NewReportPage({
               placeholder="Add a short explanation for the moderation team."
             />
           </Field>
+          {["CONVERSATION", "MESSAGE", "USER"].includes(targetType) ? (
+            <label className="flex items-start gap-3 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] p-3 text-sm text-[color:var(--px-text)]">
+              <input
+                className="mt-1 h-4 w-4 rounded border-[color:var(--px-border)]"
+                name="blockAfterReport"
+                type="checkbox"
+              />
+              <span>
+                <span className="block font-bold">Report and block</span>
+                <span className="block text-[color:var(--px-text-muted)]">
+                  Blocking is personal to your account. It does not suspend the
+                  other user globally.
+                </span>
+              </span>
+            </label>
+          ) : null}
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button className="w-full sm:w-auto" type="submit">
               Submit report

@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { Prisma } from "@/generated/prisma/client";
+import type {
+  EnforcementActionType,
+  ModerationCaseStatus,
+} from "@/generated/prisma/enums";
 import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import { writeAuditLog } from "@/lib/logging/audit";
@@ -25,6 +30,59 @@ const broadcastSchema = z.object({
   priority: z.enum(["NORMAL", "HIGH"]).default("NORMAL"),
   title: z.string().trim().min(4).max(120),
 });
+
+const caseStatusValues = [
+  "NEW",
+  "TRIAGED",
+  "ASSIGNED",
+  "IN_REVIEW",
+  "NEEDS_INFORMATION",
+  "ACTION_REQUIRED",
+  "ESCALATED",
+  "RESOLVED",
+  "DISMISSED",
+  "APPEALED",
+  "CLOSED",
+] as const;
+
+const enforcementTypeValues = [
+  "WARNING",
+  "MESSAGING_RESTRICTION",
+  "CONNECTION_REQUEST_RESTRICTION",
+  "PUBLISHING_RESTRICTION",
+  "VERIFICATION_REQUIRED",
+  "TEMPORARY_SUSPENSION",
+  "INDEFINITE_SUSPENSION",
+  "DEACTIVATION",
+  "PERMANENT_BAN",
+  "SESSION_REVOCATION",
+  "RESTORATION",
+] as const;
+
+function expiryFromForm(formData: FormData) {
+  const duration = textValue(formData, "duration");
+  const now = new Date();
+  if (duration === "1h") return new Date(now.getTime() + 60 * 60_000);
+  if (duration === "24h") return new Date(now.getTime() + 24 * 60 * 60_000);
+  if (duration === "3d") return new Date(now.getTime() + 3 * 24 * 60 * 60_000);
+  if (duration === "7d") return new Date(now.getTime() + 7 * 24 * 60 * 60_000);
+  if (duration === "14d") return new Date(now.getTime() + 14 * 24 * 60 * 60_000);
+  if (duration === "30d") return new Date(now.getTime() + 30 * 24 * 60 * 60_000);
+  if (duration === "custom") {
+    const custom = new Date(textValue(formData, "customExpiry"));
+    return Number.isNaN(custom.getTime()) ? null : custom;
+  }
+  return null;
+}
+
+function jsonSafeState(state: Record<string, unknown>): Prisma.InputJsonObject {
+  return Object.fromEntries(
+    Object.entries(state).map(([key, value]) => [
+      key,
+      value instanceof Date ? value.toISOString() : value,
+    ]),
+  ) as Prisma.InputJsonObject;
+}
 
 export async function recordConversationReviewAction(formData: FormData) {
   const admin = await requireCapabilityOrNotFound("messages:moderate");
@@ -55,6 +113,339 @@ export async function recordConversationReviewAction(formData: FormData) {
   });
 
   revalidatePath("/admin/messages");
+}
+
+export async function recordMessageScopeRevealAction(formData: FormData) {
+  const admin = await requireCapabilityOrNotFound("messages:moderate");
+  const caseId = textValue(formData, "caseId");
+  const reason = textValue(formData, "reason");
+  const scope = textValue(formData, "scope") || "reported-message-context";
+
+  if (!caseId || reason.length < 12) {
+    throw new Error("A case and clear moderation reason are required.");
+  }
+
+  const moderationCase = await getPrisma().moderationCase.findFirst({
+    select: {
+      conversationId: true,
+      id: true,
+      messageId: true,
+      status: true,
+    },
+    where: { id: caseId, conversationId: { not: null } },
+  });
+  if (!moderationCase?.conversationId) {
+    throw new Error("Message content can only be revealed from a linked case.");
+  }
+
+  await getPrisma().$transaction(async (tx) => {
+    await tx.moderationMessageScope.create({
+      data: {
+        caseId: moderationCase.id,
+        conversationId: moderationCase.conversationId!,
+        messageId: moderationCase.messageId,
+        reason,
+        revealedById: admin.id,
+        scope,
+      },
+    });
+    await tx.moderationCase.update({
+      data: { status: "IN_REVIEW" },
+      where: { id: moderationCase.id },
+    });
+    await tx.moderationCaseEvent.create({
+      data: {
+        actorId: admin.id,
+        caseId: moderationCase.id,
+        nextStatus: "IN_REVIEW",
+        note: "Scoped message context revealed after reason confirmation.",
+        previousStatus: moderationCase.status,
+        reason,
+        type: "message_scope.revealed",
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        action: "admin.message_scope.revealed",
+        actorId: admin.id,
+        entityId: moderationCase.id,
+        entityType: "moderation_case",
+        metadata: {
+          conversationId: moderationCase.conversationId,
+          messageId: moderationCase.messageId,
+          reasonProvided: true,
+          scope,
+        },
+      },
+    });
+  });
+
+  revalidatePath("/admin/messages");
+  revalidatePath(`/admin/moderation/cases/${caseId}`);
+}
+
+export async function updateModerationCaseStatusAction(formData: FormData) {
+  const admin = await requireCapabilityOrNotFound("admin:moderate");
+  const caseId = textValue(formData, "caseId");
+  const status = textValue(formData, "status");
+  const reason = textValue(formData, "reason");
+
+  const parsedStatus = z.enum(caseStatusValues).safeParse(status);
+  if (!caseId || !parsedStatus.success || reason.length < 8) {
+    throw new Error("A case, status, and reason are required.");
+  }
+
+  const moderationCase = await getPrisma().moderationCase.findUnique({
+    select: { status: true },
+    where: { id: caseId },
+  });
+  if (!moderationCase) throw new Error("Case not found.");
+
+  await getPrisma().$transaction(async (tx) => {
+    await tx.moderationCase.update({
+      data: { status: parsedStatus.data as ModerationCaseStatus },
+      where: { id: caseId },
+    });
+    await tx.moderationCaseEvent.create({
+      data: {
+        actorId: admin.id,
+        caseId,
+        nextStatus: parsedStatus.data,
+        previousStatus: moderationCase.status,
+        reason,
+        type: "case.status_changed",
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        action: "admin.case.status_changed",
+        actorId: admin.id,
+        entityId: caseId,
+        entityType: "moderation_case",
+        metadata: {
+          fromStatus: moderationCase.status,
+          reasonProvided: true,
+          toStatus: parsedStatus.data,
+        },
+      },
+    });
+  });
+
+  revalidatePath("/admin/reports");
+  revalidatePath("/admin/messages");
+  revalidatePath("/admin/moderation");
+  revalidatePath(`/admin/moderation/cases/${caseId}`);
+}
+
+export async function applyEnforcementAction(formData: FormData) {
+  const admin = await requireCapabilityOrNotFound("enforcement:manage");
+  const caseId = textValue(formData, "caseId");
+  const targetUserId = textValue(formData, "targetUserId");
+  const type = textValue(formData, "type");
+  const reason = textValue(formData, "reason");
+  const userFacingExplanation = textValue(formData, "userFacingExplanation");
+  const internalNote = textValue(formData, "internalNote");
+  const confirmation = textValue(formData, "confirmation");
+  const parsedType = z.enum(enforcementTypeValues).safeParse(type);
+
+  if (
+    !caseId ||
+    !targetUserId ||
+    !parsedType.success ||
+    reason.length < 8 ||
+    userFacingExplanation.length < 8 ||
+    internalNote.length < 8
+  ) {
+    throw new Error("Case, target, reason, user explanation, and internal note are required.");
+  }
+
+  if (parsedType.data === "PERMANENT_BAN" && confirmation !== "PERMANENT_BAN") {
+    throw new Error("Permanent ban requires confirmation.");
+  }
+
+  const moderationCase = await getPrisma().moderationCase.findUnique({
+    select: { id: true, status: true },
+    where: { id: caseId },
+  });
+  if (!moderationCase) throw new Error("Case not found.");
+
+  const target = await getPrisma().user.findUnique({
+    select: {
+      bannedAt: true,
+      connectionRequestsRestrictedUntil: true,
+      deactivatedAt: true,
+      enforcementReasonPublic: true,
+      id: true,
+      isActive: true,
+      messagingRestrictedUntil: true,
+      publishingRestrictedUntil: true,
+      suspendedAt: true,
+      suspendedUntil: true,
+    },
+    where: { id: targetUserId },
+  });
+  if (!target) throw new Error("Target user not found.");
+
+  const expiresAt =
+    parsedType.data === "WARNING" ||
+    parsedType.data === "INDEFINITE_SUSPENSION" ||
+    parsedType.data === "DEACTIVATION" ||
+    parsedType.data === "PERMANENT_BAN" ||
+    parsedType.data === "RESTORATION" ||
+    parsedType.data === "SESSION_REVOCATION"
+      ? null
+      : expiryFromForm(formData);
+
+  if (
+    [
+      "MESSAGING_RESTRICTION",
+      "CONNECTION_REQUEST_RESTRICTION",
+      "PUBLISHING_RESTRICTION",
+      "TEMPORARY_SUSPENSION",
+      "VERIFICATION_REQUIRED",
+    ].includes(parsedType.data) &&
+    !expiresAt
+  ) {
+    throw new Error("Timed enforcement requires a valid expiry.");
+  }
+
+  const previousState = jsonSafeState({
+    bannedAt: target.bannedAt,
+    connectionRequestsRestrictedUntil: target.connectionRequestsRestrictedUntil,
+    deactivatedAt: target.deactivatedAt,
+    isActive: target.isActive,
+    messagingRestrictedUntil: target.messagingRestrictedUntil,
+    publishingRestrictedUntil: target.publishingRestrictedUntil,
+    suspendedAt: target.suspendedAt,
+    suspendedUntil: target.suspendedUntil,
+  });
+
+  const userUpdate: Record<string, unknown> = {
+    enforcementReasonPublic: userFacingExplanation,
+  };
+  if (parsedType.data === "MESSAGING_RESTRICTION") {
+    userUpdate.messagingRestrictedUntil = expiresAt;
+  }
+  if (parsedType.data === "CONNECTION_REQUEST_RESTRICTION") {
+    userUpdate.connectionRequestsRestrictedUntil = expiresAt;
+  }
+  if (parsedType.data === "PUBLISHING_RESTRICTION") {
+    userUpdate.publishingRestrictedUntil = expiresAt;
+  }
+  if (parsedType.data === "VERIFICATION_REQUIRED") {
+    userUpdate.verificationStatus = "PENDING";
+  }
+  if (parsedType.data === "TEMPORARY_SUSPENSION") {
+    userUpdate.suspendedAt = new Date();
+    userUpdate.suspendedUntil = expiresAt;
+  }
+  if (parsedType.data === "INDEFINITE_SUSPENSION") {
+    userUpdate.suspendedAt = new Date();
+    userUpdate.suspendedUntil = null;
+  }
+  if (parsedType.data === "DEACTIVATION") {
+    userUpdate.deactivatedAt = new Date();
+    userUpdate.isActive = false;
+  }
+  if (parsedType.data === "PERMANENT_BAN") {
+    userUpdate.bannedAt = new Date();
+    userUpdate.isActive = false;
+  }
+  if (parsedType.data === "RESTORATION") {
+    Object.assign(userUpdate, {
+      bannedAt: null,
+      connectionRequestsRestrictedUntil: null,
+      deactivatedAt: null,
+      enforcementReasonPublic: null,
+      isActive: true,
+      messagingRestrictedUntil: null,
+      publishingRestrictedUntil: null,
+      suspendedAt: null,
+      suspendedUntil: null,
+    });
+  }
+
+  await getPrisma().$transaction(async (tx) => {
+    if (parsedType.data !== "WARNING" && parsedType.data !== "SESSION_REVOCATION") {
+      await tx.user.update({
+        data: userUpdate,
+        where: { id: targetUserId },
+      });
+    }
+    if (
+      parsedType.data === "SESSION_REVOCATION" ||
+      parsedType.data === "TEMPORARY_SUSPENSION" ||
+      parsedType.data === "INDEFINITE_SUSPENSION" ||
+      parsedType.data === "DEACTIVATION" ||
+      parsedType.data === "PERMANENT_BAN"
+    ) {
+      await tx.session.deleteMany({ where: { userId: targetUserId } });
+    }
+
+    const enforcement = await tx.enforcementAction.create({
+      data: {
+        actorId: admin.id,
+        appealAllowed: formData.get("appealAllowed") !== "off",
+        caseId,
+        expiresAt,
+        internalNote,
+        newState: jsonSafeState(userUpdate),
+        previousState,
+        reason,
+        targetUserId,
+        type: parsedType.data as EnforcementActionType,
+        userFacingExplanation,
+      },
+      select: { id: true },
+    });
+
+    await tx.moderationCase.update({
+      data: { status: "ACTION_REQUIRED" },
+      where: { id: caseId },
+    });
+    await tx.moderationCaseEvent.create({
+      data: {
+        actorId: admin.id,
+        caseId,
+        nextStatus: "ACTION_REQUIRED",
+        previousStatus: moderationCase.status,
+        reason,
+        type: "enforcement.applied",
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        action: "admin.enforcement.applied",
+        actorId: admin.id,
+        entityId: enforcement.id,
+        entityType: "enforcement_action",
+        metadata: {
+          caseId,
+          expiresAt,
+          reasonProvided: true,
+          targetUserId,
+          type: parsedType.data,
+        },
+      },
+    });
+    await tx.notification.create({
+      data: {
+        actionUrl: "/app/notifications",
+        body: userFacingExplanation,
+        metadata: { caseId, enforcementActionId: enforcement.id },
+        title: "Account enforcement update",
+        type: "MODERATION_UPDATE",
+        userId: targetUserId,
+      },
+    });
+  });
+
+  revalidatePath("/admin/reports");
+  revalidatePath("/admin/messages");
+  revalidatePath("/admin/moderation");
+  revalidatePath("/admin/users");
+  revalidatePath("/app/notifications");
+  revalidatePath(`/admin/moderation/cases/${caseId}`);
 }
 
 export async function sendAdminBroadcastAction(formData: FormData) {

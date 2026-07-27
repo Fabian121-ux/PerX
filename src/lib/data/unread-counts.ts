@@ -17,6 +17,14 @@ export async function getUnreadCounts(userId: string): Promise<UnreadCounts> {
         AND c."status" = 'ACTIVE'
         AND m."senderId" <> ${userId}
         AND (cp."lastReadAt" IS NULL OR m."createdAt" > cp."lastReadAt")
+        AND NOT EXISTS (
+          SELECT 1
+          FROM "BlockedUser" b
+          WHERE
+            (b."blockerUserId" = ${userId} AND b."blockedUserId" = m."senderId")
+            OR
+            (b."blockedUserId" = ${userId} AND b."blockerUserId" = m."senderId")
+        )
     `,
     prisma.notification.count({ where: { readAt: null, userId } }),
   ]);

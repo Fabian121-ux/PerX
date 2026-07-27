@@ -21,6 +21,32 @@ export default async function SettingsPage() {
           Security settings
         </ButtonLink>
       </Card>
+      <Card>
+        <h2 className="font-semibold text-[color:var(--px-text)]">Blocked users</h2>
+        <p className="mt-2 text-sm text-[color:var(--px-text-muted)]">
+          Review people you have blocked and restore access when appropriate.
+        </p>
+        <ButtonLink
+          className="mt-4"
+          href="/app/settings/blocked"
+          variant="secondary"
+        >
+          Manage blocked users
+        </ButtonLink>
+      </Card>
+      <Card>
+        <h2 className="font-semibold text-[color:var(--px-text)]">Appeals</h2>
+        <p className="mt-2 text-sm text-[color:var(--px-text-muted)]">
+          Review eligible account enforcement actions and submit an appeal.
+        </p>
+        <ButtonLink
+          className="mt-4"
+          href="/app/appeals"
+          variant="secondary"
+        >
+          View appeals
+        </ButtonLink>
+      </Card>
     </AppSection>
   );
 }

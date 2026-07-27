@@ -15,6 +15,7 @@ enum RoleName {
   INVESTOR
   PROPERTY_OWNER
   ADMIN
+  MASTER_ADMIN
   INTERNAL_TESTER
 }
 
@@ -148,6 +149,60 @@ enum UserReportStatus {
   DISMISSED
 }
 
+enum ModerationCaseStatus {
+  NEW
+  TRIAGED
+  ASSIGNED
+  IN_REVIEW
+  NEEDS_INFORMATION
+  ACTION_REQUIRED
+  ESCALATED
+  RESOLVED
+  DISMISSED
+  APPEALED
+  CLOSED
+}
+
+enum ModerationCaseSource {
+  USER_REPORT
+  MESSAGE_REPORT
+  CONVERSATION_REPORT
+  LISTING_REPORT
+  DEAL_DISPUTE
+  POLICY_FLAG
+  SUPPORT_CASE
+  SECURITY_INVESTIGATION
+}
+
+enum EnforcementActionType {
+  WARNING
+  MESSAGING_RESTRICTION
+  CONNECTION_REQUEST_RESTRICTION
+  PUBLISHING_RESTRICTION
+  VERIFICATION_REQUIRED
+  TEMPORARY_SUSPENSION
+  INDEFINITE_SUSPENSION
+  DEACTIVATION
+  PERMANENT_BAN
+  SESSION_REVOCATION
+  RESTORATION
+}
+
+enum EnforcementActionStatus {
+  ACTIVE
+  EXPIRED
+  REVERSED
+}
+
+enum EnforcementAppealStatus {
+  SUBMITTED
+  IN_REVIEW
+  UPHELD
+  MODIFIED
+  REVERSED
+  DISMISSED
+}
+
 enum ReviewVisibility {
   PUBLIC
   HIDDEN
@@ -213,6 +268,15 @@ model User {
   emailVerifiedAt       DateTime?
   verificationStatus    VerificationStatus        @default(UNVERIFIED)
   isActive              Boolean                   @default(true)
+  messagingRestrictedUntil DateTime?
+  connectionRequestsRestrictedUntil DateTime?
+  publishingRestrictedUntil DateTime?
+  suspendedAt           DateTime?
+  suspendedUntil        DateTime?
+  deactivatedAt         DateTime?
+  bannedAt              DateTime?
+  enforcementReasonPublic String?
+  onboardingDismissedAt DateTime?
   createdAt             DateTime                  @default(now())
   updatedAt             DateTime                  @updatedAt
   sessions              Session[]
@@ -238,6 +302,8 @@ model User {
   moderationActions     ModerationAction[]        @relation("ModerationActor")
   connectionsSent       Connection[]              @relation("ConnectionRequester")
   connectionsReceived   Connection[]              @relation("ConnectionReceiver")
+  blocksMade            BlockedUser[]             @relation("BlocksMade")
+  blocksReceived        BlockedUser[]             @relation("BlocksReceived")
   profileBookmarks      ProfileBookmark[]
   supportTickets        SupportTicket[]
   ticketMessages        TicketMessage[]
@@ -245,6 +311,11 @@ model User {
   @@index([createdAt])
   @@index([accountClassification])
   @@index([isActive, accountClassification])
+  @@index([messagingRestrictedUntil])
+  @@index([connectionRequestsRestrictedUntil])
+  @@index([publishingRestrictedUntil])
+  @@index([suspendedUntil])
+  @@index([bannedAt])
 }
 
 model Session {
@@ -470,12 +541,125 @@ model UserReport {
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
   reporter              User                 @relation("UserReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  moderationCases       ModerationCase[]
 
   @@unique([reporterId, targetType, targetId, status])
   @@index([reporterId, status, createdAt])
   @@index([targetType, targetId])
   @@index([status, createdAt])
   @@index([category, status])
+}
+
+model ModerationCase {
+  id                        String                 @id @default(cuid())
+  source                    ModerationCaseSource
+  status                    ModerationCaseStatus   @default(NEW)
+  priority                  String                 @default("NORMAL")
+  category                  String
+  title                     String
+  summary                   String
+  targetType                String
+  targetId                  String
+  reporterId                String?
+  reportedUserId            String?
+  assignedAdminId           String?
+  linkedReportId            String?
+  linkedOpportunityReportId String?
+  conversationId            String?
+  messageId                 String?
+  createdAt                 DateTime               @default(now())
+  updatedAt                 DateTime               @updatedAt
+  linkedReport              UserReport?            @relation(fields: [linkedReportId], references: [id], onDelete: SetNull)
+  events                    ModerationCaseEvent[]
+  messageScopes             ModerationMessageScope[]
+  enforcementActions        EnforcementAction[]
+  appeals                   EnforcementAppeal[]
+
+  @@index([status, createdAt])
+  @@index([source, status])
+  @@index([targetType, targetId])
+  @@index([conversationId])
+  @@index([assignedAdminId, status])
+  @@index([linkedReportId])
+}
+
+model ModerationCaseEvent {
+  id             String                @id @default(cuid())
+  caseId         String
+  actorId        String?
+  type           String
+  reason         String?
+  note           String?
+  previousStatus ModerationCaseStatus?
+  nextStatus     ModerationCaseStatus?
+  createdAt      DateTime              @default(now())
+  case           ModerationCase        @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([type, createdAt])
+}
+
+model ModerationMessageScope {
+  id             String         @id @default(cuid())
+  caseId         String
+  conversationId String
+  messageId      String?
+  revealedById   String
+  reason         String
+  scope          String
+  timeRangeStart DateTime?
+  timeRangeEnd   DateTime?
+  createdAt      DateTime       @default(now())
+  case           ModerationCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId, createdAt])
+  @@index([conversationId, createdAt])
+  @@index([revealedById, createdAt])
+}
+
+model EnforcementAction {
+  id                    String                  @id @default(cuid())
+  caseId                String
+  actorId               String
+  targetUserId          String
+  type                  EnforcementActionType
+  status                EnforcementActionStatus @default(ACTIVE)
+  reason                String
+  userFacingExplanation String
+  internalNote          String
+  previousState         Json?
+  newState              Json?
+  expiresAt             DateTime?
+  appealAllowed         Boolean                 @default(true)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  case                  ModerationCase          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  appeals               EnforcementAppeal[]
+
+  @@index([caseId, createdAt])
+  @@index([targetUserId, status])
+  @@index([type, status])
+  @@index([expiresAt])
+}
+
+model EnforcementAppeal {
+  id                  String                  @id @default(cuid())
+  enforcementActionId String
+  caseId              String
+  appellantId         String
+  reviewerId          String?
+  status              EnforcementAppealStatus @default(SUBMITTED)
+  body                String
+  resolution          String?
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+  enforcementAction   EnforcementAction       @relation(fields: [enforcementActionId], references: [id], onDelete: Cascade)
+  case                ModerationCase          @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([appellantId, status, createdAt])
+  @@index([caseId, status])
+  @@index([enforcementActionId])
 }
 
 model OpportunityStatusHistory {
@@ -585,6 +769,8 @@ model BlockedUser {
   blockedUserId String
   reason        String?
   createdAt     DateTime @default(now())
+  blocker       User     @relation("BlocksMade", fields: [blockerUserId], references: [id], onDelete: Cascade)
+  blockedUser   User     @relation("BlocksReceived", fields: [blockedUserId], references: [id], onDelete: Cascade)
 
   @@unique([blockerUserId, blockedUserId])
   @@index([blockerUserId])

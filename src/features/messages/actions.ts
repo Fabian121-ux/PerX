@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireUser } from "@/lib/auth/session";
+import { assertCanMessage } from "@/lib/account/enforcement";
 import { getPrisma } from "@/lib/db/prisma";
 import { getServerEnv, hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
@@ -35,6 +36,13 @@ export async function sendMessageAction(
   replyToMessageId?: string | null,
 ) {
   const user = await requireUser();
+  const parsed = sendMessageSchema.safeParse({ conversationId, body, replyToMessageId });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid message." };
+  }
+
+  const restriction = await assertCanMessage(user.id);
+  if (restriction) return { error: restriction };
 
   if (getResolvedDataMode() === "mock") {
     return { success: true, message: "Sent in mock mode." };
@@ -42,11 +50,6 @@ export async function sendMessageAction(
 
   if (!hasDatabaseUrl()) {
     throw new Error("Database not configured.");
-  }
-
-  const parsed = sendMessageSchema.safeParse({ conversationId, body, replyToMessageId });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid message." };
   }
 
   try {
@@ -190,6 +193,7 @@ export async function sendMessageAction(
           metadata: {
             conversationId: parsed.data.conversationId,
             messageId: message.id,
+            recipientId: participantId,
             senderId: user.id,
           },
           title: "New message",
@@ -211,6 +215,8 @@ export async function sendMessageAction(
 
 export async function editMessageAction(messageId: string, body: string) {
   const user = await requireUser();
+  const restriction = await assertCanMessage(user.id);
+  if (restriction) return { error: restriction };
 
   if (getResolvedDataMode() === "mock") {
     return { success: true };
@@ -363,7 +369,7 @@ export async function markConversationReadAction(conversationId: string) {
           { actionUrl: { startsWith: `/app/messages/${parsed.data}?` } },
         ],
         readAt: null,
-        type: { in: ["MESSAGE", "NEW_MESSAGE"] },
+        type: { in: ["MESSAGE", "MESSAGE_REQUEST_RECEIVED", "NEW_MESSAGE"] },
         userId: user.id,
       },
     });

@@ -16,6 +16,7 @@ export type CurrentUser = {
   username: string;
   roles: RoleName[];
   imageUrl?: string | null;
+  onboardingDismissedAt?: Date | null;
   accountClassification?: string;
   verificationStatus?: string;
   createdAt?: Date;
@@ -140,6 +141,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
           imageUrl: true,
           isActive: true,
           name: true,
+          onboardingDismissedAt: true,
           profile: {
             select: {
               biography: true,
@@ -176,6 +178,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
           emailVerifiedAt: session.user.emailVerifiedAt,
     id: session.user.id,
     name: session.user.name,
+    onboardingDismissedAt: session.user.onboardingDismissedAt,
     username: session.user.username,
     imageUrl: session.user.imageUrl ?? session.user.profile?.profileImageUrl,
     accountClassification: session.user.accountClassification,

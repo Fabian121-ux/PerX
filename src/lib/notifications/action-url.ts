@@ -19,6 +19,12 @@ type NotificationForAction = {
   type: string;
 };
 
+const messageNotificationTypes = new Set([
+  "MESSAGE",
+  "MESSAGE_REQUEST_RECEIVED",
+  "NEW_MESSAGE",
+]);
+
 const approvedExactPaths = new Set([
   "/app",
   "/app/connections",
@@ -36,7 +42,7 @@ const approvedExactPaths = new Set([
 ]);
 
 function actionLabel(type: string) {
-  if (["MESSAGE", "MESSAGE_REQUEST_RECEIVED", "NEW_MESSAGE"].includes(type)) {
+  if (messageNotificationTypes.has(type)) {
     return "View message";
   }
   if (
@@ -162,7 +168,7 @@ async function isDestinationAvailable(userId: string, path: string) {
 }
 
 function actionUrlFromMetadata(notification: NotificationForAction) {
-  if (!["MESSAGE", "NEW_MESSAGE"].includes(notification.type)) return null;
+  if (!messageNotificationTypes.has(notification.type)) return null;
   if (!notification.metadata || typeof notification.metadata !== "object") return null;
   const metadata = notification.metadata as {
     conversationId?: unknown;
@@ -188,7 +194,7 @@ export async function resolveNotificationAction(
     return {
       available: false,
       href: null,
-      label: ["MESSAGE", "NEW_MESSAGE"].includes(notification.type)
+      label: messageNotificationTypes.has(notification.type)
         ? "This message is no longer available."
         : "No action available",
       reason: "missing",
@@ -203,12 +209,25 @@ export async function resolveNotificationAction(
     };
   }
 
+  if (messageNotificationTypes.has(notification.type)) {
+    const segments = pathSegments(normalized);
+    const messageId = new URL(normalized, "https://perx.local").searchParams.get("message");
+    if (segments[0] !== "app" || segments[1] !== "messages" || !segments[2] || !messageId) {
+      return {
+        available: false,
+        href: null,
+        label: "This message is no longer available.",
+        reason: "unavailable",
+      };
+    }
+  }
+
   const available = await isDestinationAvailable(userId, normalized);
   if (!available) {
     return {
       available: false,
       href: null,
-      label: ["MESSAGE", "NEW_MESSAGE"].includes(notification.type)
+      label: messageNotificationTypes.has(notification.type)
         ? "This message is no longer available."
         : "This item is no longer available.",
       reason: "unavailable",
@@ -220,4 +239,81 @@ export async function resolveNotificationAction(
     href: normalized,
     label: actionLabel(notification.type),
   };
+}
+
+export async function repairResolvableMessageNotificationActions(userId: string) {
+  const prisma = getPrisma();
+  const notifications = await prisma.notification.findMany({
+    orderBy: { createdAt: "desc" },
+    select: {
+      actionUrl: true,
+      id: true,
+      metadata: true,
+      type: true,
+    },
+    take: 100,
+    where: {
+      type: { in: [...messageNotificationTypes] as never[] },
+      userId,
+    },
+  });
+
+  await Promise.all(
+    notifications.map(async (notification) => {
+      if (!notification.metadata || typeof notification.metadata !== "object") {
+        return;
+      }
+      const metadata = notification.metadata as Record<string, unknown>;
+      const conversationId = metadata.conversationId;
+      const messageId = metadata.messageId;
+      if (typeof conversationId !== "string" || typeof messageId !== "string") {
+        return;
+      }
+
+      const [participant, message] = await Promise.all([
+        prisma.conversationParticipant.findUnique({
+          select: { id: true },
+          where: {
+            conversationId_userId: {
+              conversationId,
+              userId,
+            },
+          },
+        }),
+        prisma.message.findFirst({
+          select: { conversationId: true, id: true, senderId: true },
+          where: {
+            conversationId,
+            deletedAt: null,
+            id: messageId,
+          },
+        }),
+      ]);
+
+      if (!participant || !message) return;
+
+      const actionUrl = `/app/messages/${conversationId}?message=${messageId}`;
+      if (
+        notification.actionUrl === actionUrl &&
+        metadata.senderId === message.senderId &&
+        metadata.recipientId === userId
+      ) {
+        return;
+      }
+
+      await prisma.notification.update({
+        data: {
+          actionUrl,
+          metadata: {
+            ...metadata,
+            conversationId,
+            messageId,
+            recipientId: userId,
+            senderId: message.senderId,
+          },
+        },
+        where: { id: notification.id },
+      });
+    }),
+  );
 }

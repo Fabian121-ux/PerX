@@ -9,7 +9,6 @@ import {
   Settings,
   Store,
   UsersRound,
-  LayoutDashboard,
   Building2,
   Truck,
   Plane,
@@ -43,12 +42,6 @@ export const sidebarItems: SidebarItem[] = [
     href: "/app",
     icon: Home,
     label: "Home",
-  },
-  {
-    group: "main",
-    href: "/app/dashboard",
-    icon: LayoutDashboard,
-    label: "Dashboard",
   },
   {
     group: "main",
@@ -92,7 +85,7 @@ export const sidebarItems: SidebarItem[] = [
     group: "work",
     href: "/app/deals",
     icon: Handshake,
-    label: "Agreements",
+    label: "Deals",
   },
 
   // Ecosystem

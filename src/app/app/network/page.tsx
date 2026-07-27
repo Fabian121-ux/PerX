@@ -3,7 +3,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import Link from "next/link";
 import { Card, EmptyState } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import {
   acceptConnectionAction,
   disconnectAction,
@@ -59,11 +59,19 @@ export default async function NetworkPage({ searchParams }: { searchParams: Prom
       OR: [{ requesterId: user.id }, { receiverId: user.id }],
     },
   }).then(res => res.flatMap(c => [c.requesterId, c.receiverId]));
+  const blockedIds = await getPrisma().blockedUser.findMany({
+    select: { blockedUserId: true, blockerUserId: true },
+    where: {
+      OR: [{ blockerUserId: user.id }, { blockedUserId: user.id }],
+    },
+  }).then((rows) =>
+    rows.flatMap((block) => [block.blockedUserId, block.blockerUserId]),
+  );
 
   const suggestions = await getPrisma().user.findMany({
     where: {
       accountClassification: "PUBLIC_BETA_USER",
-      id: { notIn: [...existingConnectionIds, user.id] },
+      id: { notIn: [...new Set([...existingConnectionIds, ...blockedIds, user.id])] },
       isActive: true,
       profile: {
         is: {
@@ -121,10 +129,10 @@ export default async function NetworkPage({ searchParams }: { searchParams: Prom
                   </div>
                   <div className="mt-auto flex justify-end gap-2">
                     <form action={async () => { "use server"; await disconnectAction(conn.id); }}>
-                      <Button type="submit" variant="secondary" size="sm">Remove</Button>
+                      <PendingSubmitButton type="submit" variant="secondary" size="sm" pendingLabel="Removing...">Remove</PendingSubmitButton>
                     </form>
                     <form action={async () => { "use server"; await startConversationAction(connectedUser.id); }}>
-                      <Button type="submit" size="sm">Message</Button>
+                      <PendingSubmitButton type="submit" size="sm" pendingLabel="Opening conversation...">Message</PendingSubmitButton>
                     </form>
                   </div>
                 </Card>
@@ -152,10 +160,10 @@ export default async function NetworkPage({ searchParams }: { searchParams: Prom
                 </div>
                 <div className="mt-auto flex gap-2">
                   <form action={async () => { "use server"; await acceptConnectionAction(req.id); }} className="flex-1">
-                    <Button type="submit" className="w-full" size="sm">Accept</Button>
+                    <PendingSubmitButton type="submit" className="w-full" size="sm" pendingLabel="Accepting...">Accept</PendingSubmitButton>
                   </form>
                   <form action={async () => { "use server"; await rejectConnectionAction(req.id); }} className="flex-1">
-                    <Button type="submit" variant="secondary" className="w-full" size="sm">Decline</Button>
+                    <PendingSubmitButton type="submit" variant="secondary" className="w-full" size="sm" pendingLabel="Declining...">Decline</PendingSubmitButton>
                   </form>
                 </div>
               </Card>
@@ -182,7 +190,7 @@ export default async function NetworkPage({ searchParams }: { searchParams: Prom
                 </div>
                 <div className="mt-auto">
                   <form action={async () => { "use server"; await requestConnectionAction(sug.id); }}>
-                    <Button type="submit" className="w-full" size="sm">Connect</Button>
+                    <PendingSubmitButton type="submit" className="w-full" size="sm" pendingLabel="Sending request...">Connect</PendingSubmitButton>
                   </form>
                 </div>
               </Card>

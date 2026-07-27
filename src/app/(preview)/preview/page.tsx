@@ -18,6 +18,15 @@ export default function PreviewDashboardPage() {
       username: previewUser.username,
       roles: previewUser.roles as never[],
     },
+    connectionRequestsCount: 1,
+    draftsCount: 1,
+    notificationsCount: 2,
+    publishedItemsCount: 3,
+    unreadMessagesCount: 1,
+    onboarding: {
+      dismissed: true,
+      items: [],
+    },
     connections: [
       { id: "maya-client", name: "Maya Chen", username: "maya-client", role: "Product Founder", headline: "Building cross-border services", isOnline: true },
       { id: "david-okafor", name: "David Okafor", username: "david-okafor", role: "Full-stack Developer", headline: "Scaling marketplace MVPs", isOnline: false },

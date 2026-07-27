@@ -185,7 +185,7 @@ async function markConversationRead(
           { actionUrl: { startsWith: `/app/messages/${conversationId}?` } },
         ],
         readAt: null,
-        type: { in: ["MESSAGE", "NEW_MESSAGE"] },
+        type: { in: ["MESSAGE", "MESSAGE_REQUEST_RECEIVED", "NEW_MESSAGE"] },
         userId,
       },
     });

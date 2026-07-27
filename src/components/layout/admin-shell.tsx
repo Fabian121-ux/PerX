@@ -11,6 +11,7 @@ const adminLinks = [
   ["/admin/opportunities", "Opportunities"],
   ["/admin/real-estate", "Real Estate"],
   ["/admin/messages", "Messages"],
+  ["/admin/moderation", "Moderation"],
   ["/admin/broadcasts", "Broadcasts"],
   ["/admin/reports", "Reports"],
   ["/admin/support", "Support"],
@@ -43,7 +44,7 @@ export function AdminShell({
           <div className="flex items-center gap-3">
             <Link
               className="text-sm font-medium text-slate-300 hover:text-white"
-              href="/app/dashboard"
+              href="/app"
             >
               User app
             </Link>

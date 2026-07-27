@@ -15,6 +15,7 @@ import { PublicPageShell } from "@/components/standard-page";
 import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import {
   acceptConnectionAction,
   requestConnectionAction,
@@ -515,10 +516,10 @@ function ProfilePrimaryAction({
   if (relationship.status === "ACCEPTED" && allowMessagesFromConnections) {
     return (
       <form action={async () => { "use server"; await startConversationAction(targetUserId); }}>
-        <Button className="w-full sm:w-auto" type="submit">
+        <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Opening conversation..." type="submit">
           <Mail aria-hidden className="mr-2" size={16} />
           Message
-        </Button>
+        </PendingSubmitButton>
       </form>
     );
   }
@@ -534,7 +535,7 @@ function ProfilePrimaryAction({
   ) {
     return (
       <form action={async () => { "use server"; await acceptConnectionAction(relationship.connectionId!); }}>
-        <Button className="w-full sm:w-auto" type="submit">Accept connection</Button>
+        <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Accepting..." type="submit">Accept connection</PendingSubmitButton>
       </form>
     );
   }
@@ -542,7 +543,7 @@ function ProfilePrimaryAction({
   if (allowConnectionRequests) {
     return (
       <form action={async () => { "use server"; await requestConnectionAction(targetUserId); }}>
-        <Button className="w-full sm:w-auto" type="submit">Connect</Button>
+        <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Sending request..." type="submit">Connect</PendingSubmitButton>
       </form>
     );
   }

@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, EmptyState } from "@/components/ui/card";
 import { AdminSection } from "@/components/admin-section";
 import { getPrisma } from "@/lib/db/prisma";
+import { ButtonLink } from "@/components/ui/button";
 
 export default async function AdminReportsPage() {
   const [opportunityReports, userReports] = await Promise.all([
@@ -15,6 +16,11 @@ export default async function AdminReportsPage() {
     }),
     getPrisma().userReport.findMany({
       include: {
+        moderationCases: {
+          orderBy: { createdAt: "desc" },
+          select: { id: true, status: true },
+          take: 1,
+        },
         reporter: { select: { id: true, name: true, username: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -40,6 +46,8 @@ export default async function AdminReportsPage() {
       status: report.status,
       target: report.targetId,
       targetType: report.targetType,
+      caseId: report.moderationCases[0]?.id ?? null,
+      caseStatus: report.moderationCases[0]?.status ?? null,
     })),
   ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
@@ -72,9 +80,20 @@ export default async function AdminReportsPage() {
                   Reporter: {report.reporter.name} (@{report.reporter.username})
                 </p>
               </div>
-              <p className="text-xs font-semibold text-slate-500 sm:text-right">
-                {report.createdAt.toLocaleString()}
-              </p>
+              <div className="grid gap-2 sm:justify-items-end">
+                <p className="text-xs font-semibold text-slate-500 sm:text-right">
+                  {report.createdAt.toLocaleString()}
+                </p>
+                {"caseId" in report && report.caseId ? (
+                  <ButtonLink
+                    href={`/admin/moderation/cases/${report.caseId}`}
+                    size="sm"
+                    variant="secondary"
+                  >
+                    Open case
+                  </ButtonLink>
+                ) : null}
+              </div>
             </Card>
           ))}
         </div>
