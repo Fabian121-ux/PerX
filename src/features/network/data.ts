@@ -7,9 +7,9 @@ import type { ConnectionTab } from "./routes";
 
 export const CONNECTION_DISCOVER_LIMIT = 24;
 export const CONNECTION_RELATION_LIMIT = 50;
-export const INELIGIBLE_PARTNER_DEAL_STATUSES = [
-  "DRAFT",
-  "CANCELLED",
+export const QUALIFYING_PARTNER_DEAL_STATUSES = [
+  "APPROVED",
+  "RELEASED",
 ] as const satisfies readonly DealStatus[];
 
 export const CONNECTION_COPY = {
@@ -76,8 +76,8 @@ export function normalizeConnectionsQuery(q?: string | string[]) {
 }
 
 export function isEligiblePartnerDealStatus(status: DealStatus) {
-  return !INELIGIBLE_PARTNER_DEAL_STATUSES.includes(
-    status as (typeof INELIGIBLE_PARTNER_DEAL_STATUSES)[number],
+  return QUALIFYING_PARTNER_DEAL_STATUSES.includes(
+    status as (typeof QUALIFYING_PARTNER_DEAL_STATUSES)[number],
   );
 }
 
@@ -160,7 +160,7 @@ async function getPartnerUserIds(
     where: {
       deal: {
         participants: { some: { userId: viewerId } },
-        status: { notIn: [...INELIGIBLE_PARTNER_DEAL_STATUSES] },
+        status: { in: [...QUALIFYING_PARTNER_DEAL_STATUSES] },
       },
       userId: { in: connectedUserIds },
     },

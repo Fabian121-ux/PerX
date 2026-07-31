@@ -1,6 +1,7 @@
-const CACHE_NAME = "perx-public-shell-v8";
-const PUBLIC_ASSETS = [
-  "/",
+const CACHE_NAME = "perx-public-shell-v9";
+const OFFLINE_URL = "/offline";
+
+const PRECACHE_ASSETS = [
   "/offline",
   "/favicon.ico",
   "/icons/favicon-16x16.png",
@@ -18,7 +19,7 @@ const PUBLIC_ASSETS = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PUBLIC_ASSETS)),
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS)),
   );
 });
 
@@ -43,41 +44,39 @@ self.addEventListener("message", (event) => {
   }
 });
 
+function isCacheableStaticAsset(url) {
+  if (url.pathname.startsWith("/_next/static/")) return true;
+  if (url.pathname.startsWith("/icons/")) return true;
+  if (url.pathname.startsWith("/brand/")) return true;
+  if (url.pathname === "/favicon.ico") return true;
+  if (url.pathname === "/main_app_logo.png") return true;
+  if (url.pathname === "/offline") return true;
+  if (url.pathname === "/manifest.webmanifest") return true;
+  return false;
+}
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
 
   if (request.method !== "GET") return;
   if (url.origin !== self.location.origin) return;
-  if (
-    url.pathname.startsWith("/api") ||
-    url.pathname.startsWith("/app") ||
-    url.pathname.startsWith("/admin") ||
-    url.pathname.startsWith("/sign-in") ||
-    url.pathname.startsWith("/sign-up") ||
-    url.pathname.startsWith("/password-recovery") ||
-    url.pathname.startsWith("/forgot-password") ||
-    url.pathname.startsWith("/reset-password") ||
-    url.pathname.startsWith("/verify-email") ||
-    url.pathname.includes("/messages") ||
-    url.pathname.includes("/deals")
-  ) {
-    return;
-  }
+
+  if (!isCacheableStaticAsset(url)) return;
 
   event.respondWith(
-    fetch(request)
-      .then((response) => {
-        if (response.ok && response.type === "basic") {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-        }
-        return response;
+    caches
+      .match(request)
+      .then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (response.ok && response.type === "basic") {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        });
       })
-      .catch(() =>
-        caches
-          .match(request)
-          .then((cached) => cached || caches.match("/offline")),
-      ),
+      .catch(() => caches.match(OFFLINE_URL)),
   );
 });

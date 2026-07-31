@@ -95,8 +95,8 @@ describe("network account eligibility", () => {
 });
 
 describe("connection partner state", () => {
-  it("excludes only draft and cancelled PerX deals", () => {
-    const statuses: DealStatus[] = [
+  it("qualifies only APPROVED and RELEASED deals as partner transactions", () => {
+    const allStatuses: DealStatus[] = [
       "DRAFT",
       "AWAITING_FUNDING",
       "FUNDED",
@@ -112,9 +112,36 @@ describe("connection partner state", () => {
       "RESOLVED",
     ];
 
-    expect(statuses.filter(isEligiblePartnerDealStatus)).toEqual(
-      statuses.filter((status) => !["DRAFT", "CANCELLED"].includes(status)),
+    const qualifying = allStatuses.filter(isEligiblePartnerDealStatus);
+    expect(qualifying).toEqual(["APPROVED", "RELEASED"]);
+
+    const nonQualifying = allStatuses.filter((s) => !isEligiblePartnerDealStatus(s));
+    expect(nonQualifying).toEqual(
+      allStatuses.filter((s) => !["APPROVED", "RELEASED"].includes(s)),
     );
+  });
+
+  it("does not qualify draft, proposed, active, cancelled, or disputed deals", () => {
+    for (const status of [
+      "DRAFT",
+      "AWAITING_FUNDING",
+      "FUNDED",
+      "IN_PROGRESS",
+      "SUBMITTED",
+      "UNDER_REVIEW",
+      "CANCELLED",
+      "REFUND_PENDING",
+      "REFUNDED",
+      "DISPUTED",
+      "RESOLVED",
+    ] as const) {
+      expect(isEligiblePartnerDealStatus(status)).toBe(false);
+    }
+  });
+
+  it("qualifies completed and settled transactions", () => {
+    expect(isEligiblePartnerDealStatus("APPROVED")).toBe(true);
+    expect(isEligiblePartnerDealStatus("RELEASED")).toBe(true);
   });
 
   it("marks only connected users returned by the eligible agreement batch", () => {
@@ -128,6 +155,11 @@ describe("connection partner state", () => {
     expect(getConnectedLabel(partnerIds.has("connected-b"))).toBe(
       "Connected · Partner",
     );
+  });
+
+  it("returns Connected with no partner when no qualifying deal exists", () => {
+    expect(getConnectedLabel(false)).toBe("Connected");
+    expect(getConnectedLabel(true)).toBe("Connected · Partner");
   });
 });
 
