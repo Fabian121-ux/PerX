@@ -435,7 +435,8 @@ export const ModelName = {
   Connection: 'Connection',
   ProfileBookmark: 'ProfileBookmark',
   SupportTicket: 'SupportTicket',
-  TicketMessage: 'TicketMessage'
+  TicketMessage: 'TicketMessage',
+  SponsoredContent: 'SponsoredContent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -451,7 +452,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "role" | "userRole" | "profile" | "profileSkill" | "portfolioItem" | "workHistory" | "verificationRequest" | "opportunityCategory" | "opportunity" | "opportunityImage" | "opportunityBookmark" | "opportunityReport" | "userReport" | "moderationCase" | "moderationCaseEvent" | "moderationMessageScope" | "enforcementAction" | "enforcementAppeal" | "opportunityStatusHistory" | "conversation" | "conversationParticipant" | "message" | "messageEdit" | "messageAttachment" | "messageReadReceipt" | "blockedUser" | "proposal" | "proposalMilestone" | "proposalStatusHistory" | "deal" | "dealParticipant" | "dealMilestone" | "delivery" | "approval" | "release" | "refund" | "dispute" | "ledgerEntry" | "escrowStatusHistory" | "review" | "trustSignal" | "notification" | "adminBroadcast" | "broadcastDelivery" | "auditLog" | "moderationAction" | "connection" | "profileBookmark" | "supportTicket" | "ticketMessage"
+    modelProps: "user" | "session" | "role" | "userRole" | "profile" | "profileSkill" | "portfolioItem" | "workHistory" | "verificationRequest" | "opportunityCategory" | "opportunity" | "opportunityImage" | "opportunityBookmark" | "opportunityReport" | "userReport" | "moderationCase" | "moderationCaseEvent" | "moderationMessageScope" | "enforcementAction" | "enforcementAppeal" | "opportunityStatusHistory" | "conversation" | "conversationParticipant" | "message" | "messageEdit" | "messageAttachment" | "messageReadReceipt" | "blockedUser" | "proposal" | "proposalMilestone" | "proposalStatusHistory" | "deal" | "dealParticipant" | "dealMilestone" | "delivery" | "approval" | "release" | "refund" | "dispute" | "ledgerEntry" | "escrowStatusHistory" | "review" | "trustSignal" | "notification" | "adminBroadcast" | "broadcastDelivery" | "auditLog" | "moderationAction" | "connection" | "profileBookmark" | "supportTicket" | "ticketMessage" | "sponsoredContent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -4303,6 +4304,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    SponsoredContent: {
+      payload: Prisma.$SponsoredContentPayload<ExtArgs>
+      fields: Prisma.SponsoredContentFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SponsoredContentFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SponsoredContentPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SponsoredContentFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SponsoredContentPayload>
+        }
+        findFirst: {
+          args: Prisma.SponsoredContentFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SponsoredContentPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SponsoredContentFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SponsoredContentPayload>
+        }
+        findMany: {
+          args: Prisma.SponsoredContentFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SponsoredContentPayload>[]
+        }
+        create: {
+          args: Prisma.SponsoredContentCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SponsoredContentPayload>
+        }
+        createMany: {
+          args: Prisma.SponsoredContentCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SponsoredContentCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SponsoredContentPayload>[]
+        }
+        delete: {
+          args: Prisma.SponsoredContentDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SponsoredContentPayload>
+        }
+        update: {
+          args: Prisma.SponsoredContentUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SponsoredContentPayload>
+        }
+        deleteMany: {
+          args: Prisma.SponsoredContentDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SponsoredContentUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SponsoredContentUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SponsoredContentPayload>[]
+        }
+        upsert: {
+          args: Prisma.SponsoredContentUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SponsoredContentPayload>
+        }
+        aggregate: {
+          args: Prisma.SponsoredContentAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSponsoredContent>
+        }
+        groupBy: {
+          args: Prisma.SponsoredContentGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SponsoredContentGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SponsoredContentCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SponsoredContentCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -5097,6 +5172,22 @@ export const TicketMessageScalarFieldEnum = {
 export type TicketMessageScalarFieldEnum = (typeof TicketMessageScalarFieldEnum)[keyof typeof TicketMessageScalarFieldEnum]
 
 
+export const SponsoredContentScalarFieldEnum = {
+  id: 'id',
+  brandName: 'brandName',
+  message: 'message',
+  ctaLabel: 'ctaLabel',
+  ctaHref: 'ctaHref',
+  imageUrl: 'imageUrl',
+  status: 'status',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
+  createdAt: 'createdAt'
+} as const
+
+export type SponsoredContentScalarFieldEnum = (typeof SponsoredContentScalarFieldEnum)[keyof typeof SponsoredContentScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -5600,6 +5691,20 @@ export type ListEnumTicketStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
 
 
 /**
+ * Reference to a field of type 'SponsoredContentStatus'
+ */
+export type EnumSponsoredContentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SponsoredContentStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'SponsoredContentStatus[]'
+ */
+export type ListEnumSponsoredContentStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SponsoredContentStatus[]'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -5774,6 +5879,7 @@ export type GlobalOmitConfig = {
   profileBookmark?: Prisma.ProfileBookmarkOmit
   supportTicket?: Prisma.SupportTicketOmit
   ticketMessage?: Prisma.TicketMessageOmit
+  sponsoredContent?: Prisma.SponsoredContentOmit
 }
 
 /* Types for Logging */

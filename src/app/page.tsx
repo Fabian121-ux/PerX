@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { getOpportunityFeedResult } from "@/lib/data/opportunities";
 import { getPublicPeopleDirectory } from "@/lib/data/people";
 import { getCurrentUser } from "@/lib/auth/session";
+import { SponsoredSlot } from "@/components/sponsored/sponsored-slot";
 import { trustBadgeClassName } from "@/lib/trust/engine";
 
 export const dynamic = "force-dynamic";
@@ -257,6 +258,10 @@ export default async function Home() {
               </div>
             </div>
           </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
+          <SponsoredSlot />
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">

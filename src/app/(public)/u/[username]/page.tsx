@@ -18,6 +18,7 @@ import { Card, EmptyState } from "@/components/ui/card";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import {
   acceptConnectionAction,
+  rejectConnectionAction,
   requestConnectionAction,
   startConversationAction,
 } from "@/features/network/actions";
@@ -297,12 +298,14 @@ export default async function PublicProfilePage({
                   </p>
                 </div>
               </div>
-              <ButtonLink
-                className="w-full"
-                href={`/sign-in?next=/u/${username}`}
-              >
-                Contact member
-              </ButtonLink>
+              {!viewer ? (
+                <ButtonLink
+                  className="w-full"
+                  href={`/sign-in?next=/u/${username}`}
+                >
+                  Connect With
+                </ButtonLink>
+              ) : null}
             </div>
           </Card>
 
@@ -500,7 +503,7 @@ function ProfilePrimaryAction({
     return (
       <ButtonLink className="w-full sm:w-auto" href={`/sign-in?next=/u/${username}`}>
         <Mail aria-hidden className="mr-2" size={16} />
-        Contact
+        Connect With
       </ButtonLink>
     );
   }
@@ -513,14 +516,19 @@ function ProfilePrimaryAction({
     return <Button className="w-full sm:w-auto" disabled>Unavailable</Button>;
   }
 
-  if (relationship.status === "ACCEPTED" && allowMessagesFromConnections) {
+  if (relationship.status === "ACCEPTED") {
     return (
-      <form action={async () => { "use server"; await startConversationAction(targetUserId); }}>
-        <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Opening conversation..." type="submit">
-          <Mail aria-hidden className="mr-2" size={16} />
-          Message
-        </PendingSubmitButton>
-      </form>
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <Button className="w-full sm:w-auto" disabled variant="secondary">Connected</Button>
+        {allowMessagesFromConnections ? (
+          <form action={async () => { "use server"; await startConversationAction(targetUserId); }}>
+            <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Opening conversation..." type="submit">
+              <Mail aria-hidden className="mr-2" size={16} />
+              Message
+            </PendingSubmitButton>
+          </form>
+        ) : null}
+      </div>
     );
   }
 
@@ -534,21 +542,26 @@ function ProfilePrimaryAction({
     relationship.connectionId
   ) {
     return (
-      <form action={async () => { "use server"; await acceptConnectionAction(relationship.connectionId!); }}>
-        <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Accepting..." type="submit">Accept connection</PendingSubmitButton>
-      </form>
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <form action={async () => { "use server"; await acceptConnectionAction(relationship.connectionId!); }}>
+          <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Accepting..." type="submit">Accept Connection</PendingSubmitButton>
+        </form>
+        <form action={async () => { "use server"; await rejectConnectionAction(relationship.connectionId!); }}>
+          <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Declining..." type="submit" variant="secondary">Decline</PendingSubmitButton>
+        </form>
+      </div>
     );
   }
 
   if (allowConnectionRequests) {
     return (
       <form action={async () => { "use server"; await requestConnectionAction(targetUserId); }}>
-        <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Sending request..." type="submit">Connect</PendingSubmitButton>
+        <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Sending request..." type="submit">Connect With</PendingSubmitButton>
       </form>
     );
   }
 
-  return <Button className="w-full sm:w-auto" disabled variant="secondary">Connections closed</Button>;
+  return <Button className="w-full sm:w-auto" disabled variant="secondary">Connect With</Button>;
 }
 
 function getInitials(name: string) {

@@ -7,7 +7,17 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ messages: 0, notifications: 0 }, { status: 401 });
+  if (!user) {
+    return NextResponse.json(
+      {
+        generalActivity: 0,
+        pendingConnectionRequests: 0,
+        unreadConversations: 0,
+        unreadNews: 0,
+      },
+      { status: 401 },
+    );
+  }
 
   return NextResponse.json(await getUnreadCounts(user.id));
 }

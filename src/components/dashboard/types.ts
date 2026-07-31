@@ -44,8 +44,8 @@ export interface DashboardOpportunity {
   organisation: string;
   location: string;
   remote: boolean;
-  budgetMinMinor: number;
-  budgetMaxMinor: number;
+  budgetMinMinor: number | string | null;
+  budgetMaxMinor: number | string | null;
   currency: string;
   type: string;
   postedTimeAgo: string;
@@ -61,11 +61,11 @@ export interface HomeDashboardData {
   activeDealsDetail?: string;
   connectionRequestsCount: number;
   draftsCount: number;
-  notificationsCount: number;
+  activityCount: number;
   openProposalsCount: number;
   openProposalsDetail?: string;
   publishedItemsCount: number;
-  unreadMessagesCount: number;
+  unreadConversationsCount: number;
   onboarding: {
     dismissed: boolean;
     items: Array<{

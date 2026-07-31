@@ -82,13 +82,17 @@ function mapDiscoveryUser(
 ): PeopleDirectoryEntry {
   const connection = viewerId ? connectionByUser.get(person.id) : undefined;
   const accepted = connection?.status === "ACCEPTED";
+  const canRetryConnection =
+    !connection ||
+    connection.status === "DECLINED" ||
+    connection.status === "CANCELLED";
   const messageAllowed =
     accepted && person.profile?.allowMessagesFromConnections;
 
   return {
     canRequestConnection:
       Boolean(viewerId) &&
-      !connection &&
+      canRetryConnection &&
       Boolean(person.profile?.allowConnectionRequests),
     canStartConversation: Boolean(messageAllowed),
     connectionDirection:

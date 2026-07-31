@@ -7,13 +7,20 @@ import { getAppRoute, getEnvironment } from "@/lib/navigation/app-routes";
 import { MapPin, ShieldCheck, Clock } from "lucide-react";
 import type { DashboardOpportunity } from "./types";
 import { formatBudgetRange } from "@/lib/money";
+import { getCanonicalOpportunityPath } from "@/lib/data/opportunity-path";
 
 interface RecommendedOpportunitiesProps {
+  firstPageHref?: string | null;
+  nextHref?: string | null;
   opportunities: DashboardOpportunity[];
+  unavailable?: boolean;
 }
 
 export function RecommendedOpportunities({
+  firstPageHref,
+  nextHref,
   opportunities,
+  unavailable = false,
 }: RecommendedOpportunitiesProps) {
   const pathname = usePathname();
   const env = getEnvironment(pathname);
@@ -22,7 +29,7 @@ export function RecommendedOpportunities({
     <div className="grid gap-4">
       <div className="flex items-center justify-between px-2 sm:px-0">
         <h2 className="text-xl font-bold tracking-tight text-[color:var(--px-text)]">
-          Recommended for you
+          Opportunity feed
         </h2>
         <Link
           href={getAppRoute("discover", env)}
@@ -32,7 +39,12 @@ export function RecommendedOpportunities({
         </Link>
       </div>
 
-      {opportunities && opportunities.length > 0 ? (
+      {unavailable ? (
+        <div className="rounded-[var(--px-radius)] border border-amber-300 bg-amber-50 p-6 text-sm leading-6 text-amber-950">
+          The database-backed Home feed is temporarily unavailable. No mock
+          opportunities were substituted.
+        </div>
+      ) : opportunities && opportunities.length > 0 ? (
         <div className="dashboard-scroll -mx-4 mt-4 flex gap-4 overflow-x-auto px-4 pb-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:w-full lg:grid-cols-2 lg:overflow-visible lg:px-0 lg:pb-0 xl:grid-cols-3">
           {opportunities.map((opp) => (
             <article
@@ -40,7 +52,7 @@ export function RecommendedOpportunities({
               className="dashboard-scroll-card group relative flex min-h-[338px] shrink-0 snap-start flex-col overflow-hidden rounded-[20px] bg-[color:var(--px-surface)] shadow-sm ring-1 ring-[color:var(--px-border)] transition-all hover:-translate-y-0.5 hover:shadow-[0_18px_44px_rgba(0,0,0,0.32)] hover:ring-[color:var(--px-primary)]/55 lg:min-w-0 lg:w-auto"
             >
               <Link
-                href={`${getAppRoute("discover", env)}?opportunity=${opp.slug}`}
+                href={getCanonicalOpportunityPath(opp.slug)}
                 className="flex h-full flex-col"
               >
                 <div className="relative h-28 w-full overflow-hidden bg-[color:var(--px-muted)]">
@@ -102,10 +114,34 @@ export function RecommendedOpportunities({
         </div>
       ) : (
         <div className="rounded-[var(--px-radius)] border border-dashed border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] p-6 text-sm leading-6 text-[color:var(--px-text-muted)]">
-          Relevant opportunities will appear here after approved listings match
-          your profile and search activity.
+          No eligible opportunities from other discoverable members are
+          available right now.
         </div>
       )}
+
+      {!unavailable && (firstPageHref || nextHref) ? (
+        <nav
+          aria-label="Opportunity feed pagination"
+          className="flex items-center justify-end gap-2"
+        >
+          {firstPageHref ? (
+            <Link
+              className="inline-flex min-h-10 items-center rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 text-sm font-bold text-[color:var(--px-text)] hover:border-[color:var(--px-primary)]"
+              href={firstPageHref}
+            >
+              First page
+            </Link>
+          ) : null}
+          {nextHref ? (
+            <Link
+              className="inline-flex min-h-10 items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white hover:bg-[color:var(--px-primary-strong)]"
+              href={nextHref}
+            >
+              Next
+            </Link>
+          ) : null}
+        </nav>
+      ) : null}
     </div>
   );
 }

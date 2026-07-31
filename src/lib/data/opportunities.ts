@@ -1,6 +1,13 @@
 import { getPerXDataProvider } from "./provider";
 import { isProductionMockModeError } from "@/lib/env";
 import { logServerDataError } from "@/lib/logging/runtime";
+import {
+  clampPublicOpportunityPageSize,
+  getPublicOpportunityPage,
+  normalizePublicOpportunityCursor,
+} from "@/lib/data/public-opportunities";
+
+export { getCanonicalOpportunityPath } from "@/lib/data/opportunity-path";
 
 function logPublicDataFailure(scope: string, error: unknown) {
   if (isProductionMockModeError(error)) throw error;
@@ -12,10 +19,15 @@ function logPublicDataFailure(scope: string, error: unknown) {
   });
 }
 
-export async function getOpportunityFeedResult(filters?: { category?: string; q?: string; type?: string }) {
+export async function getOpportunityFeedResult(filters?: {
+  category?: string;
+  q?: string;
+  type?: string;
+}) {
   try {
     const provider = await getPerXDataProvider();
-    const opportunities = await provider.opportunities.getOpportunityFeed(filters);
+    const opportunities =
+      await provider.opportunities.getOpportunityFeed(filters);
     return { opportunities, unavailable: false };
   } catch (error) {
     logPublicDataFailure("opportunity feed", error);
@@ -23,12 +35,48 @@ export async function getOpportunityFeedResult(filters?: { category?: string; q?
   }
 }
 
-export async function getOpportunityFeed(filters?: { category?: string; q?: string; type?: string }) {
+export async function getOpportunityFeed(filters?: {
+  category?: string;
+  q?: string;
+  type?: string;
+}) {
   const result = await getOpportunityFeedResult(filters);
   return result.opportunities;
 }
 
-export async function getPublicDiscoveryData(filters?: { category?: string; q?: string; type?: string }) {
+export async function getAuthenticatedHomeOpportunityPageResult({
+  cursor,
+  pageSize,
+  viewerId,
+}: {
+  cursor?: string;
+  pageSize?: number;
+  viewerId: string;
+}) {
+  try {
+    const page = await getPublicOpportunityPage({
+      cursor,
+      excludeOwnerId: viewerId,
+      pageSize,
+    });
+    return { ...page, unavailable: false };
+  } catch (error) {
+    logPublicDataFailure("authenticated home opportunity feed", error);
+    return {
+      cursor: normalizePublicOpportunityCursor(cursor) ?? null,
+      items: [],
+      nextCursor: null,
+      pageSize: clampPublicOpportunityPageSize(pageSize),
+      unavailable: true,
+    };
+  }
+}
+
+export async function getPublicDiscoveryData(filters?: {
+  category?: string;
+  q?: string;
+  type?: string;
+}) {
   try {
     const provider = await getPerXDataProvider();
     const [opportunities, categories] = await Promise.all([

@@ -10,6 +10,7 @@ import { Input, Select } from "@/components/ui/form";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import {
   acceptConnectionAction,
+  rejectConnectionAction,
   requestConnectionAction,
   startConversationAction,
 } from "@/features/network/actions";
@@ -211,9 +212,14 @@ function ConnectionAction({ person }: { person: PeopleDirectoryEntry }) {
   }
   if (person.connectionState === "PENDING" && person.connectionDirection === "incoming" && person.connectionId) {
     return (
-      <form action={async () => { "use server"; await acceptConnectionAction(person.connectionId!); }}>
-        <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Accepting..." size="sm" type="submit">Accept request</PendingSubmitButton>
-      </form>
+      <div className="flex w-full gap-2 sm:w-auto">
+        <form action={async () => { "use server"; await acceptConnectionAction(person.connectionId!); }}>
+          <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Accepting..." size="sm" type="submit">Accept Connection</PendingSubmitButton>
+        </form>
+        <form action={async () => { "use server"; await rejectConnectionAction(person.connectionId!); }}>
+          <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Declining..." size="sm" type="submit" variant="secondary">Decline</PendingSubmitButton>
+        </form>
+      </div>
     );
   }
   if (person.connectionState === "BLOCKED") {
@@ -225,7 +231,7 @@ function ConnectionAction({ person }: { person: PeopleDirectoryEntry }) {
     <form action={async () => { "use server"; await requestConnectionAction(person.id); }}>
       <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Sending request..." size="sm" type="submit" variant="secondary">
         <UserRoundPlus aria-hidden className="mr-2" size={15} />
-        Connect
+        Connect With
       </PendingSubmitButton>
     </form>
   );

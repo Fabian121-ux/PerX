@@ -30,7 +30,17 @@ import { ActivityFeed } from "./activity-feed";
 import { Card } from "@/components/ui/card";
 import { dismissOnboardingChecklistAction } from "@/features/onboarding/actions";
 
-export function HomeDashboard({ data }: { data: HomeDashboardData }) {
+export function HomeDashboard({
+  data,
+  opportunityFeed,
+}: {
+  data: HomeDashboardData;
+  opportunityFeed?: {
+    firstPageHref: string | null;
+    nextHref: string | null;
+    unavailable: boolean;
+  };
+}) {
   const pathname = usePathname();
   const env = getEnvironment(pathname);
   const getHref = (key: Parameters<typeof getAppRoute>[0]) =>
@@ -127,18 +137,18 @@ export function HomeDashboard({ data }: { data: HomeDashboardData }) {
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <DashboardMetricCard
-            title="Unread messages"
-            value={data.unreadMessagesCount}
-            detail="Unread conversations"
+            title="Unread conversations"
+            value={data.unreadConversationsCount}
+            detail="Conversations with new messages"
             actionLabel="Open messages"
             href={getHref("messages")}
             icon={<MessageSquare size={20} />}
           />
           <DashboardMetricCard
-            title="Notifications"
-            value={data.notificationsCount}
-            detail="Unread updates"
-            actionLabel="View notifications"
+            title="Activity"
+            value={data.activityCount}
+            detail="Unread personal updates"
+            actionLabel="View activity"
             href={getHref("notifications")}
             icon={<Bell size={20} />}
           />
@@ -197,7 +207,10 @@ export function HomeDashboard({ data }: { data: HomeDashboardData }) {
         <QuickActions />
 
         <RecommendedOpportunities
+          firstPageHref={opportunityFeed?.firstPageHref}
+          nextHref={opportunityFeed?.nextHref}
           opportunities={data.recommendedOpportunities}
+          unavailable={opportunityFeed?.unavailable}
         />
 
         <RecommendedProfiles profiles={data.recommendedProfiles} />

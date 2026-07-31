@@ -8,6 +8,11 @@ import type {
   EnforcementActionType,
   ModerationCaseStatus,
 } from "@/generated/prisma/enums";
+import {
+  caseTitleForReport,
+  messageReviewScopeOptions,
+  sourceForReportTarget,
+} from "@/lib/admin/moderation-records";
 import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import { writeAuditLog } from "@/lib/logging/audit";
@@ -66,8 +71,10 @@ function expiryFromForm(formData: FormData) {
   if (duration === "24h") return new Date(now.getTime() + 24 * 60 * 60_000);
   if (duration === "3d") return new Date(now.getTime() + 3 * 24 * 60 * 60_000);
   if (duration === "7d") return new Date(now.getTime() + 7 * 24 * 60 * 60_000);
-  if (duration === "14d") return new Date(now.getTime() + 14 * 24 * 60 * 60_000);
-  if (duration === "30d") return new Date(now.getTime() + 30 * 24 * 60 * 60_000);
+  if (duration === "14d")
+    return new Date(now.getTime() + 14 * 24 * 60 * 60_000);
+  if (duration === "30d")
+    return new Date(now.getTime() + 30 * 24 * 60 * 60_000);
   if (duration === "custom") {
     const custom = new Date(textValue(formData, "customExpiry"));
     return Number.isNaN(custom.getTime()) ? null : custom;
@@ -84,6 +91,103 @@ function jsonSafeState(state: Record<string, unknown>): Prisma.InputJsonObject {
   ) as Prisma.InputJsonObject;
 }
 
+type LegacyReportForCase = {
+  reporterId: string;
+  targetId: string;
+  targetType: string;
+};
+
+async function resolveReportedUserIdForLegacyReport(
+  report: LegacyReportForCase,
+) {
+  if (report.targetType === "USER") {
+    return report.targetId === report.reporterId ? null : report.targetId;
+  }
+
+  if (report.targetType === "MESSAGE") {
+    const message = await getPrisma().message.findFirst({
+      select: {
+        senderId: true,
+        conversation: {
+          select: {
+            participants: {
+              select: { userId: true },
+              take: 3,
+            },
+          },
+        },
+      },
+      where: { id: report.targetId },
+    });
+    if (!message) return null;
+    return message.senderId !== report.reporterId
+      ? message.senderId
+      : (message.conversation.participants.find(
+          (participant) => participant.userId !== report.reporterId,
+        )?.userId ?? null);
+  }
+
+  if (report.targetType === "CONVERSATION") {
+    const conversation = await getPrisma().conversation.findFirst({
+      select: {
+        participants: {
+          select: { userId: true },
+          take: 3,
+        },
+      },
+      where: { id: report.targetId },
+    });
+    return (
+      conversation?.participants.find(
+        (participant) => participant.userId !== report.reporterId,
+      )?.userId ?? null
+    );
+  }
+
+  if (
+    report.targetType === "OPPORTUNITY" ||
+    report.targetType === "REAL_ESTATE_LISTING"
+  ) {
+    const opportunity = await getPrisma().opportunity.findUnique({
+      select: { ownerId: true },
+      where: { id: report.targetId },
+    });
+    return opportunity?.ownerId === report.reporterId
+      ? null
+      : (opportunity?.ownerId ?? null);
+  }
+
+  if (report.targetType === "DEAL") {
+    const deal = await getPrisma().deal.findFirst({
+      select: {
+        participants: {
+          select: { userId: true },
+          take: 3,
+        },
+      },
+      where: { id: report.targetId },
+    });
+    return (
+      deal?.participants.find(
+        (participant) => participant.userId !== report.reporterId,
+      )?.userId ?? null
+    );
+  }
+
+  if (report.targetType === "REVIEW") {
+    const review = await getPrisma().review.findUnique({
+      select: { authorId: true, subjectId: true },
+      where: { id: report.targetId },
+    });
+    if (!review) return null;
+    return review.authorId === report.reporterId
+      ? review.subjectId
+      : review.authorId;
+  }
+
+  return null;
+}
+
 export async function recordConversationReviewAction(formData: FormData) {
   const admin = await requireCapabilityOrNotFound("messages:moderate");
   const conversationId = textValue(formData, "conversationId");
@@ -91,7 +195,9 @@ export async function recordConversationReviewAction(formData: FormData) {
   const outcome = textValue(formData, "outcome") || "metadata-reviewed";
 
   if (!conversationId || reason.length < 12) {
-    throw new Error("A conversation and a clear moderation reason are required.");
+    throw new Error(
+      "A conversation and a clear moderation reason are required.",
+    );
   }
 
   await getPrisma().moderationAction.create({
@@ -119,10 +225,16 @@ export async function recordMessageScopeRevealAction(formData: FormData) {
   const admin = await requireCapabilityOrNotFound("messages:moderate");
   const caseId = textValue(formData, "caseId");
   const reason = textValue(formData, "reason");
-  const scope = textValue(formData, "scope") || "reported-message-context";
+  const requestedScope = textValue(formData, "scope");
+  const scope = messageReviewScopeOptions.find(
+    (option) => option.value === requestedScope,
+  )?.value;
+  const confirmed = formData.get("confirmScope") === "on";
 
-  if (!caseId || reason.length < 12) {
-    throw new Error("A case and clear moderation reason are required.");
+  if (!caseId || !scope || reason.length < 12 || !confirmed) {
+    throw new Error(
+      "A case, clear reason, selected scope, and confirmation are required.",
+    );
   }
 
   const moderationCase = await getPrisma().moderationCase.findFirst({
@@ -138,12 +250,35 @@ export async function recordMessageScopeRevealAction(formData: FormData) {
     throw new Error("Message content can only be revealed from a linked case.");
   }
 
+  const conversation = await getPrisma().conversation.findUnique({
+    select: { id: true },
+    where: { id: moderationCase.conversationId },
+  });
+  if (!conversation) {
+    throw new Error("Conversation unavailable.");
+  }
+
+  if (!moderationCase.messageId) {
+    throw new Error("The report does not identify a message to reveal.");
+  }
+
+  const message = await getPrisma().message.findFirst({
+    select: { id: true },
+    where: {
+      conversationId: moderationCase.conversationId,
+      id: moderationCase.messageId,
+    },
+  });
+  if (!message) {
+    throw new Error("Reported message unavailable.");
+  }
+
   await getPrisma().$transaction(async (tx) => {
     await tx.moderationMessageScope.create({
       data: {
         caseId: moderationCase.id,
         conversationId: moderationCase.conversationId!,
-        messageId: moderationCase.messageId,
+        messageId: message.id,
         reason,
         revealedById: admin.id,
         scope,
@@ -172,6 +307,7 @@ export async function recordMessageScopeRevealAction(formData: FormData) {
         entityType: "moderation_case",
         metadata: {
           conversationId: moderationCase.conversationId,
+          messageAvailable: true,
           messageId: moderationCase.messageId,
           reasonProvided: true,
           scope,
@@ -182,6 +318,95 @@ export async function recordMessageScopeRevealAction(formData: FormData) {
 
   revalidatePath("/admin/messages");
   revalidatePath(`/admin/moderation/cases/${caseId}`);
+}
+
+export async function createModerationCaseForReportAction(formData: FormData) {
+  const admin = await requireCapabilityOrNotFound("admin:moderate");
+  const reportId = textValue(formData, "reportId");
+  if (!reportId) throw new Error("Report is required.");
+
+  const report = await getPrisma().userReport.findUnique({
+    select: {
+      category: true,
+      contextConversationId: true,
+      contextMessageId: true,
+      createdAt: true,
+      id: true,
+      reporterId: true,
+      status: true,
+      targetId: true,
+      targetType: true,
+    },
+    where: { id: reportId },
+  });
+  if (!report) throw new Error("Report not found.");
+  if (report.status !== "SUBMITTED" && report.status !== "IN_REVIEW") {
+    throw new Error(
+      "Only active reports can be converted into moderation cases.",
+    );
+  }
+
+  const existing = await getPrisma().moderationCase.findFirst({
+    select: { id: true },
+    where: { linkedReportId: report.id },
+  });
+  if (existing) {
+    revalidatePath("/admin/reports");
+    revalidatePath(`/admin/moderation/cases/${existing.id}`);
+    return;
+  }
+
+  const reportedUserId = await resolveReportedUserIdForLegacyReport(report);
+  const moderationCase = await getPrisma().$transaction(async (tx) => {
+    const created = await tx.moderationCase.create({
+      data: {
+        category: report.category,
+        conversationId: report.contextConversationId,
+        linkedReportId: report.id,
+        messageId: report.contextMessageId,
+        priority: "NORMAL",
+        reportedUserId,
+        reporterId: report.reporterId,
+        source: sourceForReportTarget(report.targetType),
+        status: "NEW",
+        summary:
+          "Legacy report converted into a moderation case with metadata only.",
+        targetId: report.targetId,
+        targetType: report.targetType,
+        title: caseTitleForReport(report.targetType, report.category),
+      },
+      select: { id: true },
+    });
+    await tx.moderationCaseEvent.create({
+      data: {
+        actorId: admin.id,
+        caseId: created.id,
+        nextStatus: "NEW",
+        note: "Case created for legacy report without revealing private evidence.",
+        reason: "Legacy report case creation",
+        type: "case.created_from_legacy_report",
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        action: "admin.case.created_from_legacy_report",
+        actorId: admin.id,
+        entityId: created.id,
+        entityType: "moderation_case",
+        metadata: {
+          reasonProvided: true,
+          reportId: report.id,
+          targetType: report.targetType,
+        },
+      },
+    });
+    return created;
+  });
+
+  revalidatePath("/admin/reports");
+  revalidatePath("/admin/messages");
+  revalidatePath("/admin/moderation");
+  revalidatePath(`/admin/moderation/cases/${moderationCase.id}`);
 }
 
 export async function updateModerationCaseStatusAction(formData: FormData) {
@@ -256,7 +481,9 @@ export async function applyEnforcementAction(formData: FormData) {
     userFacingExplanation.length < 8 ||
     internalNote.length < 8
   ) {
-    throw new Error("Case, target, reason, user explanation, and internal note are required.");
+    throw new Error(
+      "Case, target, reason, user explanation, and internal note are required.",
+    );
   }
 
   if (parsedType.data === "PERMANENT_BAN" && confirmation !== "PERMANENT_BAN") {
@@ -264,10 +491,18 @@ export async function applyEnforcementAction(formData: FormData) {
   }
 
   const moderationCase = await getPrisma().moderationCase.findUnique({
-    select: { id: true, status: true },
+    select: { id: true, reportedUserId: true, status: true },
     where: { id: caseId },
   });
   if (!moderationCase) throw new Error("Case not found.");
+  if (
+    !moderationCase.reportedUserId ||
+    moderationCase.reportedUserId !== targetUserId
+  ) {
+    throw new Error(
+      "The enforcement target does not match this moderation case.",
+    );
+  }
 
   const target = await getPrisma().user.findUnique({
     select: {
@@ -366,7 +601,10 @@ export async function applyEnforcementAction(formData: FormData) {
   }
 
   await getPrisma().$transaction(async (tx) => {
-    if (parsedType.data !== "WARNING" && parsedType.data !== "SESSION_REVOCATION") {
+    if (
+      parsedType.data !== "WARNING" &&
+      parsedType.data !== "SESSION_REVOCATION"
+    ) {
       await tx.user.update({
         data: userUpdate,
         where: { id: targetUserId },
@@ -470,7 +708,9 @@ export async function sendAdminBroadcastAction(formData: FormData) {
     throw new Error("Broadcast action URL must be a safe internal path.");
   }
 
-  const expiresAt = parsed.data.expiresAt ? new Date(parsed.data.expiresAt) : null;
+  const expiresAt = parsed.data.expiresAt
+    ? new Date(parsed.data.expiresAt)
+    : null;
   if (expiresAt && Number.isNaN(expiresAt.getTime())) {
     throw new Error("Broadcast expiry is invalid.");
   }
@@ -479,9 +719,15 @@ export async function sendAdminBroadcastAction(formData: FormData) {
     parsed.data.audience === "PUBLIC_BETA_USERS"
       ? { accountClassification: "PUBLIC_BETA_USER" as const, isActive: true }
       : parsed.data.audience === "INTERNAL_TEST_USERS"
-        ? { accountClassification: "INTERNAL_TEST_USER" as const, isActive: true }
+        ? {
+            accountClassification: "INTERNAL_TEST_USER" as const,
+            isActive: true,
+          }
         : parsed.data.audience === "ADMINISTRATORS"
-          ? { isActive: true, roles: { some: { role: { name: "ADMIN" as const } } } }
+          ? {
+              isActive: true,
+              roles: { some: { role: { name: "ADMIN" as const } } },
+            }
           : { isActive: true };
 
   const recipients = await getPrisma().user.findMany({
@@ -507,7 +753,7 @@ export async function sendAdminBroadcastAction(formData: FormData) {
     const notificationResult = recipients.length
       ? await tx.notification.createMany({
           data: recipients.map((recipient) => ({
-            actionUrl: actionUrl ?? "/app/notifications",
+            actionUrl: actionUrl ?? "/app/news",
             broadcastId: broadcast.id,
             body: parsed.data.body,
             metadata: {
@@ -551,13 +797,19 @@ export async function sendAdminBroadcastAction(formData: FormData) {
         metadata: {
           audience: parsed.data.audience,
           deliveryCount: notificationResult.count,
-          failedCount: Math.max(0, recipients.length - notificationResult.count),
+          failedCount: Math.max(
+            0,
+            recipients.length - notificationResult.count,
+          ),
           hasActionUrl: Boolean(actionUrl),
         },
       },
     });
 
-    return { broadcastId: broadcast.id, deliveryCount: notificationResult.count };
+    return {
+      broadcastId: broadcast.id,
+      deliveryCount: notificationResult.count,
+    };
   });
 
   await writeAuditLog({
@@ -569,7 +821,7 @@ export async function sendAdminBroadcastAction(formData: FormData) {
   });
 
   revalidatePath("/admin/broadcasts");
-  revalidatePath("/app/notifications");
+  revalidatePath("/app/news");
 }
 
 export async function reviewPropertyListingAction(formData: FormData) {

@@ -111,7 +111,7 @@ export default async function ProfilePage() {
             <div className="grid gap-4 text-sm">
               <div>
                 <span className="block text-[color:var(--px-text-muted)]">Email</span>
-                <span className="font-medium">{user.email}</span>
+                <span className="break-all font-medium">{user.email}</span>
               </div>
               <div>
                 <span className="block text-[color:var(--px-text-muted)]">Account Classification</span>
@@ -121,7 +121,7 @@ export default async function ProfilePage() {
                 <span className="block text-[color:var(--px-text-muted)]">Roles</span>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {user.roles.map(role => (
-                    <Badge key={role} className="bg-white">{role}</Badge>
+                    <Badge key={role} className="bg-[color:var(--px-muted)] text-[color:var(--px-text-muted)]">{role}</Badge>
                   ))}
                 </div>
               </div>

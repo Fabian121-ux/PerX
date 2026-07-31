@@ -1,5 +1,14 @@
 import { redirect } from "next/navigation";
 
-export default function ConnectionRequestsPage() {
-  redirect("/app/network?tab=requests");
+import {
+  getLegacyRequestsDestination,
+  type ConnectionSearchParam,
+} from "@/features/network/routes";
+
+export default async function LegacyConnectionRequestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: ConnectionSearchParam }>;
+}) {
+  redirect(getLegacyRequestsDestination(await searchParams));
 }

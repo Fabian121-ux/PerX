@@ -41,6 +41,7 @@ enum OpportunityType {
   INVESTMENT
   PROPERTY
   SERVICE
+  PRODUCT
   PARTNERSHIP
 }
 
@@ -254,6 +255,12 @@ enum TicketStatus {
   WAITING_ON_USER
   RESOLVED
   CLOSED
+}
+
+enum SponsoredContentStatus {
+  DRAFT
+  PUBLISHED
+  PAUSED
 }
 
 model User {
@@ -1131,4 +1138,20 @@ model TicketMessage {
   sender    User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([ticketId])
+}
+
+model SponsoredContent {
+  id        String                 @id @default(cuid())
+  brandName String
+  message   String
+  ctaLabel  String
+  ctaHref   String
+  imageUrl  String?
+  status    SponsoredContentStatus @default(DRAFT)
+  startsAt  DateTime
+  endsAt    DateTime?
+  createdAt DateTime               @default(now())
+
+  @@index([status, startsAt])
+  @@index([status, startsAt, endsAt])
 }

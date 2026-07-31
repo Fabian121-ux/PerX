@@ -1,15 +1,19 @@
 "use server";
 
+import type { Prisma } from "@/generated/prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getPrisma } from "@/lib/db/prisma";
 import { requireUser } from "@/lib/auth/session";
-import {
-  assertCanMessage,
-  assertCanRequestConnection,
-} from "@/lib/account/enforcement";
+import { assertCanRequestConnection } from "@/lib/account/enforcement";
 import { writeAuditLog } from "@/lib/logging/audit";
+import {
+  isDiscoverableNetworkTarget,
+  isEligibleNetworkAccount,
+  networkAccountEligibilitySelect,
+  type NetworkAccountSnapshot,
+} from "./eligibility";
 
 type PairLockClient = {
   $executeRawUnsafe: (query: string, ...values: unknown[]) => Promise<unknown>;
@@ -23,16 +27,92 @@ async function lockUserPair(tx: PairLockClient, a: string, b: string) {
   await tx.$executeRawUnsafe("SELECT pg_advisory_xact_lock(hashtext($1))", pairKey(a, b));
 }
 
-async function hasBlockBetween(a: string, b: string) {
-  const block = await getPrisma().blockedUser.findFirst({
-    where: {
-      OR: [
-        { blockerUserId: a, blockedUserId: b },
-        { blockerUserId: b, blockedUserId: a },
-      ],
-    },
+async function getNetworkPairAccounts(
+  tx: Pick<Prisma.TransactionClient, "user">,
+  actorId: string,
+  targetId: string,
+) {
+  const accounts = await tx.user.findMany({
+    select: networkAccountEligibilitySelect,
+    take: 2,
+    where: { id: { in: [actorId, targetId] } },
   });
-  return Boolean(block);
+
+  return {
+    actor: accounts.find((account) => account.id === actorId),
+    target: accounts.find((account) => account.id === targetId),
+  };
+}
+
+function assertEligibleConnectionPair(
+  accounts: {
+    actor?: NetworkAccountSnapshot;
+    target?: NetworkAccountSnapshot;
+  },
+  options: { targetAllowsRequests?: boolean } = {},
+) {
+  const now = new Date();
+  if (
+    !isDiscoverableNetworkTarget(accounts.actor, now) ||
+    !isDiscoverableNetworkTarget(accounts.target, now) ||
+    (options.targetAllowsRequests &&
+      !accounts.target?.profile?.allowConnectionRequests)
+  ) {
+    throw new Error("Connection action is unavailable.");
+  }
+}
+
+function assertEligibleAccountPair(accounts: {
+  actor?: NetworkAccountSnapshot;
+  target?: NetworkAccountSnapshot;
+}) {
+  const now = new Date();
+  if (
+    !isEligibleNetworkAccount(accounts.actor, now) ||
+    !isEligibleNetworkAccount(accounts.target, now)
+  ) {
+    throw new Error("Connection action is unavailable.");
+  }
+}
+
+function revalidateConnectionPaths(options: {
+  blocked?: boolean;
+  messages?: boolean;
+  notifications?: boolean;
+} = {}) {
+  revalidatePath("/app/connections");
+  revalidatePath("/app/network");
+  revalidatePath("/app/people");
+  if (options.blocked) revalidatePath("/app/settings/blocked");
+  if (options.messages) revalidatePath("/app/messages");
+  if (options.notifications) revalidatePath("/app/notifications");
+}
+
+type DirectMessageAccount = {
+  accountClassification: string;
+  bannedAt: Date | null;
+  deactivatedAt: Date | null;
+  id: string;
+  isActive: boolean;
+  messagingRestrictedUntil: Date | null;
+  profile: { allowMessagesFromConnections: boolean } | null;
+  suspendedAt: Date | null;
+  suspendedUntil: Date | null;
+};
+
+function isEligibleForDirectMessaging(account: DirectMessageAccount, now: Date) {
+  const suspended =
+    account.suspendedAt &&
+    (!account.suspendedUntil || account.suspendedUntil > now);
+
+  return (
+    account.accountClassification === "PUBLIC_BETA_USER" &&
+    account.isActive &&
+    !account.bannedAt &&
+    !account.deactivatedAt &&
+    !suspended &&
+    (!account.messagingRestrictedUntil || account.messagingRestrictedUntil <= now)
+  );
 }
 
 export async function requestConnectionAction(targetUserId: string) {
@@ -44,46 +124,52 @@ export async function requestConnectionAction(targetUserId: string) {
     throw new Error("Cannot connect with yourself");
   }
 
-  await getPrisma().$transaction(async (tx) => {
+  const changed = await getPrisma().$transaction(async (tx) => {
     await lockUserPair(tx, user.id, targetUserId);
 
-    const target = await tx.user.findFirst({
-      select: {
-        id: true,
-        profile: { select: { allowConnectionRequests: true } },
-      },
-      where: {
-        accountClassification: "PUBLIC_BETA_USER",
-        id: targetUserId,
-        isActive: true,
-      },
-    });
+    const accounts = await getNetworkPairAccounts(tx, user.id, targetUserId);
+    assertEligibleConnectionPair(accounts, { targetAllowsRequests: true });
 
-    if (!target || !target.profile?.allowConnectionRequests) {
+    const [block, existingConnections] = await Promise.all([
+      tx.blockedUser.findFirst({
+        select: { id: true },
+        where: {
+          OR: [
+            { blockerUserId: user.id, blockedUserId: targetUserId },
+            { blockerUserId: targetUserId, blockedUserId: user.id },
+          ],
+        },
+      }),
+      tx.connection.findMany({
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: {
+          id: true,
+          receiverId: true,
+          requesterId: true,
+          status: true,
+        },
+        take: 2,
+        where: {
+          OR: [
+            { requesterId: user.id, receiverId: targetUserId },
+            { requesterId: targetUserId, receiverId: user.id },
+          ],
+        },
+      }),
+    ]);
+    if (block) throw new Error("Connection request is unavailable.");
+    if (existingConnections.length > 1) {
       throw new Error("Connection request is unavailable.");
     }
 
-    const block = await tx.blockedUser.findFirst({
-      where: {
-        OR: [
-          { blockerUserId: user.id, blockedUserId: targetUserId },
-          { blockerUserId: targetUserId, blockedUserId: user.id },
-        ],
-      },
-    });
-    if (block) throw new Error("Connection request is unavailable.");
-
-    const existing = await tx.connection.findFirst({
-      where: {
-        OR: [
-          { requesterId: user.id, receiverId: targetUserId },
-          { requesterId: targetUserId, receiverId: user.id },
-        ],
-      },
-    });
-
-    if (existing?.status === "PENDING" || existing?.status === "ACCEPTED") {
-      return;
+    const existing = existingConnections[0];
+    if (existing?.status === "ACCEPTED") return false;
+    if (existing?.status === "PENDING") {
+      if (existing.requesterId === user.id) return false;
+      throw new Error("Respond to the existing connection request instead.");
+    }
+    if (existing?.status === "BLOCKED") {
+      throw new Error("Connection request is unavailable.");
     }
 
     const connection = existing
@@ -105,7 +191,7 @@ export async function requestConnectionAction(targetUserId: string) {
 
     await tx.notification.create({
       data: {
-        actionUrl: "/app/connections/requests",
+        actionUrl: "/app/connections?tab=requests",
         body: `${user.name} sent you a connection request.`,
         metadata: { actorId: user.id, connectionId: connection.id },
         title: "New connection request",
@@ -113,44 +199,103 @@ export async function requestConnectionAction(targetUserId: string) {
         userId: targetUserId,
       },
     });
+    return true;
   });
 
-  await writeAuditLog({
-    actorId: user.id,
-    action: "connection.request",
-    entityId: targetUserId,
-    entityType: "user",
-  });
-  revalidatePath("/app/people");
-  revalidatePath("/app/network");
-  revalidatePath("/app/connections");
-  revalidatePath("/app/notifications");
+  if (changed) {
+    await writeAuditLog({
+      actorId: user.id,
+      action: "connection.request",
+      entityId: targetUserId,
+      entityType: "user",
+    });
+  }
+  revalidateConnectionPaths({ notifications: true });
 }
 
 export async function acceptConnectionAction(connectionId: string) {
   const user = await requireUser();
 
-  const connection = await getPrisma().connection.findUnique({
-    where: { id: connectionId },
-  });
-
-  if (!connection) throw new Error("Connection not found");
-  if (connection.receiverId !== user.id) throw new Error("Unauthorized");
-
   await getPrisma().$transaction(async (tx) => {
-    const current = await tx.connection.findUnique({
-      select: { status: true },
+    const candidate = await tx.connection.findUnique({
+      select: {
+        id: true,
+        receiverId: true,
+        requesterId: true,
+        status: true,
+      },
       where: { id: connectionId },
     });
-    if (!current || current.status === "DECLINED" || current.status === "CANCELLED" || current.status === "BLOCKED") {
+    if (!candidate) throw new Error("Connection not found");
+    if (candidate.receiverId !== user.id) throw new Error("Unauthorized");
+    if (candidate.requesterId === candidate.receiverId) {
       throw new Error("Connection request is no longer available.");
     }
-    if (current.status !== "ACCEPTED") {
-      await tx.connection.update({
+
+    await lockUserPair(tx, candidate.requesterId, candidate.receiverId);
+    const accounts = await getNetworkPairAccounts(
+      tx,
+      user.id,
+      candidate.requesterId,
+    );
+    assertEligibleConnectionPair(accounts);
+
+    const [block, current, pairConnections] = await Promise.all([
+      tx.blockedUser.findFirst({
+        select: { id: true },
+        where: {
+          OR: [
+            {
+              blockerUserId: candidate.requesterId,
+              blockedUserId: candidate.receiverId,
+            },
+            {
+              blockerUserId: candidate.receiverId,
+              blockedUserId: candidate.requesterId,
+            },
+          ],
+        },
+      }),
+      tx.connection.findUnique({
+        select: {
+          id: true,
+          receiverId: true,
+          requesterId: true,
+          status: true,
+        },
         where: { id: connectionId },
-        data: { status: "ACCEPTED" },
-      });
+      }),
+      tx.connection.findMany({
+        select: { id: true },
+        take: 2,
+        where: {
+          OR: [
+            {
+              requesterId: candidate.requesterId,
+              receiverId: candidate.receiverId,
+            },
+            {
+              requesterId: candidate.receiverId,
+              receiverId: candidate.requesterId,
+            },
+          ],
+        },
+      }),
+    ]);
+    if (
+      block ||
+      !current ||
+      current.status !== "PENDING" ||
+      current.receiverId !== user.id ||
+      pairConnections.length !== 1
+    ) {
+      throw new Error("Connection request is no longer available.");
     }
+
+    await tx.connection.update({
+      data: { status: "ACCEPTED" },
+      where: { id: connectionId },
+    });
 
     await tx.notification.updateMany({
       data: { actionState: "ACCEPTED", readAt: new Date() },
@@ -158,7 +303,7 @@ export async function acceptConnectionAction(connectionId: string) {
         OR: [
           { metadata: { path: ["connectionId"], equals: connectionId } },
           {
-            metadata: { path: ["actorId"], equals: connection.requesterId },
+            metadata: { path: ["actorId"], equals: candidate.requesterId },
             type: "CONNECTION_REQUEST_RECEIVED",
           },
         ],
@@ -172,22 +317,24 @@ export async function acceptConnectionAction(connectionId: string) {
       where: {
         metadata: { path: ["connectionId"], equals: connectionId },
         type: "CONNECTION_REQUEST_ACCEPTED",
-        userId: connection.requesterId,
+        userId: candidate.requesterId,
       },
     });
 
-    if (existingNotification) return;
+    if (!existingNotification) {
+      await tx.notification.create({
+        data: {
+          actionUrl: `/u/${user.username}`,
+          body: `${user.name} accepted your connection request.`,
+          metadata: { actorId: user.id, connectionId },
+          title: "Connection accepted",
+          type: "CONNECTION_REQUEST_ACCEPTED",
+          userId: candidate.requesterId,
+        },
+      });
+    }
 
-    await tx.notification.create({
-      data: {
-        actionUrl: `/u/${user.username}`,
-        body: `${user.name} accepted your connection request.`,
-        metadata: { actorId: user.id, connectionId },
-        title: "Connection accepted",
-        type: "CONNECTION_REQUEST_ACCEPTED",
-        userId: connection.requesterId,
-      },
-    });
+    return candidate;
   });
 
   await writeAuditLog({
@@ -196,38 +343,91 @@ export async function acceptConnectionAction(connectionId: string) {
     entityId: connectionId,
     entityType: "connection",
   });
-  revalidatePath("/app/people");
-  revalidatePath("/app/network");
-  revalidatePath("/app/connections");
-  revalidatePath("/app/notifications");
+  revalidateConnectionPaths({ notifications: true });
 }
 
 export async function rejectConnectionAction(connectionId: string) {
   const user = await requireUser();
 
-  const connection = await getPrisma().connection.findUnique({
-    where: { id: connectionId },
-  });
-
-  if (!connection) throw new Error("Connection not found");
-  if (connection.receiverId !== user.id && connection.requesterId !== user.id) {
-    throw new Error("Unauthorized");
-  }
-
   await getPrisma().$transaction(async (tx) => {
-    const current = await tx.connection.findUnique({
-      select: { status: true },
+    const candidate = await tx.connection.findUnique({
+      select: {
+        id: true,
+        receiverId: true,
+        requesterId: true,
+        status: true,
+      },
       where: { id: connectionId },
     });
-    if (!current || current.status === "ACCEPTED" || current.status === "BLOCKED") {
+    if (!candidate) throw new Error("Connection not found");
+    if (candidate.receiverId !== user.id) throw new Error("Unauthorized");
+    if (candidate.requesterId === candidate.receiverId) {
       throw new Error("Connection request is no longer available.");
     }
-    if (current.status !== "DECLINED") {
-      await tx.connection.update({
+
+    await lockUserPair(tx, candidate.requesterId, candidate.receiverId);
+    const accounts = await getNetworkPairAccounts(
+      tx,
+      user.id,
+      candidate.requesterId,
+    );
+    assertEligibleConnectionPair(accounts);
+
+    const [block, current, pairConnections] = await Promise.all([
+      tx.blockedUser.findFirst({
+        select: { id: true },
+        where: {
+          OR: [
+            {
+              blockerUserId: candidate.requesterId,
+              blockedUserId: candidate.receiverId,
+            },
+            {
+              blockerUserId: candidate.receiverId,
+              blockedUserId: candidate.requesterId,
+            },
+          ],
+        },
+      }),
+      tx.connection.findUnique({
+        select: {
+          receiverId: true,
+          requesterId: true,
+          status: true,
+        },
         where: { id: connectionId },
-        data: { status: "DECLINED" },
-      });
+      }),
+      tx.connection.findMany({
+        select: { id: true },
+        take: 2,
+        where: {
+          OR: [
+            {
+              requesterId: candidate.requesterId,
+              receiverId: candidate.receiverId,
+            },
+            {
+              requesterId: candidate.receiverId,
+              receiverId: candidate.requesterId,
+            },
+          ],
+        },
+      }),
+    ]);
+    if (
+      block ||
+      !current ||
+      current.status !== "PENDING" ||
+      current.receiverId !== user.id ||
+      pairConnections.length !== 1
+    ) {
+      throw new Error("Connection request is no longer available.");
     }
+
+    await tx.connection.update({
+      data: { status: "DECLINED" },
+      where: { id: connectionId },
+    });
 
     await tx.notification.updateMany({
       data: { actionState: "DECLINED", readAt: new Date() },
@@ -235,7 +435,7 @@ export async function rejectConnectionAction(connectionId: string) {
         OR: [
           { metadata: { path: ["connectionId"], equals: connectionId } },
           {
-            metadata: { path: ["actorId"], equals: connection.requesterId },
+            metadata: { path: ["actorId"], equals: candidate.requesterId },
             type: "CONNECTION_REQUEST_RECEIVED",
           },
         ],
@@ -244,30 +444,27 @@ export async function rejectConnectionAction(connectionId: string) {
       },
     });
 
-    const notifyUserId =
-      connection.receiverId === user.id
-        ? connection.requesterId
-        : connection.receiverId;
     const existingNotification = await tx.notification.findFirst({
       select: { id: true },
       where: {
         metadata: { path: ["connectionId"], equals: connectionId },
         type: "CONNECTION_REQUEST_DECLINED",
-        userId: notifyUserId,
+        userId: candidate.requesterId,
       },
     });
 
-    if (existingNotification) return;
-    await tx.notification.create({
-      data: {
-        actionUrl: `/u/${user.username}`,
-        body: `${user.name} declined a connection request.`,
-        metadata: { actorId: user.id, connectionId },
-        title: "Connection request declined",
-        type: "CONNECTION_REQUEST_DECLINED",
-        userId: notifyUserId,
-      },
-    });
+    if (!existingNotification) {
+      await tx.notification.create({
+        data: {
+          actionUrl: `/u/${user.username}`,
+          body: `${user.name} declined a connection request.`,
+          metadata: { actorId: user.id, connectionId },
+          title: "Connection request declined",
+          type: "CONNECTION_REQUEST_DECLINED",
+          userId: candidate.requesterId,
+        },
+      });
+    }
   });
 
   await writeAuditLog({
@@ -276,27 +473,179 @@ export async function rejectConnectionAction(connectionId: string) {
     entityId: connectionId,
     entityType: "connection",
   });
-revalidatePath("/app/people");
-revalidatePath("/app/network");
-revalidatePath("/app/connections");
-revalidatePath("/app/notifications");
+  revalidateConnectionPaths({ notifications: true });
+}
+
+export async function cancelConnectionRequestAction(connectionId: string) {
+  const user = await requireUser();
+
+  await getPrisma().$transaction(async (tx) => {
+    const candidate = await tx.connection.findUnique({
+      select: {
+        id: true,
+        receiverId: true,
+        requesterId: true,
+        status: true,
+      },
+      where: { id: connectionId },
+    });
+    if (!candidate) throw new Error("Connection not found");
+    if (candidate.requesterId !== user.id) throw new Error("Unauthorized");
+    if (candidate.requesterId === candidate.receiverId) {
+      throw new Error("Connection request is no longer available.");
+    }
+
+    await lockUserPair(tx, candidate.requesterId, candidate.receiverId);
+    const accounts = await getNetworkPairAccounts(
+      tx,
+      user.id,
+      candidate.receiverId,
+    );
+    assertEligibleAccountPair(accounts);
+
+    const [block, current, pairConnections] = await Promise.all([
+      tx.blockedUser.findFirst({
+        select: { id: true },
+        where: {
+          OR: [
+            {
+              blockerUserId: candidate.requesterId,
+              blockedUserId: candidate.receiverId,
+            },
+            {
+              blockerUserId: candidate.receiverId,
+              blockedUserId: candidate.requesterId,
+            },
+          ],
+        },
+      }),
+      tx.connection.findUnique({
+        select: {
+          receiverId: true,
+          requesterId: true,
+          status: true,
+        },
+        where: { id: connectionId },
+      }),
+      tx.connection.findMany({
+        select: { id: true },
+        take: 2,
+        where: {
+          OR: [
+            {
+              requesterId: candidate.requesterId,
+              receiverId: candidate.receiverId,
+            },
+            {
+              requesterId: candidate.receiverId,
+              receiverId: candidate.requesterId,
+            },
+          ],
+        },
+      }),
+    ]);
+    if (
+      block ||
+      !current ||
+      current.status !== "PENDING" ||
+      current.requesterId !== user.id ||
+      pairConnections.length !== 1
+    ) {
+      throw new Error("Connection request is no longer available.");
+    }
+
+    await tx.connection.update({
+      data: { status: "CANCELLED" },
+      where: { id: connectionId },
+    });
+    await tx.notification.updateMany({
+      data: { actionState: "CANCELLED", readAt: new Date() },
+      where: {
+        metadata: { path: ["connectionId"], equals: connectionId },
+        type: "CONNECTION_REQUEST_RECEIVED",
+        userId: candidate.receiverId,
+      },
+    });
+  });
+
+  await writeAuditLog({
+    actorId: user.id,
+    action: "connection.cancel",
+    entityId: connectionId,
+    entityType: "connection",
+  });
+  revalidateConnectionPaths({ notifications: true });
 }
 
 export async function disconnectAction(connectionId: string) {
   const user = await requireUser();
 
-  const connection = await getPrisma().connection.findUnique({
-    where: { id: connectionId },
-  });
+  await getPrisma().$transaction(async (tx) => {
+    const candidate = await tx.connection.findUnique({
+      select: {
+        id: true,
+        receiverId: true,
+        requesterId: true,
+        status: true,
+      },
+      where: { id: connectionId },
+    });
+    if (!candidate) throw new Error("Connection not found");
+    if (
+      candidate.receiverId !== user.id &&
+      candidate.requesterId !== user.id
+    ) {
+      throw new Error("Unauthorized");
+    }
+    if (candidate.requesterId === candidate.receiverId) {
+      throw new Error("Connection is no longer available.");
+    }
 
-  if (!connection) throw new Error("Connection not found");
-  if (connection.receiverId !== user.id && connection.requesterId !== user.id) {
-    throw new Error("Unauthorized");
-  }
+    const targetUserId =
+      candidate.requesterId === user.id
+        ? candidate.receiverId
+        : candidate.requesterId;
+    await lockUserPair(tx, user.id, targetUserId);
+    const accounts = await getNetworkPairAccounts(tx, user.id, targetUserId);
+    assertEligibleAccountPair(accounts);
 
-  await getPrisma().connection.update({
-    where: { id: connectionId },
-    data: { status: "CANCELLED" },
+    const [block, current, pairConnections] = await Promise.all([
+      tx.blockedUser.findFirst({
+        select: { id: true },
+        where: {
+          OR: [
+            { blockerUserId: user.id, blockedUserId: targetUserId },
+            { blockerUserId: targetUserId, blockedUserId: user.id },
+          ],
+        },
+      }),
+      tx.connection.findUnique({
+        select: { status: true },
+        where: { id: connectionId },
+      }),
+      tx.connection.findMany({
+        select: { id: true },
+        take: 2,
+        where: {
+          OR: [
+            { requesterId: user.id, receiverId: targetUserId },
+            { requesterId: targetUserId, receiverId: user.id },
+          ],
+        },
+      }),
+    ]);
+    if (
+      block ||
+      current?.status !== "ACCEPTED" ||
+      pairConnections.length !== 1
+    ) {
+      throw new Error("Connection is no longer available.");
+    }
+
+    await tx.connection.update({
+      data: { status: "CANCELLED" },
+      where: { id: connectionId },
+    });
   });
 
   await writeAuditLog({
@@ -305,11 +654,7 @@ export async function disconnectAction(connectionId: string) {
     entityId: connectionId,
     entityType: "connection",
   });
-  revalidatePath("/app/people");
-  revalidatePath("/app/network");
-  revalidatePath("/app/connections");
-  revalidatePath("/app/messages");
-  revalidatePath("/app/settings/blocked");
+  revalidateConnectionPaths({ blocked: true, messages: true });
 }
 
 export async function blockUserAction(targetUserId: string) {
@@ -318,6 +663,9 @@ export async function blockUserAction(targetUserId: string) {
 
   await getPrisma().$transaction(async (tx) => {
     await lockUserPair(tx, user.id, targetUserId);
+    const accounts = await getNetworkPairAccounts(tx, user.id, targetUserId);
+    assertEligibleAccountPair(accounts);
+
     await tx.blockedUser.upsert({
       create: { blockedUserId: targetUserId, blockerUserId: user.id },
       update: {},
@@ -345,19 +693,38 @@ export async function blockUserAction(targetUserId: string) {
     entityId: targetUserId,
     entityType: "user",
   });
-  revalidatePath("/app/people");
-  revalidatePath("/app/network");
-  revalidatePath("/app/connections");
-  revalidatePath("/app/messages");
-  revalidatePath("/app/settings/blocked");
+  revalidateConnectionPaths({
+    blocked: true,
+    messages: true,
+    notifications: true,
+  });
 }
 
 export async function unblockUserAction(targetUserId: string) {
   const user = await requireUser();
   if (user.id === targetUserId) throw new Error("Cannot unblock yourself");
 
-  await getPrisma().blockedUser.deleteMany({
-    where: { blockedUserId: targetUserId, blockerUserId: user.id },
+  await getPrisma().$transaction(async (tx) => {
+    await lockUserPair(tx, user.id, targetUserId);
+    await tx.blockedUser.deleteMany({
+      where: { blockedUserId: targetUserId, blockerUserId: user.id },
+    });
+    const reciprocalBlock = await tx.blockedUser.findFirst({
+      select: { id: true },
+      where: { blockedUserId: user.id, blockerUserId: targetUserId },
+    });
+    if (!reciprocalBlock) {
+      await tx.connection.updateMany({
+        data: { status: "CANCELLED" },
+        where: {
+          OR: [
+            { requesterId: user.id, receiverId: targetUserId },
+            { requesterId: targetUserId, receiverId: user.id },
+          ],
+          status: "BLOCKED",
+        },
+      });
+    }
   });
 
   await writeAuditLog({
@@ -366,79 +733,106 @@ export async function unblockUserAction(targetUserId: string) {
     entityId: targetUserId,
     entityType: "user",
   });
-  revalidatePath("/app/people");
-  revalidatePath("/app/network");
-  revalidatePath("/app/connections");
+  revalidateConnectionPaths({ blocked: true });
 }
 
 export async function startConversationAction(targetUserId: string) {
   const user = await requireUser();
-  const restriction = await assertCanMessage(user.id);
-  if (restriction) throw new Error(restriction);
 
   if (user.id === targetUserId) {
     throw new Error("Cannot message yourself");
   }
 
-  if (await hasBlockBetween(user.id, targetUserId)) {
-    throw new Error("Messaging is unavailable.");
-  }
-
-  const targetUser = await getPrisma().user.findFirst({
-    select: {
-      id: true,
-      profile: {
-        select: {
-          allowMessagesFromConnections: true,
-        },
-      },
-    },
-    where: {
-      accountClassification: "PUBLIC_BETA_USER",
-      id: targetUserId,
-      isActive: true,
-    },
-  });
-
-  if (!targetUser) {
-    throw new Error("User not found");
-  }
-
-  const acceptedConnection = await getPrisma().connection.findFirst({
-    where: {
-      status: "ACCEPTED",
-      OR: [
-        { requesterId: user.id, receiverId: targetUserId },
-        { requesterId: targetUserId, receiverId: user.id },
-      ],
-    },
-  });
-
-  const messageAllowed =
-    acceptedConnection && targetUser.profile?.allowMessagesFromConnections;
-
-  if (!messageAllowed) {
-    throw new Error("Messaging is unavailable.");
-  }
-
   const conversation = await getPrisma().$transaction(async (tx) => {
     await lockUserPair(tx, user.id, targetUserId);
 
-    const possibleConversations = await tx.conversation.findMany({
-      include: { participants: true },
+    const accounts = await tx.user.findMany({
+      select: {
+        accountClassification: true,
+        bannedAt: true,
+        deactivatedAt: true,
+        id: true,
+        isActive: true,
+        messagingRestrictedUntil: true,
+        profile: { select: { allowMessagesFromConnections: true } },
+        suspendedAt: true,
+        suspendedUntil: true,
+      },
+      where: { id: { in: [user.id, targetUserId] } },
+    });
+    const actor = accounts.find((account) => account.id === user.id);
+    const target = accounts.find((account) => account.id === targetUserId);
+    const now = new Date();
+
+    if (
+      !actor ||
+      !target ||
+      !isEligibleForDirectMessaging(actor, now) ||
+      !isEligibleForDirectMessaging(target, now) ||
+      !target.profile?.allowMessagesFromConnections
+    ) {
+      throw new Error("Messaging is unavailable.");
+    }
+
+    const [block, acceptedConnection] = await Promise.all([
+      tx.blockedUser.findFirst({
+        select: { id: true },
+        where: {
+          OR: [
+            { blockerUserId: user.id, blockedUserId: targetUserId },
+            { blockerUserId: targetUserId, blockedUserId: user.id },
+          ],
+        },
+      }),
+      tx.connection.findFirst({
+        select: { id: true },
+        where: {
+          status: "ACCEPTED",
+          OR: [
+            { requesterId: user.id, receiverId: targetUserId },
+            { requesterId: targetUserId, receiverId: user.id },
+          ],
+        },
+      }),
+    ]);
+
+    if (block || !acceptedConnection) {
+      throw new Error("Messaging is unavailable.");
+    }
+
+    const directConversations = await tx.conversation.findMany({
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      select: { id: true, status: true },
       where: {
         opportunityId: null,
         AND: [
           { participants: { some: { userId: user.id } } },
           { participants: { some: { userId: targetUserId } } },
+          {
+            participants: {
+              every: { userId: { in: [user.id, targetUserId] } },
+            },
+          },
         ],
       },
     });
 
-    const existingConversation = possibleConversations.find(
-      (conversation) => conversation.participants.length === 2,
-    );
-    if (existingConversation) return { id: existingConversation.id };
+    const existingConversation =
+      directConversations.find((candidate) => candidate.status === "ACTIVE") ??
+      directConversations.find((candidate) => candidate.status === "ARCHIVED");
+    if (existingConversation?.status === "ACTIVE") {
+      return { id: existingConversation.id };
+    }
+    if (existingConversation?.status === "ARCHIVED") {
+      return tx.conversation.update({
+        data: { status: "ACTIVE" },
+        select: { id: true },
+        where: { id: existingConversation.id },
+      });
+    }
+    if (directConversations.length) {
+      throw new Error("Messaging is unavailable.");
+    }
 
     return tx.conversation.create({
       data: {

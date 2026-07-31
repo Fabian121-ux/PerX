@@ -6,8 +6,10 @@ import {
   type WorkspaceConversation,
 } from "@/components/messages/message-workspace";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth/session";
-import { getConversations } from "@/lib/data/app";
+import { getConversationMessages, getConversations } from "@/lib/data/app";
 import { getPrisma } from "@/lib/db/prisma";
+import { findOwnedMessageTarget } from "@/lib/messages/entry";
+import { markConversationReadForUser } from "@/lib/messages/read-state";
 
 type PreviewConversationLike = {
   id: string;
@@ -50,13 +52,6 @@ type DbConversationLike = {
     userId: string;
   }[];
   proposals?: { deal?: { id: string; status: string } | null }[];
-};
-
-type DbMessageLike = {
-  body: string;
-  createdAt: Date;
-  id: string;
-  senderId: string;
 };
 
 function getPresenceState(showPresence: boolean, lastSeenAt?: Date | null) {
@@ -155,43 +150,6 @@ function toWorkspaceConversation(
   };
 }
 
-async function markConversationRead(
-  conversationId: string,
-  userId: string,
-  messages: DbMessageLike[],
-) {
-  const unreadMessageIds = messages
-    .filter((message) => message.senderId !== userId)
-    .map((message) => message.id);
-
-  await getPrisma().$transaction(async (tx) => {
-    await tx.conversationParticipant.updateMany({
-      where: { conversationId, userId },
-      data: { lastReadAt: new Date() },
-    });
-
-    if (unreadMessageIds.length) {
-      await tx.messageReadReceipt.createMany({
-        data: unreadMessageIds.map((messageId) => ({ messageId, userId })),
-        skipDuplicates: true,
-      });
-    }
-
-    await tx.notification.updateMany({
-      data: { readAt: new Date() },
-      where: {
-        OR: [
-          { actionUrl: `/app/messages/${conversationId}` },
-          { actionUrl: { startsWith: `/app/messages/${conversationId}?` } },
-        ],
-        readAt: null,
-        type: { in: ["MESSAGE", "MESSAGE_REQUEST_RECEIVED", "NEW_MESSAGE"] },
-        userId,
-      },
-    });
-  });
-}
-
 export default async function ConversationPage({
   params,
   searchParams,
@@ -210,11 +168,48 @@ export default async function ConversationPage({
   );
   if (!selected) notFound();
 
-  // Load the full message history for the active conversation
-  const { getConversationMessages } = await import("@/lib/data/app");
-  const fullMessages = await getConversationMessages(conversationId);
+  const exactTarget = highlightMessageId
+    ? await findOwnedMessageTarget(user.id, {
+        conversationId,
+        messageId: highlightMessageId,
+      })
+    : null;
+  if (highlightMessageId && !exactTarget) notFound();
+
+  let fullMessages = await getConversationMessages(conversationId);
+  if (
+    exactTarget &&
+    !fullMessages.some((message) => message.id === exactTarget.id)
+  ) {
+    const targetMessage = await getPrisma().message.findFirst({
+      include: {
+        readReceipts: { select: { userId: true } },
+        replyTo: {
+          select: {
+            body: true,
+            deletedAt: true,
+            id: true,
+            sender: { select: { id: true, name: true, username: true } },
+            senderId: true,
+          },
+        },
+        sender: true,
+      },
+      where: {
+        conversationId,
+        deletedAt: null,
+        id: exactTarget.id,
+      },
+    });
+    if (!targetMessage) notFound();
+    fullMessages = [...fullMessages, targetMessage].sort((a, b) => {
+      const timeDifference = a.createdAt.getTime() - b.createdAt.getTime();
+      return timeDifference || a.id.localeCompare(b.id);
+    });
+  }
+
   (selected as DbConversationLike).messages = fullMessages;
-  await markConversationRead(conversationId, user.id, fullMessages);
+  await markConversationReadForUser(conversationId, user.id);
 
   const workspaceConversations: WorkspaceConversation[] = conversations.map(
     (conversation) => toWorkspaceConversation(conversation, user),
@@ -226,7 +221,8 @@ export default async function ConversationPage({
       conversations={workspaceConversations}
       currentUserId={user.id}
       defaultConversationId={conversationId}
-      highlightMessageId={highlightMessageId}
+      highlightMessageId={exactTarget?.id}
+      key={`${conversationId}:${exactTarget?.id ?? "latest"}`}
     />
   );
 }

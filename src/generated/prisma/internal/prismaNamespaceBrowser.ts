@@ -102,7 +102,8 @@ export const ModelName = {
   Connection: 'Connection',
   ProfileBookmark: 'ProfileBookmark',
   SupportTicket: 'SupportTicket',
-  TicketMessage: 'TicketMessage'
+  TicketMessage: 'TicketMessage',
+  SponsoredContent: 'SponsoredContent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -874,6 +875,22 @@ export const TicketMessageScalarFieldEnum = {
 } as const
 
 export type TicketMessageScalarFieldEnum = (typeof TicketMessageScalarFieldEnum)[keyof typeof TicketMessageScalarFieldEnum]
+
+
+export const SponsoredContentScalarFieldEnum = {
+  id: 'id',
+  brandName: 'brandName',
+  message: 'message',
+  ctaLabel: 'ctaLabel',
+  ctaHref: 'ctaHref',
+  imageUrl: 'imageUrl',
+  status: 'status',
+  startsAt: 'startsAt',
+  endsAt: 'endsAt',
+  createdAt: 'createdAt'
+} as const
+
+export type SponsoredContentScalarFieldEnum = (typeof SponsoredContentScalarFieldEnum)[keyof typeof SponsoredContentScalarFieldEnum]
 
 
 export const SortOrder = {

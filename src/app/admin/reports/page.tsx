@@ -1,55 +1,20 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, EmptyState } from "@/components/ui/card";
 import { AdminSection } from "@/components/admin-section";
-import { getPrisma } from "@/lib/db/prisma";
 import { ButtonLink } from "@/components/ui/button";
+import { createModerationCaseForReportAction } from "@/features/admin/actions";
+import {
+  formatAdminValue,
+  getAdminReportsOverview,
+  getRecentBlockRows,
+  safeUserLabel,
+} from "@/lib/admin/moderation-records";
 
 export default async function AdminReportsPage() {
-  const [opportunityReports, userReports] = await Promise.all([
-    getPrisma().opportunityReport.findMany({
-      include: {
-        opportunity: { select: { id: true, slug: true, title: true } },
-        reporter: { select: { id: true, name: true, username: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    }),
-    getPrisma().userReport.findMany({
-      include: {
-        moderationCases: {
-          orderBy: { createdAt: "desc" },
-          select: { id: true, status: true },
-          take: 1,
-        },
-        reporter: { select: { id: true, name: true, username: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    }),
+  const [reports, blockRows] = await Promise.all([
+    getAdminReportsOverview(),
+    getRecentBlockRows(),
   ]);
-
-  const reports = [
-    ...opportunityReports.map((report) => ({
-      category: report.reason,
-      createdAt: report.createdAt,
-      id: report.id,
-      reporter: report.reporter,
-      status: mapOpportunityReportStatus(report.status),
-      target: report.opportunity.title,
-      targetType: "OPPORTUNITY",
-    })),
-    ...userReports.map((report) => ({
-      category: report.category,
-      createdAt: report.createdAt,
-      id: report.id,
-      reporter: report.reporter,
-      status: report.status,
-      target: report.targetId,
-      targetType: report.targetType,
-      caseId: report.moderationCases[0]?.id ?? null,
-      caseStatus: report.moderationCases[0]?.status ?? null,
-    })),
-  ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
   return (
     <AdminSection
@@ -65,26 +30,29 @@ export default async function AdminReportsPage() {
             >
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge>{formatValue(report.targetType)}</Badge>
+                  <Badge>{formatAdminValue(report.targetType)}</Badge>
                   <Badge className={statusClass(report.status)}>
-                    {formatValue(report.status)}
+                    {formatAdminValue(report.status)}
                   </Badge>
+                  {report.caseStatus ? (
+                    <Badge>{formatAdminValue(report.caseStatus)}</Badge>
+                  ) : null}
                 </div>
                 <h2 className="mt-3 truncate text-sm font-black">
-                  {formatValue(report.category)}
+                  {formatAdminValue(report.category)}
                 </h2>
                 <p className="mt-1 truncate text-sm text-slate-600">
                   Target: {report.target}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Reporter: {report.reporter.name} (@{report.reporter.username})
+                  Reporter: {safeUserLabel(report.reporter, report.reporterId)}
                 </p>
               </div>
               <div className="grid gap-2 sm:justify-items-end">
                 <p className="text-xs font-semibold text-slate-500 sm:text-right">
                   {report.createdAt.toLocaleString()}
                 </p>
-                {"caseId" in report && report.caseId ? (
+                {report.caseId ? (
                   <ButtonLink
                     href={`/admin/moderation/cases/${report.caseId}`}
                     size="sm"
@@ -92,6 +60,16 @@ export default async function AdminReportsPage() {
                   >
                     Open case
                   </ButtonLink>
+                ) : report.canCreateCase ? (
+                  <form action={createModerationCaseForReportAction}>
+                    <input name="reportId" type="hidden" value={report.id} />
+                    <button
+                      className="rounded-[var(--px-radius-sm)] border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                      type="submit"
+                    >
+                      Create case
+                    </button>
+                  </form>
                 ) : null}
               </div>
             </Card>
@@ -103,19 +81,49 @@ export default async function AdminReportsPage() {
           title="No reports"
         />
       )}
+      <section className="mt-6">
+        <h2 className="text-base font-black text-white">
+          Recent block metadata
+        </h2>
+        <p className="mt-1 text-sm text-slate-300">
+          Blocks are user safety controls, not automatic moderation violations.
+          Linked reports create cases separately.
+        </p>
+        {blockRows.length ? (
+          <div className="mt-3 grid gap-3">
+            {blockRows.map((block) => (
+              <Card
+                className="grid gap-3 bg-white/95 text-slate-900 sm:grid-cols-[minmax(0,1fr)_auto]"
+                key={block.id}
+              >
+                <div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge>User block only</Badge>
+                    {block.reason ? <Badge>Reason supplied</Badge> : null}
+                  </div>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Blocker: {safeUserLabel(block.blocker, block.blockerUserId)}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Blocked:{" "}
+                    {safeUserLabel(block.blockedUser, block.blockedUserId)}
+                  </p>
+                </div>
+                <p className="text-xs font-semibold text-slate-500 sm:text-right">
+                  {block.createdAt.toLocaleString()}
+                </p>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            body="No block records are available."
+            title="No blocks"
+          />
+        )}
+      </section>
     </AdminSection>
   );
-}
-
-function mapOpportunityReportStatus(status: string) {
-  if (status === "OPEN") return "SUBMITTED";
-  if (status === "REVIEWING") return "IN_REVIEW";
-  if (status === "ACTIONED") return "ACTION_TAKEN";
-  return "DISMISSED";
-}
-
-function formatValue(value: string) {
-  return value.toLowerCase().replaceAll("_", " ");
 }
 
 function statusClass(status: string) {

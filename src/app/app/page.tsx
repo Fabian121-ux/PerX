@@ -2,13 +2,15 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getDashboardMetrics } from "@/lib/data/app";
-import { getOpportunityFeed } from "@/lib/data/opportunities";
+import { getAuthenticatedHomeOpportunityPageResult } from "@/lib/data/opportunities";
 import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { HomeDashboard } from "@/components/dashboard/home-dashboard";
 import type { HomeDashboardData } from "@/components/dashboard/types";
 import { calculateTrustSummary } from "@/lib/trust/engine";
 import { getPrisma } from "@/lib/db/prisma";
 import { getUnreadCounts } from "@/lib/data/unread-counts";
+
+export const dynamic = "force-dynamic";
 
 function getTimeAgo(dateString: string | Date | undefined) {
   if (!dateString) return "recently";
@@ -20,30 +22,36 @@ function getTimeAgo(dateString: string | Date | undefined) {
   return `${diffInDays}d ago`;
 }
 
-export default async function DashboardPage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cursor?: string; limit?: string }>;
+}) {
   const user = await getCurrentUser();
   if (!user) {
     redirect("/sign-in");
   }
 
+  const params = await searchParams;
+  const requestedPageSize = params.limit ? Number(params.limit) : undefined;
   const metrics = await getDashboardMetrics(user.id);
   const [
-    recentOpps,
+    opportunityPage,
     unreadCounts,
     connectionActivityCount,
-    connectionRequestsCount,
     draftsCount,
     publishedItemsCount,
   ] = await Promise.all([
-    getOpportunityFeed(),
+    getAuthenticatedHomeOpportunityPageResult({
+      cursor: params.cursor,
+      pageSize: requestedPageSize,
+      viewerId: user.id,
+    }),
     getUnreadCounts(user.id),
     getPrisma().connection.count({
       where: {
         OR: [{ requesterId: user.id }, { receiverId: user.id }],
       },
-    }),
-    getPrisma().connection.count({
-      where: { receiverId: user.id, status: "PENDING" },
     }),
     getPrisma().opportunity.count({
       where: { ownerId: user.id, status: "DRAFT" },
@@ -52,9 +60,6 @@ export default async function DashboardPage() {
       where: { ownerId: user.id, status: "PUBLISHED" },
     }),
   ]);
-
-  // Pick top 5 opportunities for recommended
-  const topOpps = recentOpps.slice(0, 5);
 
   const dashboardData: HomeDashboardData = {
     user,
@@ -66,13 +71,13 @@ export default async function DashboardPage() {
     }),
     activeDealsCount: metrics.deals,
     activeDealsDetail: "In progress",
-    connectionRequestsCount,
+    connectionRequestsCount: unreadCounts.pendingConnectionRequests,
     draftsCount,
-    notificationsCount: unreadCounts.notifications,
+    activityCount: unreadCounts.generalActivity,
     openProposalsCount: metrics.proposals,
     openProposalsDetail: "Awaiting response",
     publishedItemsCount,
-    unreadMessagesCount: unreadCounts.messages,
+    unreadConversationsCount: unreadCounts.unreadConversations,
     onboarding: {
       dismissed: Boolean(user.onboardingDismissedAt),
       items: [
@@ -109,7 +114,7 @@ export default async function DashboardPage() {
       ],
     },
     recommendedProfiles: [],
-    recommendedOpportunities: topOpps.map((opp: any) => {
+    recommendedOpportunities: opportunityPage.items.map((opp: any) => {
       const image = getTemporaryOpportunityImage(opp.slug);
       return {
         id: opp.id,
@@ -118,8 +123,8 @@ export default async function DashboardPage() {
         organisation: opp.owner?.name ?? "Independent",
         location: opp.location ?? "Remote",
         remote: opp.remote,
-        budgetMinMinor: Number(opp.budgetMinMinor ?? 0),
-        budgetMaxMinor: Number(opp.budgetMaxMinor ?? 0),
+        budgetMinMinor: opp.budgetMinMinor?.toString() ?? null,
+        budgetMaxMinor: opp.budgetMaxMinor?.toString() ?? null,
         currency: opp.currency,
         type: opp.type,
         postedTimeAgo: getTimeAgo(opp.publishedAt || undefined),
@@ -131,5 +136,21 @@ export default async function DashboardPage() {
     opportunityTrends: [],
   };
 
-  return <HomeDashboard data={dashboardData} />;
+  const nextHref = opportunityPage.nextCursor
+    ? `/app?${new URLSearchParams({
+        cursor: opportunityPage.nextCursor,
+        limit: String(opportunityPage.pageSize),
+      }).toString()}`
+    : null;
+
+  return (
+    <HomeDashboard
+      data={dashboardData}
+      opportunityFeed={{
+        firstPageHref: opportunityPage.cursor ? "/app" : null,
+        nextHref,
+        unavailable: opportunityPage.unavailable,
+      }}
+    />
+  );
 }

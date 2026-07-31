@@ -1,124 +1,142 @@
 import { getPrisma } from "@/lib/db/prisma";
 import type { OpportunityType } from "@/generated/prisma/enums";
+import { isProductionMockModeError } from "@/lib/env";
+import { logServerDataError } from "@/lib/logging/runtime";
+import {
+  buildPublicOpportunityWhere,
+  clampPublicOpportunityPageSize,
+  getPublicOpportunityPage,
+  normalizePublicOpportunityCursor,
+  parsePublicPriceFilter,
+  publicOpportunityInclude,
+  type PublicOpportunityFilters,
+} from "@/lib/data/public-opportunities";
 
-function normalizeSearch(value?: string) {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed.slice(0, 100) : undefined;
-}
-
-function publishedSectionWhere({
-  category,
-  q,
-  type,
-}: {
+type PublishedSectionFilters = {
   category?: string;
+  location?: string;
+  maxPrice?: string;
+  minPrice?: string;
   q?: string;
   type?: OpportunityType;
-}) {
-  const search = normalizeSearch(q);
+};
+
+function getPublishedSectionFilters({
+  category,
+  location,
+  maxPrice,
+  minPrice,
+  q,
+  type,
+}: PublishedSectionFilters): PublicOpportunityFilters {
   return {
-    moderationStatus: "APPROVED" as const,
-    status: "PUBLISHED" as const,
-    owner: {
-      accountClassification: "PUBLIC_BETA_USER" as const,
-      isActive: true,
-      profile: { is: { isDiscoverable: true } },
-    },
-    ...(type ? { type } : {}),
-    ...(category ? { category: { slug: category } } : {}),
-    ...(search
-      ? {
-          OR: [
-            { title: { contains: search, mode: "insensitive" as const } },
-            { summary: { contains: search, mode: "insensitive" as const } },
-            { description: { contains: search, mode: "insensitive" as const } },
-            { skills: { has: search } },
-          ],
-        }
-      : {}),
+    category,
+    location,
+    maxPriceMinor: parsePublicPriceFilter(maxPrice),
+    minPriceMinor: parsePublicPriceFilter(minPrice),
+    q,
+    type,
   };
 }
 
 export async function getPublishedSectionOpportunities({
   category,
+  location,
+  maxPrice,
+  minPrice,
   q,
   skip = 0,
   take = 50,
   type,
-}: {
-  category?: string;
-  q?: string;
+}: PublishedSectionFilters & {
   skip?: number;
   take?: number;
-  type?: OpportunityType;
 }) {
+  const safeSkip = Number.isFinite(skip) ? Math.max(0, Math.trunc(skip)) : 0;
+  const safeTake = Number.isFinite(take)
+    ? Math.max(1, Math.min(Math.trunc(take), 50))
+    : 50;
+
   return getPrisma().opportunity.findMany({
-    include: {
-      category: true,
-      images: {
-        orderBy: [{ isCover: "desc" }, { createdAt: "asc" }],
-        take: 4,
-      },
-      owner: {
-        select: {
-          id: true,
-          emailVerifiedAt: true,
-          imageUrl: true,
-          name: true,
-          profile: {
-            select: {
-              averageRating: true,
-              completedDeals: true,
-              profileCompleteness: true,
-              profileImageUrl: true,
-            },
-          },
-          username: true,
-          verificationStatus: true,
-        },
-      },
-    },
-    orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
-    skip,
-    take,
-    where: publishedSectionWhere({ category, q, type }),
+    include: publicOpportunityInclude,
+    orderBy: [{ publishedAt: "desc" }, { id: "desc" }],
+    skip: safeSkip,
+    take: safeTake,
+    where: buildPublicOpportunityWhere(
+      getPublishedSectionFilters({
+        category,
+        location,
+        maxPrice,
+        minPrice,
+        q,
+        type,
+      }),
+    ),
   });
 }
 
 export async function getPublishedSectionOpportunityPage({
   category,
-  page = 1,
+  cursor,
+  location,
+  maxPrice,
+  minPrice,
   pageSize = 24,
   q,
   type,
-}: {
-  category?: string;
-  page?: number;
+}: PublishedSectionFilters & {
+  cursor?: string;
   pageSize?: number;
-  q?: string;
-  type?: OpportunityType;
 }) {
-  const safePageSize = Math.max(1, Math.min(pageSize, 50));
-  const safePage = Math.max(1, page);
-  const where = publishedSectionWhere({ category, q, type });
+  const filters = getPublishedSectionFilters({
+    category,
+    location,
+    maxPrice,
+    minPrice,
+    q,
+    type,
+  });
+  const now = new Date();
+  const where = buildPublicOpportunityWhere(filters, now);
   const prisma = getPrisma();
-  const [items, total] = await Promise.all([
-    getPublishedSectionOpportunities({
-      category,
-      q,
-      skip: (safePage - 1) * safePageSize,
-      take: safePageSize,
-      type,
+  const [page, total] = await Promise.all([
+    getPublicOpportunityPage({
+      ...filters,
+      cursor,
+      now,
+      pageSize,
     }),
     prisma.opportunity.count({ where }),
   ]);
 
   return {
-    hasNextPage: safePage * safePageSize < total,
-    hasPreviousPage: safePage > 1,
-    items,
-    page: safePage,
-    pageSize: safePageSize,
+    ...page,
     total,
   };
+}
+
+export async function getPublishedSectionOpportunityPageResult(
+  params: Parameters<typeof getPublishedSectionOpportunityPage>[0],
+) {
+  try {
+    const page = await getPublishedSectionOpportunityPage(params);
+    return { ...page, unavailable: false };
+  } catch (error) {
+    if (isProductionMockModeError(error)) throw error;
+
+    logServerDataError({
+      error,
+      operation: "published section opportunity page",
+      route: "authenticated discovery",
+    });
+
+    return {
+      cursor: normalizePublicOpportunityCursor(params.cursor) ?? null,
+      items: [],
+      nextCursor: null,
+      pageSize: clampPublicOpportunityPageSize(params.pageSize),
+      total: 0,
+      unavailable: true,
+    };
+  }
 }

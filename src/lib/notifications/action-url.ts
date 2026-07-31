@@ -1,4 +1,9 @@
 import { getPrisma } from "@/lib/db/prisma";
+import {
+  findOwnedMessageTarget,
+  parseExactMessageTarget,
+  type ExactMessageTarget,
+} from "@/lib/messages/entry";
 
 export type NotificationActionResolution =
   | {
@@ -32,18 +37,20 @@ const approvedExactPaths = new Set([
   "/app/deals",
   "/app/manage",
   "/app/messages",
+  "/app/news",
   "/app/notifications",
   "/app/opportunities",
   "/app/people",
   "/app/proposals",
   "/app/reports",
+  "/app/search",
   "/app/service-center",
   "/app/trust",
 ]);
 
 function actionLabel(type: string) {
   if (messageNotificationTypes.has(type)) {
-    return "View message";
+    return "Message";
   }
   if (
     [
@@ -103,16 +110,9 @@ async function isDestinationAvailable(userId: string, path: string) {
 
     const messageId = url.searchParams.get("message");
     if (!messageId) return true;
-
-    const message = await prisma.message.findFirst({
-      select: { id: true },
-      where: {
-        conversationId: segments[2],
-        deletedAt: null,
-        id: messageId,
-      },
-    });
-    return Boolean(message);
+    const target = parseExactMessageTarget(path);
+    if (!target) return false;
+    return Boolean(await findOwnedMessageTarget(userId, target));
   }
 
   if (segments[0] === "u" && segments[1]) {
@@ -183,6 +183,29 @@ function actionUrlFromMetadata(notification: NotificationForAction) {
   return `/app/messages/${metadata.conversationId}?message=${metadata.messageId}`;
 }
 
+function metadataMatchesMessageTarget(
+  userId: string,
+  notification: NotificationForAction,
+  target: ExactMessageTarget,
+  message: { senderId: string },
+) {
+  if (!notification.metadata || typeof notification.metadata !== "object") {
+    return true;
+  }
+
+  const metadata = notification.metadata as Record<string, unknown>;
+  const expectedValues: [unknown, string][] = [
+    [metadata.conversationId, target.conversationId],
+    [metadata.messageId, target.messageId],
+    [metadata.recipientId, userId],
+    [metadata.senderId, message.senderId],
+  ];
+
+  return expectedValues.every(
+    ([value, expected]) => value === undefined || value === expected,
+  );
+}
+
 export async function resolveNotificationAction(
   userId: string,
   notification: NotificationForAction,
@@ -210,9 +233,8 @@ export async function resolveNotificationAction(
   }
 
   if (messageNotificationTypes.has(notification.type)) {
-    const segments = pathSegments(normalized);
-    const messageId = new URL(normalized, "https://perx.local").searchParams.get("message");
-    if (segments[0] !== "app" || segments[1] !== "messages" || !segments[2] || !messageId) {
+    const target = parseExactMessageTarget(normalized);
+    if (!target) {
       return {
         available: false,
         href: null,
@@ -220,6 +242,25 @@ export async function resolveNotificationAction(
         reason: "unavailable",
       };
     }
+
+    const message = await findOwnedMessageTarget(userId, target);
+    if (
+      !message ||
+      !metadataMatchesMessageTarget(userId, notification, target, message)
+    ) {
+      return {
+        available: false,
+        href: null,
+        label: "This message is no longer available.",
+        reason: "unavailable",
+      };
+    }
+
+    return {
+      available: true,
+      href: target.href,
+      label: actionLabel(notification.type),
+    };
   }
 
   const available = await isDestinationAvailable(userId, normalized);
@@ -270,29 +311,15 @@ export async function repairResolvableMessageNotificationActions(userId: string)
         return;
       }
 
-      const [participant, message] = await Promise.all([
-        prisma.conversationParticipant.findUnique({
-          select: { id: true },
-          where: {
-            conversationId_userId: {
-              conversationId,
-              userId,
-            },
-          },
-        }),
-        prisma.message.findFirst({
-          select: { conversationId: true, id: true, senderId: true },
-          where: {
-            conversationId,
-            deletedAt: null,
-            id: messageId,
-          },
-        }),
-      ]);
+      const target = parseExactMessageTarget(
+        `/app/messages/${conversationId}?message=${messageId}`,
+      );
+      if (!target) return;
 
-      if (!participant || !message) return;
+      const message = await findOwnedMessageTarget(userId, target);
+      if (!message) return;
 
-      const actionUrl = `/app/messages/${conversationId}?message=${messageId}`;
+      const actionUrl = target.href;
       if (
         notification.actionUrl === actionUrl &&
         metadata.senderId === message.senderId &&

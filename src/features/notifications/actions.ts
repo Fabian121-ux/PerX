@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/db/prisma";
 import { requireUser } from "@/lib/auth/session";
+import { getVisibleNewsWhere } from "@/lib/data/news";
 import { resolveNotificationAction } from "@/lib/notifications/action-url";
 
 export async function markNotificationAsReadAction(id: string) {
@@ -37,6 +38,36 @@ export async function markAllNotificationsAsReadAction() {
   });
 
   revalidatePath("/app/notifications");
+}
+
+export async function markVisibleNewsAsReadAction(
+  notificationIds: readonly string[],
+) {
+  const user = await requireUser();
+  const ids = Array.isArray(notificationIds)
+    ? [
+        ...new Set(
+          notificationIds.filter(
+            (id): id is string => typeof id === "string" && id.length > 0,
+          ),
+        ),
+      ]
+    : [];
+
+  if (!ids.length) return;
+
+  const now = new Date();
+  await getPrisma().notification.updateMany({
+    data: { readAt: now },
+    where: {
+      ...getVisibleNewsWhere(user.id, now),
+      id: { in: ids },
+      readAt: null,
+    },
+  });
+
+  revalidatePath("/app/news");
+  revalidatePath("/app");
 }
 
 export async function openNotificationAction(id: string) {

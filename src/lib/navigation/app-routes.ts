@@ -18,15 +18,20 @@ export type RouteKey =
   | "discover"
   | "profile"
   | "opportunities"
+  | "create_post"
   | "new_opportunity"
   | "saved"
+  | "proposals"
   | "proposals_sent"
   | "proposals_received"
   | "messages"
   | "deals"
   | "reviews"
+  | "news"
   | "notifications"
+  | "search"
   | "settings"
+  | "trust"
   | "startups";
 
 const routeMap: Record<RouteKey, string> = {
@@ -45,17 +50,22 @@ const routeMap: Record<RouteKey, string> = {
   service_center: "/app/service-center",
   reports: "/app/reports",
   discover: "/app/discover",
-  profile: "/app/profile/edit",
+  profile: "/app/profile",
   opportunities: "/app/opportunities",
+  create_post: "/app/opportunities/new",
   new_opportunity: "/app/opportunities/new",
   saved: "/app/saved",
+  proposals: "/app/proposals",
   proposals_sent: "/app/proposals/sent",
   proposals_received: "/app/proposals/received",
   messages: "/app/messages",
   deals: "/app/deals",
   reviews: "/app/reviews",
+  news: "/app/news",
   notifications: "/app/notifications",
+  search: "/app/search",
   settings: "/app/settings",
+  trust: "/app/trust",
   startups: "/app/discover?type=STARTUP",
 };
 

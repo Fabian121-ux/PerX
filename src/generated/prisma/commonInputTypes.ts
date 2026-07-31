@@ -817,6 +817,23 @@ export type EnumTicketStatusWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumTicketStatusFilter<$PrismaModel>
 }
 
+export type EnumSponsoredContentStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.SponsoredContentStatus | Prisma.EnumSponsoredContentStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.SponsoredContentStatus[] | Prisma.ListEnumSponsoredContentStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SponsoredContentStatus[] | Prisma.ListEnumSponsoredContentStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSponsoredContentStatusFilter<$PrismaModel> | $Enums.SponsoredContentStatus
+}
+
+export type EnumSponsoredContentStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SponsoredContentStatus | Prisma.EnumSponsoredContentStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.SponsoredContentStatus[] | Prisma.ListEnumSponsoredContentStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SponsoredContentStatus[] | Prisma.ListEnumSponsoredContentStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSponsoredContentStatusWithAggregatesFilter<$PrismaModel> | $Enums.SponsoredContentStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSponsoredContentStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSponsoredContentStatusFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -1615,6 +1632,23 @@ export type NestedEnumTicketStatusWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumTicketStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumTicketStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumSponsoredContentStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.SponsoredContentStatus | Prisma.EnumSponsoredContentStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.SponsoredContentStatus[] | Prisma.ListEnumSponsoredContentStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SponsoredContentStatus[] | Prisma.ListEnumSponsoredContentStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSponsoredContentStatusFilter<$PrismaModel> | $Enums.SponsoredContentStatus
+}
+
+export type NestedEnumSponsoredContentStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SponsoredContentStatus | Prisma.EnumSponsoredContentStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.SponsoredContentStatus[] | Prisma.ListEnumSponsoredContentStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SponsoredContentStatus[] | Prisma.ListEnumSponsoredContentStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSponsoredContentStatusWithAggregatesFilter<$PrismaModel> | $Enums.SponsoredContentStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSponsoredContentStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSponsoredContentStatusFilter<$PrismaModel>
 }
 
 

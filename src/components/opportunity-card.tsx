@@ -14,6 +14,7 @@ import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { formatBudgetRange } from "@/lib/money";
 import { bookmarkOpportunityAction } from "@/features/opportunities/actions";
 import { calculateTrustSummary, trustBadgeClassName } from "@/lib/trust/engine";
+import { getCanonicalOpportunityPath } from "@/lib/data/opportunity-path";
 
 type OpportunityCardProps = {
   href?: string;
@@ -85,7 +86,7 @@ export function OpportunityCard({ href, opportunity }: OpportunityCardProps) {
       ) : null}
       <Link
         className="group grid focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--px-focus)]"
-        href={href ?? `/opportunities/${opportunity.slug}`}
+        href={href ?? getCanonicalOpportunityPath(opportunity.slug)}
       >
         <div className="grid gap-4 p-5 pr-16">
           <div className="flex items-start gap-3">

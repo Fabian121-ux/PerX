@@ -120,6 +120,37 @@ export function MessageWorkspace({
     let active = true;
     let eventSource: EventSource | null = null;
     let fallbackInterval: number | null = null;
+    const updateConversations = (incoming: WorkspaceConversation[]) => {
+      setSyncedConversations((current) => {
+        if (!activeId) return incoming;
+        const incomingById = new Map(
+          incoming.map((conversation) => [conversation.id, conversation]),
+        );
+        const merged = current.map((conversation) => {
+          const next = incomingById.get(conversation.id);
+          if (!next || !highlightMessageId) return next ?? conversation;
+          const target = conversation.messages.find(
+            (message) => message.id === highlightMessageId,
+          );
+          if (!target || next.messages.some((message) => message.id === target.id)) {
+            return next;
+          }
+          return {
+            ...next,
+            messages: [...next.messages, target].sort(
+              (a, b) =>
+                new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+            ),
+          };
+        });
+        for (const conversation of incoming) {
+          if (!current.some((candidate) => candidate.id === conversation.id)) {
+            merged.push(conversation);
+          }
+        }
+        return merged;
+      });
+    };
     const sync = async () => {
       try {
         const response = await fetch(
@@ -133,7 +164,7 @@ export function MessageWorkspace({
           conversations?: WorkspaceConversation[];
         };
         if (active && payload.conversations) {
-          setSyncedConversations(payload.conversations);
+          updateConversations(payload.conversations);
         }
       } catch {
         // Polling is the fallback freshness path; persisted messages remain available after refresh.
@@ -168,7 +199,7 @@ export function MessageWorkspace({
           conversations?: WorkspaceConversation[];
         };
         if (payload.conversations) {
-          setSyncedConversations(payload.conversations);
+          updateConversations(payload.conversations);
           setLiveState("live");
           window.dispatchEvent(new Event("perx-unread-refresh"));
         }
@@ -195,7 +226,7 @@ export function MessageWorkspace({
       eventSource?.close();
       if (fallbackInterval !== null) window.clearInterval(fallbackInterval);
     };
-  }, [activeId]);
+  }, [activeId, highlightMessageId]);
 
   const activeConversation =
     syncedConversations.find((conversation) => conversation.id === activeId) ??
@@ -207,6 +238,7 @@ export function MessageWorkspace({
       ...(localMessages[activeConversation.id] ?? []),
     ];
   }, [activeConversation, localMessages]);
+  const latestMessageId = messages.at(-1)?.id;
 
   useEffect(() => {
     if (highlightedMessageId) return;
@@ -227,10 +259,22 @@ export function MessageWorkspace({
 
   useEffect(() => {
     if (!activeConversation?.id) return;
-    markConversationReadAction(activeConversation.id).then(() => {
-      window.dispatchEvent(new Event("perx-unread-refresh"));
-    });
-  }, [activeConversation?.id, messages.length]);
+    void markConversationReadAction(activeConversation.id)
+      .then((result) => {
+        if (result.error) return;
+        setSyncedConversations((current) =>
+          current.map((conversation) =>
+            conversation.id === activeConversation.id
+              ? { ...conversation, unreadCount: 0 }
+              : conversation,
+          ),
+        );
+        window.dispatchEvent(new Event("perx-unread-refresh"));
+      })
+      .catch(() => {
+        // The participant-scoped stream or polling fallback will retry freshness.
+      });
+  }, [activeConversation?.id, latestMessageId]);
 
   const sendMessage = (event?: FormEvent) => {
     event?.preventDefault();
@@ -601,7 +645,9 @@ function MessageBubble({
 
   return (
     <div
+      aria-current={highlighted ? "true" : undefined}
       className={`flex scroll-mt-24 ${mine ? "justify-end" : "justify-start"}`}
+      data-message-id={message.id}
       ref={refCallback}
     >
       <div

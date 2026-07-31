@@ -1,4 +1,8 @@
 import { getPrisma } from "@/lib/db/prisma";
+import {
+  buildPublicOpportunityWhere,
+  getPublicOpportunityPage,
+} from "@/lib/data/public-opportunities";
 import { PerXDataProvider } from "./interfaces";
 
 type OpportunityTypeValue =
@@ -29,55 +33,14 @@ function isOpportunityType(value?: string): value is OpportunityTypeValue {
 export const prismaProvider: PerXDataProvider = {
   opportunities: {
     getOpportunityFeed: async ({ category, q, type } = {}) => {
-      return getPrisma().opportunity.findMany({
-        include: {
-          category: true,
-          images: {
-            orderBy: [{ isCover: "desc" }, { createdAt: "asc" }],
-            take: 4,
-          },
-          owner: {
-            select: {
-              id: true,
-              emailVerifiedAt: true,
-              imageUrl: true,
-              name: true,
-              profile: {
-                select: {
-                  averageRating: true,
-                  completedDeals: true,
-                  profileCompleteness: true,
-                  profileImageUrl: true,
-                },
-              },
-              username: true,
-              verificationStatus: true,
-            },
-          },
-        },
-        orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
-        take: 20,
-        where: {
-          moderationStatus: "APPROVED",
-          status: "PUBLISHED",
-          owner: {
-            accountClassification: "PUBLIC_BETA_USER",
-            isActive: true,
-            profile: { is: { isDiscoverable: true } },
-          },
-          ...(category ? { category: { slug: category } } : {}),
-          ...(isOpportunityType(type) ? { type } : {}),
-          ...(q
-            ? {
-                OR: [
-                  { title: { contains: q, mode: "insensitive" } },
-                  { summary: { contains: q, mode: "insensitive" } },
-                  { description: { contains: q, mode: "insensitive" } },
-                ],
-              }
-            : {}),
-        },
+      const page = await getPublicOpportunityPage({
+        category,
+        pageSize: 20,
+        q,
+        type: isOpportunityType(type) ? type : undefined,
       });
+
+      return page.items;
     },
     getOpportunityBySlug: async (slug: string) => {
       return getPrisma().opportunity.findFirst({
@@ -107,16 +70,7 @@ export const prismaProvider: PerXDataProvider = {
             },
           },
         },
-        where: {
-          moderationStatus: "APPROVED",
-          slug,
-          status: "PUBLISHED",
-          owner: {
-            accountClassification: "PUBLIC_BETA_USER",
-            isActive: true,
-            profile: { is: { isDiscoverable: true } },
-          },
-        },
+        where: { ...buildPublicOpportunityWhere(), slug },
       });
     },
     getCategories: async () => {
@@ -294,10 +248,7 @@ export const prismaProvider: PerXDataProvider = {
             },
             orderBy: { publishedAt: "desc" },
             take: 8,
-            where: {
-              moderationStatus: "APPROVED",
-              status: "PUBLISHED",
-            },
+            where: buildPublicOpportunityWhere(),
           },
           profile: {
             include: {

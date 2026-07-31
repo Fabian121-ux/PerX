@@ -90,8 +90,9 @@ export function DiscoverExperience({
   };
 
   const shellHref = (slug: string) => {
-    if (mode === "public") return `/opportunities/${slug}`;
-    return `${basePath}?opportunity=${encodeURIComponent(slug)}`;
+    return mode === "preview"
+      ? `${basePath}?opportunity=${encodeURIComponent(slug)}`
+      : undefined;
   };
 
   return (

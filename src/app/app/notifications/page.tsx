@@ -249,7 +249,7 @@ function NotificationCard({
           <>
             <form action={acceptConnectionAction.bind(null, connectionRequest.id)}>
               <Button size="sm" type="submit">
-                Accept
+                Accept Connection
               </Button>
             </form>
             <form action={rejectConnectionAction.bind(null, connectionRequest.id)}>

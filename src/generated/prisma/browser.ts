@@ -277,3 +277,8 @@ export type SupportTicket = Prisma.SupportTicketModel
  * 
  */
 export type TicketMessage = Prisma.TicketMessageModel
+/**
+ * Model SponsoredContent
+ * 
+ */
+export type SponsoredContent = Prisma.SponsoredContentModel

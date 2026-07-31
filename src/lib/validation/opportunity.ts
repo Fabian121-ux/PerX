@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { parseMoneyToMinor } from "@/lib/money";
 import {
   currencyValues,
   opportunityCategoryValues,
@@ -10,25 +11,72 @@ import {
   reportReasonValues,
 } from "@/lib/options";
 
-export const opportunityFormSchema = z.object({
-  title: z.string().trim().min(8).max(140),
-  summary: z.string().trim().min(20).max(260),
-  description: z.string().trim().min(80).max(4000),
-  type: z.enum(opportunityTypeValues),
-  category: z.enum(opportunityCategoryValues),
-  location: z.string().trim().max(120).optional(),
-  remote: z.boolean().default(true),
-  currency: z.enum(currencyValues).default("NGN"),
-  budgetMin: z.string().trim().optional(),
-  budgetMax: z.string().trim().optional(),
-  skills: z.string().trim().max(500).optional(),
-  intent: z.enum(["draft", "publish"]).default("draft"),
-  propertyType: z.enum(propertyTypeValues).optional(),
-  propertyListingType: z.enum(propertyListingTypeValues).optional(),
-  contactPreference: z.enum(contactPreferenceValues).optional(),
-  authorityDeclaration: z.string().trim().max(1000).optional(),
-  listingRulesAccepted: z.boolean().default(false),
-});
+export const opportunityFormSchema = z
+  .object({
+    title: z.string().trim().min(8).max(140),
+    summary: z.string().trim().min(20).max(260),
+    description: z.string().trim().min(80).max(4000),
+    type: z.enum(opportunityTypeValues),
+    category: z.enum(opportunityCategoryValues),
+    location: z.string().trim().max(120).optional(),
+    remote: z.boolean().default(true),
+    currency: z.enum(currencyValues).default("NGN"),
+    budgetMin: z.string().trim().optional(),
+    budgetMax: z.string().trim().optional(),
+    skills: z.string().trim().max(500).optional(),
+    intent: z.enum(["draft", "publish"]).default("draft"),
+    propertyType: z.enum(propertyTypeValues).optional(),
+    propertyListingType: z.enum(propertyListingTypeValues).optional(),
+    contactPreference: z.enum(contactPreferenceValues).optional(),
+    authorityDeclaration: z.string().trim().max(1000).optional(),
+    listingRulesAccepted: z.boolean().default(false),
+  })
+  .superRefine((values, context) => {
+    let budgetMin: bigint | undefined;
+    let budgetMax: bigint | undefined;
+
+    if (values.budgetMin) {
+      try {
+        budgetMin = parseMoneyToMinor(
+          values.budgetMin,
+          values.currency,
+        ).amountMinor;
+      } catch {
+        context.addIssue({
+          code: "custom",
+          message: "Enter a valid minimum budget.",
+          path: ["budgetMin"],
+        });
+      }
+    }
+
+    if (values.budgetMax) {
+      try {
+        budgetMax = parseMoneyToMinor(
+          values.budgetMax,
+          values.currency,
+        ).amountMinor;
+      } catch {
+        context.addIssue({
+          code: "custom",
+          message: "Enter a valid maximum budget.",
+          path: ["budgetMax"],
+        });
+      }
+    }
+
+    if (
+      budgetMin !== undefined &&
+      budgetMax !== undefined &&
+      budgetMin > budgetMax
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Minimum budget cannot exceed maximum budget.",
+        path: ["budgetMax"],
+      });
+    }
+  });
 
 export const opportunityReportSchema = z.object({
   opportunityId: z.string().cuid(),

@@ -25,7 +25,12 @@ export default function PreviewLayout({ children }: { children: ReactNode }) {
       <AnimatedBackground />
       <DashboardSidebar userRoles={mockCurrentUser.roles} />
       <MobileDashboardDrawer
-        badges={{ messages: 0, notifications: 0 }}
+        badges={{
+          generalActivity: 0,
+          pendingConnectionRequests: 0,
+          unreadConversations: 0,
+          unreadNews: 0,
+        }}
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         userRoles={mockCurrentUser.roles}
@@ -34,7 +39,12 @@ export default function PreviewLayout({ children }: { children: ReactNode }) {
       <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
         <DashboardTopbar
           user={mockCurrentUser}
-          unreadCounts={{ messages: 0, notifications: 0 }}
+          unreadCounts={{
+            generalActivity: 0,
+            pendingConnectionRequests: 0,
+            unreadConversations: 0,
+            unreadNews: 0,
+          }}
           previewMode
           onMenuClick={() => setMobileOpen(true)}
         />

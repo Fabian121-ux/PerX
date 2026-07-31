@@ -5,32 +5,42 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { BrandLogo } from "@/components/brand-logo";
+import { FeatureDirectory } from "@/components/navigation/feature-directory";
 import {
+  canShowSidebarItem,
   isSidebarItemActive,
   sidebarGroups,
   sidebarItems,
   type SidebarItem,
 } from "@/lib/navigation/sidebar-items";
+import {
+  formatNavigationBadge,
+  shouldShowNavigationDot,
+} from "@/lib/navigation/navigation-state";
 import type { UnreadCounts } from "@/lib/data/unread-counts";
-
-function formatBadgeCount(value: number) {
-  if (!value) return "";
-  return value > 99 ? "99+" : String(value);
-}
 
 function badgeForHref(href: string, badges?: UnreadCounts) {
   if (!badges) return 0;
-  if (href === "/app/messages") return badges.messages;
-  if (href === "/app/notifications") return badges.notifications;
+  if (href === "/app/connections") return badges.pendingConnectionRequests;
+  if (href === "/app/messages") return badges.unreadConversations;
+  if (href === "/app/notifications") return badges.generalActivity;
   return 0;
+}
+
+function dotForHref(href: string, badges?: UnreadCounts) {
+  return (
+    href === "/app/news" && shouldShowNavigationDot(badges?.unreadNews)
+  );
 }
 
 function SidebarLink({
   badgeCount = 0,
+  dot = false,
   item,
   onNavigate,
 }: {
   badgeCount?: number;
+  dot?: boolean;
   item: SidebarItem;
   onNavigate?: () => void;
 }) {
@@ -42,7 +52,7 @@ function SidebarLink({
   return (
     <Link
       aria-current={active ? "page" : undefined}
-      aria-label={item.label}
+      aria-label={dot ? `${item.label}, unread` : item.label}
       className={`group flex min-h-10 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-[13px] font-semibold leading-tight transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--px-sidebar)] ${
         active
           ? "bg-[color:var(--px-primary)] text-white shadow-[0_10px_22px_rgba(37,99,235,0.32)]"
@@ -60,23 +70,36 @@ function SidebarLink({
         }`}
       />
       <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
+      {dot ? (
+        <span
+          aria-hidden
+          className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+            active
+              ? "bg-white"
+              : "bg-[color:var(--px-warning)] ring-2 ring-[color:var(--px-sidebar)]"
+          }`}
+        />
+      ) : null}
       {badgeCount ? (
         <span
-          aria-label={`${formatBadgeCount(badgeCount)} unread ${item.label.toLowerCase()}`}
+          aria-label={`${formatNavigationBadge(badgeCount)} unread ${
+            item.href === "/app/messages"
+              ? "conversations"
+              : item.href === "/app/connections"
+                ? "pending connection requests"
+                : item.label.toLowerCase()
+          }`}
           className={`grid h-5 min-w-5 shrink-0 place-items-center rounded-full px-1.5 text-[10px] font-black ${
-            active ? "bg-white text-[color:var(--px-primary)]" : "bg-[color:var(--px-warning)] text-white"
+            active
+              ? "bg-white text-[color:var(--px-primary)]"
+              : "bg-[color:var(--px-warning)] text-white"
           }`}
         >
-          {formatBadgeCount(badgeCount)}
+          {formatNavigationBadge(badgeCount)}
         </span>
       ) : null}
     </Link>
   );
-}
-
-function canShowSidebarItem(item: SidebarItem, userRoles?: readonly string[]) {
-  if (item.href !== "/admin") return true;
-  return Boolean(userRoles?.includes("ADMIN") || userRoles?.includes("MASTER_ADMIN"));
 }
 
 function getRenderedHref(href: string, pathname: string) {
@@ -85,7 +108,9 @@ function getRenderedHref(href: string, pathname: string) {
   }
 
   if (href === "/app") return "/preview";
+  if (href === "/app/connections") return "/preview/network";
   if (href === "/app/deals") return "/preview/deals/demo-deal";
+  if (href === "/app/news") return "/preview/notifications";
   if (href === "/app/profile/edit") return "/preview/profile";
   if (href.startsWith("/app/")) return `/preview${href.slice(4)}`;
 
@@ -111,7 +136,8 @@ export function SidebarNavigation({
     <nav aria-label="Sidebar navigation" className="grid gap-5">
       {sidebarGroups.map((group) => {
         const items = sidebarItems.filter(
-          (item) => item.group === group.key && canShowSidebarItem(item, userRoles),
+          (item) =>
+            item.group === group.key && canShowSidebarItem(item, userRoles),
         );
 
         return (
@@ -123,6 +149,7 @@ export function SidebarNavigation({
               {items.map((item) => (
                 <SidebarLink
                   badgeCount={badgeForHref(item.href, badges)}
+                  dot={dotForHref(item.href, badges)}
                   item={item}
                   key={item.href}
                   onNavigate={onNavigate}
@@ -138,9 +165,11 @@ export function SidebarNavigation({
 
 export function DashboardSidebar({
   badges,
+  featureDirectory = false,
   userRoles,
 }: {
   badges?: UnreadCounts;
+  featureDirectory?: boolean;
   userRoles?: readonly string[];
 }) {
   const isDesktop = useIsDesktop();
@@ -152,12 +181,28 @@ export function DashboardSidebar({
   return (
     <aside className="perx-sidebar relative z-20 flex h-dvh w-[224px] shrink-0 flex-col border-r border-white/10 text-white shadow-[18px_0_44px_rgba(2,10,26,0.22)]">
       <div className="flex h-[86px] shrink-0 items-center px-5">
-        <Link aria-label="PerX Home" href="/app">
-          <BrandLogo
-            className="h-10 max-w-[152px] drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]"
-            dark
-          />
-        </Link>
+        {featureDirectory ? (
+          <FeatureDirectory userRoles={userRoles}>
+            <button
+              aria-label="Open PerX feature directory"
+              className="flex min-h-11 min-w-11 items-center rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+              type="button"
+            >
+              <BrandLogo
+                className="h-10 max-w-[152px] drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]"
+                dark
+                decorative
+              />
+            </button>
+          </FeatureDirectory>
+        ) : (
+          <Link aria-label="PerX Home" href="/app">
+            <BrandLogo
+              className="h-10 max-w-[152px] drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]"
+              dark
+            />
+          </Link>
+        )}
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-5 pt-1">

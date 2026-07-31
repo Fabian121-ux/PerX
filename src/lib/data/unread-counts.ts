@@ -1,13 +1,42 @@
+import { NotificationType } from "@/generated/prisma/enums";
 import { getPrisma } from "@/lib/db/prisma";
+import { getVisibleNewsWhere } from "@/lib/data/news";
+
+export const MESSAGE_NOTIFICATION_TYPES = [
+  NotificationType.MESSAGE,
+  NotificationType.MESSAGE_REQUEST_RECEIVED,
+  NotificationType.NEW_MESSAGE,
+] as const;
+
+export const CONNECTION_NOTIFICATION_TYPES = [
+  NotificationType.CONNECTION,
+  NotificationType.CONNECTION_REQUEST_ACCEPTED,
+  NotificationType.CONNECTION_REQUEST_DECLINED,
+  NotificationType.CONNECTION_REQUEST_RECEIVED,
+] as const;
+
+export const GENERAL_ACTIVITY_EXCLUDED_NOTIFICATION_TYPES = [
+  NotificationType.BROADCAST,
+  ...MESSAGE_NOTIFICATION_TYPES,
+  ...CONNECTION_NOTIFICATION_TYPES,
+] as const;
 
 export type UnreadCounts = {
-  messages: number;
-  notifications: number;
+  generalActivity: number;
+  pendingConnectionRequests: number;
+  unreadConversations: number;
+  unreadNews: number;
 };
 
 export async function getUnreadCounts(userId: string): Promise<UnreadCounts> {
   const prisma = getPrisma();
-  const [messageRows, notifications] = await Promise.all([
+  const now = new Date();
+  const [
+    messageRows,
+    pendingConnectionRequests,
+    unreadNews,
+    generalActivity,
+  ] = await Promise.all([
     prisma.$queryRaw<Array<{ count: bigint | number }>>`
       SELECT COUNT(DISTINCT cp."conversationId") AS count
       FROM "ConversationParticipant" cp
@@ -26,11 +55,30 @@ export async function getUnreadCounts(userId: string): Promise<UnreadCounts> {
             (b."blockedUserId" = ${userId} AND b."blockerUserId" = m."senderId")
         )
     `,
-    prisma.notification.count({ where: { readAt: null, userId } }),
+    prisma.connection.count({
+      where: { receiverId: userId, status: "PENDING" },
+    }),
+    prisma.notification.count({
+      where: {
+        ...getVisibleNewsWhere(userId, now),
+        readAt: null,
+      },
+    }),
+    prisma.notification.count({
+      where: {
+        readAt: null,
+        type: {
+          notIn: [...GENERAL_ACTIVITY_EXCLUDED_NOTIFICATION_TYPES],
+        },
+        userId,
+      },
+    }),
   ]);
 
   return {
-    messages: Number(messageRows[0]?.count ?? 0),
-    notifications,
+    generalActivity,
+    pendingConnectionRequests,
+    unreadConversations: Number(messageRows[0]?.count ?? 0),
+    unreadNews,
   };
 }

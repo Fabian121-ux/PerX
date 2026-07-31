@@ -15,6 +15,10 @@ vi.mock("@/lib/db/prisma", () => ({
 }));
 
 import { getPublishedSectionOpportunityPage } from "@/lib/data/section-opportunities";
+import {
+  buildPublicOpportunityWhere,
+  getPublicOpportunityPage,
+} from "@/lib/data/public-opportunities";
 
 describe("published content discovery query", () => {
   beforeEach(() => {
@@ -23,41 +27,103 @@ describe("published content discovery query", () => {
     prismaMocks.opportunityCount.mockResolvedValue(0);
   });
 
-  it("requires published, approved content from active discoverable public users", async () => {
+  it("builds the complete shared public-eligibility predicate", () => {
+    const now = new Date("2026-07-31T12:00:00.000Z");
+    const where = buildPublicOpportunityWhere(
+      { excludeOwnerId: "viewer-1" },
+      now,
+    );
+
+    expect(where).toEqual(
+      expect.objectContaining({
+        moderationStatus: "APPROVED",
+        ownerId: { not: "viewer-1" },
+        publishedAt: { not: null },
+        status: "PUBLISHED",
+        owner: expect.objectContaining({
+          OR: [{ suspendedAt: null }, { suspendedUntil: { lte: now } }],
+          accountClassification: "PUBLIC_BETA_USER",
+          bannedAt: null,
+          deactivatedAt: null,
+          isActive: true,
+          profile: { is: { isDiscoverable: true } },
+        }),
+      }),
+    );
+    expect(where.AND).toEqual(
+      expect.arrayContaining([
+        {
+          OR: [
+            { type: { not: "PROPERTY" } },
+            { propertyVerificationState: "PUBLISHED", type: "PROPERTY" },
+          ],
+        },
+      ]),
+    );
+  });
+
+  it("constructs service filters without restricting the category", async () => {
     await getPublishedSectionOpportunityPage({
-      category: "services",
+      location: "Lagos",
+      maxPrice: "500.00",
+      minPrice: "100.00",
       q: "design",
       type: "SERVICE",
     });
 
-    expect(prismaMocks.opportunityFindMany).toHaveBeenCalledWith(
+    const query = prismaMocks.opportunityFindMany.mock.calls[0]?.[0];
+    expect(query).toEqual(
       expect.objectContaining({
         skip: 0,
-        take: 24,
+        take: 25,
         where: expect.objectContaining({
-          category: { slug: "services" },
-          moderationStatus: "APPROVED",
-          owner: {
-            accountClassification: "PUBLIC_BETA_USER",
-            isActive: true,
-            profile: { is: { isDiscoverable: true } },
-          },
-          status: "PUBLISHED",
+          budgetMaxMinor: { lte: 50000n },
+          budgetMinMinor: { gte: 10000n },
+          location: { contains: "Lagos", mode: "insensitive" },
           type: "SERVICE",
         }),
       }),
     );
+    expect(query.where).not.toHaveProperty("category");
+    expect(query.where.AND).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          OR: expect.arrayContaining([
+            { title: { contains: "design", mode: "insensitive" } },
+          ]),
+        }),
+      ]),
+    );
   });
 
-  it("paginates without loading unbounded service rows", async () => {
-    await getPublishedSectionOpportunityPage({
-      page: 3,
-      pageSize: 10,
-      type: "SERVICE",
+  it("uses a bounded look-ahead cursor page and returns the next cursor", async () => {
+    prismaMocks.opportunityFindMany.mockResolvedValueOnce([
+      { id: "item-1" },
+      { id: "item-2" },
+      { id: "item-3" },
+    ]);
+
+    const result = await getPublicOpportunityPage({
+      cursor: "item-0",
+      pageSize: 2,
     });
 
     expect(prismaMocks.opportunityFindMany).toHaveBeenCalledWith(
-      expect.objectContaining({ skip: 20, take: 10 }),
+      expect.objectContaining({
+        cursor: { id: "item-0" },
+        skip: 1,
+        take: 3,
+      }),
+    );
+    expect(result.items).toHaveLength(2);
+    expect(result.nextCursor).toBe("item-2");
+  });
+
+  it("clamps oversized page requests", async () => {
+    await getPublicOpportunityPage({ pageSize: 10_000 });
+
+    expect(prismaMocks.opportunityFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ take: 25 }),
     );
   });
 });

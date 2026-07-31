@@ -43,7 +43,7 @@
   --px-shadow: 0 18px 44px rgba(15, 23, 42, 0.09);
   --px-shadow-strong: 0 28px 70px rgba(15, 23, 42, 0.15);
   --px-sidebar-width: 260px;
-  --mobile-nav-height: 68px;
+  --mobile-nav-height: 72px;
 }
 
 @theme inline {
@@ -336,6 +336,17 @@ a {
     padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
   }
 
+  @media (max-width: 1023px) {
+    .dashboard-main {
+      padding-bottom: calc(
+        var(--mobile-nav-height) + env(safe-area-inset-bottom) + 1.5rem
+      );
+      scroll-padding-bottom: calc(
+        var(--mobile-nav-height) + env(safe-area-inset-bottom) + 1.5rem
+      );
+    }
+  }
+
   .dashboard-scroll {
     scroll-padding-inline: 1rem;
     scroll-snap-type: x proximity;
@@ -448,8 +459,8 @@ a {
 }
 
 input:-webkit-autofill,
-input:-webkit-autofill:hover, 
-input:-webkit-autofill:focus, 
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 30px var(--px-surface) inset !important;
   -webkit-text-fill-color: var(--px-text) !important;
@@ -459,4 +470,25 @@ input:-webkit-autofill:active {
 input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {
   display: none;
+}
+
+.sponsored-enter {
+  animation: perx-sponsored-fade 240ms ease-out;
+}
+
+@keyframes perx-sponsored-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sponsored-enter {
+    animation: none;
+  }
 }

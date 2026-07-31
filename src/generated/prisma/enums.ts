@@ -52,6 +52,7 @@ export const OpportunityType = {
   INVESTMENT: 'INVESTMENT',
   PROPERTY: 'PROPERTY',
   SERVICE: 'SERVICE',
+  PRODUCT: 'PRODUCT',
   PARTNERSHIP: 'PARTNERSHIP'
 } as const
 
@@ -334,3 +335,12 @@ export const TicketStatus = {
 } as const
 
 export type TicketStatus = (typeof TicketStatus)[keyof typeof TicketStatus]
+
+
+export const SponsoredContentStatus = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED',
+  PAUSED: 'PAUSED'
+} as const
+
+export type SponsoredContentStatus = (typeof SponsoredContentStatus)[keyof typeof SponsoredContentStatus]

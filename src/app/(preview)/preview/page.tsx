@@ -20,9 +20,9 @@ export default function PreviewDashboardPage() {
     },
     connectionRequestsCount: 1,
     draftsCount: 1,
-    notificationsCount: 2,
+    activityCount: 2,
     publishedItemsCount: 3,
-    unreadMessagesCount: 1,
+    unreadConversationsCount: 1,
     onboarding: {
       dismissed: true,
       items: [],

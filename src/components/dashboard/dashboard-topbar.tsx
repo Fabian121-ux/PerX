@@ -1,21 +1,31 @@
 "use client";
 
-import { Bell, Menu, MessageSquare, Search, ShieldCheck } from "lucide-react";
+import {
+  Bell,
+  Menu,
+  MessageSquare,
+  Newspaper,
+  Search,
+  ShieldCheck,
+} from "lucide-react";
 import Link from "next/link";
 
+import { BrandLogo } from "@/components/brand-logo";
+import { FeatureDirectory } from "@/components/navigation/feature-directory";
+import { SecondaryMenu } from "@/components/navigation/secondary-menu";
 import type { CurrentUser } from "@/lib/auth/session";
-import { CreateMenu } from "./create-menu";
-import { AccountMenu } from "./account-menu";
-import { ThemeToggle } from "./theme-toggle";
 import type { UnreadCounts } from "@/lib/data/unread-counts";
-
-function formatBadgeCount(value: number) {
-  if (!value) return "";
-  return value > 99 ? "99+" : String(value);
-}
+import { getAppRoute } from "@/lib/navigation/app-routes";
+import {
+  formatNavigationBadge,
+  shouldShowNavigationDot,
+} from "@/lib/navigation/navigation-state";
+import { AccountMenu } from "./account-menu";
+import { CreateMenu } from "./create-menu";
+import { ThemeToggle } from "./theme-toggle";
 
 function IconBadge({ count, label }: { count: number; label: string }) {
-  const display = formatBadgeCount(count);
+  const display = formatNavigationBadge(count);
   if (!display) return null;
 
   return (
@@ -28,35 +38,75 @@ function IconBadge({ count, label }: { count: number; label: string }) {
   );
 }
 
+function IconDot({ show }: { show: boolean }) {
+  if (!show) return null;
+
+  return (
+    <span
+      aria-hidden
+      className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-[color:var(--px-warning)] ring-2 ring-[color:var(--px-surface)]"
+    />
+  );
+}
+
 export function DashboardTopbar({
   user,
   unreadCounts,
+  featureDirectory = false,
   previewMode = false,
+  secondaryMenu = false,
   onMenuClick,
 }: {
   user: CurrentUser;
   unreadCounts: UnreadCounts;
+  featureDirectory?: boolean;
   previewMode?: boolean;
+  secondaryMenu?: boolean;
   onMenuClick?: () => void;
 }) {
-  const discoverHref = previewMode ? "/preview/discover" : "/app/discover";
+  const homeHref = previewMode ? "/preview" : "/app";
+  const searchHref = previewMode ? "/preview/discover" : getAppRoute("search");
   const messagesHref = previewMode ? "/preview/messages" : "/app/messages";
-  const notificationsHref = previewMode
+  const activityHref = previewMode
     ? "/preview/notifications"
     : "/app/notifications";
+  const newsHref = previewMode ? "/preview/notifications" : getAppRoute("news");
   const trustHref = previewMode ? "/preview" : "/app/trust";
+  const unreadConversations = formatNavigationBadge(
+    unreadCounts.unreadConversations,
+  );
+  const unreadActivity = formatNavigationBadge(unreadCounts.generalActivity);
+  const hasUnreadNews = shouldShowNavigationDot(unreadCounts.unreadNews);
 
   return (
-    <header className="dashboard-topbar sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b border-[color:var(--px-border)] px-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:px-6 lg:px-8">
-      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4 lg:gap-6">
-        <button
-          onClick={onMenuClick}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text)] shadow-sm transition hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:hidden"
-          aria-label="Open navigation menu"
-          type="button"
-        >
-          <Menu aria-hidden size={22} />
-        </button>
+    <header className="dashboard-topbar sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b border-[color:var(--px-border)] px-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:px-4 lg:px-8">
+      <div className="flex min-w-0 flex-1 items-center gap-3 lg:gap-6">
+        <div className="flex min-w-0 items-center lg:hidden">
+          {featureDirectory ? (
+            <FeatureDirectory userRoles={user.roles}>
+              <button
+                aria-label="Open PerX feature directory"
+                className="flex h-11 min-w-11 items-center rounded-xl pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+                type="button"
+              >
+                <BrandLogo
+                  className="h-8 max-w-[116px]"
+                  dark
+                  decorative
+                  priority
+                />
+              </button>
+            </FeatureDirectory>
+          ) : (
+            <Link
+              aria-label="PerX Home"
+              className="flex h-11 min-w-11 items-center rounded-xl pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+              href={homeHref}
+            >
+              <BrandLogo className="h-8 max-w-[116px]" dark priority />
+            </Link>
+          )}
+        </div>
 
         {previewMode ? (
           <span className="hidden rounded-full bg-[color:var(--px-primary-soft)] px-2.5 py-0.5 text-xs font-bold tracking-wide text-[color:var(--px-primary)] ring-1 ring-[color:var(--px-primary)]/30 lg:inline-flex">
@@ -65,8 +115,8 @@ export function DashboardTopbar({
         ) : null}
 
         <form
-          action={discoverHref}
-          className="hidden max-w-lg flex-1 items-center gap-2 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-muted)] px-3 py-2 transition-colors focus-within:border-[color:var(--px-primary)] focus-within:ring-2 focus-within:ring-[color:var(--px-focus)]/25 hover:border-[color:var(--px-primary)] sm:flex"
+          action={searchHref}
+          className="hidden max-w-lg flex-1 items-center gap-2 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-muted)] px-3 py-2 transition-colors focus-within:border-[color:var(--px-primary)] focus-within:ring-2 focus-within:ring-[color:var(--px-focus)]/25 hover:border-[color:var(--px-primary)] lg:flex"
         >
           <Search
             aria-hidden
@@ -85,65 +135,101 @@ export function DashboardTopbar({
         </form>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1.5 sm:gap-5">
-        <div className="hidden sm:block">
-          <CreateMenu previewMode={previewMode} />
-        </div>
-
-        <div className="hidden h-6 w-px bg-[color:var(--px-border)] sm:block" />
-
-        <div className="flex items-center gap-1 sm:gap-2">
-          <div className="hidden sm:block">
-            <ThemeToggle />
-          </div>
-
+      <div className="flex shrink-0 items-center">
+        <div className="flex items-center gap-1.5 lg:hidden">
           <Link
-            className="flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:hidden"
-            aria-label="Search"
-            href={discoverHref}
+            aria-label="Search PerX"
+            className="grid h-11 w-11 place-items-center rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text)] transition hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            href={searchHref}
           >
-            <Search size={20} />
+            <Search aria-hidden size={21} />
           </Link>
 
           <Link
-            className="hidden h-9 w-9 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:flex"
+            aria-label={hasUnreadNews ? "News, unread" : "News"}
+            className="relative grid h-11 w-11 place-items-center rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text)] transition hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            href={newsHref}
+          >
+            <Newspaper aria-hidden size={20} />
+            <IconDot show={hasUnreadNews} />
+          </Link>
+
+          {secondaryMenu ? (
+            <SecondaryMenu unreadCounts={unreadCounts} user={user} />
+          ) : (
+            <button
+              aria-label="Open navigation menu"
+              className="grid h-11 w-11 place-items-center rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text)] transition hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              onClick={onMenuClick}
+              type="button"
+            >
+              <Menu aria-hidden size={22} />
+            </button>
+          )}
+        </div>
+
+        <div className="hidden items-center gap-2 lg:flex">
+          <CreateMenu previewMode={previewMode} />
+          <div className="mx-2 h-6 w-px bg-[color:var(--px-border)]" />
+          <ThemeToggle />
+
+          <Link
             aria-label="Trust dashboard"
+            className="grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={trustHref}
             title="Trust dashboard"
           >
-            <ShieldCheck size={20} />
+            <ShieldCheck aria-hidden size={20} />
           </Link>
 
           <Link
-            className="relative flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:h-9 sm:w-9"
             aria-label={
-              unreadCounts.notifications
-                ? `${formatBadgeCount(unreadCounts.notifications)} unread notifications`
-                : "Notifications"
+              hasUnreadNews ? "News, unread" : "News"
             }
-            href={notificationsHref}
-            title="Notifications"
+            className="relative grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            href={newsHref}
+            title="News"
           >
-            <Bell size={20} />
-            <IconBadge count={unreadCounts.notifications} label="notifications" />
+            <Newspaper aria-hidden size={20} />
+            <IconDot show={hasUnreadNews} />
           </Link>
 
           <Link
-            className="relative flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:bg-[color:var(--px-surface-soft)] focus:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:h-9 sm:w-9"
             aria-label={
-              unreadCounts.messages
-                ? `${formatBadgeCount(unreadCounts.messages)} unread messages`
+              unreadActivity
+                ? `${unreadActivity} unread activity updates`
+                : "Activity"
+            }
+            className="relative grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            href={activityHref}
+            title="Activity"
+          >
+            <Bell aria-hidden size={20} />
+            <IconBadge
+              count={unreadCounts.generalActivity}
+              label="activity updates"
+            />
+          </Link>
+
+          <Link
+            aria-label={
+              unreadConversations
+                ? `${unreadConversations} unread conversations`
                 : "Messages"
             }
+            className="relative grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={messagesHref}
             title="Messages"
           >
-            <MessageSquare size={20} />
-            <IconBadge count={unreadCounts.messages} label="messages" />
+            <MessageSquare aria-hidden size={20} />
+            <IconBadge
+              count={unreadCounts.unreadConversations}
+              label="conversations"
+            />
           </Link>
-        </div>
 
-        <AccountMenu user={user} previewMode={previewMode} />
+          <AccountMenu previewMode={previewMode} user={user} />
+        </div>
       </div>
     </header>
   );

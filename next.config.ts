@@ -20,7 +20,8 @@ const nextConfig: NextConfig = {
   deploymentId: process.env.VERCEL_GIT_COMMIT_SHA ? process.env.VERCEL_GIT_COMMIT_SHA.substring(0, 32) : undefined,
   async redirects() {
     return [
-      { source: "/dashboard", destination: "/app/dashboard", permanent: true },
+      { source: "/dashboard", destination: "/app", permanent: true },
+      { source: "/app/dashboard", destination: "/app", permanent: true },
       { source: "/deals/:path*", destination: "/app/deals/:path*", permanent: true },
       { source: "/escrow", destination: "/app/escrow", permanent: true },
       { source: "/logistics", destination: "/app/logistics", permanent: true },
@@ -28,7 +29,9 @@ const nextConfig: NextConfig = {
       { source: "/messages/:path*", destination: "/app/messages/:path*", permanent: true },
       { source: "/network", destination: "/app/network", permanent: true },
       { source: "/notifications", destination: "/app/notifications", permanent: true },
-      { source: "/opportunities/:path*", destination: "/app/opportunities/:path*", permanent: true },
+      { source: "/opportunities", destination: "/app/opportunities", permanent: true },
+      { source: "/opportunities/new", destination: "/app/opportunities/new", permanent: true },
+      { source: "/opportunities/:opportunityId/edit", destination: "/app/opportunities/:opportunityId/edit", permanent: true },
       { source: "/profile/:path*", destination: "/app/profile/:path*", permanent: true },
       { source: "/proposals/:path*", destination: "/app/proposals/:path*", permanent: true },
       { source: "/real-estate", destination: "/app/real-estate", permanent: true },

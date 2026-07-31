@@ -10,6 +10,7 @@ import { assertCanMessage } from "@/lib/account/enforcement";
 import { getPrisma } from "@/lib/db/prisma";
 import { getServerEnv, hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
+import { markConversationReadForUser } from "@/lib/messages/read-state";
 import { evaluatePolicy, isPolicyBlocking } from "@/lib/policy/enforcement";
 
 const sendMessageSchema = z.object({
@@ -317,63 +318,8 @@ export async function markConversationReadAction(conversationId: string) {
   const parsed = z.string().cuid().safeParse(conversationId);
   if (!parsed.success) return { error: "Invalid conversation." };
 
-  const participant = await getPrisma().conversationParticipant.findUnique({
-    select: { id: true },
-    where: {
-      conversationId_userId: {
-        conversationId: parsed.data,
-        userId: user.id,
-      },
-    },
-  });
-
-  if (!participant) return { error: "Conversation not found." };
-
-  const unreadMessages = await getPrisma().message.findMany({
-    orderBy: { createdAt: "desc" },
-    select: { id: true },
-    take: 100,
-    where: {
-      conversationId: parsed.data,
-      senderId: { not: user.id },
-      readReceipts: { none: { userId: user.id } },
-    },
-  });
-
-  await getPrisma().$transaction(async (tx) => {
-    await tx.conversationParticipant.update({
-      data: { lastReadAt: new Date() },
-      where: {
-        conversationId_userId: {
-          conversationId: parsed.data,
-          userId: user.id,
-        },
-      },
-    });
-
-    if (unreadMessages.length) {
-      await tx.messageReadReceipt.createMany({
-        data: unreadMessages.map((message) => ({
-          messageId: message.id,
-          userId: user.id,
-        })),
-        skipDuplicates: true,
-      });
-    }
-
-    await tx.notification.updateMany({
-      data: { readAt: new Date() },
-      where: {
-        OR: [
-          { actionUrl: `/app/messages/${parsed.data}` },
-          { actionUrl: { startsWith: `/app/messages/${parsed.data}?` } },
-        ],
-        readAt: null,
-        type: { in: ["MESSAGE", "MESSAGE_REQUEST_RECEIVED", "NEW_MESSAGE"] },
-        userId: user.id,
-      },
-    });
-  });
+  const marked = await markConversationReadForUser(parsed.data, user.id);
+  if (!marked) return { error: "Conversation not found." };
 
   revalidatePath("/app/messages");
   revalidatePath(`/app/messages/${parsed.data}`);
