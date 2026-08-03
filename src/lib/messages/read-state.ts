@@ -6,19 +6,29 @@ export async function markConversationReadForUser(
 ) {
   return getPrisma().$transaction(async (tx) => {
     const participant = await tx.conversationParticipant.findUnique({
-      select: { id: true, lastReadAt: true },
+      select: { id: true, lastReadAt: true, removedAt: true },
       where: {
         conversationId_userId: { conversationId, userId },
       },
     });
-    if (!participant) return false;
+    if (!participant || participant.removedAt) return false;
 
-    const latestMessage = await tx.message.findFirst({
-      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      select: { createdAt: true },
-      where: { conversationId },
-    });
-    const readThroughAt = latestMessage?.createdAt ?? participant.lastReadAt;
+    const [latestMessage, latestEvent] = await Promise.all([
+      tx.message.findFirst({
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        select: { createdAt: true },
+        where: { conversationId },
+      }),
+      tx.conversationEvent.findFirst({
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        select: { createdAt: true },
+        where: { conversationId },
+      }),
+    ]);
+    const latestEntryAt = [latestMessage?.createdAt, latestEvent?.createdAt]
+      .filter((value): value is Date => Boolean(value))
+      .sort((a, b) => b.getTime() - a.getTime())[0];
+    const readThroughAt = latestEntryAt ?? participant.lastReadAt;
     const unreadMessages = readThroughAt
       ? await tx.message.findMany({
           select: { id: true },
@@ -62,7 +72,17 @@ export async function markConversationReadForUser(
           { metadata: { path: ["conversationId"], equals: conversationId } },
         ],
         readAt: null,
-        type: { in: ["MESSAGE", "MESSAGE_REQUEST_RECEIVED", "NEW_MESSAGE"] },
+        type: {
+          in: [
+            "DEAL",
+            "DEAL_UPDATE",
+            "MESSAGE",
+            "MESSAGE_REQUEST_RECEIVED",
+            "NEW_MESSAGE",
+            "PROPOSAL",
+            "PROPOSAL_UPDATE",
+          ],
+        },
         userId,
       },
     });

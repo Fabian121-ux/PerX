@@ -17,16 +17,16 @@ export default async function MilestonesPage({ params }: { params: Promise<{ dea
   return (
     <AppSection description="Milestones define the work units that deliveries and approvals are attached to." title="Milestones">
       <div className="grid gap-4">
-        {deal.proposal.opportunity.milestones?.map((milestone: any) => (
+        {deal.milestones.map((milestone: any) => (
           <Card key={milestone.id}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 className="font-semibold text-slate-950">{milestone.title}</h2>
-                <p className="mt-2 text-sm text-slate-600">{milestone.description}</p>
+                <h2 className="font-semibold text-[color:var(--px-text)]">{milestone.title}</h2>
+                <p className="mt-2 text-sm text-[color:var(--px-text-muted)]">{milestone.description}</p>
               </div>
               <Badge>{milestone.status.toLowerCase()}</Badge>
             </div>
-            <p className="mt-3 text-sm font-semibold text-slate-950">{formatMoney(milestone.amountMinor, milestone.currency)}</p>
+            <p className="mt-3 text-sm font-semibold text-[color:var(--px-text)]">{formatMoney(milestone.amountMinor, milestone.currency)}</p>
           </Card>
         ))}
       </div>

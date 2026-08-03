@@ -22,7 +22,10 @@ import {
   bookmarkOpportunityAction,
   reportOpportunityAction,
 } from "@/features/opportunities/actions";
-import { submitProposalAction } from "@/features/proposals/actions";
+import {
+  saveProposalDraftAction,
+  submitProposalAction,
+} from "@/features/proposals/actions";
 import { getOpportunityBySlugResult } from "@/lib/data/opportunities";
 import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { formatBudgetRange } from "@/lib/money";
@@ -225,10 +228,18 @@ export default async function OpportunityDetailPage({
                   required
                 />
               </Field>
-              <Button type="submit">
-                <Send aria-hidden className="mr-2" size={16} />
-                Send proposal
-              </Button>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Button formAction={saveProposalDraftAction} type="submit" variant="secondary">
+                  Save draft
+                </Button>
+                <Button type="submit">
+                  <Send aria-hidden className="mr-2" size={16} />
+                  Submit locked version
+                </Button>
+              </div>
+              <p className="text-xs leading-5 text-[color:var(--px-text-muted)]">
+                Drafts remain private and editable. A submitted version is locked; later changes require a numbered revision.
+              </p>
               <ButtonLink href="/sign-in" variant="ghost">
                 Sign in first if needed
               </ButtonLink>

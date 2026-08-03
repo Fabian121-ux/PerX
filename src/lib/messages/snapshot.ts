@@ -20,13 +20,17 @@ export async function getMessageSnapshot({
         },
       },
     });
-    if (!participant) {
+    if (!participant || participant.removedAt) {
       return { conversations: null, notFound: true };
     }
   }
 
   const conversations = await prisma.conversation.findMany({
     include: {
+      events: {
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: conversationId ? 50 : 1,
+      },
       messages: {
         include: {
           readReceipts: { select: { userId: true } },
@@ -74,7 +78,16 @@ export async function getMessageSnapshot({
       proposals: {
         orderBy: { createdAt: "desc" },
         select: {
-          deal: { select: { id: true, status: true } },
+          deal: {
+            select: {
+              currency: true,
+              id: true,
+              proposalVersion: { select: { versionNumber: true } },
+              settlementMode: true,
+              status: true,
+              valueMinor: true,
+            },
+          },
         },
         take: 1,
         where: { deal: { isNot: null } },
@@ -84,7 +97,7 @@ export async function getMessageSnapshot({
     take: 50,
     where: {
       ...(conversationId ? { id: conversationId } : {}),
-      participants: { some: { userId } },
+      participants: { some: { removedAt: null, userId } },
       status: "ACTIVE",
     },
   });
@@ -104,20 +117,59 @@ export async function getMessageSnapshot({
       const linkedDeal = conversation.proposals.find(
         (proposal) => proposal.deal,
       )?.deal;
-      const unreadCount = conversation.messages.filter(
+      const unreadMessageCount = conversation.messages.filter(
         (message) =>
           message.senderId !== userId &&
           (!participant?.lastReadAt ||
             message.createdAt > participant.lastReadAt),
       ).length;
+      const unreadEventCount = conversation.events.filter(
+        (event) =>
+          event.actorId !== userId &&
+          (!participant?.lastReadAt || event.createdAt > participant.lastReadAt),
+      ).length;
+      const latestMessage = conversation.messages[0];
+      const latestEvent = conversation.events[0];
+      const latestEventIsNewer =
+        latestEvent &&
+        (!latestMessage || latestEvent.createdAt > latestMessage.createdAt);
 
       return {
         context: conversation.opportunity?.title ?? "Professional conversation",
+        deal: linkedDeal
+          ? {
+              amountMinor: linkedDeal.valueMinor.toString(),
+              currency: linkedDeal.currency,
+              id: linkedDeal.id,
+              settlementMode: linkedDeal.settlementMode,
+              status: linkedDeal.status,
+              title: conversation.opportunity?.title ?? "PerX Deal",
+              versionLabel: linkedDeal.proposalVersion
+                ? `v${linkedDeal.proposalVersion.versionNumber}`
+                : undefined,
+            }
+          : null,
         dealHref: linkedDeal ? `/app/deals/${linkedDeal.id}` : null,
+        events: [...conversation.events].reverse().map((event) => ({
+          actorName:
+            conversation.participants.find(
+              (entry) => entry.userId === event.actorId,
+            )?.user.name ?? null,
+          createdAt: event.createdAt.toISOString(),
+          dealHref: event.dealId ? `/app/deals/${event.dealId}` : null,
+          id: event.id,
+          proposalVersionId: event.proposalVersionId,
+          snapshot: toEventSnapshot(event.snapshot),
+          type: event.type,
+        })),
         id: conversation.id,
-        lastMessage: conversation.messages[0]?.body ?? "No messages yet.",
+        lastMessage: latestEventIsNewer
+          ? eventSummary(latestEvent.type)
+          : latestMessage?.deletedAt
+            ? "Message removed"
+            : latestMessage?.body ?? "No messages yet.",
         messages: messages.map((message) => ({
-          body: message.body,
+          body: message.deletedAt ? "" : message.body,
           createdAt: message.createdAt.toISOString(),
           deletedAt: message.deletedAt?.toISOString() ?? null,
           editedAt: message.editedAt?.toISOString() ?? null,
@@ -158,14 +210,33 @@ export async function getMessageSnapshot({
           other?.sessions[0]?.lastSeenAt ?? null,
         ),
         participantUsername: other?.username ?? null,
-        timestamp:
-          conversation.messages[0]?.createdAt.toISOString() ??
-          conversation.updatedAt.toISOString(),
-        unreadCount,
+        timestamp: (
+          latestEventIsNewer
+            ? latestEvent.createdAt
+            : latestMessage?.createdAt ?? conversation.updatedAt
+        ).toISOString(),
+        unreadCount: unreadMessageCount + unreadEventCount,
       };
     }),
     notFound: false,
   };
+}
+
+function toEventSnapshot(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function eventSummary(type: string) {
+  if (type === "PROPOSAL_OBJECTION_RAISED") return "Proposal revision requested";
+  if (type === "PROPOSAL_ACCEPTED") return "Proposal accepted";
+  if (type === "PROPOSAL_REJECTED") return "Proposal rejected";
+  if (type === "DEAL_CREATED") return "Deal record created";
+  if (type === "MILESTONE_SUBMITTED") return "Milestone delivery submitted";
+  if (type === "MILESTONE_APPROVED") return "Milestone approved";
+  if (type === "SIMULATED_RELEASE_RECORDED") return "Simulated release recorded";
+  return "Proposal version submitted";
 }
 
 function getPresenceState(showPresence: boolean, lastSeenAt: Date | null) {

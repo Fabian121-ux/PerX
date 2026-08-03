@@ -284,6 +284,7 @@ export type ProposalWhereInput = {
   sender?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   conversation?: Prisma.XOR<Prisma.ConversationNullableScalarRelationFilter, Prisma.ConversationWhereInput> | null
   milestones?: Prisma.ProposalMilestoneListRelationFilter
+  versions?: Prisma.ProposalVersionListRelationFilter
   statusHistory?: Prisma.ProposalStatusHistoryListRelationFilter
   deal?: Prisma.XOR<Prisma.DealNullableScalarRelationFilter, Prisma.DealWhereInput> | null
 }
@@ -305,6 +306,7 @@ export type ProposalOrderByWithRelationInput = {
   sender?: Prisma.UserOrderByWithRelationInput
   conversation?: Prisma.ConversationOrderByWithRelationInput
   milestones?: Prisma.ProposalMilestoneOrderByRelationAggregateInput
+  versions?: Prisma.ProposalVersionOrderByRelationAggregateInput
   statusHistory?: Prisma.ProposalStatusHistoryOrderByRelationAggregateInput
   deal?: Prisma.DealOrderByWithRelationInput
 }
@@ -329,6 +331,7 @@ export type ProposalWhereUniqueInput = Prisma.AtLeast<{
   sender?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   conversation?: Prisma.XOR<Prisma.ConversationNullableScalarRelationFilter, Prisma.ConversationWhereInput> | null
   milestones?: Prisma.ProposalMilestoneListRelationFilter
+  versions?: Prisma.ProposalVersionListRelationFilter
   statusHistory?: Prisma.ProposalStatusHistoryListRelationFilter
   deal?: Prisma.XOR<Prisma.DealNullableScalarRelationFilter, Prisma.DealWhereInput> | null
 }, "id">
@@ -385,6 +388,7 @@ export type ProposalCreateInput = {
   sender: Prisma.UserCreateNestedOneWithoutProposalsInput
   conversation?: Prisma.ConversationCreateNestedOneWithoutProposalsInput
   milestones?: Prisma.ProposalMilestoneCreateNestedManyWithoutProposalInput
+  versions?: Prisma.ProposalVersionCreateNestedManyWithoutProposalInput
   statusHistory?: Prisma.ProposalStatusHistoryCreateNestedManyWithoutProposalInput
   deal?: Prisma.DealCreateNestedOneWithoutProposalInput
 }
@@ -403,6 +407,7 @@ export type ProposalUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   milestones?: Prisma.ProposalMilestoneUncheckedCreateNestedManyWithoutProposalInput
+  versions?: Prisma.ProposalVersionUncheckedCreateNestedManyWithoutProposalInput
   statusHistory?: Prisma.ProposalStatusHistoryUncheckedCreateNestedManyWithoutProposalInput
   deal?: Prisma.DealUncheckedCreateNestedOneWithoutProposalInput
 }
@@ -421,6 +426,7 @@ export type ProposalUpdateInput = {
   sender?: Prisma.UserUpdateOneRequiredWithoutProposalsNestedInput
   conversation?: Prisma.ConversationUpdateOneWithoutProposalsNestedInput
   milestones?: Prisma.ProposalMilestoneUpdateManyWithoutProposalNestedInput
+  versions?: Prisma.ProposalVersionUpdateManyWithoutProposalNestedInput
   statusHistory?: Prisma.ProposalStatusHistoryUpdateManyWithoutProposalNestedInput
   deal?: Prisma.DealUpdateOneWithoutProposalNestedInput
 }
@@ -439,6 +445,7 @@ export type ProposalUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   milestones?: Prisma.ProposalMilestoneUncheckedUpdateManyWithoutProposalNestedInput
+  versions?: Prisma.ProposalVersionUncheckedUpdateManyWithoutProposalNestedInput
   statusHistory?: Prisma.ProposalStatusHistoryUncheckedUpdateManyWithoutProposalNestedInput
   deal?: Prisma.DealUncheckedUpdateOneWithoutProposalNestedInput
 }
@@ -695,6 +702,20 @@ export type BigIntFieldUpdateOperationsInput = {
   divide?: bigint | number
 }
 
+export type ProposalCreateNestedOneWithoutVersionsInput = {
+  create?: Prisma.XOR<Prisma.ProposalCreateWithoutVersionsInput, Prisma.ProposalUncheckedCreateWithoutVersionsInput>
+  connectOrCreate?: Prisma.ProposalCreateOrConnectWithoutVersionsInput
+  connect?: Prisma.ProposalWhereUniqueInput
+}
+
+export type ProposalUpdateOneRequiredWithoutVersionsNestedInput = {
+  create?: Prisma.XOR<Prisma.ProposalCreateWithoutVersionsInput, Prisma.ProposalUncheckedCreateWithoutVersionsInput>
+  connectOrCreate?: Prisma.ProposalCreateOrConnectWithoutVersionsInput
+  upsert?: Prisma.ProposalUpsertWithoutVersionsInput
+  connect?: Prisma.ProposalWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProposalUpdateToOneWithWhereWithoutVersionsInput, Prisma.ProposalUpdateWithoutVersionsInput>, Prisma.ProposalUncheckedUpdateWithoutVersionsInput>
+}
+
 export type ProposalCreateNestedOneWithoutMilestonesInput = {
   create?: Prisma.XOR<Prisma.ProposalCreateWithoutMilestonesInput, Prisma.ProposalUncheckedCreateWithoutMilestonesInput>
   connectOrCreate?: Prisma.ProposalCreateOrConnectWithoutMilestonesInput
@@ -750,6 +771,7 @@ export type ProposalCreateWithoutSenderInput = {
   opportunity: Prisma.OpportunityCreateNestedOneWithoutProposalsInput
   conversation?: Prisma.ConversationCreateNestedOneWithoutProposalsInput
   milestones?: Prisma.ProposalMilestoneCreateNestedManyWithoutProposalInput
+  versions?: Prisma.ProposalVersionCreateNestedManyWithoutProposalInput
   statusHistory?: Prisma.ProposalStatusHistoryCreateNestedManyWithoutProposalInput
   deal?: Prisma.DealCreateNestedOneWithoutProposalInput
 }
@@ -767,6 +789,7 @@ export type ProposalUncheckedCreateWithoutSenderInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   milestones?: Prisma.ProposalMilestoneUncheckedCreateNestedManyWithoutProposalInput
+  versions?: Prisma.ProposalVersionUncheckedCreateNestedManyWithoutProposalInput
   statusHistory?: Prisma.ProposalStatusHistoryUncheckedCreateNestedManyWithoutProposalInput
   deal?: Prisma.DealUncheckedCreateNestedOneWithoutProposalInput
 }
@@ -828,6 +851,7 @@ export type ProposalCreateWithoutOpportunityInput = {
   sender: Prisma.UserCreateNestedOneWithoutProposalsInput
   conversation?: Prisma.ConversationCreateNestedOneWithoutProposalsInput
   milestones?: Prisma.ProposalMilestoneCreateNestedManyWithoutProposalInput
+  versions?: Prisma.ProposalVersionCreateNestedManyWithoutProposalInput
   statusHistory?: Prisma.ProposalStatusHistoryCreateNestedManyWithoutProposalInput
   deal?: Prisma.DealCreateNestedOneWithoutProposalInput
 }
@@ -845,6 +869,7 @@ export type ProposalUncheckedCreateWithoutOpportunityInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   milestones?: Prisma.ProposalMilestoneUncheckedCreateNestedManyWithoutProposalInput
+  versions?: Prisma.ProposalVersionUncheckedCreateNestedManyWithoutProposalInput
   statusHistory?: Prisma.ProposalStatusHistoryUncheckedCreateNestedManyWithoutProposalInput
   deal?: Prisma.DealUncheckedCreateNestedOneWithoutProposalInput
 }
@@ -888,6 +913,7 @@ export type ProposalCreateWithoutConversationInput = {
   opportunity: Prisma.OpportunityCreateNestedOneWithoutProposalsInput
   sender: Prisma.UserCreateNestedOneWithoutProposalsInput
   milestones?: Prisma.ProposalMilestoneCreateNestedManyWithoutProposalInput
+  versions?: Prisma.ProposalVersionCreateNestedManyWithoutProposalInput
   statusHistory?: Prisma.ProposalStatusHistoryCreateNestedManyWithoutProposalInput
   deal?: Prisma.DealCreateNestedOneWithoutProposalInput
 }
@@ -905,6 +931,7 @@ export type ProposalUncheckedCreateWithoutConversationInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   milestones?: Prisma.ProposalMilestoneUncheckedCreateNestedManyWithoutProposalInput
+  versions?: Prisma.ProposalVersionUncheckedCreateNestedManyWithoutProposalInput
   statusHistory?: Prisma.ProposalStatusHistoryUncheckedCreateNestedManyWithoutProposalInput
   deal?: Prisma.DealUncheckedCreateNestedOneWithoutProposalInput
 }
@@ -935,6 +962,94 @@ export type ProposalUpdateManyWithWhereWithoutConversationInput = {
   data: Prisma.XOR<Prisma.ProposalUpdateManyMutationInput, Prisma.ProposalUncheckedUpdateManyWithoutConversationInput>
 }
 
+export type ProposalCreateWithoutVersionsInput = {
+  id?: string
+  status?: $Enums.ProposalStatus
+  amountMinor: bigint | number
+  currency?: string
+  description: string
+  deliveryDays: number
+  revisions?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  opportunity: Prisma.OpportunityCreateNestedOneWithoutProposalsInput
+  sender: Prisma.UserCreateNestedOneWithoutProposalsInput
+  conversation?: Prisma.ConversationCreateNestedOneWithoutProposalsInput
+  milestones?: Prisma.ProposalMilestoneCreateNestedManyWithoutProposalInput
+  statusHistory?: Prisma.ProposalStatusHistoryCreateNestedManyWithoutProposalInput
+  deal?: Prisma.DealCreateNestedOneWithoutProposalInput
+}
+
+export type ProposalUncheckedCreateWithoutVersionsInput = {
+  id?: string
+  opportunityId: string
+  senderId: string
+  conversationId?: string | null
+  status?: $Enums.ProposalStatus
+  amountMinor: bigint | number
+  currency?: string
+  description: string
+  deliveryDays: number
+  revisions?: number
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  milestones?: Prisma.ProposalMilestoneUncheckedCreateNestedManyWithoutProposalInput
+  statusHistory?: Prisma.ProposalStatusHistoryUncheckedCreateNestedManyWithoutProposalInput
+  deal?: Prisma.DealUncheckedCreateNestedOneWithoutProposalInput
+}
+
+export type ProposalCreateOrConnectWithoutVersionsInput = {
+  where: Prisma.ProposalWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProposalCreateWithoutVersionsInput, Prisma.ProposalUncheckedCreateWithoutVersionsInput>
+}
+
+export type ProposalUpsertWithoutVersionsInput = {
+  update: Prisma.XOR<Prisma.ProposalUpdateWithoutVersionsInput, Prisma.ProposalUncheckedUpdateWithoutVersionsInput>
+  create: Prisma.XOR<Prisma.ProposalCreateWithoutVersionsInput, Prisma.ProposalUncheckedCreateWithoutVersionsInput>
+  where?: Prisma.ProposalWhereInput
+}
+
+export type ProposalUpdateToOneWithWhereWithoutVersionsInput = {
+  where?: Prisma.ProposalWhereInput
+  data: Prisma.XOR<Prisma.ProposalUpdateWithoutVersionsInput, Prisma.ProposalUncheckedUpdateWithoutVersionsInput>
+}
+
+export type ProposalUpdateWithoutVersionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
+  amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  deliveryDays?: Prisma.IntFieldUpdateOperationsInput | number
+  revisions?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  opportunity?: Prisma.OpportunityUpdateOneRequiredWithoutProposalsNestedInput
+  sender?: Prisma.UserUpdateOneRequiredWithoutProposalsNestedInput
+  conversation?: Prisma.ConversationUpdateOneWithoutProposalsNestedInput
+  milestones?: Prisma.ProposalMilestoneUpdateManyWithoutProposalNestedInput
+  statusHistory?: Prisma.ProposalStatusHistoryUpdateManyWithoutProposalNestedInput
+  deal?: Prisma.DealUpdateOneWithoutProposalNestedInput
+}
+
+export type ProposalUncheckedUpdateWithoutVersionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
+  senderId?: Prisma.StringFieldUpdateOperationsInput | string
+  conversationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumProposalStatusFieldUpdateOperationsInput | $Enums.ProposalStatus
+  amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  deliveryDays?: Prisma.IntFieldUpdateOperationsInput | number
+  revisions?: Prisma.IntFieldUpdateOperationsInput | number
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  milestones?: Prisma.ProposalMilestoneUncheckedUpdateManyWithoutProposalNestedInput
+  statusHistory?: Prisma.ProposalStatusHistoryUncheckedUpdateManyWithoutProposalNestedInput
+  deal?: Prisma.DealUncheckedUpdateOneWithoutProposalNestedInput
+}
+
 export type ProposalCreateWithoutMilestonesInput = {
   id?: string
   status?: $Enums.ProposalStatus
@@ -948,6 +1063,7 @@ export type ProposalCreateWithoutMilestonesInput = {
   opportunity: Prisma.OpportunityCreateNestedOneWithoutProposalsInput
   sender: Prisma.UserCreateNestedOneWithoutProposalsInput
   conversation?: Prisma.ConversationCreateNestedOneWithoutProposalsInput
+  versions?: Prisma.ProposalVersionCreateNestedManyWithoutProposalInput
   statusHistory?: Prisma.ProposalStatusHistoryCreateNestedManyWithoutProposalInput
   deal?: Prisma.DealCreateNestedOneWithoutProposalInput
 }
@@ -965,6 +1081,7 @@ export type ProposalUncheckedCreateWithoutMilestonesInput = {
   revisions?: number
   createdAt?: Date | string
   updatedAt?: Date | string
+  versions?: Prisma.ProposalVersionUncheckedCreateNestedManyWithoutProposalInput
   statusHistory?: Prisma.ProposalStatusHistoryUncheckedCreateNestedManyWithoutProposalInput
   deal?: Prisma.DealUncheckedCreateNestedOneWithoutProposalInput
 }
@@ -998,6 +1115,7 @@ export type ProposalUpdateWithoutMilestonesInput = {
   opportunity?: Prisma.OpportunityUpdateOneRequiredWithoutProposalsNestedInput
   sender?: Prisma.UserUpdateOneRequiredWithoutProposalsNestedInput
   conversation?: Prisma.ConversationUpdateOneWithoutProposalsNestedInput
+  versions?: Prisma.ProposalVersionUpdateManyWithoutProposalNestedInput
   statusHistory?: Prisma.ProposalStatusHistoryUpdateManyWithoutProposalNestedInput
   deal?: Prisma.DealUpdateOneWithoutProposalNestedInput
 }
@@ -1015,6 +1133,7 @@ export type ProposalUncheckedUpdateWithoutMilestonesInput = {
   revisions?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  versions?: Prisma.ProposalVersionUncheckedUpdateManyWithoutProposalNestedInput
   statusHistory?: Prisma.ProposalStatusHistoryUncheckedUpdateManyWithoutProposalNestedInput
   deal?: Prisma.DealUncheckedUpdateOneWithoutProposalNestedInput
 }
@@ -1033,6 +1152,7 @@ export type ProposalCreateWithoutStatusHistoryInput = {
   sender: Prisma.UserCreateNestedOneWithoutProposalsInput
   conversation?: Prisma.ConversationCreateNestedOneWithoutProposalsInput
   milestones?: Prisma.ProposalMilestoneCreateNestedManyWithoutProposalInput
+  versions?: Prisma.ProposalVersionCreateNestedManyWithoutProposalInput
   deal?: Prisma.DealCreateNestedOneWithoutProposalInput
 }
 
@@ -1050,6 +1170,7 @@ export type ProposalUncheckedCreateWithoutStatusHistoryInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   milestones?: Prisma.ProposalMilestoneUncheckedCreateNestedManyWithoutProposalInput
+  versions?: Prisma.ProposalVersionUncheckedCreateNestedManyWithoutProposalInput
   deal?: Prisma.DealUncheckedCreateNestedOneWithoutProposalInput
 }
 
@@ -1083,6 +1204,7 @@ export type ProposalUpdateWithoutStatusHistoryInput = {
   sender?: Prisma.UserUpdateOneRequiredWithoutProposalsNestedInput
   conversation?: Prisma.ConversationUpdateOneWithoutProposalsNestedInput
   milestones?: Prisma.ProposalMilestoneUpdateManyWithoutProposalNestedInput
+  versions?: Prisma.ProposalVersionUpdateManyWithoutProposalNestedInput
   deal?: Prisma.DealUpdateOneWithoutProposalNestedInput
 }
 
@@ -1100,6 +1222,7 @@ export type ProposalUncheckedUpdateWithoutStatusHistoryInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   milestones?: Prisma.ProposalMilestoneUncheckedUpdateManyWithoutProposalNestedInput
+  versions?: Prisma.ProposalVersionUncheckedUpdateManyWithoutProposalNestedInput
   deal?: Prisma.DealUncheckedUpdateOneWithoutProposalNestedInput
 }
 
@@ -1117,6 +1240,7 @@ export type ProposalCreateWithoutDealInput = {
   sender: Prisma.UserCreateNestedOneWithoutProposalsInput
   conversation?: Prisma.ConversationCreateNestedOneWithoutProposalsInput
   milestones?: Prisma.ProposalMilestoneCreateNestedManyWithoutProposalInput
+  versions?: Prisma.ProposalVersionCreateNestedManyWithoutProposalInput
   statusHistory?: Prisma.ProposalStatusHistoryCreateNestedManyWithoutProposalInput
 }
 
@@ -1134,6 +1258,7 @@ export type ProposalUncheckedCreateWithoutDealInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   milestones?: Prisma.ProposalMilestoneUncheckedCreateNestedManyWithoutProposalInput
+  versions?: Prisma.ProposalVersionUncheckedCreateNestedManyWithoutProposalInput
   statusHistory?: Prisma.ProposalStatusHistoryUncheckedCreateNestedManyWithoutProposalInput
 }
 
@@ -1167,6 +1292,7 @@ export type ProposalUpdateWithoutDealInput = {
   sender?: Prisma.UserUpdateOneRequiredWithoutProposalsNestedInput
   conversation?: Prisma.ConversationUpdateOneWithoutProposalsNestedInput
   milestones?: Prisma.ProposalMilestoneUpdateManyWithoutProposalNestedInput
+  versions?: Prisma.ProposalVersionUpdateManyWithoutProposalNestedInput
   statusHistory?: Prisma.ProposalStatusHistoryUpdateManyWithoutProposalNestedInput
 }
 
@@ -1184,6 +1310,7 @@ export type ProposalUncheckedUpdateWithoutDealInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   milestones?: Prisma.ProposalMilestoneUncheckedUpdateManyWithoutProposalNestedInput
+  versions?: Prisma.ProposalVersionUncheckedUpdateManyWithoutProposalNestedInput
   statusHistory?: Prisma.ProposalStatusHistoryUncheckedUpdateManyWithoutProposalNestedInput
 }
 
@@ -1214,6 +1341,7 @@ export type ProposalUpdateWithoutSenderInput = {
   opportunity?: Prisma.OpportunityUpdateOneRequiredWithoutProposalsNestedInput
   conversation?: Prisma.ConversationUpdateOneWithoutProposalsNestedInput
   milestones?: Prisma.ProposalMilestoneUpdateManyWithoutProposalNestedInput
+  versions?: Prisma.ProposalVersionUpdateManyWithoutProposalNestedInput
   statusHistory?: Prisma.ProposalStatusHistoryUpdateManyWithoutProposalNestedInput
   deal?: Prisma.DealUpdateOneWithoutProposalNestedInput
 }
@@ -1231,6 +1359,7 @@ export type ProposalUncheckedUpdateWithoutSenderInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   milestones?: Prisma.ProposalMilestoneUncheckedUpdateManyWithoutProposalNestedInput
+  versions?: Prisma.ProposalVersionUncheckedUpdateManyWithoutProposalNestedInput
   statusHistory?: Prisma.ProposalStatusHistoryUncheckedUpdateManyWithoutProposalNestedInput
   deal?: Prisma.DealUncheckedUpdateOneWithoutProposalNestedInput
 }
@@ -1276,6 +1405,7 @@ export type ProposalUpdateWithoutOpportunityInput = {
   sender?: Prisma.UserUpdateOneRequiredWithoutProposalsNestedInput
   conversation?: Prisma.ConversationUpdateOneWithoutProposalsNestedInput
   milestones?: Prisma.ProposalMilestoneUpdateManyWithoutProposalNestedInput
+  versions?: Prisma.ProposalVersionUpdateManyWithoutProposalNestedInput
   statusHistory?: Prisma.ProposalStatusHistoryUpdateManyWithoutProposalNestedInput
   deal?: Prisma.DealUpdateOneWithoutProposalNestedInput
 }
@@ -1293,6 +1423,7 @@ export type ProposalUncheckedUpdateWithoutOpportunityInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   milestones?: Prisma.ProposalMilestoneUncheckedUpdateManyWithoutProposalNestedInput
+  versions?: Prisma.ProposalVersionUncheckedUpdateManyWithoutProposalNestedInput
   statusHistory?: Prisma.ProposalStatusHistoryUncheckedUpdateManyWithoutProposalNestedInput
   deal?: Prisma.DealUncheckedUpdateOneWithoutProposalNestedInput
 }
@@ -1338,6 +1469,7 @@ export type ProposalUpdateWithoutConversationInput = {
   opportunity?: Prisma.OpportunityUpdateOneRequiredWithoutProposalsNestedInput
   sender?: Prisma.UserUpdateOneRequiredWithoutProposalsNestedInput
   milestones?: Prisma.ProposalMilestoneUpdateManyWithoutProposalNestedInput
+  versions?: Prisma.ProposalVersionUpdateManyWithoutProposalNestedInput
   statusHistory?: Prisma.ProposalStatusHistoryUpdateManyWithoutProposalNestedInput
   deal?: Prisma.DealUpdateOneWithoutProposalNestedInput
 }
@@ -1355,6 +1487,7 @@ export type ProposalUncheckedUpdateWithoutConversationInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   milestones?: Prisma.ProposalMilestoneUncheckedUpdateManyWithoutProposalNestedInput
+  versions?: Prisma.ProposalVersionUncheckedUpdateManyWithoutProposalNestedInput
   statusHistory?: Prisma.ProposalStatusHistoryUncheckedUpdateManyWithoutProposalNestedInput
   deal?: Prisma.DealUncheckedUpdateOneWithoutProposalNestedInput
 }
@@ -1380,11 +1513,13 @@ export type ProposalUncheckedUpdateManyWithoutConversationInput = {
 
 export type ProposalCountOutputType = {
   milestones: number
+  versions: number
   statusHistory: number
 }
 
 export type ProposalCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   milestones?: boolean | ProposalCountOutputTypeCountMilestonesArgs
+  versions?: boolean | ProposalCountOutputTypeCountVersionsArgs
   statusHistory?: boolean | ProposalCountOutputTypeCountStatusHistoryArgs
 }
 
@@ -1403,6 +1538,13 @@ export type ProposalCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Ext
  */
 export type ProposalCountOutputTypeCountMilestonesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.ProposalMilestoneWhereInput
+}
+
+/**
+ * ProposalCountOutputType without action
+ */
+export type ProposalCountOutputTypeCountVersionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ProposalVersionWhereInput
 }
 
 /**
@@ -1430,6 +1572,7 @@ export type ProposalSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   sender?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   conversation?: boolean | Prisma.Proposal$conversationArgs<ExtArgs>
   milestones?: boolean | Prisma.Proposal$milestonesArgs<ExtArgs>
+  versions?: boolean | Prisma.Proposal$versionsArgs<ExtArgs>
   statusHistory?: boolean | Prisma.Proposal$statusHistoryArgs<ExtArgs>
   deal?: boolean | Prisma.Proposal$dealArgs<ExtArgs>
   _count?: boolean | Prisma.ProposalCountOutputTypeDefaultArgs<ExtArgs>
@@ -1492,6 +1635,7 @@ export type ProposalInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
   sender?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   conversation?: boolean | Prisma.Proposal$conversationArgs<ExtArgs>
   milestones?: boolean | Prisma.Proposal$milestonesArgs<ExtArgs>
+  versions?: boolean | Prisma.Proposal$versionsArgs<ExtArgs>
   statusHistory?: boolean | Prisma.Proposal$statusHistoryArgs<ExtArgs>
   deal?: boolean | Prisma.Proposal$dealArgs<ExtArgs>
   _count?: boolean | Prisma.ProposalCountOutputTypeDefaultArgs<ExtArgs>
@@ -1514,6 +1658,7 @@ export type $ProposalPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     sender: Prisma.$UserPayload<ExtArgs>
     conversation: Prisma.$ConversationPayload<ExtArgs> | null
     milestones: Prisma.$ProposalMilestonePayload<ExtArgs>[]
+    versions: Prisma.$ProposalVersionPayload<ExtArgs>[]
     statusHistory: Prisma.$ProposalStatusHistoryPayload<ExtArgs>[]
     deal: Prisma.$DealPayload<ExtArgs> | null
   }
@@ -1928,6 +2073,7 @@ export interface Prisma__ProposalClient<T, Null = never, ExtArgs extends runtime
   sender<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   conversation<T extends Prisma.Proposal$conversationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Proposal$conversationArgs<ExtArgs>>): Prisma.Prisma__ConversationClient<runtime.Types.Result.GetResult<Prisma.$ConversationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   milestones<T extends Prisma.Proposal$milestonesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Proposal$milestonesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProposalMilestonePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  versions<T extends Prisma.Proposal$versionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Proposal$versionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProposalVersionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   statusHistory<T extends Prisma.Proposal$statusHistoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Proposal$statusHistoryArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ProposalStatusHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   deal<T extends Prisma.Proposal$dealArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Proposal$dealArgs<ExtArgs>>): Prisma.Prisma__DealClient<runtime.Types.Result.GetResult<Prisma.$DealPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
@@ -2412,6 +2558,30 @@ export type Proposal$milestonesArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.ProposalMilestoneScalarFieldEnum | Prisma.ProposalMilestoneScalarFieldEnum[]
+}
+
+/**
+ * Proposal.versions
+ */
+export type Proposal$versionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ProposalVersion
+   */
+  select?: Prisma.ProposalVersionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ProposalVersion
+   */
+  omit?: Prisma.ProposalVersionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ProposalVersionInclude<ExtArgs> | null
+  where?: Prisma.ProposalVersionWhereInput
+  orderBy?: Prisma.ProposalVersionOrderByWithRelationInput | Prisma.ProposalVersionOrderByWithRelationInput[]
+  cursor?: Prisma.ProposalVersionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ProposalVersionScalarFieldEnum | Prisma.ProposalVersionScalarFieldEnum[]
 }
 
 /**

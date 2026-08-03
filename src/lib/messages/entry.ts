@@ -6,6 +6,12 @@ export type ExactMessageTarget = {
   messageId: string;
 };
 
+export type ExactConversationEventTarget = {
+  conversationId: string;
+  eventId: string;
+  href: string;
+};
+
 const routeIdPattern = /^[A-Za-z0-9_-]+$/;
 
 export function parseExactMessageTarget(value: string): ExactMessageTarget | null {
@@ -41,6 +47,41 @@ export function parseExactMessageTarget(value: string): ExactMessageTarget | nul
   }
 }
 
+export function parseExactConversationEventTarget(
+  value: string,
+): ExactConversationEventTarget | null {
+  try {
+    const url = new URL(value, "https://perx.local");
+    const segments = url.pathname.split("/").filter(Boolean);
+    const eventValues = url.searchParams.getAll("event");
+    const queryEntries = [...url.searchParams.entries()];
+
+    if (
+      url.origin !== "https://perx.local" ||
+      segments.length !== 3 ||
+      segments[0] !== "app" ||
+      segments[1] !== "messages" ||
+      !routeIdPattern.test(segments[2] ?? "") ||
+      eventValues.length !== 1 ||
+      queryEntries.length !== 1 ||
+      queryEntries[0]?.[0] !== "event" ||
+      !routeIdPattern.test(eventValues[0] ?? "")
+    ) {
+      return null;
+    }
+
+    const conversationId = segments[2]!;
+    const eventId = eventValues[0]!;
+    return {
+      conversationId,
+      eventId,
+      href: `/app/messages/${conversationId}?event=${eventId}`,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function findOwnedMessageTarget(
   userId: string,
   target: Pick<ExactMessageTarget, "conversationId" | "messageId">,
@@ -49,7 +90,7 @@ export async function findOwnedMessageTarget(
     select: { conversationId: true, id: true, senderId: true },
     where: {
       conversation: {
-        participants: { some: { userId } },
+        participants: { some: { removedAt: null, userId } },
         status: "ACTIVE",
       },
       conversationId: target.conversationId,
@@ -58,6 +99,22 @@ export async function findOwnedMessageTarget(
       sender: {
         conversations: { some: { conversationId: target.conversationId } },
       },
+    },
+  });
+}
+
+export async function findOwnedConversationEventTarget(
+  userId: string,
+  target: Pick<ExactConversationEventTarget, "conversationId" | "eventId">,
+) {
+  return getPrisma().conversationEvent.findFirst({
+    where: {
+      conversation: {
+        participants: { some: { removedAt: null, userId } },
+        status: "ACTIVE",
+      },
+      conversationId: target.conversationId,
+      id: target.eventId,
     },
   });
 }

@@ -330,9 +330,9 @@ export const featureRegistry = [
 export type FeatureId = (typeof featureRegistry)[number]["id"];
 
 export const authenticatedMobileNavigation = [
-  { featureId: "home" },
   { featureId: "connections" },
-  { featureId: "create-post", prominent: true },
+  { featureId: "create-post" },
+  { featureId: "home", prominent: true },
   { featureId: "messages" },
   { featureId: "profile" },
 ] as const satisfies readonly {

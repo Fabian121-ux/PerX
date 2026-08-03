@@ -3,7 +3,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowRight, Search, X } from "lucide-react";
 import Link from "next/link";
-import { useState, type ReactElement } from "react";
+import { useRef, useState, type ReactElement } from "react";
 
 import {
   featureGroups,
@@ -20,6 +20,7 @@ export function FeatureDirectory({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const home = getFeatureById("home");
   const HomeIcon = home.icon;
   const matches = searchFeatures(query, { roles: userRoles });
@@ -37,7 +38,13 @@ export function FeatureDirectory({
       <Dialog.Trigger asChild>{children}</Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[70] bg-[color:var(--px-overlay)] backdrop-blur-[2px]" />
-        <Dialog.Content className="fixed inset-x-0 bottom-0 z-[71] flex max-h-[94dvh] flex-col overflow-hidden rounded-t-[28px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] shadow-[var(--px-shadow-strong)] focus:outline-none sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:w-[min(960px,calc(100vw-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[28px]">
+        <Dialog.Content
+          className="fixed inset-x-0 bottom-0 z-[71] flex max-h-[94dvh] flex-col overflow-hidden rounded-t-[28px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] shadow-[var(--px-shadow-strong)] focus:outline-none sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:w-[min(960px,calc(100vw-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[28px]"
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            closeButtonRef.current?.focus();
+          }}
+        >
           <div className="flex items-start justify-between gap-4 border-b border-[color:var(--px-border)] px-4 py-4 sm:px-6 sm:py-5">
             <div className="min-w-0">
               <Dialog.Title className="text-xl font-black text-[color:var(--px-text)] sm:text-2xl">
@@ -51,6 +58,7 @@ export function FeatureDirectory({
               <button
                 aria-label="Close feature directory"
                 className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[color:var(--px-text-muted)] transition hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                ref={closeButtonRef}
                 type="button"
               >
                 <X aria-hidden size={20} />
@@ -96,7 +104,6 @@ export function FeatureDirectory({
                 Search PerX features
               </label>
               <input
-                autoFocus
                 className="h-12 w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] pl-11 pr-12 text-sm text-[color:var(--px-text)] outline-none placeholder:text-[color:var(--px-text-muted)] focus:border-[color:var(--px-primary)] focus:ring-2 focus:ring-[color:var(--px-focus)]/25"
                 id="feature-directory-search"
                 onChange={(event) => setQuery(event.target.value)}

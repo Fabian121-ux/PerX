@@ -413,6 +413,9 @@ export const ModelName = {
   MessageReadReceipt: 'MessageReadReceipt',
   BlockedUser: 'BlockedUser',
   Proposal: 'Proposal',
+  ProposalVersion: 'ProposalVersion',
+  ProposalVersionMilestone: 'ProposalVersionMilestone',
+  ConversationEvent: 'ConversationEvent',
   ProposalMilestone: 'ProposalMilestone',
   ProposalStatusHistory: 'ProposalStatusHistory',
   Deal: 'Deal',
@@ -452,7 +455,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "role" | "userRole" | "profile" | "profileSkill" | "portfolioItem" | "workHistory" | "verificationRequest" | "opportunityCategory" | "opportunity" | "opportunityImage" | "opportunityBookmark" | "opportunityReport" | "userReport" | "moderationCase" | "moderationCaseEvent" | "moderationMessageScope" | "enforcementAction" | "enforcementAppeal" | "opportunityStatusHistory" | "conversation" | "conversationParticipant" | "message" | "messageEdit" | "messageAttachment" | "messageReadReceipt" | "blockedUser" | "proposal" | "proposalMilestone" | "proposalStatusHistory" | "deal" | "dealParticipant" | "dealMilestone" | "delivery" | "approval" | "release" | "refund" | "dispute" | "ledgerEntry" | "escrowStatusHistory" | "review" | "trustSignal" | "notification" | "adminBroadcast" | "broadcastDelivery" | "auditLog" | "moderationAction" | "connection" | "profileBookmark" | "supportTicket" | "ticketMessage" | "sponsoredContent"
+    modelProps: "user" | "session" | "role" | "userRole" | "profile" | "profileSkill" | "portfolioItem" | "workHistory" | "verificationRequest" | "opportunityCategory" | "opportunity" | "opportunityImage" | "opportunityBookmark" | "opportunityReport" | "userReport" | "moderationCase" | "moderationCaseEvent" | "moderationMessageScope" | "enforcementAction" | "enforcementAppeal" | "opportunityStatusHistory" | "conversation" | "conversationParticipant" | "message" | "messageEdit" | "messageAttachment" | "messageReadReceipt" | "blockedUser" | "proposal" | "proposalVersion" | "proposalVersionMilestone" | "conversationEvent" | "proposalMilestone" | "proposalStatusHistory" | "deal" | "dealParticipant" | "dealMilestone" | "delivery" | "approval" | "release" | "refund" | "dispute" | "ledgerEntry" | "escrowStatusHistory" | "review" | "trustSignal" | "notification" | "adminBroadcast" | "broadcastDelivery" | "auditLog" | "moderationAction" | "connection" | "profileBookmark" | "supportTicket" | "ticketMessage" | "sponsoredContent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -2599,6 +2602,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ProposalCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ProposalCountAggregateOutputType> | number
+        }
+      }
+    }
+    ProposalVersion: {
+      payload: Prisma.$ProposalVersionPayload<ExtArgs>
+      fields: Prisma.ProposalVersionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ProposalVersionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ProposalVersionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionPayload>
+        }
+        findFirst: {
+          args: Prisma.ProposalVersionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ProposalVersionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionPayload>
+        }
+        findMany: {
+          args: Prisma.ProposalVersionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionPayload>[]
+        }
+        create: {
+          args: Prisma.ProposalVersionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionPayload>
+        }
+        createMany: {
+          args: Prisma.ProposalVersionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ProposalVersionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionPayload>[]
+        }
+        delete: {
+          args: Prisma.ProposalVersionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionPayload>
+        }
+        update: {
+          args: Prisma.ProposalVersionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionPayload>
+        }
+        deleteMany: {
+          args: Prisma.ProposalVersionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ProposalVersionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ProposalVersionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionPayload>[]
+        }
+        upsert: {
+          args: Prisma.ProposalVersionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionPayload>
+        }
+        aggregate: {
+          args: Prisma.ProposalVersionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProposalVersion>
+        }
+        groupBy: {
+          args: Prisma.ProposalVersionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProposalVersionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ProposalVersionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProposalVersionCountAggregateOutputType> | number
+        }
+      }
+    }
+    ProposalVersionMilestone: {
+      payload: Prisma.$ProposalVersionMilestonePayload<ExtArgs>
+      fields: Prisma.ProposalVersionMilestoneFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ProposalVersionMilestoneFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionMilestonePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ProposalVersionMilestoneFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionMilestonePayload>
+        }
+        findFirst: {
+          args: Prisma.ProposalVersionMilestoneFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionMilestonePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ProposalVersionMilestoneFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionMilestonePayload>
+        }
+        findMany: {
+          args: Prisma.ProposalVersionMilestoneFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionMilestonePayload>[]
+        }
+        create: {
+          args: Prisma.ProposalVersionMilestoneCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionMilestonePayload>
+        }
+        createMany: {
+          args: Prisma.ProposalVersionMilestoneCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ProposalVersionMilestoneCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionMilestonePayload>[]
+        }
+        delete: {
+          args: Prisma.ProposalVersionMilestoneDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionMilestonePayload>
+        }
+        update: {
+          args: Prisma.ProposalVersionMilestoneUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionMilestonePayload>
+        }
+        deleteMany: {
+          args: Prisma.ProposalVersionMilestoneDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ProposalVersionMilestoneUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ProposalVersionMilestoneUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionMilestonePayload>[]
+        }
+        upsert: {
+          args: Prisma.ProposalVersionMilestoneUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProposalVersionMilestonePayload>
+        }
+        aggregate: {
+          args: Prisma.ProposalVersionMilestoneAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProposalVersionMilestone>
+        }
+        groupBy: {
+          args: Prisma.ProposalVersionMilestoneGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProposalVersionMilestoneGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ProposalVersionMilestoneCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProposalVersionMilestoneCountAggregateOutputType> | number
+        }
+      }
+    }
+    ConversationEvent: {
+      payload: Prisma.$ConversationEventPayload<ExtArgs>
+      fields: Prisma.ConversationEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ConversationEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ConversationEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationEventPayload>
+        }
+        findFirst: {
+          args: Prisma.ConversationEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ConversationEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationEventPayload>
+        }
+        findMany: {
+          args: Prisma.ConversationEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationEventPayload>[]
+        }
+        create: {
+          args: Prisma.ConversationEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationEventPayload>
+        }
+        createMany: {
+          args: Prisma.ConversationEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ConversationEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationEventPayload>[]
+        }
+        delete: {
+          args: Prisma.ConversationEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationEventPayload>
+        }
+        update: {
+          args: Prisma.ConversationEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.ConversationEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ConversationEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ConversationEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.ConversationEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ConversationEventPayload>
+        }
+        aggregate: {
+          args: Prisma.ConversationEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateConversationEvent>
+        }
+        groupBy: {
+          args: Prisma.ConversationEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ConversationEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ConversationEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ConversationEventCountAggregateOutputType> | number
         }
       }
     }
@@ -4776,6 +5001,7 @@ export const ConversationParticipantScalarFieldEnum = {
   conversationId: 'conversationId',
   userId: 'userId',
   lastReadAt: 'lastReadAt',
+  removedAt: 'removedAt',
   createdAt: 'createdAt'
 } as const
 
@@ -4862,6 +5088,55 @@ export const ProposalScalarFieldEnum = {
 export type ProposalScalarFieldEnum = (typeof ProposalScalarFieldEnum)[keyof typeof ProposalScalarFieldEnum]
 
 
+export const ProposalVersionScalarFieldEnum = {
+  id: 'id',
+  proposalId: 'proposalId',
+  versionNumber: 'versionNumber',
+  status: 'status',
+  amountMinor: 'amountMinor',
+  currency: 'currency',
+  description: 'description',
+  deliveryDays: 'deliveryDays',
+  includedRevisions: 'includedRevisions',
+  createdById: 'createdById',
+  supersedesVersionId: 'supersedesVersionId',
+  submittedAt: 'submittedAt',
+  acceptedAt: 'acceptedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProposalVersionScalarFieldEnum = (typeof ProposalVersionScalarFieldEnum)[keyof typeof ProposalVersionScalarFieldEnum]
+
+
+export const ProposalVersionMilestoneScalarFieldEnum = {
+  id: 'id',
+  proposalVersionId: 'proposalVersionId',
+  position: 'position',
+  title: 'title',
+  description: 'description',
+  amountMinor: 'amountMinor',
+  dueInDays: 'dueInDays'
+} as const
+
+export type ProposalVersionMilestoneScalarFieldEnum = (typeof ProposalVersionMilestoneScalarFieldEnum)[keyof typeof ProposalVersionMilestoneScalarFieldEnum]
+
+
+export const ConversationEventScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  actorId: 'actorId',
+  type: 'type',
+  proposalVersionId: 'proposalVersionId',
+  dealId: 'dealId',
+  snapshot: 'snapshot',
+  idempotencyKey: 'idempotencyKey',
+  createdAt: 'createdAt'
+} as const
+
+export type ConversationEventScalarFieldEnum = (typeof ConversationEventScalarFieldEnum)[keyof typeof ConversationEventScalarFieldEnum]
+
+
 export const ProposalMilestoneScalarFieldEnum = {
   id: 'id',
   proposalId: 'proposalId',
@@ -4890,8 +5165,10 @@ export type ProposalStatusHistoryScalarFieldEnum = (typeof ProposalStatusHistory
 export const DealScalarFieldEnum = {
   id: 'id',
   proposalId: 'proposalId',
+  proposalVersionId: 'proposalVersionId',
   opportunityId: 'opportunityId',
   status: 'status',
+  settlementMode: 'settlementMode',
   valueMinor: 'valueMinor',
   currency: 'currency',
   idempotencyKey: 'idempotencyKey',
@@ -4945,6 +5222,7 @@ export type DeliveryScalarFieldEnum = (typeof DeliveryScalarFieldEnum)[keyof typ
 export const ApprovalScalarFieldEnum = {
   id: 'id',
   dealId: 'dealId',
+  milestoneId: 'milestoneId',
   actorId: 'actorId',
   note: 'note',
   createdAt: 'createdAt'
@@ -4956,6 +5234,7 @@ export type ApprovalScalarFieldEnum = (typeof ApprovalScalarFieldEnum)[keyof typ
 export const ReleaseScalarFieldEnum = {
   id: 'id',
   dealId: 'dealId',
+  milestoneId: 'milestoneId',
   actorId: 'actorId',
   amountMinor: 'amountMinor',
   currency: 'currency',
@@ -5202,6 +5481,13 @@ export const NullableJsonNullValueInput = {
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {
@@ -5579,6 +5865,34 @@ export type ListEnumProposalStatusFieldRefInput<$PrismaModel> = FieldRefInputTyp
 
 
 /**
+ * Reference to a field of type 'ProposalVersionStatus'
+ */
+export type EnumProposalVersionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProposalVersionStatus'>
+
+
+
+/**
+ * Reference to a field of type 'ProposalVersionStatus[]'
+ */
+export type ListEnumProposalVersionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProposalVersionStatus[]'>
+
+
+
+/**
+ * Reference to a field of type 'ConversationEventType'
+ */
+export type EnumConversationEventTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ConversationEventType'>
+
+
+
+/**
+ * Reference to a field of type 'ConversationEventType[]'
+ */
+export type ListEnumConversationEventTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ConversationEventType[]'>
+
+
+
+/**
  * Reference to a field of type 'DealStatus'
  */
 export type EnumDealStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DealStatus'>
@@ -5590,6 +5904,20 @@ export type EnumDealStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$Prism
  */
 export type ListEnumDealStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DealStatus[]'>
     
+
+
+/**
+ * Reference to a field of type 'DealSettlementMode'
+ */
+export type EnumDealSettlementModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DealSettlementMode'>
+
+
+
+/**
+ * Reference to a field of type 'DealSettlementMode[]'
+ */
+export type ListEnumDealSettlementModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DealSettlementMode[]'>
+
 
 
 /**
@@ -5856,6 +6184,9 @@ export type GlobalOmitConfig = {
   messageReadReceipt?: Prisma.MessageReadReceiptOmit
   blockedUser?: Prisma.BlockedUserOmit
   proposal?: Prisma.ProposalOmit
+  proposalVersion?: Prisma.ProposalVersionOmit
+  proposalVersionMilestone?: Prisma.ProposalVersionMilestoneOmit
+  conversationEvent?: Prisma.ConversationEventOmit
   proposalMilestone?: Prisma.ProposalMilestoneOmit
   proposalStatusHistory?: Prisma.ProposalStatusHistoryOmit
   deal?: Prisma.DealOmit
@@ -5942,4 +6273,3 @@ export type PrismaAction =
  * `PrismaClient` proxy available in interactive transactions.
  */
 export type TransactionClient = Omit<DefaultPrismaClient, runtime.ITXClientDenyList>
-

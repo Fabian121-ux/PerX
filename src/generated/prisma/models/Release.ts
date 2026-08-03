@@ -37,6 +37,7 @@ export type ReleaseSumAggregateOutputType = {
 export type ReleaseMinAggregateOutputType = {
   id: string | null
   dealId: string | null
+  milestoneId: string | null
   actorId: string | null
   amountMinor: bigint | null
   currency: string | null
@@ -47,6 +48,7 @@ export type ReleaseMinAggregateOutputType = {
 export type ReleaseMaxAggregateOutputType = {
   id: string | null
   dealId: string | null
+  milestoneId: string | null
   actorId: string | null
   amountMinor: bigint | null
   currency: string | null
@@ -57,6 +59,7 @@ export type ReleaseMaxAggregateOutputType = {
 export type ReleaseCountAggregateOutputType = {
   id: number
   dealId: number
+  milestoneId: number
   actorId: number
   amountMinor: number
   currency: number
@@ -77,6 +80,7 @@ export type ReleaseSumAggregateInputType = {
 export type ReleaseMinAggregateInputType = {
   id?: true
   dealId?: true
+  milestoneId?: true
   actorId?: true
   amountMinor?: true
   currency?: true
@@ -87,6 +91,7 @@ export type ReleaseMinAggregateInputType = {
 export type ReleaseMaxAggregateInputType = {
   id?: true
   dealId?: true
+  milestoneId?: true
   actorId?: true
   amountMinor?: true
   currency?: true
@@ -97,6 +102,7 @@ export type ReleaseMaxAggregateInputType = {
 export type ReleaseCountAggregateInputType = {
   id?: true
   dealId?: true
+  milestoneId?: true
   actorId?: true
   amountMinor?: true
   currency?: true
@@ -194,6 +200,7 @@ export type ReleaseGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 export type ReleaseGroupByOutputType = {
   id: string
   dealId: string
+  milestoneId: string | null
   actorId: string
   amountMinor: bigint
   currency: string
@@ -227,24 +234,28 @@ export type ReleaseWhereInput = {
   NOT?: Prisma.ReleaseWhereInput | Prisma.ReleaseWhereInput[]
   id?: Prisma.StringFilter<"Release"> | string
   dealId?: Prisma.StringFilter<"Release"> | string
+  milestoneId?: Prisma.StringNullableFilter<"Release"> | string | null
   actorId?: Prisma.StringFilter<"Release"> | string
   amountMinor?: Prisma.BigIntFilter<"Release"> | bigint | number
   currency?: Prisma.StringFilter<"Release"> | string
   idempotencyKey?: Prisma.StringFilter<"Release"> | string
   createdAt?: Prisma.DateTimeFilter<"Release"> | Date | string
   deal?: Prisma.XOR<Prisma.DealScalarRelationFilter, Prisma.DealWhereInput>
+  milestone?: Prisma.XOR<Prisma.DealMilestoneNullableScalarRelationFilter, Prisma.DealMilestoneWhereInput> | null
   actor?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type ReleaseOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   dealId?: Prisma.SortOrder
+  milestoneId?: Prisma.SortOrderInput | Prisma.SortOrder
   actorId?: Prisma.SortOrder
   amountMinor?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   deal?: Prisma.DealOrderByWithRelationInput
+  milestone?: Prisma.DealMilestoneOrderByWithRelationInput
   actor?: Prisma.UserOrderByWithRelationInput
 }
 
@@ -255,17 +266,20 @@ export type ReleaseWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ReleaseWhereInput[]
   NOT?: Prisma.ReleaseWhereInput | Prisma.ReleaseWhereInput[]
   dealId?: Prisma.StringFilter<"Release"> | string
+  milestoneId?: Prisma.StringNullableFilter<"Release"> | string | null
   actorId?: Prisma.StringFilter<"Release"> | string
   amountMinor?: Prisma.BigIntFilter<"Release"> | bigint | number
   currency?: Prisma.StringFilter<"Release"> | string
   createdAt?: Prisma.DateTimeFilter<"Release"> | Date | string
   deal?: Prisma.XOR<Prisma.DealScalarRelationFilter, Prisma.DealWhereInput>
+  milestone?: Prisma.XOR<Prisma.DealMilestoneNullableScalarRelationFilter, Prisma.DealMilestoneWhereInput> | null
   actor?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id" | "idempotencyKey">
 
 export type ReleaseOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   dealId?: Prisma.SortOrder
+  milestoneId?: Prisma.SortOrderInput | Prisma.SortOrder
   actorId?: Prisma.SortOrder
   amountMinor?: Prisma.SortOrder
   currency?: Prisma.SortOrder
@@ -284,6 +298,7 @@ export type ReleaseScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ReleaseScalarWhereWithAggregatesInput | Prisma.ReleaseScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Release"> | string
   dealId?: Prisma.StringWithAggregatesFilter<"Release"> | string
+  milestoneId?: Prisma.StringNullableWithAggregatesFilter<"Release"> | string | null
   actorId?: Prisma.StringWithAggregatesFilter<"Release"> | string
   amountMinor?: Prisma.BigIntWithAggregatesFilter<"Release"> | bigint | number
   currency?: Prisma.StringWithAggregatesFilter<"Release"> | string
@@ -298,12 +313,14 @@ export type ReleaseCreateInput = {
   idempotencyKey: string
   createdAt?: Date | string
   deal: Prisma.DealCreateNestedOneWithoutReleasesInput
+  milestone?: Prisma.DealMilestoneCreateNestedOneWithoutReleasesInput
   actor: Prisma.UserCreateNestedOneWithoutReleasesInput
 }
 
 export type ReleaseUncheckedCreateInput = {
   id?: string
   dealId: string
+  milestoneId?: string | null
   actorId: string
   amountMinor: bigint | number
   currency: string
@@ -318,12 +335,14 @@ export type ReleaseUpdateInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deal?: Prisma.DealUpdateOneRequiredWithoutReleasesNestedInput
+  milestone?: Prisma.DealMilestoneUpdateOneWithoutReleasesNestedInput
   actor?: Prisma.UserUpdateOneRequiredWithoutReleasesNestedInput
 }
 
 export type ReleaseUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   dealId?: Prisma.StringFieldUpdateOperationsInput | string
+  milestoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
@@ -334,6 +353,7 @@ export type ReleaseUncheckedUpdateInput = {
 export type ReleaseCreateManyInput = {
   id?: string
   dealId: string
+  milestoneId?: string | null
   actorId: string
   amountMinor: bigint | number
   currency: string
@@ -352,6 +372,7 @@ export type ReleaseUpdateManyMutationInput = {
 export type ReleaseUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   dealId?: Prisma.StringFieldUpdateOperationsInput | string
+  milestoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
@@ -372,6 +393,7 @@ export type ReleaseOrderByRelationAggregateInput = {
 export type ReleaseCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   dealId?: Prisma.SortOrder
+  milestoneId?: Prisma.SortOrder
   actorId?: Prisma.SortOrder
   amountMinor?: Prisma.SortOrder
   currency?: Prisma.SortOrder
@@ -386,6 +408,7 @@ export type ReleaseAvgOrderByAggregateInput = {
 export type ReleaseMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   dealId?: Prisma.SortOrder
+  milestoneId?: Prisma.SortOrder
   actorId?: Prisma.SortOrder
   amountMinor?: Prisma.SortOrder
   currency?: Prisma.SortOrder
@@ -396,6 +419,7 @@ export type ReleaseMaxOrderByAggregateInput = {
 export type ReleaseMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   dealId?: Prisma.SortOrder
+  milestoneId?: Prisma.SortOrder
   actorId?: Prisma.SortOrder
   amountMinor?: Prisma.SortOrder
   currency?: Prisma.SortOrder
@@ -491,6 +515,48 @@ export type ReleaseUncheckedUpdateManyWithoutDealNestedInput = {
   deleteMany?: Prisma.ReleaseScalarWhereInput | Prisma.ReleaseScalarWhereInput[]
 }
 
+export type ReleaseCreateNestedManyWithoutMilestoneInput = {
+  create?: Prisma.XOR<Prisma.ReleaseCreateWithoutMilestoneInput, Prisma.ReleaseUncheckedCreateWithoutMilestoneInput> | Prisma.ReleaseCreateWithoutMilestoneInput[] | Prisma.ReleaseUncheckedCreateWithoutMilestoneInput[]
+  connectOrCreate?: Prisma.ReleaseCreateOrConnectWithoutMilestoneInput | Prisma.ReleaseCreateOrConnectWithoutMilestoneInput[]
+  createMany?: Prisma.ReleaseCreateManyMilestoneInputEnvelope
+  connect?: Prisma.ReleaseWhereUniqueInput | Prisma.ReleaseWhereUniqueInput[]
+}
+
+export type ReleaseUncheckedCreateNestedManyWithoutMilestoneInput = {
+  create?: Prisma.XOR<Prisma.ReleaseCreateWithoutMilestoneInput, Prisma.ReleaseUncheckedCreateWithoutMilestoneInput> | Prisma.ReleaseCreateWithoutMilestoneInput[] | Prisma.ReleaseUncheckedCreateWithoutMilestoneInput[]
+  connectOrCreate?: Prisma.ReleaseCreateOrConnectWithoutMilestoneInput | Prisma.ReleaseCreateOrConnectWithoutMilestoneInput[]
+  createMany?: Prisma.ReleaseCreateManyMilestoneInputEnvelope
+  connect?: Prisma.ReleaseWhereUniqueInput | Prisma.ReleaseWhereUniqueInput[]
+}
+
+export type ReleaseUpdateManyWithoutMilestoneNestedInput = {
+  create?: Prisma.XOR<Prisma.ReleaseCreateWithoutMilestoneInput, Prisma.ReleaseUncheckedCreateWithoutMilestoneInput> | Prisma.ReleaseCreateWithoutMilestoneInput[] | Prisma.ReleaseUncheckedCreateWithoutMilestoneInput[]
+  connectOrCreate?: Prisma.ReleaseCreateOrConnectWithoutMilestoneInput | Prisma.ReleaseCreateOrConnectWithoutMilestoneInput[]
+  upsert?: Prisma.ReleaseUpsertWithWhereUniqueWithoutMilestoneInput | Prisma.ReleaseUpsertWithWhereUniqueWithoutMilestoneInput[]
+  createMany?: Prisma.ReleaseCreateManyMilestoneInputEnvelope
+  set?: Prisma.ReleaseWhereUniqueInput | Prisma.ReleaseWhereUniqueInput[]
+  disconnect?: Prisma.ReleaseWhereUniqueInput | Prisma.ReleaseWhereUniqueInput[]
+  delete?: Prisma.ReleaseWhereUniqueInput | Prisma.ReleaseWhereUniqueInput[]
+  connect?: Prisma.ReleaseWhereUniqueInput | Prisma.ReleaseWhereUniqueInput[]
+  update?: Prisma.ReleaseUpdateWithWhereUniqueWithoutMilestoneInput | Prisma.ReleaseUpdateWithWhereUniqueWithoutMilestoneInput[]
+  updateMany?: Prisma.ReleaseUpdateManyWithWhereWithoutMilestoneInput | Prisma.ReleaseUpdateManyWithWhereWithoutMilestoneInput[]
+  deleteMany?: Prisma.ReleaseScalarWhereInput | Prisma.ReleaseScalarWhereInput[]
+}
+
+export type ReleaseUncheckedUpdateManyWithoutMilestoneNestedInput = {
+  create?: Prisma.XOR<Prisma.ReleaseCreateWithoutMilestoneInput, Prisma.ReleaseUncheckedCreateWithoutMilestoneInput> | Prisma.ReleaseCreateWithoutMilestoneInput[] | Prisma.ReleaseUncheckedCreateWithoutMilestoneInput[]
+  connectOrCreate?: Prisma.ReleaseCreateOrConnectWithoutMilestoneInput | Prisma.ReleaseCreateOrConnectWithoutMilestoneInput[]
+  upsert?: Prisma.ReleaseUpsertWithWhereUniqueWithoutMilestoneInput | Prisma.ReleaseUpsertWithWhereUniqueWithoutMilestoneInput[]
+  createMany?: Prisma.ReleaseCreateManyMilestoneInputEnvelope
+  set?: Prisma.ReleaseWhereUniqueInput | Prisma.ReleaseWhereUniqueInput[]
+  disconnect?: Prisma.ReleaseWhereUniqueInput | Prisma.ReleaseWhereUniqueInput[]
+  delete?: Prisma.ReleaseWhereUniqueInput | Prisma.ReleaseWhereUniqueInput[]
+  connect?: Prisma.ReleaseWhereUniqueInput | Prisma.ReleaseWhereUniqueInput[]
+  update?: Prisma.ReleaseUpdateWithWhereUniqueWithoutMilestoneInput | Prisma.ReleaseUpdateWithWhereUniqueWithoutMilestoneInput[]
+  updateMany?: Prisma.ReleaseUpdateManyWithWhereWithoutMilestoneInput | Prisma.ReleaseUpdateManyWithWhereWithoutMilestoneInput[]
+  deleteMany?: Prisma.ReleaseScalarWhereInput | Prisma.ReleaseScalarWhereInput[]
+}
+
 export type ReleaseCreateWithoutActorInput = {
   id?: string
   amountMinor: bigint | number
@@ -498,11 +564,13 @@ export type ReleaseCreateWithoutActorInput = {
   idempotencyKey: string
   createdAt?: Date | string
   deal: Prisma.DealCreateNestedOneWithoutReleasesInput
+  milestone?: Prisma.DealMilestoneCreateNestedOneWithoutReleasesInput
 }
 
 export type ReleaseUncheckedCreateWithoutActorInput = {
   id?: string
   dealId: string
+  milestoneId?: string | null
   amountMinor: bigint | number
   currency: string
   idempotencyKey: string
@@ -541,6 +609,7 @@ export type ReleaseScalarWhereInput = {
   NOT?: Prisma.ReleaseScalarWhereInput | Prisma.ReleaseScalarWhereInput[]
   id?: Prisma.StringFilter<"Release"> | string
   dealId?: Prisma.StringFilter<"Release"> | string
+  milestoneId?: Prisma.StringNullableFilter<"Release"> | string | null
   actorId?: Prisma.StringFilter<"Release"> | string
   amountMinor?: Prisma.BigIntFilter<"Release"> | bigint | number
   currency?: Prisma.StringFilter<"Release"> | string
@@ -554,11 +623,13 @@ export type ReleaseCreateWithoutDealInput = {
   currency: string
   idempotencyKey: string
   createdAt?: Date | string
+  milestone?: Prisma.DealMilestoneCreateNestedOneWithoutReleasesInput
   actor: Prisma.UserCreateNestedOneWithoutReleasesInput
 }
 
 export type ReleaseUncheckedCreateWithoutDealInput = {
   id?: string
+  milestoneId?: string | null
   actorId: string
   amountMinor: bigint | number
   currency: string
@@ -592,9 +663,55 @@ export type ReleaseUpdateManyWithWhereWithoutDealInput = {
   data: Prisma.XOR<Prisma.ReleaseUpdateManyMutationInput, Prisma.ReleaseUncheckedUpdateManyWithoutDealInput>
 }
 
+export type ReleaseCreateWithoutMilestoneInput = {
+  id?: string
+  amountMinor: bigint | number
+  currency: string
+  idempotencyKey: string
+  createdAt?: Date | string
+  deal: Prisma.DealCreateNestedOneWithoutReleasesInput
+  actor: Prisma.UserCreateNestedOneWithoutReleasesInput
+}
+
+export type ReleaseUncheckedCreateWithoutMilestoneInput = {
+  id?: string
+  actorId: string
+  amountMinor: bigint | number
+  currency: string
+  idempotencyKey: string
+  createdAt?: Date | string
+}
+
+export type ReleaseCreateOrConnectWithoutMilestoneInput = {
+  where: Prisma.ReleaseWhereUniqueInput
+  create: Prisma.XOR<Prisma.ReleaseCreateWithoutMilestoneInput, Prisma.ReleaseUncheckedCreateWithoutMilestoneInput>
+}
+
+export type ReleaseCreateManyMilestoneInputEnvelope = {
+  data: Prisma.ReleaseCreateManyMilestoneInput | Prisma.ReleaseCreateManyMilestoneInput[]
+  skipDuplicates?: boolean
+}
+
+export type ReleaseUpsertWithWhereUniqueWithoutMilestoneInput = {
+  where: Prisma.ReleaseWhereUniqueInput
+  update: Prisma.XOR<Prisma.ReleaseUpdateWithoutMilestoneInput, Prisma.ReleaseUncheckedUpdateWithoutMilestoneInput>
+  create: Prisma.XOR<Prisma.ReleaseCreateWithoutMilestoneInput, Prisma.ReleaseUncheckedCreateWithoutMilestoneInput>
+}
+
+export type ReleaseUpdateWithWhereUniqueWithoutMilestoneInput = {
+  where: Prisma.ReleaseWhereUniqueInput
+  data: Prisma.XOR<Prisma.ReleaseUpdateWithoutMilestoneInput, Prisma.ReleaseUncheckedUpdateWithoutMilestoneInput>
+}
+
+export type ReleaseUpdateManyWithWhereWithoutMilestoneInput = {
+  where: Prisma.ReleaseScalarWhereInput
+  data: Prisma.XOR<Prisma.ReleaseUpdateManyMutationInput, Prisma.ReleaseUncheckedUpdateManyWithoutMilestoneInput>
+}
+
 export type ReleaseCreateManyActorInput = {
   id?: string
   dealId: string
+  milestoneId?: string | null
   amountMinor: bigint | number
   currency: string
   idempotencyKey: string
@@ -608,11 +725,13 @@ export type ReleaseUpdateWithoutActorInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deal?: Prisma.DealUpdateOneRequiredWithoutReleasesNestedInput
+  milestone?: Prisma.DealMilestoneUpdateOneWithoutReleasesNestedInput
 }
 
 export type ReleaseUncheckedUpdateWithoutActorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   dealId?: Prisma.StringFieldUpdateOperationsInput | string
+  milestoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
@@ -622,6 +741,7 @@ export type ReleaseUncheckedUpdateWithoutActorInput = {
 export type ReleaseUncheckedUpdateManyWithoutActorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   dealId?: Prisma.StringFieldUpdateOperationsInput | string
+  milestoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
@@ -630,6 +750,7 @@ export type ReleaseUncheckedUpdateManyWithoutActorInput = {
 
 export type ReleaseCreateManyDealInput = {
   id?: string
+  milestoneId?: string | null
   actorId: string
   amountMinor: bigint | number
   currency: string
@@ -643,11 +764,13 @@ export type ReleaseUpdateWithoutDealInput = {
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  milestone?: Prisma.DealMilestoneUpdateOneWithoutReleasesNestedInput
   actor?: Prisma.UserUpdateOneRequiredWithoutReleasesNestedInput
 }
 
 export type ReleaseUncheckedUpdateWithoutDealInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  milestoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
@@ -656,6 +779,44 @@ export type ReleaseUncheckedUpdateWithoutDealInput = {
 }
 
 export type ReleaseUncheckedUpdateManyWithoutDealInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  milestoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actorId?: Prisma.StringFieldUpdateOperationsInput | string
+  amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ReleaseCreateManyMilestoneInput = {
+  id?: string
+  actorId: string
+  amountMinor: bigint | number
+  currency: string
+  idempotencyKey: string
+  createdAt?: Date | string
+}
+
+export type ReleaseUpdateWithoutMilestoneInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deal?: Prisma.DealUpdateOneRequiredWithoutReleasesNestedInput
+  actor?: Prisma.UserUpdateOneRequiredWithoutReleasesNestedInput
+}
+
+export type ReleaseUncheckedUpdateWithoutMilestoneInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  actorId?: Prisma.StringFieldUpdateOperationsInput | string
+  amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ReleaseUncheckedUpdateManyWithoutMilestoneInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -669,42 +830,49 @@ export type ReleaseUncheckedUpdateManyWithoutDealInput = {
 export type ReleaseSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   dealId?: boolean
+  milestoneId?: boolean
   actorId?: boolean
   amountMinor?: boolean
   currency?: boolean
   idempotencyKey?: boolean
   createdAt?: boolean
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
+  milestone?: boolean | Prisma.Release$milestoneArgs<ExtArgs>
   actor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["release"]>
 
 export type ReleaseSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   dealId?: boolean
+  milestoneId?: boolean
   actorId?: boolean
   amountMinor?: boolean
   currency?: boolean
   idempotencyKey?: boolean
   createdAt?: boolean
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
+  milestone?: boolean | Prisma.Release$milestoneArgs<ExtArgs>
   actor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["release"]>
 
 export type ReleaseSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   dealId?: boolean
+  milestoneId?: boolean
   actorId?: boolean
   amountMinor?: boolean
   currency?: boolean
   idempotencyKey?: boolean
   createdAt?: boolean
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
+  milestone?: boolean | Prisma.Release$milestoneArgs<ExtArgs>
   actor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["release"]>
 
 export type ReleaseSelectScalar = {
   id?: boolean
   dealId?: boolean
+  milestoneId?: boolean
   actorId?: boolean
   amountMinor?: boolean
   currency?: boolean
@@ -712,17 +880,20 @@ export type ReleaseSelectScalar = {
   createdAt?: boolean
 }
 
-export type ReleaseOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "dealId" | "actorId" | "amountMinor" | "currency" | "idempotencyKey" | "createdAt", ExtArgs["result"]["release"]>
+export type ReleaseOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "dealId" | "milestoneId" | "actorId" | "amountMinor" | "currency" | "idempotencyKey" | "createdAt", ExtArgs["result"]["release"]>
 export type ReleaseInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
+  milestone?: boolean | Prisma.Release$milestoneArgs<ExtArgs>
   actor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type ReleaseIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
+  milestone?: boolean | Prisma.Release$milestoneArgs<ExtArgs>
   actor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type ReleaseIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
+  milestone?: boolean | Prisma.Release$milestoneArgs<ExtArgs>
   actor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
@@ -730,11 +901,13 @@ export type $ReleasePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   name: "Release"
   objects: {
     deal: Prisma.$DealPayload<ExtArgs>
+    milestone: Prisma.$DealMilestonePayload<ExtArgs> | null
     actor: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     dealId: string
+    milestoneId: string | null
     actorId: string
     amountMinor: bigint
     currency: string
@@ -1135,6 +1308,7 @@ readonly fields: ReleaseFieldRefs;
 export interface Prisma__ReleaseClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   deal<T extends Prisma.DealDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DealDefaultArgs<ExtArgs>>): Prisma.Prisma__DealClient<runtime.Types.Result.GetResult<Prisma.$DealPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  milestone<T extends Prisma.Release$milestoneArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Release$milestoneArgs<ExtArgs>>): Prisma.Prisma__DealMilestoneClient<runtime.Types.Result.GetResult<Prisma.$DealMilestonePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   actor<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1167,6 +1341,7 @@ export interface Prisma__ReleaseClient<T, Null = never, ExtArgs extends runtime.
 export interface ReleaseFieldRefs {
   readonly id: Prisma.FieldRef<"Release", 'String'>
   readonly dealId: Prisma.FieldRef<"Release", 'String'>
+  readonly milestoneId: Prisma.FieldRef<"Release", 'String'>
   readonly actorId: Prisma.FieldRef<"Release", 'String'>
   readonly amountMinor: Prisma.FieldRef<"Release", 'BigInt'>
   readonly currency: Prisma.FieldRef<"Release", 'String'>
@@ -1570,6 +1745,25 @@ export type ReleaseDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inter
    * Limit how many Releases to delete.
    */
   limit?: number
+}
+
+/**
+ * Release.milestone
+ */
+export type Release$milestoneArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DealMilestone
+   */
+  select?: Prisma.DealMilestoneSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DealMilestone
+   */
+  omit?: Prisma.DealMilestoneOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DealMilestoneInclude<ExtArgs> | null
+  where?: Prisma.DealMilestoneWhereInput
 }
 
 /**

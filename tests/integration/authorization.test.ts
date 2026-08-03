@@ -5,6 +5,7 @@ import { getDeliveryApprovalDecision } from "@/features/deals/authorization";
 import { getConnectedLabel, isEligiblePartnerDealStatus } from "@/features/network/data";
 import { isEligibleNetworkAccount } from "@/features/network/eligibility";
 import type { DealStatus } from "@/generated/prisma/enums";
+import { prismaProvider } from "@/lib/data/providers/prisma-provider";
 
 const testDbUrl = process.env.TEST_DATABASE_URL || "";
 if (testDbUrl.includes("qtmvausduxiqcguckfql")) {
@@ -277,5 +278,167 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
     expect(modCase).not.toBeNull();
     expect(modCase!.status).toBe("NEW");
     expect(modCase!.conversationId).not.toBeNull();
+  });
+
+  it("keeps private proposal drafts out of the opportunity owner's received list", async () => {
+    if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
+    const alice = await prisma.user.findUniqueOrThrow({
+      where: { email: "alice-test@perx.test" },
+    });
+    const bob = await prisma.user.findUniqueOrThrow({
+      where: { email: "bob-test@perx.test" },
+    });
+    const opportunity = await prisma.opportunity.findUniqueOrThrow({
+      where: { slug: "bob-mech-keyboard" },
+    });
+    const proposal = await prisma.proposal.create({
+      data: {
+        amountMinor: 250000n,
+        currency: "NGN",
+        deliveryDays: 10,
+        description: `private-draft-${runId}`,
+        opportunityId: opportunity.id,
+        senderId: alice.id,
+        status: "DRAFT",
+        versions: {
+          create: {
+            amountMinor: 250000n,
+            createdById: alice.id,
+            currency: "NGN",
+            deliveryDays: 10,
+            description: `private-draft-${runId}`,
+            includedRevisions: 1,
+            status: "DRAFT",
+            versionNumber: 1,
+          },
+        },
+      },
+    });
+
+    try {
+      const received = await prismaProvider.app.getUserProposals(
+        bob.id,
+        "received",
+      );
+      expect(received.some((entry) => entry.id === proposal.id)).toBe(false);
+    } finally {
+      await prisma.proposal.delete({ where: { id: proposal.id } });
+    }
+  });
+
+  it("enforces submitted proposal terms as immutable in PostgreSQL", async () => {
+    if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
+    const alice = await prisma.user.findUniqueOrThrow({
+      where: { email: "alice-test@perx.test" },
+    });
+    const opportunity = await prisma.opportunity.findUniqueOrThrow({
+      where: { slug: "bob-mech-keyboard" },
+    });
+
+    await expect(
+      prisma.$transaction(async (tx) => {
+        const proposal = await tx.proposal.create({
+          data: {
+            amountMinor: 300000n,
+            currency: "NGN",
+            deliveryDays: 14,
+            description: `immutable-version-${runId}`,
+            opportunityId: opportunity.id,
+            senderId: alice.id,
+            status: "SENT",
+          },
+        });
+        const version = await tx.proposalVersion.create({
+          data: {
+            amountMinor: proposal.amountMinor,
+            createdById: alice.id,
+            currency: proposal.currency,
+            deliveryDays: proposal.deliveryDays,
+            description: proposal.description,
+            includedRevisions: 1,
+            proposalId: proposal.id,
+            status: "SUBMITTED",
+            submittedAt: new Date(),
+            versionNumber: 1,
+          },
+        });
+        await tx.proposalVersion.update({
+          data: { amountMinor: 1n },
+          where: { id: version.id },
+        });
+      }),
+    ).rejects.toThrow(/immutable/i);
+  });
+
+  it("rejects a Deal linked to a version from another proposal", async () => {
+    if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
+    const alice = await prisma.user.findUniqueOrThrow({
+      where: { email: "alice-test@perx.test" },
+    });
+    const bob = await prisma.user.findUniqueOrThrow({
+      where: { email: "bob-test@perx.test" },
+    });
+    const opportunity = await prisma.opportunity.findUniqueOrThrow({
+      where: { slug: "bob-mech-keyboard" },
+    });
+
+    await expect(
+      prisma.$transaction(async (tx) => {
+        const first = await tx.proposal.create({
+          data: {
+            amountMinor: 100000n,
+            currency: "NGN",
+            deliveryDays: 7,
+            description: `composite-first-${runId}`,
+            opportunityId: opportunity.id,
+            senderId: alice.id,
+            status: "ACCEPTED",
+          },
+        });
+        const second = await tx.proposal.create({
+          data: {
+            amountMinor: 200000n,
+            currency: "NGN",
+            deliveryDays: 8,
+            description: `composite-second-${runId}`,
+            opportunityId: opportunity.id,
+            senderId: alice.id,
+            status: "ACCEPTED",
+          },
+        });
+        const wrongVersion = await tx.proposalVersion.create({
+          data: {
+            acceptedAt: new Date(),
+            amountMinor: second.amountMinor,
+            createdById: alice.id,
+            currency: second.currency,
+            deliveryDays: second.deliveryDays,
+            description: second.description,
+            includedRevisions: 1,
+            proposalId: second.id,
+            status: "ACCEPTED",
+            submittedAt: new Date(),
+            versionNumber: 1,
+          },
+        });
+        await tx.deal.create({
+          data: {
+            currency: first.currency,
+            opportunityId: opportunity.id,
+            proposalId: first.id,
+            proposalVersionId: wrongVersion.id,
+            settlementMode: "PROVIDER_DISABLED",
+            status: "IN_PROGRESS",
+            valueMinor: first.amountMinor,
+            participants: {
+              create: [
+                { role: "freelancer", userId: alice.id },
+                { role: "client", userId: bob.id },
+              ],
+            },
+          },
+        });
+      }),
+    ).rejects.toThrow();
   });
 });

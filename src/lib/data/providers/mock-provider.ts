@@ -54,9 +54,32 @@ export const mockProvider: PerXDataProvider = {
       };
     },
     getUserProposals: async (userId: string, direction: "sent" | "received") => {
-      return proposalsStore.filter((p: any) => 
-        direction === "sent" ? p.sender.username === userId || p.senderId === userId : p.opportunity?.owner?.username === userId
-      );
+      return proposalsStore
+        .filter((p: any) =>
+          direction === "sent"
+            ? p.sender.username === userId || p.senderId === userId
+            : p.status !== "DRAFT" &&
+              p.opportunity?.owner?.username === userId,
+        )
+        .map((proposal: any) => ({
+          ...proposal,
+          versions: proposal.versions ?? [
+            {
+              amountMinor: proposal.amountMinor,
+              currency: proposal.currency,
+              deliveryDays: proposal.deliveryDays,
+              description: proposal.description,
+              id: `${proposal.id}-version-1`,
+              includedRevisions: proposal.revisions,
+              milestones: proposal.milestones ?? [],
+              status:
+                proposal.status === "SENT"
+                  ? "SUBMITTED"
+                  : proposal.status,
+              versionNumber: 1,
+            },
+          ],
+        }));
     },
     getUserDeals: async (userId: string) => {
       return dealsStore.filter((d: any) => 

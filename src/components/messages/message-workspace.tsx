@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Fragment,
   useEffect,
   useMemo,
   useRef,
@@ -15,23 +16,30 @@ import {
   Clock3,
   Copy,
   Flag,
+  Handshake,
   Info,
   Loader2,
+  LockKeyhole,
   MoreVertical,
   Pencil,
   Reply,
   Search,
   Send,
   ShieldCheck,
+  Trash2,
+  UserRoundX,
   X,
 } from "lucide-react";
 import Link from "next/link";
 import {
+  deleteMessageAction,
   editMessageAction,
   markConversationReadAction,
+  removeConversationForMeAction,
   sendMessageAction,
 } from "@/features/messages/actions";
 import { blockUserAction } from "@/features/network/actions";
+import { shouldSubmitMessage } from "@/lib/messages/composer-keyboard";
 
 type ReplyPreview = {
   body: string;
@@ -55,9 +63,40 @@ export type WorkspaceMessage = {
   status?: "sending" | "sent" | "failed";
 };
 
+export type WorkspaceConversationEvent = {
+  actorName?: string | null;
+  createdAt: string;
+  dealHref?: string | null;
+  id: string;
+  proposalVersionId?: string | null;
+  snapshot: Record<string, unknown>;
+  type:
+    | "PROPOSAL_SUBMITTED"
+    | "PROPOSAL_OBJECTION_RAISED"
+    | "PROPOSAL_REVISION_CREATED"
+    | "PROPOSAL_REVISION_SUBMITTED"
+    | "PROPOSAL_ACCEPTED"
+    | "PROPOSAL_REJECTED"
+    | "DEAL_CREATED"
+    | "DEAL_STATUS_CHANGED"
+    | "MILESTONE_SUBMITTED"
+    | "MILESTONE_APPROVED"
+    | "SIMULATED_RELEASE_RECORDED";
+};
+
 export type WorkspaceConversation = {
   context?: string;
+  deal?: {
+    amountMinor: string;
+    currency: string;
+    id: string;
+    settlementMode?: "SIMULATED" | "PROVIDER_DISABLED";
+    status: string;
+    title: string;
+    versionLabel?: string;
+  };
   dealHref?: string;
+  events?: WorkspaceConversationEvent[];
   id: string;
   lastMessage?: string;
   messages: WorkspaceMessage[];
@@ -77,30 +116,37 @@ export function MessageWorkspace({
   conversations,
   currentUserId,
   defaultConversationId,
+  highlightEventId,
   highlightMessageId,
 }: {
   backHref?: string;
   conversations: WorkspaceConversation[];
   currentUserId: string;
   defaultConversationId?: string;
+  highlightEventId?: string;
   highlightMessageId?: string;
 }) {
   const [activeId, setActiveId] = useState(defaultConversationId ?? conversations[0]?.id ?? "");
   const [mobileDetailOpen, setMobileDetailOpen] = useState(Boolean(defaultConversationId));
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [draft, setDraft] = useState("");
+  const [conversationQuery, setConversationQuery] = useState("");
+  const [conversationFilter, setConversationFilter] = useState<"all" | "unread" | "deals">("all");
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [editDraft, setEditDraft] = useState("");
   const [editingMessageId, setEditingMessageId] = useState("");
   const [editError, setEditError] = useState("");
   const [sendError, setSendError] = useState("");
   const [replyTarget, setReplyTarget] = useState<WorkspaceMessage | null>(null);
-  const [highlightedMessageId, setHighlightedMessageId] = useState(highlightMessageId ?? "");
+  const [highlightedMessageId, setHighlightedMessageId] = useState(
+    highlightMessageId ?? highlightEventId ?? "",
+  );
   const [syncedConversations, setSyncedConversations] = useState(() => conversations);
   const [localMessages, setLocalMessages] = useState<Record<string, WorkspaceMessage[]>>({});
   const [liveState, setLiveState] = useState<"connecting" | "live" | "reconnecting" | "fallback">("connecting");
   const [isPending, startTransition] = useTransition();
   const [isEditPending, startEditTransition] = useTransition();
   const historyRef = useRef<HTMLDivElement>(null);
+  const isComposingRef = useRef(false);
   const listRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -128,19 +174,39 @@ export function MessageWorkspace({
         );
         const merged = current.map((conversation) => {
           const next = incomingById.get(conversation.id);
-          if (!next || !highlightMessageId) return next ?? conversation;
+          if (!next || (!highlightMessageId && !highlightEventId)) {
+            return next ?? conversation;
+          }
           const target = conversation.messages.find(
             (message) => message.id === highlightMessageId,
           );
-          if (!target || next.messages.some((message) => message.id === target.id)) {
+          const targetEvent = conversation.events?.find(
+            (event) => event.id === highlightEventId,
+          );
+          const mergedMessages =
+            target && !next.messages.some((message) => message.id === target.id)
+              ? [...next.messages, target].sort(
+                  (a, b) =>
+                    new Date(a.createdAt).getTime() -
+                    new Date(b.createdAt).getTime(),
+                )
+              : next.messages;
+          const mergedEvents =
+            targetEvent &&
+            !next.events?.some((event) => event.id === targetEvent.id)
+              ? [...(next.events ?? []), targetEvent].sort(
+                  (a, b) =>
+                    new Date(a.createdAt).getTime() -
+                    new Date(b.createdAt).getTime(),
+                )
+              : next.events;
+          if (mergedMessages === next.messages && mergedEvents === next.events) {
             return next;
           }
           return {
             ...next,
-            messages: [...next.messages, target].sort(
-              (a, b) =>
-                new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-            ),
+            events: mergedEvents,
+            messages: mergedMessages,
           };
         });
         for (const conversation of incoming) {
@@ -226,11 +292,27 @@ export function MessageWorkspace({
       eventSource?.close();
       if (fallbackInterval !== null) window.clearInterval(fallbackInterval);
     };
-  }, [activeId, highlightMessageId]);
+  }, [activeId, highlightEventId, highlightMessageId]);
 
   const activeConversation =
     syncedConversations.find((conversation) => conversation.id === activeId) ??
     syncedConversations[0];
+  const draft = drafts[activeConversation?.id ?? activeId] ?? "";
+  const visibleConversations = useMemo(() => {
+    const query = conversationQuery.trim().toLocaleLowerCase();
+    return syncedConversations.filter((conversation) => {
+      if (conversationFilter === "unread" && !conversation.unreadCount) return false;
+      if (conversationFilter === "deals" && !conversation.dealHref) return false;
+      if (!query) return true;
+      return [
+        conversation.participantName,
+        conversation.participantUsername,
+        conversation.opportunityTitle,
+        conversation.context,
+        conversation.lastMessage,
+      ].some((value) => value?.toLocaleLowerCase().includes(query));
+    });
+  }, [conversationFilter, conversationQuery, syncedConversations]);
   const messages = useMemo(() => {
     if (!activeConversation) return [];
     return [
@@ -238,7 +320,29 @@ export function MessageWorkspace({
       ...(localMessages[activeConversation.id] ?? []),
     ];
   }, [activeConversation, localMessages]);
-  const latestMessageId = messages.at(-1)?.id;
+  const timeline = useMemo(
+    () =>
+      [
+        ...messages.map((message) => ({
+          createdAt: message.createdAt,
+          id: message.id,
+          kind: "message" as const,
+          message,
+        })),
+        ...(activeConversation?.events ?? []).map((conversationEvent) => ({
+          conversationEvent,
+          createdAt: conversationEvent.createdAt,
+          id: conversationEvent.id,
+          kind: "event" as const,
+        })),
+      ].sort((a, b) => {
+        const timeDifference =
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        return timeDifference || a.id.localeCompare(b.id);
+      }),
+    [activeConversation?.events, messages],
+  );
+  const latestEntryId = timeline.at(-1)?.id;
 
   useEffect(() => {
     if (highlightedMessageId) return;
@@ -246,7 +350,7 @@ export function MessageWorkspace({
       behavior: "smooth",
       top: historyRef.current.scrollHeight,
     });
-  }, [activeConversation?.id, highlightedMessageId, messages.length]);
+  }, [activeConversation?.id, highlightedMessageId, timeline.length]);
 
   useEffect(() => {
     if (!highlightedMessageId) return;
@@ -255,7 +359,7 @@ export function MessageWorkspace({
     target.scrollIntoView({ behavior: "smooth", block: "center" });
     const timeout = window.setTimeout(() => setHighlightedMessageId(""), 2200);
     return () => window.clearTimeout(timeout);
-  }, [highlightedMessageId, messages.length]);
+  }, [highlightedMessageId, timeline.length]);
 
   useEffect(() => {
     if (!activeConversation?.id) return;
@@ -274,7 +378,7 @@ export function MessageWorkspace({
       .catch(() => {
         // The participant-scoped stream or polling fallback will retry freshness.
       });
-  }, [activeConversation?.id, latestMessageId]);
+  }, [activeConversation?.id, latestEntryId]);
 
   const sendMessage = (event?: FormEvent) => {
     event?.preventDefault();
@@ -300,7 +404,7 @@ export function MessageWorkspace({
       ...value,
       [conversationId]: [...(value[conversationId] ?? []), message],
     }));
-    setDraft("");
+    setDrafts((value) => ({ ...value, [conversationId]: "" }));
     setReplyTarget(null);
 
     startTransition(async () => {
@@ -310,7 +414,7 @@ export function MessageWorkspace({
           ...value,
           [conversationId]: (value[conversationId] ?? []).filter((m) => m.id !== messageId),
         }));
-        setDraft(body);
+        setDrafts((value) => ({ ...value, [conversationId]: body }));
         setReplyTarget(replyTarget);
         setSendError(result.error);
       } else {
@@ -355,6 +459,47 @@ export function MessageWorkspace({
     }
   };
 
+  const deleteMessage = async (message: WorkspaceMessage) => {
+    if (!window.confirm("Remove this message from participant view? A tombstone remains, and the original content is retained for safety, reports, and audit history.")) {
+      return;
+    }
+    const result = await deleteMessageAction(message.id);
+    if (result.error) {
+      setSendError(result.error);
+      return;
+    }
+    const deletedAt = new Date().toISOString();
+    setSyncedConversations((current) =>
+      current.map((conversation) => ({
+        ...conversation,
+        messages: conversation.messages.map((candidate) =>
+          candidate.id === message.id
+            ? { ...candidate, deletedAt }
+            : candidate,
+        ),
+      })),
+    );
+  };
+
+  const removeConversation = async () => {
+    if (!activeConversation) return;
+    if (!window.confirm("Remove this chat from your list? It remains available to other participants and may return after a new message.")) {
+      return;
+    }
+    const result = await removeConversationForMeAction(activeConversation.id);
+    if (result.error) {
+      setSendError(result.error);
+      return;
+    }
+    const remaining = syncedConversations.filter(
+      (conversation) => conversation.id !== activeConversation.id,
+    );
+    setSyncedConversations(remaining);
+    setActiveId(remaining[0]?.id ?? "");
+    setDetailsOpen(false);
+    setMobileDetailOpen(false);
+  };
+
   if (!syncedConversations.length) {
     return (
       <section className="grid min-h-[58dvh] place-items-center rounded-[24px] bg-[color:var(--px-surface)] p-8 text-center shadow-sm ring-1 ring-[color:var(--px-border)]">
@@ -372,19 +517,20 @@ export function MessageWorkspace({
   }
 
   return (
-    <section className="relative grid h-[min(760px,calc(100dvh-5.5rem))] min-h-[540px] max-w-full overflow-hidden rounded-[24px] bg-[color:var(--px-surface)] shadow-[var(--px-shadow)] ring-1 ring-[color:var(--px-border)] lg:grid-cols-[320px_minmax(0,1fr)] 2xl:grid-cols-[320px_minmax(0,1fr)_320px]">
+    <section className="relative grid h-[calc(100dvh-9rem)] min-h-0 max-w-full overflow-hidden rounded-[18px] bg-[color:var(--px-surface)] shadow-[var(--px-shadow)] ring-1 ring-[color:var(--px-border)] sm:h-[min(780px,calc(100dvh-7rem))] sm:rounded-[24px] lg:grid-cols-[300px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)_320px]">
       <aside className={`${mobileDetailOpen ? "hidden lg:flex" : "flex"} min-h-0 flex-col border-r border-[color:var(--px-border)] bg-[color:var(--px-surface)]`}>
-        <div className="border-b border-[color:var(--px-border)] p-4">
+        <div className="border-b border-[color:var(--px-border)] bg-[linear-gradient(145deg,var(--px-navy),var(--px-navy-3))] p-4 text-white">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-xl font-black text-[color:var(--px-text)]">Messages</h1>
-              <p className="truncate text-xs text-[color:var(--px-text-muted)]">Private chats with connected PerX members.</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/55">PerX workspace</p>
+              <h1 className="mt-1 text-xl font-black">Messages</h1>
+              <p className="truncate text-xs text-white/65">Conversations, terms, and Deal records.</p>
             </div>
             <span
               className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${
                 liveState === "live"
-                  ? "bg-green-50 text-green-800"
-                  : "bg-amber-50 text-amber-900"
+                  ? "bg-emerald-400/15 text-emerald-200 ring-1 ring-emerald-300/20"
+                  : "bg-amber-300/15 text-amber-100 ring-1 ring-amber-200/20"
               }`}
             >
               {liveState === "live"
@@ -395,25 +541,45 @@ export function MessageWorkspace({
             </span>
             {backHref ? (
               <Link
-                className="rounded-full border border-[color:var(--px-border)] px-3 py-1.5 text-xs font-bold text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 href={backHref}
               >
                 Back
               </Link>
             ) : null}
           </div>
-          <label className="mt-4 flex h-11 items-center gap-2 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-muted)] px-3">
-            <Search size={17} className="text-[color:var(--px-text-muted)]" />
+          <label className="mt-4 flex h-11 items-center gap-2 rounded-xl border border-white/12 bg-white/8 px-3 focus-within:border-white/35 focus-within:ring-2 focus-within:ring-white/10">
+            <Search size={17} className="text-white/60" />
             <span className="sr-only">Search conversations</span>
             <input
-              className="min-w-0 flex-1 bg-transparent text-sm text-[color:var(--px-text)] outline-none placeholder:text-[color:var(--px-text-muted)]"
-              placeholder="Search conversations..."
+              className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/45"
+              onChange={(event) => setConversationQuery(event.target.value)}
+              placeholder="Search people or conversations"
+              type="search"
+              value={conversationQuery}
             />
           </label>
+          <div aria-label="Conversation filters" className="mt-3 flex gap-1.5" role="group">
+            {(["all", "unread", "deals"] as const).map((filter) => (
+              <button
+                aria-pressed={conversationFilter === filter}
+                className={`rounded-lg px-3 py-1.5 text-[11px] font-black capitalize transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+                  conversationFilter === filter
+                    ? "bg-white text-[color:var(--px-navy)]"
+                    : "bg-white/8 text-white/70 hover:bg-white/14 hover:text-white"
+                }`}
+                key={filter}
+                onClick={() => setConversationFilter(filter)}
+                type="button"
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-3" ref={listRef}>
-          {syncedConversations.map((conversation) => {
+          {visibleConversations.map((conversation) => {
             const active = conversation.id === activeConversation?.id;
             return (
               <button
@@ -440,7 +606,11 @@ export function MessageWorkspace({
                     <span className="shrink-0 text-[10px] font-semibold text-[color:var(--px-text-muted)]">{formatConversationTime(conversation.timestamp)}</span>
                   </div>
                   <p className="truncate text-xs font-semibold text-[color:var(--px-primary)]">{conversation.opportunityTitle ?? conversation.context}</p>
-                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-[color:var(--px-text-muted)]">{conversation.lastMessage ?? "No messages yet."}</p>
+                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
+                     {drafts[conversation.id]?.trim() ? (
+                       <><span className="font-black text-[color:var(--px-error)]">Draft: </span>{drafts[conversation.id]}</>
+                     ) : conversation.lastMessage ?? "No messages yet."}
+                   </p>
                 </div>
                 {conversation.unreadCount ? (
                   <span
@@ -453,6 +623,15 @@ export function MessageWorkspace({
               </button>
             );
           })}
+          {!visibleConversations.length ? (
+            <div className="grid min-h-40 place-items-center rounded-2xl border border-dashed border-[color:var(--px-border-strong)] p-5 text-center">
+              <div>
+                <Search className="mx-auto text-[color:var(--px-text-muted)]" size={20} />
+                <p className="mt-2 text-sm font-black text-[color:var(--px-text)]">No conversations found</p>
+                <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">Try another search or filter.</p>
+              </div>
+            </div>
+          ) : null}
         </div>
       </aside>
 
@@ -503,10 +682,13 @@ export function MessageWorkspace({
             </button>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4" ref={historyRef}>
+          <div className="bg-dot-pattern min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4" ref={historyRef}>
             <div className="mx-auto flex max-w-3xl flex-col gap-4">
               <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4">
-                <p className="text-xs font-bold uppercase tracking-wide text-[color:var(--px-primary)]">Safety reminder</p>
+                <div className="flex items-center gap-2 text-[color:var(--px-primary)]">
+                  <LockKeyhole aria-hidden size={15} />
+                  <p className="text-xs font-bold uppercase tracking-wide">Keep a clear record</p>
+                </div>
                 <p className="mt-1 text-sm font-bold text-[color:var(--px-text)]">{activeConversation.opportunityTitle ?? activeConversation.context ?? "Professional conversation"}</p>
                 <p className="mt-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
                   Keep important conversations and agreements on PerX. This helps preserve records that may support dispute resolution, safety reviews and account protection.{" "}
@@ -516,27 +698,49 @@ export function MessageWorkspace({
                 </p>
               </div>
 
-              {messages.map((message) => (
-                <MessageBubble
-                  conversationId={activeConversation.id}
-                  currentUserId={currentUserId}
-                  editingMessageId={editingMessageId}
-                  editDraft={editDraft}
-                  editError={editError}
-                  highlighted={highlightedMessageId === message.id}
-                  isEditPending={isEditPending}
-                  jumpToMessage={jumpToMessage}
-                  key={message.id}
-                  message={message}
-                  onCancelEdit={cancelEditing}
-                  onChangeEdit={setEditDraft}
-                  onReply={() => setReplyTarget(message)}
-                  onSaveEdit={saveEdit}
-                  onStartEdit={startEditing}
-                  refCallback={(node) => {
-                    messageRefs.current[message.id] = node;
-                  }}
-                />
+              {activeConversation.deal ? (
+                <DealSummaryCard deal={activeConversation.deal} href={activeConversation.dealHref} />
+              ) : null}
+
+              {timeline.map((entry, index) => (
+                <Fragment key={`${entry.kind}:${entry.id}`}>
+                  {shouldShowDateSeparator(
+                    timeline[index - 1]?.createdAt,
+                    entry.createdAt,
+                  ) ? (
+                    <DateSeparator value={entry.createdAt} />
+                  ) : null}
+                  {entry.kind === "message" ? (
+                    <MessageBubble
+                      conversationId={activeConversation.id}
+                      currentUserId={currentUserId}
+                      editingMessageId={editingMessageId}
+                      editDraft={editDraft}
+                      editError={editError}
+                      highlighted={highlightedMessageId === entry.message.id}
+                      isEditPending={isEditPending}
+                      jumpToMessage={jumpToMessage}
+                      message={entry.message}
+                      onCancelEdit={cancelEditing}
+                      onChangeEdit={setEditDraft}
+                      onDelete={() => void deleteMessage(entry.message)}
+                      onReply={() => setReplyTarget(entry.message)}
+                      onSaveEdit={saveEdit}
+                      onStartEdit={startEditing}
+                      refCallback={(node) => {
+                        messageRefs.current[entry.message.id] = node;
+                      }}
+                    />
+                  ) : (
+                    <ConversationEventCard
+                      event={entry.conversationEvent}
+                      highlighted={highlightedMessageId === entry.conversationEvent.id}
+                      refCallback={(node) => {
+                        messageRefs.current[entry.conversationEvent.id] = node;
+                      }}
+                    />
+                  )}
+                </Fragment>
               ))}
             </div>
           </div>
@@ -561,17 +765,32 @@ export function MessageWorkspace({
               ) : null}
               <div className="flex items-end gap-2 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-2">
                 <label className="sr-only" htmlFor="message-draft">Message</label>
-                <textarea
+                 <textarea
                   className="max-h-36 min-h-11 flex-1 resize-none bg-transparent px-2 py-2 text-sm text-[color:var(--px-text)] outline-none placeholder:text-[color:var(--px-text-muted)]"
                   id="message-draft"
                   maxLength={2000}
-                  onChange={(event) => setDraft(event.target.value)}
+                   onChange={(event) => {
+                     const conversationId = activeConversation.id;
+                     setDrafts((value) => ({ ...value, [conversationId]: event.target.value }));
+                   }}
+                   onCompositionEnd={() => {
+                     isComposingRef.current = false;
+                   }}
+                   onCompositionStart={() => {
+                     isComposingRef.current = true;
+                   }}
                   onInput={autoResize}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter" && !event.shiftKey) {
-                      event.preventDefault();
-                      sendMessage();
-                    }
+                     if (shouldSubmitMessage({
+                       ctrlKey: event.ctrlKey,
+                       isComposing: isComposingRef.current || event.nativeEvent.isComposing,
+                       key: event.key,
+                       keyCode: event.keyCode,
+                       metaKey: event.metaKey,
+                     })) {
+                       event.preventDefault();
+                       event.currentTarget.form?.requestSubmit();
+                     }
                   }}
                   placeholder="Type a message..."
                   rows={1}
@@ -585,8 +804,11 @@ export function MessageWorkspace({
                 >
                   {isPending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
                 </button>
-              </div>
-            </div>
+               </div>
+               <p className="px-1 text-[10px] font-semibold text-[color:var(--px-text-muted)]">
+                 Enter adds a new line. Ctrl+Enter or Command+Enter sends.
+               </p>
+             </div>
             {sendError ? (
               <p className="mx-auto mt-2 max-w-3xl text-sm font-semibold text-[color:var(--px-error)]">
                 {sendError}
@@ -599,6 +821,7 @@ export function MessageWorkspace({
       <ConversationDetails
         conversation={activeConversation}
         onClose={() => setDetailsOpen(false)}
+        onRemove={() => void removeConversation()}
         open={detailsOpen}
       />
     </section>
@@ -617,6 +840,7 @@ function MessageBubble({
   message,
   onCancelEdit,
   onChangeEdit,
+  onDelete,
   onReply,
   onSaveEdit,
   onStartEdit,
@@ -633,6 +857,7 @@ function MessageBubble({
   message: WorkspaceMessage;
   onCancelEdit: () => void;
   onChangeEdit: (value: string) => void;
+  onDelete: () => void;
   onReply: () => void;
   onSaveEdit: (message: WorkspaceMessage) => void;
   onStartEdit: (message: WorkspaceMessage) => void;
@@ -642,6 +867,7 @@ function MessageBubble({
   const editing = editingMessageId === message.id;
   const isLocal = message.id.startsWith("local-");
   const canEdit = mine && !isLocal && !message.deletedAt;
+  const editIsComposingRef = useRef(false);
 
   return (
     <div
@@ -653,7 +879,7 @@ function MessageBubble({
       <div
         className={`group max-w-[min(82%,42rem)] overflow-visible rounded-3xl px-4 py-3 shadow-sm transition ${
           mine
-            ? "rounded-br-md bg-[color:var(--px-primary)] text-white"
+            ? "rounded-br-md bg-[linear-gradient(135deg,var(--px-primary),var(--px-secondary))] text-white"
             : "rounded-bl-md bg-[color:var(--px-surface)] text-[color:var(--px-text)] ring-1 ring-[color:var(--px-border)]"
         } ${highlighted ? "ring-4 ring-[color:var(--px-warning)]" : ""}`}
       >
@@ -665,6 +891,7 @@ function MessageBubble({
               conversationId={conversationId}
               mine={mine}
               message={message}
+              onDelete={onDelete}
               onReply={onReply}
               onStartEdit={() => onStartEdit(message)}
             />
@@ -687,7 +914,7 @@ function MessageBubble({
         ) : null}
 
         {message.deletedAt ? (
-          <p className="text-sm italic leading-6 opacity-80">This message was deleted.</p>
+          <p className="text-sm italic leading-6 opacity-80">This message was removed from the chat view.</p>
         ) : editing ? (
           <div className="grid gap-2">
             <label className="sr-only" htmlFor={`edit-${message.id}`}>
@@ -696,18 +923,36 @@ function MessageBubble({
             <textarea
               className="min-h-20 resize-none rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-3 py-2 text-sm leading-6 text-[color:var(--px-text)] caret-[color:var(--px-primary)] outline-none placeholder:text-[color:var(--px-text-muted)] focus:ring-2 focus:ring-[color:var(--px-focus)]"
               id={`edit-${message.id}`}
-              maxLength={2000}
-              onChange={(event) => onChangeEdit(event.target.value)}
-              onInput={autoResize}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  event.preventDefault();
-                  onCancelEdit();
-                }
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  onSaveEdit(message);
-                }
+               maxLength={2000}
+                onChange={(event) => onChangeEdit(event.target.value)}
+                onCompositionEnd={() => {
+                  editIsComposingRef.current = false;
+                }}
+                onCompositionStart={() => {
+                  editIsComposingRef.current = true;
+                }}
+                onInput={autoResize}
+                onKeyDown={(event) => {
+                  const composing =
+                    editIsComposingRef.current ||
+                    event.nativeEvent.isComposing ||
+                    event.keyCode === 229;
+                  if (event.key === "Escape" && !composing) {
+                    event.preventDefault();
+                    onCancelEdit();
+                  }
+                  if (shouldSubmitMessage({
+                    ctrlKey: event.ctrlKey,
+                    isComposing:
+                      editIsComposingRef.current ||
+                      event.nativeEvent.isComposing,
+                    key: event.key,
+                    keyCode: event.keyCode,
+                    metaKey: event.metaKey,
+                  })) {
+                    event.preventDefault();
+                    onSaveEdit(message);
+                  }
               }}
               rows={2}
               value={editDraft}
@@ -746,11 +991,204 @@ function MessageBubble({
   );
 }
 
+function ConversationEventCard({
+  event,
+  highlighted,
+  refCallback,
+}: {
+  event: WorkspaceConversationEvent;
+  highlighted: boolean;
+  refCallback: (node: HTMLDivElement | null) => void;
+}) {
+  const versionNumber = getSnapshotNumber(event.snapshot, "versionNumber");
+  const amountMinor = getSnapshotString(event.snapshot, "amountMinor");
+  const currency = getSnapshotString(event.snapshot, "currency");
+  const reason = getSnapshotString(event.snapshot, "reason");
+  const description = getSnapshotString(event.snapshot, "description");
+  const dealEvent = event.type === "DEAL_CREATED" || event.type.startsWith("DEAL_");
+  const objection = event.type === "PROPOSAL_OBJECTION_RAISED";
+  const accepted = event.type === "PROPOSAL_ACCEPTED";
+  const rejected = event.type === "PROPOSAL_REJECTED";
+  const termsEvent = [
+    "PROPOSAL_SUBMITTED",
+    "PROPOSAL_REVISION_SUBMITTED",
+  ].includes(event.type);
+  const title = dealEvent
+    ? "Deal record created"
+    : objection
+      ? `Objection to proposal version ${versionNumber ?? ""}`.trim()
+      : accepted
+        ? `Proposal version ${versionNumber ?? ""} accepted`.trim()
+        : rejected
+          ? `Proposal version ${versionNumber ?? ""} rejected`.trim()
+          : event.type === "PROPOSAL_REVISION_SUBMITTED"
+            ? `Proposal revision ${versionNumber ?? ""} submitted`.trim()
+            : event.type === "PROPOSAL_SUBMITTED"
+              ? `Proposal version ${versionNumber ?? ""} submitted`.trim()
+              : formatEventType(event.type);
+
+  return (
+    <div
+      aria-current={highlighted ? "true" : undefined}
+      className="flex scroll-mt-24 justify-center"
+      data-event-id={event.id}
+      ref={refCallback}
+    >
+      <article
+        className={`w-full max-w-xl overflow-hidden rounded-3xl border bg-[color:var(--px-surface)] shadow-sm transition ${
+          highlighted
+            ? "border-[color:var(--px-warning)] ring-4 ring-[color:var(--px-warning)]/30"
+            : "border-[color:var(--px-border)]"
+        }`}
+      >
+        <div
+          className={`flex items-center justify-between gap-3 px-4 py-3 ${
+            objection
+              ? "bg-amber-500/10 text-amber-800 dark:text-amber-200"
+              : rejected
+                ? "bg-red-500/10 text-red-700 dark:text-red-200"
+                : accepted || dealEvent
+                  ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-200"
+                  : "bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)]"
+          }`}
+        >
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-current/10">
+              {dealEvent ? <Handshake aria-hidden size={17} /> : <ShieldCheck aria-hidden size={17} />}
+            </span>
+            <div className="min-w-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] opacity-65">PerX system record</p>
+              <h3 className="truncate text-sm font-black">{title}</h3>
+            </div>
+          </div>
+          <span className="shrink-0 text-[10px] font-bold opacity-70">
+            {formatMessageTime(event.createdAt)}
+          </span>
+        </div>
+        <div className="p-4">
+          {amountMinor && currency ? (
+            <p className="text-xl font-black text-[color:var(--px-text)]">
+              {formatMinorMoney(amountMinor, currency)}
+            </p>
+          ) : null}
+          {description && termsEvent ? (
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[color:var(--px-text-muted)]">
+              {description}
+            </p>
+          ) : null}
+          {reason ? (
+            <blockquote className="mt-2 border-l-4 border-amber-400 pl-3 text-sm leading-6 text-[color:var(--px-text)]">
+              {reason}
+            </blockquote>
+          ) : null}
+          <p className="mt-3 text-xs leading-5 text-[color:var(--px-text-muted)]">
+            {termsEvent
+              ? "This submitted version is locked. Any term change requires a new numbered revision."
+              : accepted
+                ? "Acceptance applies only to this exact locked version and is retained in the Deal history."
+                : dealEvent
+                  ? "This is an agreement record. Online payment is not active, and PerX has not collected or held funds."
+                  : objection
+                    ? "The submitted terms remain unchanged. The proposal creator can prepare a separate revision."
+                    : rejected
+                      ? "This decision is retained in the proposal history."
+                      : "This system event is retained as part of the conversation history."}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--px-border)] pt-3">
+            <p className="text-[10px] font-bold text-[color:var(--px-text-muted)]">
+              {event.actorName ? `Recorded by ${event.actorName}` : "Recorded by PerX"}
+            </p>
+            {event.dealHref ? (
+              <Link
+                className="text-xs font-black text-[color:var(--px-primary)] hover:underline"
+                href={event.dealHref}
+              >
+                Open Deal
+              </Link>
+            ) : termsEvent || objection ? (
+              <Link
+                className="text-xs font-black text-[color:var(--px-primary)] hover:underline"
+                href="/app/proposals"
+              >
+                Review proposals
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      </article>
+    </div>
+  );
+}
+
+function DealSummaryCard({
+  deal,
+  href,
+}: {
+  deal: NonNullable<WorkspaceConversation["deal"]>;
+  href?: string;
+}) {
+  const simulated = deal.settlementMode !== "PROVIDER_DISABLED";
+
+  return (
+    <article className="overflow-hidden rounded-3xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3 bg-[linear-gradient(135deg,var(--px-navy),var(--px-navy-3))] px-4 py-3 text-white">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/10 ring-1 ring-white/15">
+            <Handshake aria-hidden size={19} />
+          </span>
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/60">
+              Linked Deal {deal.versionLabel ? `· ${deal.versionLabel}` : ""}
+            </p>
+            <h3 className="truncate text-sm font-black">{deal.title}</h3>
+          </div>
+        </div>
+        <span className="rounded-full bg-white/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ring-1 ring-white/15">
+          {deal.status.replaceAll("_", " ")}
+        </span>
+      </div>
+      <div className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-end">
+        <div>
+          <p className="text-lg font-black text-[color:var(--px-text)]">
+            {formatMinorMoney(deal.amountMinor, deal.currency)}
+          </p>
+          <p className="mt-1 max-w-xl text-xs leading-5 text-[color:var(--px-text-muted)]">
+            {simulated
+              ? "Simulated agreement-state tracking only. PerX has not collected, held, transferred, or released funds."
+              : "Online payment is not active. This card records agreed terms only; no funds have been collected or held."}
+          </p>
+        </div>
+        {href ? (
+          <Link
+            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[color:var(--px-primary)] px-4 text-sm font-black text-white transition hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            href={href}
+          >
+            View Deal
+          </Link>
+        ) : null}
+      </div>
+    </article>
+  );
+}
+
+function DateSeparator({ value }: { value: string }) {
+  return (
+    <div className="flex items-center gap-3 py-1" role="separator">
+      <span className="h-px flex-1 bg-[color:var(--px-border)]" />
+      <span className="rounded-full bg-[color:var(--px-surface)] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[color:var(--px-text-muted)] shadow-sm ring-1 ring-[color:var(--px-border)]">
+        {formatMessageDay(value)}
+      </span>
+      <span className="h-px flex-1 bg-[color:var(--px-border)]" />
+    </div>
+  );
+}
+
 function MessageActionMenu({
   canEdit,
   conversationId,
   message,
   mine,
+  onDelete,
   onReply,
   onStartEdit,
 }: {
@@ -758,6 +1196,7 @@ function MessageActionMenu({
   conversationId: string;
   message: WorkspaceMessage;
   mine: boolean;
+  onDelete: () => void;
   onReply: () => void;
   onStartEdit: () => void;
 }) {
@@ -782,6 +1221,16 @@ function MessageActionMenu({
           <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]" onClick={onStartEdit} type="button">
             <Pencil aria-hidden size={14} />
             Edit
+          </button>
+        ) : null}
+        {canEdit ? (
+          <button
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-[color:var(--px-error)] hover:bg-red-50 dark:hover:bg-red-950/30"
+            onClick={onDelete}
+            type="button"
+          >
+            <Trash2 aria-hidden size={14} />
+            Remove message
           </button>
         ) : null}
         <button
@@ -813,10 +1262,12 @@ function MessageActionMenu({
 function ConversationDetails({
   conversation,
   onClose,
+  onRemove,
   open,
 }: {
   conversation?: WorkspaceConversation;
   onClose: () => void;
+  onRemove: () => void;
   open: boolean;
 }) {
   if (!conversation) return null;
@@ -896,6 +1347,27 @@ function ConversationDetails({
             No deal is linked to this conversation.
           </p>
         )}
+      </div>
+
+      <div className="rounded-3xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4">
+        <div className="flex items-start gap-3">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[color:var(--px-muted)] text-[color:var(--px-text-muted)]">
+            <UserRoundX aria-hidden size={18} />
+          </span>
+          <div>
+            <h3 className="text-sm font-black text-[color:var(--px-text)]">Your chat list</h3>
+            <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">
+              Removing this chat only hides it for you. It does not erase messages, Deal records, reports, or another participant&apos;s copy.
+            </p>
+          </div>
+        </div>
+        <button
+          className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-[color:var(--px-border-strong)] px-4 text-sm font-bold text-[color:var(--px-text)] transition hover:bg-[color:var(--px-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+          onClick={onRemove}
+          type="button"
+        >
+          Remove chat for me
+        </button>
       </div>
     </div>
   );
@@ -1024,6 +1496,67 @@ function formatConversationTime(value?: string) {
   if (dayDiff === 0) return formatMessageTime(value);
   if (dayDiff === 1) return "Yesterday";
   return new Intl.DateTimeFormat(undefined, { day: "2-digit", month: "short" }).format(date);
+}
+
+function shouldShowDateSeparator(previous: string | undefined, current: string) {
+  if (!previous) return true;
+  const previousDate = new Date(previous);
+  const currentDate = new Date(current);
+  if (Number.isNaN(previousDate.getTime()) || Number.isNaN(currentDate.getTime())) {
+    return false;
+  }
+  return previousDate.toDateString() !== currentDate.toDateString();
+}
+
+function getSnapshotString(snapshot: Record<string, unknown>, key: string) {
+  const value = snapshot[key];
+  return typeof value === "string" ? value : null;
+}
+
+function getSnapshotNumber(snapshot: Record<string, unknown>, key: string) {
+  const value = snapshot[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function formatEventType(value: WorkspaceConversationEvent["type"]) {
+  return value
+    .toLocaleLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toLocaleUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function formatMessageDay(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Conversation";
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const messageDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayDiff = Math.round(
+    (today.getTime() - messageDay.getTime()) / 86_400_000,
+  );
+  if (dayDiff === 0) return "Today";
+  if (dayDiff === 1) return "Yesterday";
+  return new Intl.DateTimeFormat(undefined, {
+    day: "numeric",
+    month: "short",
+    year: date.getFullYear() === now.getFullYear() ? undefined : "numeric",
+  }).format(date);
+}
+
+function formatMinorMoney(value: string, currency: string) {
+  try {
+    const amount = Number(BigInt(value)) / 100;
+    return new Intl.NumberFormat(undefined, {
+      currency,
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 0,
+      style: "currency",
+    }).format(amount);
+  } catch {
+    return `${currency} ${value}`;
+  }
 }
 
 function MessageStateIcon({ message }: { message: WorkspaceMessage }) {

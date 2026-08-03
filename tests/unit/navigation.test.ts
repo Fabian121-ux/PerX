@@ -115,9 +115,9 @@ describe("authenticated navigation destinations", () => {
     });
 
     expect(destinations).toEqual([
-      { href: "/app", label: "Home" },
       { href: "/app/connections", label: "Connections" },
       { href: "/app/opportunities/new", label: "Create Post" },
+      { href: "/app", label: "Home" },
       { href: "/app/messages", label: "Messages" },
       { href: "/app/profile", label: "Profile" },
     ]);

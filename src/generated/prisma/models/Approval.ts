@@ -27,6 +27,7 @@ export type AggregateApproval = {
 export type ApprovalMinAggregateOutputType = {
   id: string | null
   dealId: string | null
+  milestoneId: string | null
   actorId: string | null
   note: string | null
   createdAt: Date | null
@@ -35,6 +36,7 @@ export type ApprovalMinAggregateOutputType = {
 export type ApprovalMaxAggregateOutputType = {
   id: string | null
   dealId: string | null
+  milestoneId: string | null
   actorId: string | null
   note: string | null
   createdAt: Date | null
@@ -43,6 +45,7 @@ export type ApprovalMaxAggregateOutputType = {
 export type ApprovalCountAggregateOutputType = {
   id: number
   dealId: number
+  milestoneId: number
   actorId: number
   note: number
   createdAt: number
@@ -53,6 +56,7 @@ export type ApprovalCountAggregateOutputType = {
 export type ApprovalMinAggregateInputType = {
   id?: true
   dealId?: true
+  milestoneId?: true
   actorId?: true
   note?: true
   createdAt?: true
@@ -61,6 +65,7 @@ export type ApprovalMinAggregateInputType = {
 export type ApprovalMaxAggregateInputType = {
   id?: true
   dealId?: true
+  milestoneId?: true
   actorId?: true
   note?: true
   createdAt?: true
@@ -69,6 +74,7 @@ export type ApprovalMaxAggregateInputType = {
 export type ApprovalCountAggregateInputType = {
   id?: true
   dealId?: true
+  milestoneId?: true
   actorId?: true
   note?: true
   createdAt?: true
@@ -150,6 +156,7 @@ export type ApprovalGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
 export type ApprovalGroupByOutputType = {
   id: string
   dealId: string
+  milestoneId: string | null
   actorId: string
   note: string | null
   createdAt: Date
@@ -179,20 +186,24 @@ export type ApprovalWhereInput = {
   NOT?: Prisma.ApprovalWhereInput | Prisma.ApprovalWhereInput[]
   id?: Prisma.StringFilter<"Approval"> | string
   dealId?: Prisma.StringFilter<"Approval"> | string
+  milestoneId?: Prisma.StringNullableFilter<"Approval"> | string | null
   actorId?: Prisma.StringFilter<"Approval"> | string
   note?: Prisma.StringNullableFilter<"Approval"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Approval"> | Date | string
   deal?: Prisma.XOR<Prisma.DealScalarRelationFilter, Prisma.DealWhereInput>
+  milestone?: Prisma.XOR<Prisma.DealMilestoneNullableScalarRelationFilter, Prisma.DealMilestoneWhereInput> | null
   actor?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type ApprovalOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   dealId?: Prisma.SortOrder
+  milestoneId?: Prisma.SortOrderInput | Prisma.SortOrder
   actorId?: Prisma.SortOrder
   note?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   deal?: Prisma.DealOrderByWithRelationInput
+  milestone?: Prisma.DealMilestoneOrderByWithRelationInput
   actor?: Prisma.UserOrderByWithRelationInput
 }
 
@@ -202,16 +213,19 @@ export type ApprovalWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.ApprovalWhereInput[]
   NOT?: Prisma.ApprovalWhereInput | Prisma.ApprovalWhereInput[]
   dealId?: Prisma.StringFilter<"Approval"> | string
+  milestoneId?: Prisma.StringNullableFilter<"Approval"> | string | null
   actorId?: Prisma.StringFilter<"Approval"> | string
   note?: Prisma.StringNullableFilter<"Approval"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Approval"> | Date | string
   deal?: Prisma.XOR<Prisma.DealScalarRelationFilter, Prisma.DealWhereInput>
+  milestone?: Prisma.XOR<Prisma.DealMilestoneNullableScalarRelationFilter, Prisma.DealMilestoneWhereInput> | null
   actor?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id">
 
 export type ApprovalOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   dealId?: Prisma.SortOrder
+  milestoneId?: Prisma.SortOrderInput | Prisma.SortOrder
   actorId?: Prisma.SortOrder
   note?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -226,6 +240,7 @@ export type ApprovalScalarWhereWithAggregatesInput = {
   NOT?: Prisma.ApprovalScalarWhereWithAggregatesInput | Prisma.ApprovalScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Approval"> | string
   dealId?: Prisma.StringWithAggregatesFilter<"Approval"> | string
+  milestoneId?: Prisma.StringNullableWithAggregatesFilter<"Approval"> | string | null
   actorId?: Prisma.StringWithAggregatesFilter<"Approval"> | string
   note?: Prisma.StringNullableWithAggregatesFilter<"Approval"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Approval"> | Date | string
@@ -236,12 +251,14 @@ export type ApprovalCreateInput = {
   note?: string | null
   createdAt?: Date | string
   deal: Prisma.DealCreateNestedOneWithoutApprovalsInput
+  milestone?: Prisma.DealMilestoneCreateNestedOneWithoutApprovalsInput
   actor: Prisma.UserCreateNestedOneWithoutApprovalsInput
 }
 
 export type ApprovalUncheckedCreateInput = {
   id?: string
   dealId: string
+  milestoneId?: string | null
   actorId: string
   note?: string | null
   createdAt?: Date | string
@@ -252,12 +269,14 @@ export type ApprovalUpdateInput = {
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deal?: Prisma.DealUpdateOneRequiredWithoutApprovalsNestedInput
+  milestone?: Prisma.DealMilestoneUpdateOneWithoutApprovalsNestedInput
   actor?: Prisma.UserUpdateOneRequiredWithoutApprovalsNestedInput
 }
 
 export type ApprovalUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   dealId?: Prisma.StringFieldUpdateOperationsInput | string
+  milestoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -266,6 +285,7 @@ export type ApprovalUncheckedUpdateInput = {
 export type ApprovalCreateManyInput = {
   id?: string
   dealId: string
+  milestoneId?: string | null
   actorId: string
   note?: string | null
   createdAt?: Date | string
@@ -280,6 +300,7 @@ export type ApprovalUpdateManyMutationInput = {
 export type ApprovalUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   dealId?: Prisma.StringFieldUpdateOperationsInput | string
+  milestoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -298,6 +319,7 @@ export type ApprovalOrderByRelationAggregateInput = {
 export type ApprovalCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   dealId?: Prisma.SortOrder
+  milestoneId?: Prisma.SortOrder
   actorId?: Prisma.SortOrder
   note?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -306,6 +328,7 @@ export type ApprovalCountOrderByAggregateInput = {
 export type ApprovalMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   dealId?: Prisma.SortOrder
+  milestoneId?: Prisma.SortOrder
   actorId?: Prisma.SortOrder
   note?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -314,6 +337,7 @@ export type ApprovalMaxOrderByAggregateInput = {
 export type ApprovalMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   dealId?: Prisma.SortOrder
+  milestoneId?: Prisma.SortOrder
   actorId?: Prisma.SortOrder
   note?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -403,16 +427,60 @@ export type ApprovalUncheckedUpdateManyWithoutDealNestedInput = {
   deleteMany?: Prisma.ApprovalScalarWhereInput | Prisma.ApprovalScalarWhereInput[]
 }
 
+export type ApprovalCreateNestedManyWithoutMilestoneInput = {
+  create?: Prisma.XOR<Prisma.ApprovalCreateWithoutMilestoneInput, Prisma.ApprovalUncheckedCreateWithoutMilestoneInput> | Prisma.ApprovalCreateWithoutMilestoneInput[] | Prisma.ApprovalUncheckedCreateWithoutMilestoneInput[]
+  connectOrCreate?: Prisma.ApprovalCreateOrConnectWithoutMilestoneInput | Prisma.ApprovalCreateOrConnectWithoutMilestoneInput[]
+  createMany?: Prisma.ApprovalCreateManyMilestoneInputEnvelope
+  connect?: Prisma.ApprovalWhereUniqueInput | Prisma.ApprovalWhereUniqueInput[]
+}
+
+export type ApprovalUncheckedCreateNestedManyWithoutMilestoneInput = {
+  create?: Prisma.XOR<Prisma.ApprovalCreateWithoutMilestoneInput, Prisma.ApprovalUncheckedCreateWithoutMilestoneInput> | Prisma.ApprovalCreateWithoutMilestoneInput[] | Prisma.ApprovalUncheckedCreateWithoutMilestoneInput[]
+  connectOrCreate?: Prisma.ApprovalCreateOrConnectWithoutMilestoneInput | Prisma.ApprovalCreateOrConnectWithoutMilestoneInput[]
+  createMany?: Prisma.ApprovalCreateManyMilestoneInputEnvelope
+  connect?: Prisma.ApprovalWhereUniqueInput | Prisma.ApprovalWhereUniqueInput[]
+}
+
+export type ApprovalUpdateManyWithoutMilestoneNestedInput = {
+  create?: Prisma.XOR<Prisma.ApprovalCreateWithoutMilestoneInput, Prisma.ApprovalUncheckedCreateWithoutMilestoneInput> | Prisma.ApprovalCreateWithoutMilestoneInput[] | Prisma.ApprovalUncheckedCreateWithoutMilestoneInput[]
+  connectOrCreate?: Prisma.ApprovalCreateOrConnectWithoutMilestoneInput | Prisma.ApprovalCreateOrConnectWithoutMilestoneInput[]
+  upsert?: Prisma.ApprovalUpsertWithWhereUniqueWithoutMilestoneInput | Prisma.ApprovalUpsertWithWhereUniqueWithoutMilestoneInput[]
+  createMany?: Prisma.ApprovalCreateManyMilestoneInputEnvelope
+  set?: Prisma.ApprovalWhereUniqueInput | Prisma.ApprovalWhereUniqueInput[]
+  disconnect?: Prisma.ApprovalWhereUniqueInput | Prisma.ApprovalWhereUniqueInput[]
+  delete?: Prisma.ApprovalWhereUniqueInput | Prisma.ApprovalWhereUniqueInput[]
+  connect?: Prisma.ApprovalWhereUniqueInput | Prisma.ApprovalWhereUniqueInput[]
+  update?: Prisma.ApprovalUpdateWithWhereUniqueWithoutMilestoneInput | Prisma.ApprovalUpdateWithWhereUniqueWithoutMilestoneInput[]
+  updateMany?: Prisma.ApprovalUpdateManyWithWhereWithoutMilestoneInput | Prisma.ApprovalUpdateManyWithWhereWithoutMilestoneInput[]
+  deleteMany?: Prisma.ApprovalScalarWhereInput | Prisma.ApprovalScalarWhereInput[]
+}
+
+export type ApprovalUncheckedUpdateManyWithoutMilestoneNestedInput = {
+  create?: Prisma.XOR<Prisma.ApprovalCreateWithoutMilestoneInput, Prisma.ApprovalUncheckedCreateWithoutMilestoneInput> | Prisma.ApprovalCreateWithoutMilestoneInput[] | Prisma.ApprovalUncheckedCreateWithoutMilestoneInput[]
+  connectOrCreate?: Prisma.ApprovalCreateOrConnectWithoutMilestoneInput | Prisma.ApprovalCreateOrConnectWithoutMilestoneInput[]
+  upsert?: Prisma.ApprovalUpsertWithWhereUniqueWithoutMilestoneInput | Prisma.ApprovalUpsertWithWhereUniqueWithoutMilestoneInput[]
+  createMany?: Prisma.ApprovalCreateManyMilestoneInputEnvelope
+  set?: Prisma.ApprovalWhereUniqueInput | Prisma.ApprovalWhereUniqueInput[]
+  disconnect?: Prisma.ApprovalWhereUniqueInput | Prisma.ApprovalWhereUniqueInput[]
+  delete?: Prisma.ApprovalWhereUniqueInput | Prisma.ApprovalWhereUniqueInput[]
+  connect?: Prisma.ApprovalWhereUniqueInput | Prisma.ApprovalWhereUniqueInput[]
+  update?: Prisma.ApprovalUpdateWithWhereUniqueWithoutMilestoneInput | Prisma.ApprovalUpdateWithWhereUniqueWithoutMilestoneInput[]
+  updateMany?: Prisma.ApprovalUpdateManyWithWhereWithoutMilestoneInput | Prisma.ApprovalUpdateManyWithWhereWithoutMilestoneInput[]
+  deleteMany?: Prisma.ApprovalScalarWhereInput | Prisma.ApprovalScalarWhereInput[]
+}
+
 export type ApprovalCreateWithoutActorInput = {
   id?: string
   note?: string | null
   createdAt?: Date | string
   deal: Prisma.DealCreateNestedOneWithoutApprovalsInput
+  milestone?: Prisma.DealMilestoneCreateNestedOneWithoutApprovalsInput
 }
 
 export type ApprovalUncheckedCreateWithoutActorInput = {
   id?: string
   dealId: string
+  milestoneId?: string | null
   note?: string | null
   createdAt?: Date | string
 }
@@ -449,6 +517,7 @@ export type ApprovalScalarWhereInput = {
   NOT?: Prisma.ApprovalScalarWhereInput | Prisma.ApprovalScalarWhereInput[]
   id?: Prisma.StringFilter<"Approval"> | string
   dealId?: Prisma.StringFilter<"Approval"> | string
+  milestoneId?: Prisma.StringNullableFilter<"Approval"> | string | null
   actorId?: Prisma.StringFilter<"Approval"> | string
   note?: Prisma.StringNullableFilter<"Approval"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Approval"> | Date | string
@@ -458,11 +527,13 @@ export type ApprovalCreateWithoutDealInput = {
   id?: string
   note?: string | null
   createdAt?: Date | string
+  milestone?: Prisma.DealMilestoneCreateNestedOneWithoutApprovalsInput
   actor: Prisma.UserCreateNestedOneWithoutApprovalsInput
 }
 
 export type ApprovalUncheckedCreateWithoutDealInput = {
   id?: string
+  milestoneId?: string | null
   actorId: string
   note?: string | null
   createdAt?: Date | string
@@ -494,9 +565,51 @@ export type ApprovalUpdateManyWithWhereWithoutDealInput = {
   data: Prisma.XOR<Prisma.ApprovalUpdateManyMutationInput, Prisma.ApprovalUncheckedUpdateManyWithoutDealInput>
 }
 
+export type ApprovalCreateWithoutMilestoneInput = {
+  id?: string
+  note?: string | null
+  createdAt?: Date | string
+  deal: Prisma.DealCreateNestedOneWithoutApprovalsInput
+  actor: Prisma.UserCreateNestedOneWithoutApprovalsInput
+}
+
+export type ApprovalUncheckedCreateWithoutMilestoneInput = {
+  id?: string
+  actorId: string
+  note?: string | null
+  createdAt?: Date | string
+}
+
+export type ApprovalCreateOrConnectWithoutMilestoneInput = {
+  where: Prisma.ApprovalWhereUniqueInput
+  create: Prisma.XOR<Prisma.ApprovalCreateWithoutMilestoneInput, Prisma.ApprovalUncheckedCreateWithoutMilestoneInput>
+}
+
+export type ApprovalCreateManyMilestoneInputEnvelope = {
+  data: Prisma.ApprovalCreateManyMilestoneInput | Prisma.ApprovalCreateManyMilestoneInput[]
+  skipDuplicates?: boolean
+}
+
+export type ApprovalUpsertWithWhereUniqueWithoutMilestoneInput = {
+  where: Prisma.ApprovalWhereUniqueInput
+  update: Prisma.XOR<Prisma.ApprovalUpdateWithoutMilestoneInput, Prisma.ApprovalUncheckedUpdateWithoutMilestoneInput>
+  create: Prisma.XOR<Prisma.ApprovalCreateWithoutMilestoneInput, Prisma.ApprovalUncheckedCreateWithoutMilestoneInput>
+}
+
+export type ApprovalUpdateWithWhereUniqueWithoutMilestoneInput = {
+  where: Prisma.ApprovalWhereUniqueInput
+  data: Prisma.XOR<Prisma.ApprovalUpdateWithoutMilestoneInput, Prisma.ApprovalUncheckedUpdateWithoutMilestoneInput>
+}
+
+export type ApprovalUpdateManyWithWhereWithoutMilestoneInput = {
+  where: Prisma.ApprovalScalarWhereInput
+  data: Prisma.XOR<Prisma.ApprovalUpdateManyMutationInput, Prisma.ApprovalUncheckedUpdateManyWithoutMilestoneInput>
+}
+
 export type ApprovalCreateManyActorInput = {
   id?: string
   dealId: string
+  milestoneId?: string | null
   note?: string | null
   createdAt?: Date | string
 }
@@ -506,11 +619,13 @@ export type ApprovalUpdateWithoutActorInput = {
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deal?: Prisma.DealUpdateOneRequiredWithoutApprovalsNestedInput
+  milestone?: Prisma.DealMilestoneUpdateOneWithoutApprovalsNestedInput
 }
 
 export type ApprovalUncheckedUpdateWithoutActorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   dealId?: Prisma.StringFieldUpdateOperationsInput | string
+  milestoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -518,12 +633,14 @@ export type ApprovalUncheckedUpdateWithoutActorInput = {
 export type ApprovalUncheckedUpdateManyWithoutActorInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   dealId?: Prisma.StringFieldUpdateOperationsInput | string
+  milestoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ApprovalCreateManyDealInput = {
   id?: string
+  milestoneId?: string | null
   actorId: string
   note?: string | null
   createdAt?: Date | string
@@ -533,17 +650,49 @@ export type ApprovalUpdateWithoutDealInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  milestone?: Prisma.DealMilestoneUpdateOneWithoutApprovalsNestedInput
   actor?: Prisma.UserUpdateOneRequiredWithoutApprovalsNestedInput
 }
 
 export type ApprovalUncheckedUpdateWithoutDealInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  milestoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type ApprovalUncheckedUpdateManyWithoutDealInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  milestoneId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actorId?: Prisma.StringFieldUpdateOperationsInput | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ApprovalCreateManyMilestoneInput = {
+  id?: string
+  actorId: string
+  note?: string | null
+  createdAt?: Date | string
+}
+
+export type ApprovalUpdateWithoutMilestoneInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deal?: Prisma.DealUpdateOneRequiredWithoutApprovalsNestedInput
+  actor?: Prisma.UserUpdateOneRequiredWithoutApprovalsNestedInput
+}
+
+export type ApprovalUncheckedUpdateWithoutMilestoneInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  actorId?: Prisma.StringFieldUpdateOperationsInput | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+}
+
+export type ApprovalUncheckedUpdateManyWithoutMilestoneInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -555,52 +704,62 @@ export type ApprovalUncheckedUpdateManyWithoutDealInput = {
 export type ApprovalSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   dealId?: boolean
+  milestoneId?: boolean
   actorId?: boolean
   note?: boolean
   createdAt?: boolean
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
+  milestone?: boolean | Prisma.Approval$milestoneArgs<ExtArgs>
   actor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["approval"]>
 
 export type ApprovalSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   dealId?: boolean
+  milestoneId?: boolean
   actorId?: boolean
   note?: boolean
   createdAt?: boolean
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
+  milestone?: boolean | Prisma.Approval$milestoneArgs<ExtArgs>
   actor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["approval"]>
 
 export type ApprovalSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   dealId?: boolean
+  milestoneId?: boolean
   actorId?: boolean
   note?: boolean
   createdAt?: boolean
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
+  milestone?: boolean | Prisma.Approval$milestoneArgs<ExtArgs>
   actor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["approval"]>
 
 export type ApprovalSelectScalar = {
   id?: boolean
   dealId?: boolean
+  milestoneId?: boolean
   actorId?: boolean
   note?: boolean
   createdAt?: boolean
 }
 
-export type ApprovalOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "dealId" | "actorId" | "note" | "createdAt", ExtArgs["result"]["approval"]>
+export type ApprovalOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "dealId" | "milestoneId" | "actorId" | "note" | "createdAt", ExtArgs["result"]["approval"]>
 export type ApprovalInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
+  milestone?: boolean | Prisma.Approval$milestoneArgs<ExtArgs>
   actor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type ApprovalIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
+  milestone?: boolean | Prisma.Approval$milestoneArgs<ExtArgs>
   actor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type ApprovalIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
+  milestone?: boolean | Prisma.Approval$milestoneArgs<ExtArgs>
   actor?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
@@ -608,11 +767,13 @@ export type $ApprovalPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   name: "Approval"
   objects: {
     deal: Prisma.$DealPayload<ExtArgs>
+    milestone: Prisma.$DealMilestonePayload<ExtArgs> | null
     actor: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     dealId: string
+    milestoneId: string | null
     actorId: string
     note: string | null
     createdAt: Date
@@ -1011,6 +1172,7 @@ readonly fields: ApprovalFieldRefs;
 export interface Prisma__ApprovalClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   deal<T extends Prisma.DealDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DealDefaultArgs<ExtArgs>>): Prisma.Prisma__DealClient<runtime.Types.Result.GetResult<Prisma.$DealPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  milestone<T extends Prisma.Approval$milestoneArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Approval$milestoneArgs<ExtArgs>>): Prisma.Prisma__DealMilestoneClient<runtime.Types.Result.GetResult<Prisma.$DealMilestonePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   actor<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1043,6 +1205,7 @@ export interface Prisma__ApprovalClient<T, Null = never, ExtArgs extends runtime
 export interface ApprovalFieldRefs {
   readonly id: Prisma.FieldRef<"Approval", 'String'>
   readonly dealId: Prisma.FieldRef<"Approval", 'String'>
+  readonly milestoneId: Prisma.FieldRef<"Approval", 'String'>
   readonly actorId: Prisma.FieldRef<"Approval", 'String'>
   readonly note: Prisma.FieldRef<"Approval", 'String'>
   readonly createdAt: Prisma.FieldRef<"Approval", 'DateTime'>
@@ -1444,6 +1607,25 @@ export type ApprovalDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Inte
    * Limit how many Approvals to delete.
    */
   limit?: number
+}
+
+/**
+ * Approval.milestone
+ */
+export type Approval$milestoneArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the DealMilestone
+   */
+  select?: Prisma.DealMilestoneSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the DealMilestone
+   */
+  omit?: Prisma.DealMilestoneOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.DealMilestoneInclude<ExtArgs> | null
+  where?: Prisma.DealMilestoneWhereInput
 }
 
 /**

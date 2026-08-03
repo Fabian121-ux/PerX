@@ -17,6 +17,7 @@ const tx = vi.hoisted(() => ({
     findMany: vi.fn(),
     update: vi.fn(),
   },
+  conversationParticipant: { updateMany: vi.fn() },
   user: { findMany: vi.fn() },
 }));
 
@@ -67,6 +68,7 @@ describe("direct conversation entry", () => {
     tx.connection.findFirst.mockResolvedValue({ id: "connection-1" });
     tx.conversation.findMany.mockResolvedValue([]);
     tx.conversation.create.mockResolvedValue({ id: "conversation-new" });
+    tx.conversationParticipant.updateMany.mockResolvedValue({ count: 1 });
   });
 
   it("locks the normalized pair and reuses the oldest active direct conversation", async () => {
@@ -101,6 +103,13 @@ describe("direct conversation entry", () => {
       tx.conversation.findMany.mock.invocationCallOrder[0]!,
     );
     expect(tx.conversation.create).not.toHaveBeenCalled();
+    expect(tx.conversationParticipant.updateMany).toHaveBeenCalledWith({
+      data: { removedAt: null },
+      where: {
+        conversationId: "conversation-canonical",
+        userId: "user-b",
+      },
+    });
     expect(mocks.redirect).toHaveBeenCalledWith(
       "/app/messages/conversation-canonical",
     );

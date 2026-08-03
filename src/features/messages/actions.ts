@@ -24,6 +24,9 @@ const editMessageSchema = z.object({
   messageId: z.string().cuid(),
 });
 
+const messageIdSchema = z.string().cuid("Invalid message.");
+const conversationIdSchema = z.string().cuid("Invalid conversation.");
+
 const rateLimitWindowMs = 60_000;
 const rateLimitMaxMessages = 20;
 
@@ -183,6 +186,11 @@ export async function sendMessageAction(
       });
 
       await tx.conversationParticipant.updateMany({
+        data: { removedAt: null },
+        where: { conversationId: parsed.data.conversationId },
+      });
+
+      await tx.conversationParticipant.updateMany({
         data: { lastReadAt: message.createdAt },
         where: { conversationId: parsed.data.conversationId, userId: user.id },
       });
@@ -310,6 +318,96 @@ export async function editMessageAction(messageId: string, body: string) {
 
   revalidatePath("/app/messages");
   revalidatePath(`/app/messages/${message.conversationId}`);
+  return { success: true };
+}
+
+export async function deleteMessageAction(messageId: string) {
+  const user = await requireUser();
+  const parsed = messageIdSchema.safeParse(messageId);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+
+  if (getResolvedDataMode() === "mock") return { success: true };
+  if (!hasDatabaseUrl()) return { error: "Database not configured." };
+
+  const message = await getPrisma().message.findFirst({
+    select: {
+      conversationId: true,
+      createdAt: true,
+      deletedAt: true,
+      senderId: true,
+    },
+    where: {
+      id: parsed.data,
+      conversation: {
+        participants: { some: { userId: user.id } },
+        status: "ACTIVE",
+      },
+    },
+  });
+
+  if (!message || message.senderId !== user.id) {
+    return { error: "You can only remove your own messages." };
+  }
+  if (message.deletedAt) return { success: true };
+
+  const editWindowMs = getServerEnv().MESSAGE_EDIT_WINDOW_MINUTES * 60_000;
+  if (Date.now() - message.createdAt.getTime() > editWindowMs) {
+    return { error: "The removal window for this message has closed." };
+  }
+
+  await getPrisma().$transaction(async (tx) => {
+    const updated = await tx.message.updateMany({
+      data: { deletedAt: new Date(), deletedById: user.id },
+      where: { deletedAt: null, id: parsed.data, senderId: user.id },
+    });
+    if (!updated.count) return;
+    await tx.auditLog.create({
+      data: {
+        action: "message.deleted",
+        actorId: user.id,
+        entityId: parsed.data,
+        entityType: "message",
+        metadata: {
+          conversationId: message.conversationId,
+          retainedAsTombstone: true,
+        },
+      },
+    });
+  });
+
+  revalidatePath("/app/messages");
+  revalidatePath(`/app/messages/${message.conversationId}`);
+  return { success: true };
+}
+
+export async function removeConversationForMeAction(conversationId: string) {
+  const user = await requireUser();
+  const parsed = conversationIdSchema.safeParse(conversationId);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+
+  if (getResolvedDataMode() === "mock") return { success: true };
+  if (!hasDatabaseUrl()) return { error: "Database not configured." };
+
+  const removed = await getPrisma().$transaction(async (tx) => {
+    const updated = await tx.conversationParticipant.updateMany({
+      data: { removedAt: new Date() },
+      where: { conversationId: parsed.data, userId: user.id },
+    });
+    if (!updated.count) return false;
+    await tx.auditLog.create({
+      data: {
+        action: "conversation.removed_for_participant",
+        actorId: user.id,
+        entityId: parsed.data,
+        entityType: "conversation",
+        metadata: { participantLocal: true },
+      },
+    });
+    return true;
+  });
+  if (!removed) return { error: "Conversation not found." };
+
+  revalidatePath("/app/messages");
   return { success: true };
 }
 

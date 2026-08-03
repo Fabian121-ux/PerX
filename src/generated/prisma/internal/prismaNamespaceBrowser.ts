@@ -80,6 +80,9 @@ export const ModelName = {
   MessageReadReceipt: 'MessageReadReceipt',
   BlockedUser: 'BlockedUser',
   Proposal: 'Proposal',
+  ProposalVersion: 'ProposalVersion',
+  ProposalVersionMilestone: 'ProposalVersionMilestone',
+  ConversationEvent: 'ConversationEvent',
   ProposalMilestone: 'ProposalMilestone',
   ProposalStatusHistory: 'ProposalStatusHistory',
   Deal: 'Deal',
@@ -481,6 +484,7 @@ export const ConversationParticipantScalarFieldEnum = {
   conversationId: 'conversationId',
   userId: 'userId',
   lastReadAt: 'lastReadAt',
+  removedAt: 'removedAt',
   createdAt: 'createdAt'
 } as const
 
@@ -567,6 +571,55 @@ export const ProposalScalarFieldEnum = {
 export type ProposalScalarFieldEnum = (typeof ProposalScalarFieldEnum)[keyof typeof ProposalScalarFieldEnum]
 
 
+export const ProposalVersionScalarFieldEnum = {
+  id: 'id',
+  proposalId: 'proposalId',
+  versionNumber: 'versionNumber',
+  status: 'status',
+  amountMinor: 'amountMinor',
+  currency: 'currency',
+  description: 'description',
+  deliveryDays: 'deliveryDays',
+  includedRevisions: 'includedRevisions',
+  createdById: 'createdById',
+  supersedesVersionId: 'supersedesVersionId',
+  submittedAt: 'submittedAt',
+  acceptedAt: 'acceptedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProposalVersionScalarFieldEnum = (typeof ProposalVersionScalarFieldEnum)[keyof typeof ProposalVersionScalarFieldEnum]
+
+
+export const ProposalVersionMilestoneScalarFieldEnum = {
+  id: 'id',
+  proposalVersionId: 'proposalVersionId',
+  position: 'position',
+  title: 'title',
+  description: 'description',
+  amountMinor: 'amountMinor',
+  dueInDays: 'dueInDays'
+} as const
+
+export type ProposalVersionMilestoneScalarFieldEnum = (typeof ProposalVersionMilestoneScalarFieldEnum)[keyof typeof ProposalVersionMilestoneScalarFieldEnum]
+
+
+export const ConversationEventScalarFieldEnum = {
+  id: 'id',
+  conversationId: 'conversationId',
+  actorId: 'actorId',
+  type: 'type',
+  proposalVersionId: 'proposalVersionId',
+  dealId: 'dealId',
+  snapshot: 'snapshot',
+  idempotencyKey: 'idempotencyKey',
+  createdAt: 'createdAt'
+} as const
+
+export type ConversationEventScalarFieldEnum = (typeof ConversationEventScalarFieldEnum)[keyof typeof ConversationEventScalarFieldEnum]
+
+
 export const ProposalMilestoneScalarFieldEnum = {
   id: 'id',
   proposalId: 'proposalId',
@@ -595,8 +648,10 @@ export type ProposalStatusHistoryScalarFieldEnum = (typeof ProposalStatusHistory
 export const DealScalarFieldEnum = {
   id: 'id',
   proposalId: 'proposalId',
+  proposalVersionId: 'proposalVersionId',
   opportunityId: 'opportunityId',
   status: 'status',
+  settlementMode: 'settlementMode',
   valueMinor: 'valueMinor',
   currency: 'currency',
   idempotencyKey: 'idempotencyKey',
@@ -650,6 +705,7 @@ export type DeliveryScalarFieldEnum = (typeof DeliveryScalarFieldEnum)[keyof typ
 export const ApprovalScalarFieldEnum = {
   id: 'id',
   dealId: 'dealId',
+  milestoneId: 'milestoneId',
   actorId: 'actorId',
   note: 'note',
   createdAt: 'createdAt'
@@ -661,6 +717,7 @@ export type ApprovalScalarFieldEnum = (typeof ApprovalScalarFieldEnum)[keyof typ
 export const ReleaseScalarFieldEnum = {
   id: 'id',
   dealId: 'dealId',
+  milestoneId: 'milestoneId',
   actorId: 'actorId',
   amountMinor: 'amountMinor',
   currency: 'currency',
@@ -907,6 +964,13 @@ export const NullableJsonNullValueInput = {
 } as const
 
 export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+export const JsonNullValueInput = {
+  JsonNull: JsonNull
+} as const
+
+export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
 export const QueryMode = {

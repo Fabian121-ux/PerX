@@ -5,7 +5,7 @@ export type DealParticipantSnapshot = {
 
 export type DealApprovalSnapshot = {
   participants: DealParticipantSnapshot[];
-  releases?: { id: string }[];
+  releases?: { id: string; milestoneId?: string | null }[];
   status: string;
 };
 
@@ -26,6 +26,7 @@ function participantRole(role: string) {
 export function getDeliveryApprovalDecision(
   deal: DealApprovalSnapshot,
   userId: string,
+  milestoneId?: string,
 ): DealApprovalDecision {
   const currentParticipant = deal.participants.find(
     (participant) => participant.userId === userId,
@@ -43,7 +44,13 @@ export function getDeliveryApprovalDecision(
     return { allowed: false, reason: "not-client" };
   }
 
-  if (deal.releases?.length) {
+  if (
+    milestoneId
+      ? deal.releases?.some(
+          (release) => release.milestoneId === milestoneId,
+        )
+      : deal.releases?.length
+  ) {
     return { allowed: false, reason: "already-released" };
   }
 

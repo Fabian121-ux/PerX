@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const prismaMocks = vi.hoisted(() => ({
+  conversationEventFindFirst: vi.fn(),
   conversationParticipantFindUnique: vi.fn(),
   dealFindFirst: vi.fn(),
   messageFindFirst: vi.fn(),
@@ -12,6 +13,9 @@ vi.mock("@/lib/db/prisma", () => ({
   getPrisma: () => ({
     conversationParticipant: {
       findUnique: prismaMocks.conversationParticipantFindUnique,
+    },
+    conversationEvent: {
+      findFirst: prismaMocks.conversationEventFindFirst,
     },
     deal: {
       findFirst: prismaMocks.dealFindFirst,
@@ -32,7 +36,10 @@ import {
   normalizeNotificationActionUrl,
   resolveNotificationAction,
 } from "@/lib/notifications/action-url";
-import { parseExactMessageTarget } from "@/lib/messages/entry";
+import {
+  parseExactConversationEventTarget,
+  parseExactMessageTarget,
+} from "@/lib/messages/entry";
 import { hasCapability } from "@/lib/permissions/capabilities";
 
 describe("notification action URLs", () => {
@@ -91,7 +98,7 @@ describe("notification action URLs", () => {
       select: { conversationId: true, id: true, senderId: true },
       where: {
         conversation: {
-          participants: { some: { userId: "user-1" } },
+          participants: { some: { removedAt: null, userId: "user-1" } },
           status: "ACTIVE",
         },
         conversationId: "conversation-1",
@@ -223,6 +230,56 @@ describe("notification action URLs", () => {
         "/app/messages/conversation-1/extra?message=message-1",
       ),
     ).toBeNull();
+  });
+
+  it("validates exact proposal and Deal event destinations", async () => {
+    prismaMocks.conversationParticipantFindUnique.mockResolvedValue({
+      id: "participant-1",
+      removedAt: null,
+    });
+    prismaMocks.conversationEventFindFirst.mockResolvedValue({
+      conversationId: "conversation-1",
+      id: "event-1",
+    });
+
+    await expect(
+      resolveNotificationAction("user-1", {
+        actionUrl: "/app/messages/conversation-1?event=event-1",
+        type: "PROPOSAL_UPDATE",
+      }),
+    ).resolves.toEqual({
+      available: true,
+      href: "/app/messages/conversation-1?event=event-1",
+      label: "Review proposal",
+    });
+    expect(parseExactConversationEventTarget(
+      "/app/messages/conversation-1?event=event-1",
+    )).toEqual({
+      conversationId: "conversation-1",
+      eventId: "event-1",
+      href: "/app/messages/conversation-1?event=event-1",
+    });
+  });
+
+  it("hides event destinations after participant-local chat removal", async () => {
+    prismaMocks.conversationEventFindFirst.mockResolvedValue(null);
+
+    await expect(
+      resolveNotificationAction("user-1", {
+        actionUrl: "/app/messages/conversation-1?event=event-1",
+        type: "DEAL_UPDATE",
+      }),
+    ).resolves.toMatchObject({ available: false, reason: "unavailable" });
+    expect(prismaMocks.conversationEventFindFirst).toHaveBeenCalledWith({
+      where: {
+        conversation: {
+          participants: { some: { removedAt: null, userId: "user-1" } },
+          status: "ACTIVE",
+        },
+        conversationId: "conversation-1",
+        id: "event-1",
+      },
+    });
   });
 });
 

@@ -80,7 +80,7 @@ async function main() {
   }
 
   const userA = await upsertUser("alice-test@perx.test", "alice_test", "Alice Test", "PUBLIC_BETA_USER", ["FREELANCER", "CLIENT"]);
-  const userB = await upsertUser("bob-test@perx.test", "bob_test", "Bob Test", "PUBLIC_BETA_USER", ["FOUNDER"]);
+  const userB = await upsertUser("bob-test@perx.test", "bob_test", "Bob Test", "PUBLIC_BETA_USER", ["FOUNDER", "CLIENT"]);
   const userC = await upsertUser("carol-test@perx.test", "carol_test", "Carol Test", "PUBLIC_BETA_USER", ["MEMBER"]);
   const masterAdmin = await upsertUser("admin-test@perx.test", "admin_test", "Admin Test", "PUBLIC_BETA_USER", ["MASTER_ADMIN"]);
 
@@ -213,10 +213,27 @@ async function main() {
         status: "ACCEPTED",
       },
     });
+    const proposalVersion = await prisma.proposalVersion.create({
+      data: {
+        acceptedAt: new Date(),
+        amountMinor: proposal.amountMinor,
+        createdById: userB.id,
+        currency: proposal.currency,
+        deliveryDays: proposal.deliveryDays,
+        description: proposal.description,
+        includedRevisions: proposal.revisions,
+        proposalId: proposal.id,
+        status: "ACCEPTED",
+        submittedAt: proposal.createdAt,
+        versionNumber: 1,
+      },
+    });
     deal = await prisma.deal.create({
       data: {
         opportunityId: proposal.opportunityId,
         proposalId: proposal.id,
+        proposalVersionId: proposalVersion.id,
+        settlementMode: "SIMULATED",
         status: "APPROVED",
         valueMinor: BigInt(100000),
         currency: "NGN",
@@ -246,10 +263,27 @@ async function main() {
         status: "ACCEPTED",
       },
     });
+    const proposalVersion2 = await prisma.proposalVersion.create({
+      data: {
+        acceptedAt: new Date(),
+        amountMinor: proposal2.amountMinor,
+        createdById: userC.id,
+        currency: proposal2.currency,
+        deliveryDays: proposal2.deliveryDays,
+        description: proposal2.description,
+        includedRevisions: proposal2.revisions,
+        proposalId: proposal2.id,
+        status: "ACCEPTED",
+        submittedAt: proposal2.createdAt,
+        versionNumber: 1,
+      },
+    });
     nonQualifyingDeal = await prisma.deal.create({
       data: {
         opportunityId: proposal2.opportunityId,
         proposalId: proposal2.id,
+        proposalVersionId: proposalVersion2.id,
+        settlementMode: "SIMULATED",
         status: "IN_PROGRESS",
         valueMinor: BigInt(50000),
         currency: "NGN",

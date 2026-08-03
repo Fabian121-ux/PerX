@@ -821,14 +821,23 @@ export async function startConversationAction(targetUserId: string) {
       directConversations.find((candidate) => candidate.status === "ACTIVE") ??
       directConversations.find((candidate) => candidate.status === "ARCHIVED");
     if (existingConversation?.status === "ACTIVE") {
+      await tx.conversationParticipant.updateMany({
+        data: { removedAt: null },
+        where: { conversationId: existingConversation.id, userId: user.id },
+      });
       return { id: existingConversation.id };
     }
     if (existingConversation?.status === "ARCHIVED") {
-      return tx.conversation.update({
+      const reactivated = await tx.conversation.update({
         data: { status: "ACTIVE" },
         select: { id: true },
         where: { id: existingConversation.id },
       });
+      await tx.conversationParticipant.updateMany({
+        data: { removedAt: null },
+        where: { conversationId: existingConversation.id, userId: user.id },
+      });
+      return reactivated;
     }
     if (directConversations.length) {
       throw new Error("Messaging is unavailable.");

@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  conversationEventFindFirst: vi.fn(),
+  findOwnedConversationEventTarget: vi.fn(),
   findOwnedMessageTarget: vi.fn(),
   getConversationMessages: vi.fn(),
   getConversations: vi.fn(),
@@ -24,9 +26,13 @@ vi.mock("@/lib/data/app", () => ({
   getConversations: mocks.getConversations,
 }));
 vi.mock("@/lib/db/prisma", () => ({
-  getPrisma: () => ({ message: { findFirst: mocks.messageFindFirst } }),
+  getPrisma: () => ({
+    conversationEvent: { findFirst: mocks.conversationEventFindFirst },
+    message: { findFirst: mocks.messageFindFirst },
+  }),
 }));
 vi.mock("@/lib/messages/entry", () => ({
+  findOwnedConversationEventTarget: mocks.findOwnedConversationEventTarget,
   findOwnedMessageTarget: mocks.findOwnedMessageTarget,
 }));
 vi.mock("@/lib/messages/read-state", () => ({
@@ -54,7 +60,9 @@ function message(id: string, createdAt: string) {
 }
 
 function conversation() {
+  const events: unknown[] = [];
   return {
+    events,
     id: "conversation-1",
     messages: [message("message-latest", "2026-07-31T12:00:00.000Z")],
     opportunity: null,
@@ -137,6 +145,58 @@ describe("conversation exact message entry", () => {
       "conversation-1",
       "user-1",
     );
+    expect(mocks.getConversationMessages).toHaveBeenCalledWith(
+      "conversation-1",
+      "user-1",
+    );
+  });
+
+  it("loads and highlights an exact immutable conversation event", async () => {
+    const selected = conversation();
+    const event = {
+      actorId: "user-2",
+      conversationId: "conversation-1",
+      createdAt: new Date("2026-07-01T12:00:00.000Z"),
+      dealId: null,
+      id: "event-target",
+      idempotencyKey: "proposal:1:submitted",
+      proposalVersionId: "version-1",
+      snapshot: { schemaVersion: 1, versionNumber: 1 },
+      type: "PROPOSAL_SUBMITTED",
+    };
+    mocks.getConversations.mockResolvedValue([selected]);
+    mocks.getConversationMessages.mockResolvedValue(selected.messages);
+    mocks.findOwnedConversationEventTarget.mockResolvedValue(event);
+
+    const element = await ConversationPage({
+      params: Promise.resolve({ conversationId: "conversation-1" }),
+      searchParams: Promise.resolve({ event: "event-target" }),
+    });
+    const props = element.props as {
+      highlightEventId: string;
+    };
+
+    expect(mocks.findOwnedConversationEventTarget).toHaveBeenCalledWith(
+      "user-1",
+      { conversationId: "conversation-1", eventId: "event-target" },
+    );
+    expect(selected.events).toEqual([event]);
+    expect(props.highlightEventId).toBe("event-target");
+  });
+
+  it("rejects ambiguous message and event targets", async () => {
+    mocks.getConversations.mockResolvedValue([conversation()]);
+
+    await expect(
+      ConversationPage({
+        params: Promise.resolve({ conversationId: "conversation-1" }),
+        searchParams: Promise.resolve({
+          event: "event-target",
+          message: "message-target",
+        }),
+      }),
+    ).rejects.toThrow("NOT_FOUND");
+    expect(mocks.findOwnedMessageTarget).not.toHaveBeenCalled();
   });
 
   it("rejects a target that is not owned by the conversation participant", async () => {

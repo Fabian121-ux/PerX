@@ -4,11 +4,15 @@ import { notFound, redirect } from "next/navigation";
 import {
   MessageWorkspace,
   type WorkspaceConversation,
+  type WorkspaceConversationEvent,
 } from "@/components/messages/message-workspace";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth/session";
 import { getConversationMessages, getConversations } from "@/lib/data/app";
 import { getPrisma } from "@/lib/db/prisma";
-import { findOwnedMessageTarget } from "@/lib/messages/entry";
+import {
+  findOwnedConversationEventTarget,
+  findOwnedMessageTarget,
+} from "@/lib/messages/entry";
 import { markConversationReadForUser } from "@/lib/messages/read-state";
 
 type PreviewConversationLike = {
@@ -27,6 +31,15 @@ type PreviewConversationLike = {
 };
 
 type DbConversationLike = {
+  events?: {
+    actorId?: string | null;
+    createdAt: Date;
+    dealId?: string | null;
+    id: string;
+    proposalVersionId?: string | null;
+    snapshot: unknown;
+    type: WorkspaceConversationEvent["type"];
+  }[];
   id: string;
   messages: {
     body: string;
@@ -51,7 +64,16 @@ type DbConversationLike = {
     } | null;
     userId: string;
   }[];
-  proposals?: { deal?: { id: string; status: string } | null }[];
+  proposals?: {
+    deal?: {
+      currency: string;
+      id: string;
+      proposalVersion?: { versionNumber: number } | null;
+      settlementMode?: "SIMULATED" | "PROVIDER_DISABLED";
+      status: string;
+      valueMinor: bigint;
+    } | null;
+  }[];
 };
 
 function getPresenceState(showPresence: boolean, lastSeenAt?: Date | null) {
@@ -102,16 +124,40 @@ function toWorkspaceConversation(
   const latestMessage = dbConversation.messages.length > 1 
     ? dbConversation.messages[dbConversation.messages.length - 1] // ascending full messages
     : dbConversation.messages[0]; // descending single message
+  const linkedDeal = dbConversation.proposals?.find((proposal) => proposal.deal)?.deal;
 
   return {
     context: dbConversation.opportunity?.title ?? "Professional conversation",
-    dealHref: dbConversation.proposals?.find((proposal) => proposal.deal)?.deal
-      ? `/app/deals/${dbConversation.proposals.find((proposal) => proposal.deal)?.deal?.id}`
+    deal: linkedDeal
+      ? {
+          amountMinor: linkedDeal.valueMinor.toString(),
+          currency: linkedDeal.currency,
+          id: linkedDeal.id,
+          settlementMode: linkedDeal.settlementMode,
+          status: linkedDeal.status,
+          title: dbConversation.opportunity?.title ?? "PerX Deal",
+          versionLabel: linkedDeal.proposalVersion
+            ? `v${linkedDeal.proposalVersion.versionNumber}`
+            : undefined,
+        }
       : undefined,
+    dealHref: linkedDeal ? `/app/deals/${linkedDeal.id}` : undefined,
+    events: (dbConversation.events ?? []).map((event) => ({
+      actorName:
+        dbConversation.participants.find(
+          (participant) => participant.userId === event.actorId,
+        )?.user?.name ?? null,
+      createdAt: event.createdAt.toISOString(),
+      dealHref: event.dealId ? `/app/deals/${event.dealId}` : null,
+      id: event.id,
+      proposalVersionId: event.proposalVersionId ?? null,
+      snapshot: toEventSnapshot(event.snapshot),
+      type: event.type,
+    })),
     id: dbConversation.id,
     lastMessage: latestMessage?.body ?? "No messages yet.",
     messages: dbConversation.messages.map(msg => ({
-      body: msg.body,
+      body: msg.deletedAt ? "" : msg.body,
       createdAt: msg.createdAt.toISOString(),
       deletedAt: msg.deletedAt?.toISOString() ?? null,
       editedAt: msg.editedAt?.toISOString() ?? null,
@@ -155,13 +201,17 @@ export default async function ConversationPage({
   searchParams,
 }: {
   params: Promise<{ conversationId: string }>;
-  searchParams: Promise<{ message?: string }>;
+  searchParams: Promise<{ event?: string; message?: string }>;
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
   const { conversationId } = await params;
-  const { message: highlightMessageId } = await searchParams;
+  const {
+    event: highlightEventId,
+    message: highlightMessageId,
+  } = await searchParams;
+  if (highlightEventId && highlightMessageId) notFound();
   const conversations = await getConversations(user.id);
   const selected = conversations.find(
     (conversation) => conversation.id === conversationId,
@@ -175,8 +225,15 @@ export default async function ConversationPage({
       })
     : null;
   if (highlightMessageId && !exactTarget) notFound();
+  const exactEventTarget = highlightEventId
+    ? await findOwnedConversationEventTarget(user.id, {
+        conversationId,
+        eventId: highlightEventId,
+      })
+    : null;
+  if (highlightEventId && !exactEventTarget) notFound();
 
-  let fullMessages = await getConversationMessages(conversationId);
+  let fullMessages = await getConversationMessages(conversationId, user.id);
   if (
     exactTarget &&
     !fullMessages.some((message) => message.id === exactTarget.id)
@@ -209,6 +266,21 @@ export default async function ConversationPage({
   }
 
   (selected as DbConversationLike).messages = fullMessages;
+  if (exactEventTarget) {
+    const selectedWithEvents = selected as DbConversationLike & {
+      events?: unknown[];
+    };
+    if (
+      !selectedWithEvents.events?.some(
+        (event: any) => event.id === exactEventTarget.id,
+      )
+    ) {
+      selectedWithEvents.events = [
+        ...(selectedWithEvents.events ?? []),
+        exactEventTarget,
+      ];
+    }
+  }
   await markConversationReadForUser(conversationId, user.id);
 
   const workspaceConversations: WorkspaceConversation[] = conversations.map(
@@ -221,8 +293,9 @@ export default async function ConversationPage({
       conversations={workspaceConversations}
       currentUserId={user.id}
       defaultConversationId={conversationId}
+      highlightEventId={exactEventTarget?.id}
       highlightMessageId={exactTarget?.id}
-      key={`${conversationId}:${exactTarget?.id ?? "latest"}`}
+      key={`${conversationId}:${exactTarget?.id ?? exactEventTarget?.id ?? "latest"}`}
     />
   );
 }
@@ -236,4 +309,10 @@ function toWorkspaceReply(replyTo: any) {
     senderId: replyTo.senderId,
     senderName: replyTo.sender?.name ?? replyTo.sender?.username ?? "Participant",
   };
+}
+
+function toEventSnapshot(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
 }

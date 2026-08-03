@@ -83,6 +83,35 @@ enum ProposalStatus {
   EXPIRED
 }
 
+enum ProposalVersionStatus {
+  DRAFT
+  SUBMITTED
+  SUPERSEDED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+  EXPIRED
+}
+
+enum ConversationEventType {
+  PROPOSAL_SUBMITTED
+  PROPOSAL_OBJECTION_RAISED
+  PROPOSAL_REVISION_CREATED
+  PROPOSAL_REVISION_SUBMITTED
+  PROPOSAL_ACCEPTED
+  PROPOSAL_REJECTED
+  DEAL_CREATED
+  DEAL_STATUS_CHANGED
+  MILESTONE_SUBMITTED
+  MILESTONE_APPROVED
+  SIMULATED_RELEASE_RECORDED
+}
+
+enum DealSettlementMode {
+  SIMULATED
+  PROVIDER_DISABLED
+}
+
 enum DealStatus {
   DRAFT
   AWAITING_FUNDING
@@ -264,56 +293,56 @@ enum SponsoredContentStatus {
 }
 
 model User {
-  id                    String                    @id @default(cuid())
-  email                 String                    @unique
-  passwordHash          String
-  name                  String
-  username              String                    @unique
-  accountClassification AccountClassification     @default(PUBLIC_BETA_USER)
-  imageUrl              String?
-  imageStorageKey       String?
-  emailVerifiedAt       DateTime?
-  verificationStatus    VerificationStatus        @default(UNVERIFIED)
-  isActive              Boolean                   @default(true)
-  messagingRestrictedUntil DateTime?
+  id                                String                    @id @default(cuid())
+  email                             String                    @unique
+  passwordHash                      String
+  name                              String
+  username                          String                    @unique
+  accountClassification             AccountClassification     @default(PUBLIC_BETA_USER)
+  imageUrl                          String?
+  imageStorageKey                   String?
+  emailVerifiedAt                   DateTime?
+  verificationStatus                VerificationStatus        @default(UNVERIFIED)
+  isActive                          Boolean                   @default(true)
+  messagingRestrictedUntil          DateTime?
   connectionRequestsRestrictedUntil DateTime?
-  publishingRestrictedUntil DateTime?
-  suspendedAt           DateTime?
-  suspendedUntil        DateTime?
-  deactivatedAt         DateTime?
-  bannedAt              DateTime?
-  enforcementReasonPublic String?
-  onboardingDismissedAt DateTime?
-  createdAt             DateTime                  @default(now())
-  updatedAt             DateTime                  @updatedAt
-  sessions              Session[]
-  roles                 UserRole[]
-  profile               Profile?
-  opportunities         Opportunity[]             @relation("OpportunityOwner")
-  bookmarks             OpportunityBookmark[]
-  reports               OpportunityReport[]       @relation("Reporter")
-  userReports           UserReport[]              @relation("UserReportReporter")
-  proposals             Proposal[]                @relation("ProposalSender")
-  conversations         ConversationParticipant[]
-  messages              Message[]
-  deals                 DealParticipant[]
-  deliveries            Delivery[]
-  approvals             Approval[]
-  releases              Release[]
-  refunds               Refund[]
-  disputesOpened        Dispute[]                 @relation("DisputeOpenedBy")
-  reviewsGiven          Review[]                  @relation("ReviewAuthor")
-  reviewsReceived       Review[]                  @relation("ReviewSubject")
-  notifications         Notification[]
-  auditLogs             AuditLog[]                @relation("AuditActor")
-  moderationActions     ModerationAction[]        @relation("ModerationActor")
-  connectionsSent       Connection[]              @relation("ConnectionRequester")
-  connectionsReceived   Connection[]              @relation("ConnectionReceiver")
-  blocksMade            BlockedUser[]             @relation("BlocksMade")
-  blocksReceived        BlockedUser[]             @relation("BlocksReceived")
-  profileBookmarks      ProfileBookmark[]
-  supportTickets        SupportTicket[]
-  ticketMessages        TicketMessage[]
+  publishingRestrictedUntil         DateTime?
+  suspendedAt                       DateTime?
+  suspendedUntil                    DateTime?
+  deactivatedAt                     DateTime?
+  bannedAt                          DateTime?
+  enforcementReasonPublic           String?
+  onboardingDismissedAt             DateTime?
+  createdAt                         DateTime                  @default(now())
+  updatedAt                         DateTime                  @updatedAt
+  sessions                          Session[]
+  roles                             UserRole[]
+  profile                           Profile?
+  opportunities                     Opportunity[]             @relation("OpportunityOwner")
+  bookmarks                         OpportunityBookmark[]
+  reports                           OpportunityReport[]       @relation("Reporter")
+  userReports                       UserReport[]              @relation("UserReportReporter")
+  proposals                         Proposal[]                @relation("ProposalSender")
+  conversations                     ConversationParticipant[]
+  messages                          Message[]
+  deals                             DealParticipant[]
+  deliveries                        Delivery[]
+  approvals                         Approval[]
+  releases                          Release[]
+  refunds                           Refund[]
+  disputesOpened                    Dispute[]                 @relation("DisputeOpenedBy")
+  reviewsGiven                      Review[]                  @relation("ReviewAuthor")
+  reviewsReceived                   Review[]                  @relation("ReviewSubject")
+  notifications                     Notification[]
+  auditLogs                         AuditLog[]                @relation("AuditActor")
+  moderationActions                 ModerationAction[]        @relation("ModerationActor")
+  connectionsSent                   Connection[]              @relation("ConnectionRequester")
+  connectionsReceived               Connection[]              @relation("ConnectionReceiver")
+  blocksMade                        BlockedUser[]             @relation("BlocksMade")
+  blocksReceived                    BlockedUser[]             @relation("BlocksReceived")
+  profileBookmarks                  ProfileBookmark[]
+  supportTickets                    SupportTicket[]
+  ticketMessages                    TicketMessage[]
 
   @@index([createdAt])
   @@index([accountClassification])
@@ -558,10 +587,10 @@ model UserReport {
 }
 
 model ModerationCase {
-  id                        String                 @id @default(cuid())
+  id                        String                   @id @default(cuid())
   source                    ModerationCaseSource
-  status                    ModerationCaseStatus   @default(NEW)
-  priority                  String                 @default("NORMAL")
+  status                    ModerationCaseStatus     @default(NEW)
+  priority                  String                   @default("NORMAL")
   category                  String
   title                     String
   summary                   String
@@ -574,9 +603,9 @@ model ModerationCase {
   linkedOpportunityReportId String?
   conversationId            String?
   messageId                 String?
-  createdAt                 DateTime               @default(now())
-  updatedAt                 DateTime               @updatedAt
-  linkedReport              UserReport?            @relation(fields: [linkedReportId], references: [id], onDelete: SetNull)
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+  linkedReport              UserReport?              @relation(fields: [linkedReportId], references: [id], onDelete: SetNull)
   events                    ModerationCaseEvent[]
   messageScopes             ModerationMessageScope[]
   enforcementActions        EnforcementAction[]
@@ -689,6 +718,7 @@ model Conversation {
   opportunity   Opportunity?              @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
   participants  ConversationParticipant[]
   messages      Message[]
+  events        ConversationEvent[]
   proposals     Proposal[]
 
   @@index([opportunityId])
@@ -700,6 +730,7 @@ model ConversationParticipant {
   conversationId String
   userId         String
   lastReadAt     DateTime?
+  removedAt      DateTime?
   createdAt      DateTime     @default(now())
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -708,6 +739,7 @@ model ConversationParticipant {
   @@index([conversationId])
   @@index([userId])
   @@index([userId, lastReadAt])
+  @@index([userId, removedAt])
 }
 
 model Message {
@@ -801,11 +833,73 @@ model Proposal {
   sender         User                    @relation("ProposalSender", fields: [senderId], references: [id], onDelete: Cascade)
   conversation   Conversation?           @relation(fields: [conversationId], references: [id], onDelete: SetNull)
   milestones     ProposalMilestone[]
+  versions       ProposalVersion[]
   statusHistory  ProposalStatusHistory[]
   deal           Deal?
 
   @@index([opportunityId, status])
   @@index([senderId, status])
+}
+
+model ProposalVersion {
+  id                  String                     @id @default(cuid())
+  proposalId          String
+  versionNumber       Int
+  status              ProposalVersionStatus      @default(DRAFT)
+  amountMinor         BigInt
+  currency            String                     @default("NGN")
+  description         String
+  deliveryDays        Int
+  includedRevisions   Int                        @default(1)
+  createdById         String
+  supersedesVersionId String?
+  submittedAt         DateTime?
+  acceptedAt          DateTime?
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+  proposal            Proposal                   @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  supersedes          ProposalVersion?           @relation("ProposalVersionLineage", fields: [supersedesVersionId], references: [id], onDelete: Restrict)
+  revisions           ProposalVersion[]          @relation("ProposalVersionLineage")
+  milestones          ProposalVersionMilestone[]
+  events              ConversationEvent[]
+  deal                Deal?                      @relation("AcceptedProposalVersion")
+
+  @@unique([id, proposalId])
+  @@unique([proposalId, versionNumber])
+  @@index([proposalId, status, createdAt])
+  @@index([supersedesVersionId])
+}
+
+model ProposalVersionMilestone {
+  id                String          @id @default(cuid())
+  proposalVersionId String
+  position          Int
+  title             String
+  description       String
+  amountMinor       BigInt
+  dueInDays         Int
+  proposalVersion   ProposalVersion @relation(fields: [proposalVersionId], references: [id], onDelete: Cascade)
+
+  @@unique([proposalVersionId, position])
+}
+
+model ConversationEvent {
+  id                String                @id @default(cuid())
+  conversationId    String
+  actorId           String?
+  type              ConversationEventType
+  proposalVersionId String?
+  dealId            String?
+  snapshot          Json
+  idempotencyKey    String                @unique
+  createdAt         DateTime              @default(now())
+  conversation      Conversation          @relation(fields: [conversationId], references: [id], onDelete: Restrict)
+  proposalVersion   ProposalVersion?      @relation(fields: [proposalVersionId], references: [id], onDelete: Restrict)
+  deal              Deal?                 @relation(fields: [dealId], references: [id], onDelete: Restrict)
+
+  @@index([conversationId, createdAt])
+  @@index([proposalVersionId])
+  @@index([dealId])
 }
 
 model ProposalMilestone {
@@ -830,27 +924,32 @@ model ProposalStatusHistory {
 }
 
 model Deal {
-  id             String                @id @default(cuid())
-  proposalId     String                @unique
-  opportunityId  String
-  status         DealStatus            @default(AWAITING_FUNDING)
-  valueMinor     BigInt
-  currency       String                @default("NGN")
-  idempotencyKey String?               @unique
-  createdAt      DateTime              @default(now())
-  updatedAt      DateTime              @updatedAt
-  proposal       Proposal              @relation(fields: [proposalId], references: [id], onDelete: Cascade)
-  participants   DealParticipant[]
-  milestones     DealMilestone[]
-  deliveries     Delivery[]
-  approvals      Approval[]
-  releases       Release[]
-  refunds        Refund[]
-  disputes       Dispute[]
-  ledgerEntries  LedgerEntry[]
-  statusHistory  EscrowStatusHistory[]
-  reviews        Review[]
+  id                 String                @id @default(cuid())
+  proposalId         String                @unique
+  proposalVersionId  String
+  opportunityId      String
+  status             DealStatus            @default(AWAITING_FUNDING)
+  settlementMode     DealSettlementMode    @default(SIMULATED)
+  valueMinor         BigInt
+  currency           String                @default("NGN")
+  idempotencyKey     String?               @unique
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  proposal           Proposal              @relation(fields: [proposalId], references: [id], onDelete: Restrict)
+  proposalVersion    ProposalVersion       @relation("AcceptedProposalVersion", fields: [proposalVersionId, proposalId], references: [id, proposalId], onDelete: Restrict)
+  participants       DealParticipant[]
+  milestones         DealMilestone[]
+  deliveries         Delivery[]
+  approvals          Approval[]
+  releases           Release[]
+  refunds            Refund[]
+  disputes           Dispute[]
+  ledgerEntries      LedgerEntry[]
+  statusHistory      EscrowStatusHistory[]
+  reviews            Review[]
+  conversationEvents ConversationEvent[]
 
+  @@unique([proposalVersionId, proposalId])
   @@index([status, createdAt])
 }
 
@@ -879,6 +978,10 @@ model DealMilestone {
   createdAt   DateTime        @default(now())
   deal        Deal            @relation(fields: [dealId], references: [id], onDelete: Cascade)
   deliveries  Delivery[]
+  approvals   Approval[]
+  releases    Release[]
+
+  @@unique([id, dealId])
 }
 
 model Delivery {
@@ -896,25 +999,33 @@ model Delivery {
 }
 
 model Approval {
-  id        String   @id @default(cuid())
-  dealId    String
-  actorId   String
-  note      String?
-  createdAt DateTime @default(now())
-  deal      Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  actor     User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  id          String         @id @default(cuid())
+  dealId      String
+  milestoneId String?
+  actorId     String
+  note        String?
+  createdAt   DateTime       @default(now())
+  deal        Deal           @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  milestone   DealMilestone? @relation(fields: [milestoneId, dealId], references: [id, dealId], onDelete: Restrict)
+  actor       User           @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([milestoneId])
 }
 
 model Release {
-  id             String   @id @default(cuid())
+  id             String         @id @default(cuid())
   dealId         String
+  milestoneId    String?
   actorId        String
   amountMinor    BigInt
   currency       String
-  idempotencyKey String   @unique
-  createdAt      DateTime @default(now())
-  deal           Deal     @relation(fields: [dealId], references: [id], onDelete: Cascade)
-  actor          User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+  idempotencyKey String         @unique
+  createdAt      DateTime       @default(now())
+  deal           Deal           @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  milestone      DealMilestone? @relation(fields: [milestoneId, dealId], references: [id, dealId], onDelete: Restrict)
+  actor          User           @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([milestoneId])
 }
 
 model Refund {

@@ -1,18 +1,22 @@
 // @vitest-environment jsdom
 
-import { act, cleanup, render, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   blockUserAction: vi.fn(),
+  deleteMessageAction: vi.fn(),
   editMessageAction: vi.fn(),
   markConversationReadAction: vi.fn(),
+  removeConversationForMeAction: vi.fn(),
   sendMessageAction: vi.fn(),
 }));
 
 vi.mock("@/features/messages/actions", () => ({
+  deleteMessageAction: mocks.deleteMessageAction,
   editMessageAction: mocks.editMessageAction,
   markConversationReadAction: mocks.markConversationReadAction,
+  removeConversationForMeAction: mocks.removeConversationForMeAction,
   sendMessageAction: mocks.sendMessageAction,
 }));
 vi.mock("@/features/network/actions", () => ({
@@ -50,6 +54,7 @@ describe("message workspace exact targets", () => {
     vi.clearAllMocks();
     EventSourceMock.current = null;
     mocks.markConversationReadAction.mockResolvedValue({ success: true });
+    mocks.sendMessageAction.mockResolvedValue({ success: true });
     vi.stubGlobal("EventSource", EventSourceMock);
     Element.prototype.scrollIntoView = scrollIntoView;
     HTMLDivElement.prototype.scrollTo = vi.fn();
@@ -141,5 +146,83 @@ describe("message workspace exact targets", () => {
     ).not.toBeNull();
     expect(view.getByText("Other User")).toBeTruthy();
     expect(view.getAllByText("Target User").length).toBeGreaterThan(0);
+  });
+
+  it("keeps Enter multiline and sends only with Ctrl or Command Enter outside IME composition", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+    const composer = view.getByLabelText("Message") as HTMLTextAreaElement;
+
+    fireEvent.change(composer, { target: { value: "First line" } });
+    fireEvent.keyDown(composer, { key: "Enter" });
+    expect(mocks.sendMessageAction).not.toHaveBeenCalled();
+
+    fireEvent.compositionStart(composer);
+    fireEvent.keyDown(composer, { ctrlKey: true, key: "Enter" });
+    fireEvent.compositionEnd(composer);
+    expect(mocks.sendMessageAction).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(composer, { ctrlKey: true, key: "Enter", keyCode: 229 });
+    expect(mocks.sendMessageAction).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(composer, { ctrlKey: true, key: "Enter" });
+    await waitFor(() =>
+      expect(mocks.sendMessageAction).toHaveBeenCalledWith(
+        "conversation-1",
+        "First line",
+        null,
+      ),
+    );
+
+    fireEvent.change(composer, { target: { value: "Second message" } });
+    fireEvent.keyDown(composer, { key: "Enter", metaKey: true });
+    await waitFor(() => expect(mocks.sendMessageAction).toHaveBeenCalledTimes(2));
+  });
+
+  it("renders and highlights structured immutable Deal events", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            events: [
+              {
+                actorName: "Other User",
+                createdAt: "2026-07-31T11:00:00.000Z",
+                dealHref: "/app/deals/deal-1",
+                id: "event-1",
+                snapshot: {
+                  amountMinor: "25000000",
+                  currency: "NGN",
+                  onlinePaymentActive: false,
+                  versionNumber: 2,
+                },
+                type: "DEAL_CREATED",
+              },
+            ],
+            id: "conversation-1",
+            messages: [],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+        highlightEventId="event-1"
+      />,
+    );
+
+    const target = view.container.querySelector('[data-event-id="event-1"]');
+    expect(target?.getAttribute("aria-current")).toBe("true");
+    expect(view.getByText("Deal record created")).toBeTruthy();
+    expect(view.getByText("Open Deal")).toBeTruthy();
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
   });
 });

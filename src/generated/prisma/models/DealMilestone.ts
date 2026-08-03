@@ -250,6 +250,8 @@ export type DealMilestoneWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"DealMilestone"> | Date | string
   deal?: Prisma.XOR<Prisma.DealScalarRelationFilter, Prisma.DealWhereInput>
   deliveries?: Prisma.DeliveryListRelationFilter
+  approvals?: Prisma.ApprovalListRelationFilter
+  releases?: Prisma.ReleaseListRelationFilter
 }
 
 export type DealMilestoneOrderByWithRelationInput = {
@@ -264,10 +266,13 @@ export type DealMilestoneOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   deal?: Prisma.DealOrderByWithRelationInput
   deliveries?: Prisma.DeliveryOrderByRelationAggregateInput
+  approvals?: Prisma.ApprovalOrderByRelationAggregateInput
+  releases?: Prisma.ReleaseOrderByRelationAggregateInput
 }
 
 export type DealMilestoneWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  id_dealId?: Prisma.DealMilestoneIdDealIdCompoundUniqueInput
   AND?: Prisma.DealMilestoneWhereInput | Prisma.DealMilestoneWhereInput[]
   OR?: Prisma.DealMilestoneWhereInput[]
   NOT?: Prisma.DealMilestoneWhereInput | Prisma.DealMilestoneWhereInput[]
@@ -281,7 +286,9 @@ export type DealMilestoneWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"DealMilestone"> | Date | string
   deal?: Prisma.XOR<Prisma.DealScalarRelationFilter, Prisma.DealWhereInput>
   deliveries?: Prisma.DeliveryListRelationFilter
-}, "id">
+  approvals?: Prisma.ApprovalListRelationFilter
+  releases?: Prisma.ReleaseListRelationFilter
+}, "id" | "id_dealId">
 
 export type DealMilestoneOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -326,6 +333,8 @@ export type DealMilestoneCreateInput = {
   createdAt?: Date | string
   deal: Prisma.DealCreateNestedOneWithoutMilestonesInput
   deliveries?: Prisma.DeliveryCreateNestedManyWithoutMilestoneInput
+  approvals?: Prisma.ApprovalCreateNestedManyWithoutMilestoneInput
+  releases?: Prisma.ReleaseCreateNestedManyWithoutMilestoneInput
 }
 
 export type DealMilestoneUncheckedCreateInput = {
@@ -339,6 +348,8 @@ export type DealMilestoneUncheckedCreateInput = {
   dueAt?: Date | string | null
   createdAt?: Date | string
   deliveries?: Prisma.DeliveryUncheckedCreateNestedManyWithoutMilestoneInput
+  approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutMilestoneInput
+  releases?: Prisma.ReleaseUncheckedCreateNestedManyWithoutMilestoneInput
 }
 
 export type DealMilestoneUpdateInput = {
@@ -352,6 +363,8 @@ export type DealMilestoneUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deal?: Prisma.DealUpdateOneRequiredWithoutMilestonesNestedInput
   deliveries?: Prisma.DeliveryUpdateManyWithoutMilestoneNestedInput
+  approvals?: Prisma.ApprovalUpdateManyWithoutMilestoneNestedInput
+  releases?: Prisma.ReleaseUpdateManyWithoutMilestoneNestedInput
 }
 
 export type DealMilestoneUncheckedUpdateInput = {
@@ -365,6 +378,8 @@ export type DealMilestoneUncheckedUpdateInput = {
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveries?: Prisma.DeliveryUncheckedUpdateManyWithoutMilestoneNestedInput
+  approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutMilestoneNestedInput
+  releases?: Prisma.ReleaseUncheckedUpdateManyWithoutMilestoneNestedInput
 }
 
 export type DealMilestoneCreateManyInput = {
@@ -410,6 +425,11 @@ export type DealMilestoneListRelationFilter = {
 
 export type DealMilestoneOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
+}
+
+export type DealMilestoneIdDealIdCompoundUniqueInput = {
+  id: string
+  dealId: string
 }
 
 export type DealMilestoneCountOrderByAggregateInput = {
@@ -523,6 +543,38 @@ export type DealMilestoneUpdateOneWithoutDeliveriesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.DealMilestoneUpdateToOneWithWhereWithoutDeliveriesInput, Prisma.DealMilestoneUpdateWithoutDeliveriesInput>, Prisma.DealMilestoneUncheckedUpdateWithoutDeliveriesInput>
 }
 
+export type DealMilestoneCreateNestedOneWithoutApprovalsInput = {
+  create?: Prisma.XOR<Prisma.DealMilestoneCreateWithoutApprovalsInput, Prisma.DealMilestoneUncheckedCreateWithoutApprovalsInput>
+  connectOrCreate?: Prisma.DealMilestoneCreateOrConnectWithoutApprovalsInput
+  connect?: Prisma.DealMilestoneWhereUniqueInput
+}
+
+export type DealMilestoneUpdateOneWithoutApprovalsNestedInput = {
+  create?: Prisma.XOR<Prisma.DealMilestoneCreateWithoutApprovalsInput, Prisma.DealMilestoneUncheckedCreateWithoutApprovalsInput>
+  connectOrCreate?: Prisma.DealMilestoneCreateOrConnectWithoutApprovalsInput
+  upsert?: Prisma.DealMilestoneUpsertWithoutApprovalsInput
+  disconnect?: Prisma.DealMilestoneWhereInput | boolean
+  delete?: Prisma.DealMilestoneWhereInput | boolean
+  connect?: Prisma.DealMilestoneWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DealMilestoneUpdateToOneWithWhereWithoutApprovalsInput, Prisma.DealMilestoneUpdateWithoutApprovalsInput>, Prisma.DealMilestoneUncheckedUpdateWithoutApprovalsInput>
+}
+
+export type DealMilestoneCreateNestedOneWithoutReleasesInput = {
+  create?: Prisma.XOR<Prisma.DealMilestoneCreateWithoutReleasesInput, Prisma.DealMilestoneUncheckedCreateWithoutReleasesInput>
+  connectOrCreate?: Prisma.DealMilestoneCreateOrConnectWithoutReleasesInput
+  connect?: Prisma.DealMilestoneWhereUniqueInput
+}
+
+export type DealMilestoneUpdateOneWithoutReleasesNestedInput = {
+  create?: Prisma.XOR<Prisma.DealMilestoneCreateWithoutReleasesInput, Prisma.DealMilestoneUncheckedCreateWithoutReleasesInput>
+  connectOrCreate?: Prisma.DealMilestoneCreateOrConnectWithoutReleasesInput
+  upsert?: Prisma.DealMilestoneUpsertWithoutReleasesInput
+  disconnect?: Prisma.DealMilestoneWhereInput | boolean
+  delete?: Prisma.DealMilestoneWhereInput | boolean
+  connect?: Prisma.DealMilestoneWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DealMilestoneUpdateToOneWithWhereWithoutReleasesInput, Prisma.DealMilestoneUpdateWithoutReleasesInput>, Prisma.DealMilestoneUncheckedUpdateWithoutReleasesInput>
+}
+
 export type DealMilestoneCreateWithoutDealInput = {
   id?: string
   title: string
@@ -533,6 +585,8 @@ export type DealMilestoneCreateWithoutDealInput = {
   dueAt?: Date | string | null
   createdAt?: Date | string
   deliveries?: Prisma.DeliveryCreateNestedManyWithoutMilestoneInput
+  approvals?: Prisma.ApprovalCreateNestedManyWithoutMilestoneInput
+  releases?: Prisma.ReleaseCreateNestedManyWithoutMilestoneInput
 }
 
 export type DealMilestoneUncheckedCreateWithoutDealInput = {
@@ -545,6 +599,8 @@ export type DealMilestoneUncheckedCreateWithoutDealInput = {
   dueAt?: Date | string | null
   createdAt?: Date | string
   deliveries?: Prisma.DeliveryUncheckedCreateNestedManyWithoutMilestoneInput
+  approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutMilestoneInput
+  releases?: Prisma.ReleaseUncheckedCreateNestedManyWithoutMilestoneInput
 }
 
 export type DealMilestoneCreateOrConnectWithoutDealInput = {
@@ -598,6 +654,8 @@ export type DealMilestoneCreateWithoutDeliveriesInput = {
   dueAt?: Date | string | null
   createdAt?: Date | string
   deal: Prisma.DealCreateNestedOneWithoutMilestonesInput
+  approvals?: Prisma.ApprovalCreateNestedManyWithoutMilestoneInput
+  releases?: Prisma.ReleaseCreateNestedManyWithoutMilestoneInput
 }
 
 export type DealMilestoneUncheckedCreateWithoutDeliveriesInput = {
@@ -610,6 +668,8 @@ export type DealMilestoneUncheckedCreateWithoutDeliveriesInput = {
   status?: $Enums.MilestoneStatus
   dueAt?: Date | string | null
   createdAt?: Date | string
+  approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutMilestoneInput
+  releases?: Prisma.ReleaseUncheckedCreateNestedManyWithoutMilestoneInput
 }
 
 export type DealMilestoneCreateOrConnectWithoutDeliveriesInput = {
@@ -638,6 +698,8 @@ export type DealMilestoneUpdateWithoutDeliveriesInput = {
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deal?: Prisma.DealUpdateOneRequiredWithoutMilestonesNestedInput
+  approvals?: Prisma.ApprovalUpdateManyWithoutMilestoneNestedInput
+  releases?: Prisma.ReleaseUpdateManyWithoutMilestoneNestedInput
 }
 
 export type DealMilestoneUncheckedUpdateWithoutDeliveriesInput = {
@@ -650,6 +712,152 @@ export type DealMilestoneUncheckedUpdateWithoutDeliveriesInput = {
   status?: Prisma.EnumMilestoneStatusFieldUpdateOperationsInput | $Enums.MilestoneStatus
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutMilestoneNestedInput
+  releases?: Prisma.ReleaseUncheckedUpdateManyWithoutMilestoneNestedInput
+}
+
+export type DealMilestoneCreateWithoutApprovalsInput = {
+  id?: string
+  title: string
+  description: string
+  amountMinor: bigint | number
+  currency?: string
+  status?: $Enums.MilestoneStatus
+  dueAt?: Date | string | null
+  createdAt?: Date | string
+  deal: Prisma.DealCreateNestedOneWithoutMilestonesInput
+  deliveries?: Prisma.DeliveryCreateNestedManyWithoutMilestoneInput
+  releases?: Prisma.ReleaseCreateNestedManyWithoutMilestoneInput
+}
+
+export type DealMilestoneUncheckedCreateWithoutApprovalsInput = {
+  id?: string
+  dealId: string
+  title: string
+  description: string
+  amountMinor: bigint | number
+  currency?: string
+  status?: $Enums.MilestoneStatus
+  dueAt?: Date | string | null
+  createdAt?: Date | string
+  deliveries?: Prisma.DeliveryUncheckedCreateNestedManyWithoutMilestoneInput
+  releases?: Prisma.ReleaseUncheckedCreateNestedManyWithoutMilestoneInput
+}
+
+export type DealMilestoneCreateOrConnectWithoutApprovalsInput = {
+  where: Prisma.DealMilestoneWhereUniqueInput
+  create: Prisma.XOR<Prisma.DealMilestoneCreateWithoutApprovalsInput, Prisma.DealMilestoneUncheckedCreateWithoutApprovalsInput>
+}
+
+export type DealMilestoneUpsertWithoutApprovalsInput = {
+  update: Prisma.XOR<Prisma.DealMilestoneUpdateWithoutApprovalsInput, Prisma.DealMilestoneUncheckedUpdateWithoutApprovalsInput>
+  create: Prisma.XOR<Prisma.DealMilestoneCreateWithoutApprovalsInput, Prisma.DealMilestoneUncheckedCreateWithoutApprovalsInput>
+  where?: Prisma.DealMilestoneWhereInput
+}
+
+export type DealMilestoneUpdateToOneWithWhereWithoutApprovalsInput = {
+  where?: Prisma.DealMilestoneWhereInput
+  data: Prisma.XOR<Prisma.DealMilestoneUpdateWithoutApprovalsInput, Prisma.DealMilestoneUncheckedUpdateWithoutApprovalsInput>
+}
+
+export type DealMilestoneUpdateWithoutApprovalsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumMilestoneStatusFieldUpdateOperationsInput | $Enums.MilestoneStatus
+  dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deal?: Prisma.DealUpdateOneRequiredWithoutMilestonesNestedInput
+  deliveries?: Prisma.DeliveryUpdateManyWithoutMilestoneNestedInput
+  releases?: Prisma.ReleaseUpdateManyWithoutMilestoneNestedInput
+}
+
+export type DealMilestoneUncheckedUpdateWithoutApprovalsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  dealId?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumMilestoneStatusFieldUpdateOperationsInput | $Enums.MilestoneStatus
+  dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deliveries?: Prisma.DeliveryUncheckedUpdateManyWithoutMilestoneNestedInput
+  releases?: Prisma.ReleaseUncheckedUpdateManyWithoutMilestoneNestedInput
+}
+
+export type DealMilestoneCreateWithoutReleasesInput = {
+  id?: string
+  title: string
+  description: string
+  amountMinor: bigint | number
+  currency?: string
+  status?: $Enums.MilestoneStatus
+  dueAt?: Date | string | null
+  createdAt?: Date | string
+  deal: Prisma.DealCreateNestedOneWithoutMilestonesInput
+  deliveries?: Prisma.DeliveryCreateNestedManyWithoutMilestoneInput
+  approvals?: Prisma.ApprovalCreateNestedManyWithoutMilestoneInput
+}
+
+export type DealMilestoneUncheckedCreateWithoutReleasesInput = {
+  id?: string
+  dealId: string
+  title: string
+  description: string
+  amountMinor: bigint | number
+  currency?: string
+  status?: $Enums.MilestoneStatus
+  dueAt?: Date | string | null
+  createdAt?: Date | string
+  deliveries?: Prisma.DeliveryUncheckedCreateNestedManyWithoutMilestoneInput
+  approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutMilestoneInput
+}
+
+export type DealMilestoneCreateOrConnectWithoutReleasesInput = {
+  where: Prisma.DealMilestoneWhereUniqueInput
+  create: Prisma.XOR<Prisma.DealMilestoneCreateWithoutReleasesInput, Prisma.DealMilestoneUncheckedCreateWithoutReleasesInput>
+}
+
+export type DealMilestoneUpsertWithoutReleasesInput = {
+  update: Prisma.XOR<Prisma.DealMilestoneUpdateWithoutReleasesInput, Prisma.DealMilestoneUncheckedUpdateWithoutReleasesInput>
+  create: Prisma.XOR<Prisma.DealMilestoneCreateWithoutReleasesInput, Prisma.DealMilestoneUncheckedCreateWithoutReleasesInput>
+  where?: Prisma.DealMilestoneWhereInput
+}
+
+export type DealMilestoneUpdateToOneWithWhereWithoutReleasesInput = {
+  where?: Prisma.DealMilestoneWhereInput
+  data: Prisma.XOR<Prisma.DealMilestoneUpdateWithoutReleasesInput, Prisma.DealMilestoneUncheckedUpdateWithoutReleasesInput>
+}
+
+export type DealMilestoneUpdateWithoutReleasesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumMilestoneStatusFieldUpdateOperationsInput | $Enums.MilestoneStatus
+  dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deal?: Prisma.DealUpdateOneRequiredWithoutMilestonesNestedInput
+  deliveries?: Prisma.DeliveryUpdateManyWithoutMilestoneNestedInput
+  approvals?: Prisma.ApprovalUpdateManyWithoutMilestoneNestedInput
+}
+
+export type DealMilestoneUncheckedUpdateWithoutReleasesInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  dealId?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  description?: Prisma.StringFieldUpdateOperationsInput | string
+  amountMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumMilestoneStatusFieldUpdateOperationsInput | $Enums.MilestoneStatus
+  dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  deliveries?: Prisma.DeliveryUncheckedUpdateManyWithoutMilestoneNestedInput
+  approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutMilestoneNestedInput
 }
 
 export type DealMilestoneCreateManyDealInput = {
@@ -673,6 +881,8 @@ export type DealMilestoneUpdateWithoutDealInput = {
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveries?: Prisma.DeliveryUpdateManyWithoutMilestoneNestedInput
+  approvals?: Prisma.ApprovalUpdateManyWithoutMilestoneNestedInput
+  releases?: Prisma.ReleaseUpdateManyWithoutMilestoneNestedInput
 }
 
 export type DealMilestoneUncheckedUpdateWithoutDealInput = {
@@ -685,6 +895,8 @@ export type DealMilestoneUncheckedUpdateWithoutDealInput = {
   dueAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   deliveries?: Prisma.DeliveryUncheckedUpdateManyWithoutMilestoneNestedInput
+  approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutMilestoneNestedInput
+  releases?: Prisma.ReleaseUncheckedUpdateManyWithoutMilestoneNestedInput
 }
 
 export type DealMilestoneUncheckedUpdateManyWithoutDealInput = {
@@ -705,10 +917,14 @@ export type DealMilestoneUncheckedUpdateManyWithoutDealInput = {
 
 export type DealMilestoneCountOutputType = {
   deliveries: number
+  approvals: number
+  releases: number
 }
 
 export type DealMilestoneCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   deliveries?: boolean | DealMilestoneCountOutputTypeCountDeliveriesArgs
+  approvals?: boolean | DealMilestoneCountOutputTypeCountApprovalsArgs
+  releases?: boolean | DealMilestoneCountOutputTypeCountReleasesArgs
 }
 
 /**
@@ -728,6 +944,20 @@ export type DealMilestoneCountOutputTypeCountDeliveriesArgs<ExtArgs extends runt
   where?: Prisma.DeliveryWhereInput
 }
 
+/**
+ * DealMilestoneCountOutputType without action
+ */
+export type DealMilestoneCountOutputTypeCountApprovalsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ApprovalWhereInput
+}
+
+/**
+ * DealMilestoneCountOutputType without action
+ */
+export type DealMilestoneCountOutputTypeCountReleasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ReleaseWhereInput
+}
+
 
 export type DealMilestoneSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -741,6 +971,8 @@ export type DealMilestoneSelect<ExtArgs extends runtime.Types.Extensions.Interna
   createdAt?: boolean
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
   deliveries?: boolean | Prisma.DealMilestone$deliveriesArgs<ExtArgs>
+  approvals?: boolean | Prisma.DealMilestone$approvalsArgs<ExtArgs>
+  releases?: boolean | Prisma.DealMilestone$releasesArgs<ExtArgs>
   _count?: boolean | Prisma.DealMilestoneCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["dealMilestone"]>
 
@@ -786,6 +1018,8 @@ export type DealMilestoneOmit<ExtArgs extends runtime.Types.Extensions.InternalA
 export type DealMilestoneInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   deal?: boolean | Prisma.DealDefaultArgs<ExtArgs>
   deliveries?: boolean | Prisma.DealMilestone$deliveriesArgs<ExtArgs>
+  approvals?: boolean | Prisma.DealMilestone$approvalsArgs<ExtArgs>
+  releases?: boolean | Prisma.DealMilestone$releasesArgs<ExtArgs>
   _count?: boolean | Prisma.DealMilestoneCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type DealMilestoneIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -800,6 +1034,8 @@ export type $DealMilestonePayload<ExtArgs extends runtime.Types.Extensions.Inter
   objects: {
     deal: Prisma.$DealPayload<ExtArgs>
     deliveries: Prisma.$DeliveryPayload<ExtArgs>[]
+    approvals: Prisma.$ApprovalPayload<ExtArgs>[]
+    releases: Prisma.$ReleasePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1207,6 +1443,8 @@ export interface Prisma__DealMilestoneClient<T, Null = never, ExtArgs extends ru
   readonly [Symbol.toStringTag]: "PrismaPromise"
   deal<T extends Prisma.DealDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DealDefaultArgs<ExtArgs>>): Prisma.Prisma__DealClient<runtime.Types.Result.GetResult<Prisma.$DealPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   deliveries<T extends Prisma.DealMilestone$deliveriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DealMilestone$deliveriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DeliveryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  approvals<T extends Prisma.DealMilestone$approvalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DealMilestone$approvalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ApprovalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  releases<T extends Prisma.DealMilestone$releasesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DealMilestone$releasesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReleasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1667,6 +1905,54 @@ export type DealMilestone$deliveriesArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.DeliveryScalarFieldEnum | Prisma.DeliveryScalarFieldEnum[]
+}
+
+/**
+ * DealMilestone.approvals
+ */
+export type DealMilestone$approvalsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Approval
+   */
+  select?: Prisma.ApprovalSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Approval
+   */
+  omit?: Prisma.ApprovalOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ApprovalInclude<ExtArgs> | null
+  where?: Prisma.ApprovalWhereInput
+  orderBy?: Prisma.ApprovalOrderByWithRelationInput | Prisma.ApprovalOrderByWithRelationInput[]
+  cursor?: Prisma.ApprovalWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ApprovalScalarFieldEnum | Prisma.ApprovalScalarFieldEnum[]
+}
+
+/**
+ * DealMilestone.releases
+ */
+export type DealMilestone$releasesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Release
+   */
+  select?: Prisma.ReleaseSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Release
+   */
+  omit?: Prisma.ReleaseOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ReleaseInclude<ExtArgs> | null
+  where?: Prisma.ReleaseWhereInput
+  orderBy?: Prisma.ReleaseOrderByWithRelationInput | Prisma.ReleaseOrderByWithRelationInput[]
+  cursor?: Prisma.ReleaseWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ReleaseScalarFieldEnum | Prisma.ReleaseScalarFieldEnum[]
 }
 
 /**

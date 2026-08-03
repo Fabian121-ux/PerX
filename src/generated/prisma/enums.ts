@@ -112,6 +112,44 @@ export const ProposalStatus = {
 export type ProposalStatus = (typeof ProposalStatus)[keyof typeof ProposalStatus]
 
 
+export const ProposalVersionStatus = {
+  DRAFT: 'DRAFT',
+  SUBMITTED: 'SUBMITTED',
+  SUPERSEDED: 'SUPERSEDED',
+  ACCEPTED: 'ACCEPTED',
+  REJECTED: 'REJECTED',
+  WITHDRAWN: 'WITHDRAWN',
+  EXPIRED: 'EXPIRED'
+} as const
+
+export type ProposalVersionStatus = (typeof ProposalVersionStatus)[keyof typeof ProposalVersionStatus]
+
+
+export const ConversationEventType = {
+  PROPOSAL_SUBMITTED: 'PROPOSAL_SUBMITTED',
+  PROPOSAL_OBJECTION_RAISED: 'PROPOSAL_OBJECTION_RAISED',
+  PROPOSAL_REVISION_CREATED: 'PROPOSAL_REVISION_CREATED',
+  PROPOSAL_REVISION_SUBMITTED: 'PROPOSAL_REVISION_SUBMITTED',
+  PROPOSAL_ACCEPTED: 'PROPOSAL_ACCEPTED',
+  PROPOSAL_REJECTED: 'PROPOSAL_REJECTED',
+  DEAL_CREATED: 'DEAL_CREATED',
+  DEAL_STATUS_CHANGED: 'DEAL_STATUS_CHANGED',
+  MILESTONE_SUBMITTED: 'MILESTONE_SUBMITTED',
+  MILESTONE_APPROVED: 'MILESTONE_APPROVED',
+  SIMULATED_RELEASE_RECORDED: 'SIMULATED_RELEASE_RECORDED'
+} as const
+
+export type ConversationEventType = (typeof ConversationEventType)[keyof typeof ConversationEventType]
+
+
+export const DealSettlementMode = {
+  SIMULATED: 'SIMULATED',
+  PROVIDER_DISABLED: 'PROVIDER_DISABLED'
+} as const
+
+export type DealSettlementMode = (typeof DealSettlementMode)[keyof typeof DealSettlementMode]
+
+
 export const DealStatus = {
   DRAFT: 'DRAFT',
   AWAITING_FUNDING: 'AWAITING_FUNDING',

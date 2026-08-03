@@ -1,7 +1,10 @@
 import { getPrisma } from "@/lib/db/prisma";
 import {
+  findOwnedConversationEventTarget,
   findOwnedMessageTarget,
+  parseExactConversationEventTarget,
   parseExactMessageTarget,
+  type ExactConversationEventTarget,
   type ExactMessageTarget,
 } from "@/lib/messages/entry";
 
@@ -63,6 +66,7 @@ function actionLabel(type: string) {
     return "View";
   }
   if (["SUPPORT", "SUPPORT_REPLY"].includes(type)) return "View ticket";
+  if (["PROPOSAL", "PROPOSAL_UPDATE"].includes(type)) return "Review proposal";
   if (["DEAL", "DEAL_UPDATE"].includes(type)) return "View deal";
   if (type === "BROADCAST") return "View details";
   return "Open";
@@ -98,7 +102,7 @@ async function isDestinationAvailable(userId: string, path: string) {
 
   if (segments[0] === "app" && segments[1] === "messages" && segments[2]) {
     const participant = await prisma.conversationParticipant.findUnique({
-      select: { id: true },
+      select: { id: true, removedAt: true },
       where: {
         conversationId_userId: {
           conversationId: segments[2],
@@ -106,13 +110,22 @@ async function isDestinationAvailable(userId: string, path: string) {
         },
       },
     });
-    if (!participant) return false;
+    if (!participant || participant.removedAt) return false;
 
     const messageId = url.searchParams.get("message");
-    if (!messageId) return true;
-    const target = parseExactMessageTarget(path);
-    if (!target) return false;
-    return Boolean(await findOwnedMessageTarget(userId, target));
+    const eventId = url.searchParams.get("event");
+    if (messageId && eventId) return false;
+    if (messageId) {
+      const target = parseExactMessageTarget(path);
+      if (!target) return false;
+      return Boolean(await findOwnedMessageTarget(userId, target));
+    }
+    if (eventId) {
+      const target = parseExactConversationEventTarget(path);
+      if (!target) return false;
+      return Boolean(await findOwnedConversationEventTarget(userId, target));
+    }
+    return url.searchParams.size === 0;
   }
 
   if (segments[0] === "u" && segments[1]) {
@@ -206,6 +219,31 @@ function metadataMatchesMessageTarget(
   );
 }
 
+function metadataMatchesConversationEvent(
+  userId: string,
+  notification: NotificationForAction,
+  target: ExactConversationEventTarget,
+  event: {
+    dealId: string | null;
+    proposalVersionId: string | null;
+  },
+) {
+  if (!notification.metadata || typeof notification.metadata !== "object") {
+    return true;
+  }
+  const metadata = notification.metadata as Record<string, unknown>;
+  const expectedValues: [unknown, string | null][] = [
+    [metadata.conversationId, target.conversationId],
+    [metadata.conversationEventId, target.eventId],
+    [metadata.recipientId, userId],
+    [metadata.dealId, event.dealId],
+    [metadata.proposalVersionId, event.proposalVersionId],
+  ];
+  return expectedValues.every(
+    ([value, expected]) => value === undefined || value === expected,
+  );
+}
+
 export async function resolveNotificationAction(
   userId: string,
   notification: NotificationForAction,
@@ -259,6 +297,36 @@ export async function resolveNotificationAction(
     return {
       available: true,
       href: target.href,
+      label: actionLabel(notification.type),
+    };
+  }
+
+
+  const conversationEventTarget = parseExactConversationEventTarget(normalized);
+  if (conversationEventTarget) {
+    const event = await findOwnedConversationEventTarget(
+      userId,
+      conversationEventTarget,
+    );
+    if (
+      !event ||
+      !metadataMatchesConversationEvent(
+        userId,
+        notification,
+        conversationEventTarget,
+        event,
+      )
+    ) {
+      return {
+        available: false,
+        href: null,
+        label: "This item is no longer available.",
+        reason: "unavailable",
+      };
+    }
+    return {
+      available: true,
+      href: conversationEventTarget.href,
       label: actionLabel(notification.type),
     };
   }

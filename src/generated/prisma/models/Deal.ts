@@ -37,8 +37,10 @@ export type DealSumAggregateOutputType = {
 export type DealMinAggregateOutputType = {
   id: string | null
   proposalId: string | null
+  proposalVersionId: string | null
   opportunityId: string | null
   status: $Enums.DealStatus | null
+  settlementMode: $Enums.DealSettlementMode | null
   valueMinor: bigint | null
   currency: string | null
   idempotencyKey: string | null
@@ -49,8 +51,10 @@ export type DealMinAggregateOutputType = {
 export type DealMaxAggregateOutputType = {
   id: string | null
   proposalId: string | null
+  proposalVersionId: string | null
   opportunityId: string | null
   status: $Enums.DealStatus | null
+  settlementMode: $Enums.DealSettlementMode | null
   valueMinor: bigint | null
   currency: string | null
   idempotencyKey: string | null
@@ -61,8 +65,10 @@ export type DealMaxAggregateOutputType = {
 export type DealCountAggregateOutputType = {
   id: number
   proposalId: number
+  proposalVersionId: number
   opportunityId: number
   status: number
+  settlementMode: number
   valueMinor: number
   currency: number
   idempotencyKey: number
@@ -83,8 +89,10 @@ export type DealSumAggregateInputType = {
 export type DealMinAggregateInputType = {
   id?: true
   proposalId?: true
+  proposalVersionId?: true
   opportunityId?: true
   status?: true
+  settlementMode?: true
   valueMinor?: true
   currency?: true
   idempotencyKey?: true
@@ -95,8 +103,10 @@ export type DealMinAggregateInputType = {
 export type DealMaxAggregateInputType = {
   id?: true
   proposalId?: true
+  proposalVersionId?: true
   opportunityId?: true
   status?: true
+  settlementMode?: true
   valueMinor?: true
   currency?: true
   idempotencyKey?: true
@@ -107,8 +117,10 @@ export type DealMaxAggregateInputType = {
 export type DealCountAggregateInputType = {
   id?: true
   proposalId?: true
+  proposalVersionId?: true
   opportunityId?: true
   status?: true
+  settlementMode?: true
   valueMinor?: true
   currency?: true
   idempotencyKey?: true
@@ -206,8 +218,10 @@ export type DealGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type DealGroupByOutputType = {
   id: string
   proposalId: string
+  proposalVersionId: string
   opportunityId: string
   status: $Enums.DealStatus
+  settlementMode: $Enums.DealSettlementMode
   valueMinor: bigint
   currency: string
   idempotencyKey: string | null
@@ -241,14 +255,17 @@ export type DealWhereInput = {
   NOT?: Prisma.DealWhereInput | Prisma.DealWhereInput[]
   id?: Prisma.StringFilter<"Deal"> | string
   proposalId?: Prisma.StringFilter<"Deal"> | string
+  proposalVersionId?: Prisma.StringFilter<"Deal"> | string
   opportunityId?: Prisma.StringFilter<"Deal"> | string
   status?: Prisma.EnumDealStatusFilter<"Deal"> | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFilter<"Deal"> | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFilter<"Deal"> | bigint | number
   currency?: Prisma.StringFilter<"Deal"> | string
   idempotencyKey?: Prisma.StringNullableFilter<"Deal"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Deal"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Deal"> | Date | string
   proposal?: Prisma.XOR<Prisma.ProposalScalarRelationFilter, Prisma.ProposalWhereInput>
+  proposalVersion?: Prisma.XOR<Prisma.ProposalVersionScalarRelationFilter, Prisma.ProposalVersionWhereInput>
   participants?: Prisma.DealParticipantListRelationFilter
   milestones?: Prisma.DealMilestoneListRelationFilter
   deliveries?: Prisma.DeliveryListRelationFilter
@@ -259,19 +276,23 @@ export type DealWhereInput = {
   ledgerEntries?: Prisma.LedgerEntryListRelationFilter
   statusHistory?: Prisma.EscrowStatusHistoryListRelationFilter
   reviews?: Prisma.ReviewListRelationFilter
+  conversationEvents?: Prisma.ConversationEventListRelationFilter
 }
 
 export type DealOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   proposalId?: Prisma.SortOrder
+  proposalVersionId?: Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  settlementMode?: Prisma.SortOrder
   valueMinor?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   proposal?: Prisma.ProposalOrderByWithRelationInput
+  proposalVersion?: Prisma.ProposalVersionOrderByWithRelationInput
   participants?: Prisma.DealParticipantOrderByRelationAggregateInput
   milestones?: Prisma.DealMilestoneOrderByRelationAggregateInput
   deliveries?: Prisma.DeliveryOrderByRelationAggregateInput
@@ -282,22 +303,27 @@ export type DealOrderByWithRelationInput = {
   ledgerEntries?: Prisma.LedgerEntryOrderByRelationAggregateInput
   statusHistory?: Prisma.EscrowStatusHistoryOrderByRelationAggregateInput
   reviews?: Prisma.ReviewOrderByRelationAggregateInput
+  conversationEvents?: Prisma.ConversationEventOrderByRelationAggregateInput
 }
 
 export type DealWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   proposalId?: string
   idempotencyKey?: string
+  proposalVersionId_proposalId?: Prisma.DealProposalVersionIdProposalIdCompoundUniqueInput
   AND?: Prisma.DealWhereInput | Prisma.DealWhereInput[]
   OR?: Prisma.DealWhereInput[]
   NOT?: Prisma.DealWhereInput | Prisma.DealWhereInput[]
+  proposalVersionId?: Prisma.StringFilter<"Deal"> | string
   opportunityId?: Prisma.StringFilter<"Deal"> | string
   status?: Prisma.EnumDealStatusFilter<"Deal"> | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFilter<"Deal"> | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFilter<"Deal"> | bigint | number
   currency?: Prisma.StringFilter<"Deal"> | string
   createdAt?: Prisma.DateTimeFilter<"Deal"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Deal"> | Date | string
   proposal?: Prisma.XOR<Prisma.ProposalScalarRelationFilter, Prisma.ProposalWhereInput>
+  proposalVersion?: Prisma.XOR<Prisma.ProposalVersionScalarRelationFilter, Prisma.ProposalVersionWhereInput>
   participants?: Prisma.DealParticipantListRelationFilter
   milestones?: Prisma.DealMilestoneListRelationFilter
   deliveries?: Prisma.DeliveryListRelationFilter
@@ -308,13 +334,16 @@ export type DealWhereUniqueInput = Prisma.AtLeast<{
   ledgerEntries?: Prisma.LedgerEntryListRelationFilter
   statusHistory?: Prisma.EscrowStatusHistoryListRelationFilter
   reviews?: Prisma.ReviewListRelationFilter
-}, "id" | "proposalId" | "idempotencyKey">
+  conversationEvents?: Prisma.ConversationEventListRelationFilter
+}, "id" | "proposalId" | "idempotencyKey" | "proposalVersionId_proposalId">
 
 export type DealOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   proposalId?: Prisma.SortOrder
+  proposalVersionId?: Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  settlementMode?: Prisma.SortOrder
   valueMinor?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -333,8 +362,10 @@ export type DealScalarWhereWithAggregatesInput = {
   NOT?: Prisma.DealScalarWhereWithAggregatesInput | Prisma.DealScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Deal"> | string
   proposalId?: Prisma.StringWithAggregatesFilter<"Deal"> | string
+  proposalVersionId?: Prisma.StringWithAggregatesFilter<"Deal"> | string
   opportunityId?: Prisma.StringWithAggregatesFilter<"Deal"> | string
   status?: Prisma.EnumDealStatusWithAggregatesFilter<"Deal"> | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeWithAggregatesFilter<"Deal"> | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntWithAggregatesFilter<"Deal"> | bigint | number
   currency?: Prisma.StringWithAggregatesFilter<"Deal"> | string
   idempotencyKey?: Prisma.StringNullableWithAggregatesFilter<"Deal"> | string | null
@@ -346,12 +377,14 @@ export type DealCreateInput = {
   id?: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   proposal: Prisma.ProposalCreateNestedOneWithoutDealInput
+  proposalVersion: Prisma.ProposalVersionCreateNestedOneWithoutDealInput
   participants?: Prisma.DealParticipantCreateNestedManyWithoutDealInput
   milestones?: Prisma.DealMilestoneCreateNestedManyWithoutDealInput
   deliveries?: Prisma.DeliveryCreateNestedManyWithoutDealInput
@@ -362,13 +395,16 @@ export type DealCreateInput = {
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventCreateNestedManyWithoutDealInput
 }
 
 export type DealUncheckedCreateInput = {
   id?: string
   proposalId: string
+  proposalVersionId: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
@@ -384,18 +420,21 @@ export type DealUncheckedCreateInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventUncheckedCreateNestedManyWithoutDealInput
 }
 
 export type DealUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   proposal?: Prisma.ProposalUpdateOneRequiredWithoutDealNestedInput
+  proposalVersion?: Prisma.ProposalVersionUpdateOneRequiredWithoutDealNestedInput
   participants?: Prisma.DealParticipantUpdateManyWithoutDealNestedInput
   milestones?: Prisma.DealMilestoneUpdateManyWithoutDealNestedInput
   deliveries?: Prisma.DeliveryUpdateManyWithoutDealNestedInput
@@ -406,13 +445,16 @@ export type DealUpdateInput = {
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUpdateManyWithoutDealNestedInput
 }
 
 export type DealUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   proposalId?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -428,13 +470,16 @@ export type DealUncheckedUpdateInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUncheckedUpdateManyWithoutDealNestedInput
 }
 
 export type DealCreateManyInput = {
   id?: string
   proposalId: string
+  proposalVersionId: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
@@ -446,6 +491,7 @@ export type DealUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -456,8 +502,10 @@ export type DealUpdateManyMutationInput = {
 export type DealUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   proposalId?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -470,11 +518,18 @@ export type DealNullableScalarRelationFilter = {
   isNot?: Prisma.DealWhereInput | null
 }
 
+export type DealProposalVersionIdProposalIdCompoundUniqueInput = {
+  proposalVersionId: string
+  proposalId: string
+}
+
 export type DealCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   proposalId?: Prisma.SortOrder
+  proposalVersionId?: Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  settlementMode?: Prisma.SortOrder
   valueMinor?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrder
@@ -489,8 +544,10 @@ export type DealAvgOrderByAggregateInput = {
 export type DealMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   proposalId?: Prisma.SortOrder
+  proposalVersionId?: Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  settlementMode?: Prisma.SortOrder
   valueMinor?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrder
@@ -501,8 +558,10 @@ export type DealMaxOrderByAggregateInput = {
 export type DealMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   proposalId?: Prisma.SortOrder
+  proposalVersionId?: Prisma.SortOrder
   opportunityId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  settlementMode?: Prisma.SortOrder
   valueMinor?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrder
@@ -551,8 +610,60 @@ export type DealUncheckedUpdateOneWithoutProposalNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.DealUpdateToOneWithWhereWithoutProposalInput, Prisma.DealUpdateWithoutProposalInput>, Prisma.DealUncheckedUpdateWithoutProposalInput>
 }
 
+export type DealCreateNestedOneWithoutProposalVersionInput = {
+  create?: Prisma.XOR<Prisma.DealCreateWithoutProposalVersionInput, Prisma.DealUncheckedCreateWithoutProposalVersionInput>
+  connectOrCreate?: Prisma.DealCreateOrConnectWithoutProposalVersionInput
+  connect?: Prisma.DealWhereUniqueInput
+}
+
+export type DealUncheckedCreateNestedOneWithoutProposalVersionInput = {
+  create?: Prisma.XOR<Prisma.DealCreateWithoutProposalVersionInput, Prisma.DealUncheckedCreateWithoutProposalVersionInput>
+  connectOrCreate?: Prisma.DealCreateOrConnectWithoutProposalVersionInput
+  connect?: Prisma.DealWhereUniqueInput
+}
+
+export type DealUpdateOneWithoutProposalVersionNestedInput = {
+  create?: Prisma.XOR<Prisma.DealCreateWithoutProposalVersionInput, Prisma.DealUncheckedCreateWithoutProposalVersionInput>
+  connectOrCreate?: Prisma.DealCreateOrConnectWithoutProposalVersionInput
+  upsert?: Prisma.DealUpsertWithoutProposalVersionInput
+  disconnect?: Prisma.DealWhereInput | boolean
+  delete?: Prisma.DealWhereInput | boolean
+  connect?: Prisma.DealWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DealUpdateToOneWithWhereWithoutProposalVersionInput, Prisma.DealUpdateWithoutProposalVersionInput>, Prisma.DealUncheckedUpdateWithoutProposalVersionInput>
+}
+
+export type DealUncheckedUpdateOneWithoutProposalVersionNestedInput = {
+  create?: Prisma.XOR<Prisma.DealCreateWithoutProposalVersionInput, Prisma.DealUncheckedCreateWithoutProposalVersionInput>
+  connectOrCreate?: Prisma.DealCreateOrConnectWithoutProposalVersionInput
+  upsert?: Prisma.DealUpsertWithoutProposalVersionInput
+  disconnect?: Prisma.DealWhereInput | boolean
+  delete?: Prisma.DealWhereInput | boolean
+  connect?: Prisma.DealWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DealUpdateToOneWithWhereWithoutProposalVersionInput, Prisma.DealUpdateWithoutProposalVersionInput>, Prisma.DealUncheckedUpdateWithoutProposalVersionInput>
+}
+
+export type DealCreateNestedOneWithoutConversationEventsInput = {
+  create?: Prisma.XOR<Prisma.DealCreateWithoutConversationEventsInput, Prisma.DealUncheckedCreateWithoutConversationEventsInput>
+  connectOrCreate?: Prisma.DealCreateOrConnectWithoutConversationEventsInput
+  connect?: Prisma.DealWhereUniqueInput
+}
+
+export type DealUpdateOneWithoutConversationEventsNestedInput = {
+  create?: Prisma.XOR<Prisma.DealCreateWithoutConversationEventsInput, Prisma.DealUncheckedCreateWithoutConversationEventsInput>
+  connectOrCreate?: Prisma.DealCreateOrConnectWithoutConversationEventsInput
+  upsert?: Prisma.DealUpsertWithoutConversationEventsInput
+  disconnect?: Prisma.DealWhereInput | boolean
+  delete?: Prisma.DealWhereInput | boolean
+  connect?: Prisma.DealWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.DealUpdateToOneWithWhereWithoutConversationEventsInput, Prisma.DealUpdateWithoutConversationEventsInput>, Prisma.DealUncheckedUpdateWithoutConversationEventsInput>
+}
+
 export type EnumDealStatusFieldUpdateOperationsInput = {
   set?: $Enums.DealStatus
+}
+
+export type EnumDealSettlementModeFieldUpdateOperationsInput = {
+  set?: $Enums.DealSettlementMode
 }
 
 export type DealCreateNestedOneWithoutParticipantsInput = {
@@ -699,11 +810,13 @@ export type DealCreateWithoutProposalInput = {
   id?: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  proposalVersion: Prisma.ProposalVersionCreateNestedOneWithoutDealInput
   participants?: Prisma.DealParticipantCreateNestedManyWithoutDealInput
   milestones?: Prisma.DealMilestoneCreateNestedManyWithoutDealInput
   deliveries?: Prisma.DeliveryCreateNestedManyWithoutDealInput
@@ -714,12 +827,15 @@ export type DealCreateWithoutProposalInput = {
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventCreateNestedManyWithoutDealInput
 }
 
 export type DealUncheckedCreateWithoutProposalInput = {
   id?: string
+  proposalVersionId: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
@@ -735,6 +851,7 @@ export type DealUncheckedCreateWithoutProposalInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventUncheckedCreateNestedManyWithoutDealInput
 }
 
 export type DealCreateOrConnectWithoutProposalInput = {
@@ -757,11 +874,236 @@ export type DealUpdateWithoutProposalInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  proposalVersion?: Prisma.ProposalVersionUpdateOneRequiredWithoutDealNestedInput
+  participants?: Prisma.DealParticipantUpdateManyWithoutDealNestedInput
+  milestones?: Prisma.DealMilestoneUpdateManyWithoutDealNestedInput
+  deliveries?: Prisma.DeliveryUpdateManyWithoutDealNestedInput
+  approvals?: Prisma.ApprovalUpdateManyWithoutDealNestedInput
+  releases?: Prisma.ReleaseUpdateManyWithoutDealNestedInput
+  refunds?: Prisma.RefundUpdateManyWithoutDealNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutDealNestedInput
+  ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutDealNestedInput
+  statusHistory?: Prisma.EscrowStatusHistoryUpdateManyWithoutDealNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUpdateManyWithoutDealNestedInput
+}
+
+export type DealUncheckedUpdateWithoutProposalInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
+  opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
+  valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participants?: Prisma.DealParticipantUncheckedUpdateManyWithoutDealNestedInput
+  milestones?: Prisma.DealMilestoneUncheckedUpdateManyWithoutDealNestedInput
+  deliveries?: Prisma.DeliveryUncheckedUpdateManyWithoutDealNestedInput
+  approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutDealNestedInput
+  releases?: Prisma.ReleaseUncheckedUpdateManyWithoutDealNestedInput
+  refunds?: Prisma.RefundUncheckedUpdateManyWithoutDealNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutDealNestedInput
+  ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutDealNestedInput
+  statusHistory?: Prisma.EscrowStatusHistoryUncheckedUpdateManyWithoutDealNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUncheckedUpdateManyWithoutDealNestedInput
+}
+
+export type DealCreateWithoutProposalVersionInput = {
+  id?: string
+  opportunityId: string
+  status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
+  valueMinor: bigint | number
+  currency?: string
+  idempotencyKey?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  proposal: Prisma.ProposalCreateNestedOneWithoutDealInput
+  participants?: Prisma.DealParticipantCreateNestedManyWithoutDealInput
+  milestones?: Prisma.DealMilestoneCreateNestedManyWithoutDealInput
+  deliveries?: Prisma.DeliveryCreateNestedManyWithoutDealInput
+  approvals?: Prisma.ApprovalCreateNestedManyWithoutDealInput
+  releases?: Prisma.ReleaseCreateNestedManyWithoutDealInput
+  refunds?: Prisma.RefundCreateNestedManyWithoutDealInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutDealInput
+  ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutDealInput
+  statusHistory?: Prisma.EscrowStatusHistoryCreateNestedManyWithoutDealInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventCreateNestedManyWithoutDealInput
+}
+
+export type DealUncheckedCreateWithoutProposalVersionInput = {
+  id?: string
+  opportunityId: string
+  status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
+  valueMinor: bigint | number
+  currency?: string
+  idempotencyKey?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  participants?: Prisma.DealParticipantUncheckedCreateNestedManyWithoutDealInput
+  milestones?: Prisma.DealMilestoneUncheckedCreateNestedManyWithoutDealInput
+  deliveries?: Prisma.DeliveryUncheckedCreateNestedManyWithoutDealInput
+  approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutDealInput
+  releases?: Prisma.ReleaseUncheckedCreateNestedManyWithoutDealInput
+  refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutDealInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutDealInput
+  ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutDealInput
+  statusHistory?: Prisma.EscrowStatusHistoryUncheckedCreateNestedManyWithoutDealInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventUncheckedCreateNestedManyWithoutDealInput
+}
+
+export type DealCreateOrConnectWithoutProposalVersionInput = {
+  where: Prisma.DealWhereUniqueInput
+  create: Prisma.XOR<Prisma.DealCreateWithoutProposalVersionInput, Prisma.DealUncheckedCreateWithoutProposalVersionInput>
+}
+
+export type DealUpsertWithoutProposalVersionInput = {
+  update: Prisma.XOR<Prisma.DealUpdateWithoutProposalVersionInput, Prisma.DealUncheckedUpdateWithoutProposalVersionInput>
+  create: Prisma.XOR<Prisma.DealCreateWithoutProposalVersionInput, Prisma.DealUncheckedCreateWithoutProposalVersionInput>
+  where?: Prisma.DealWhereInput
+}
+
+export type DealUpdateToOneWithWhereWithoutProposalVersionInput = {
+  where?: Prisma.DealWhereInput
+  data: Prisma.XOR<Prisma.DealUpdateWithoutProposalVersionInput, Prisma.DealUncheckedUpdateWithoutProposalVersionInput>
+}
+
+export type DealUpdateWithoutProposalVersionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
+  valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  proposal?: Prisma.ProposalUpdateOneRequiredWithoutDealNestedInput
+  participants?: Prisma.DealParticipantUpdateManyWithoutDealNestedInput
+  milestones?: Prisma.DealMilestoneUpdateManyWithoutDealNestedInput
+  deliveries?: Prisma.DeliveryUpdateManyWithoutDealNestedInput
+  approvals?: Prisma.ApprovalUpdateManyWithoutDealNestedInput
+  releases?: Prisma.ReleaseUpdateManyWithoutDealNestedInput
+  refunds?: Prisma.RefundUpdateManyWithoutDealNestedInput
+  disputes?: Prisma.DisputeUpdateManyWithoutDealNestedInput
+  ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutDealNestedInput
+  statusHistory?: Prisma.EscrowStatusHistoryUpdateManyWithoutDealNestedInput
+  reviews?: Prisma.ReviewUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUpdateManyWithoutDealNestedInput
+}
+
+export type DealUncheckedUpdateWithoutProposalVersionInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
+  valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  participants?: Prisma.DealParticipantUncheckedUpdateManyWithoutDealNestedInput
+  milestones?: Prisma.DealMilestoneUncheckedUpdateManyWithoutDealNestedInput
+  deliveries?: Prisma.DeliveryUncheckedUpdateManyWithoutDealNestedInput
+  approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutDealNestedInput
+  releases?: Prisma.ReleaseUncheckedUpdateManyWithoutDealNestedInput
+  refunds?: Prisma.RefundUncheckedUpdateManyWithoutDealNestedInput
+  disputes?: Prisma.DisputeUncheckedUpdateManyWithoutDealNestedInput
+  ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutDealNestedInput
+  statusHistory?: Prisma.EscrowStatusHistoryUncheckedUpdateManyWithoutDealNestedInput
+  reviews?: Prisma.ReviewUncheckedUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUncheckedUpdateManyWithoutDealNestedInput
+}
+
+export type DealCreateWithoutConversationEventsInput = {
+  id?: string
+  opportunityId: string
+  status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
+  valueMinor: bigint | number
+  currency?: string
+  idempotencyKey?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  proposal: Prisma.ProposalCreateNestedOneWithoutDealInput
+  proposalVersion: Prisma.ProposalVersionCreateNestedOneWithoutDealInput
+  participants?: Prisma.DealParticipantCreateNestedManyWithoutDealInput
+  milestones?: Prisma.DealMilestoneCreateNestedManyWithoutDealInput
+  deliveries?: Prisma.DeliveryCreateNestedManyWithoutDealInput
+  approvals?: Prisma.ApprovalCreateNestedManyWithoutDealInput
+  releases?: Prisma.ReleaseCreateNestedManyWithoutDealInput
+  refunds?: Prisma.RefundCreateNestedManyWithoutDealInput
+  disputes?: Prisma.DisputeCreateNestedManyWithoutDealInput
+  ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutDealInput
+  statusHistory?: Prisma.EscrowStatusHistoryCreateNestedManyWithoutDealInput
+  reviews?: Prisma.ReviewCreateNestedManyWithoutDealInput
+}
+
+export type DealUncheckedCreateWithoutConversationEventsInput = {
+  id?: string
+  proposalId: string
+  proposalVersionId: string
+  opportunityId: string
+  status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
+  valueMinor: bigint | number
+  currency?: string
+  idempotencyKey?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  participants?: Prisma.DealParticipantUncheckedCreateNestedManyWithoutDealInput
+  milestones?: Prisma.DealMilestoneUncheckedCreateNestedManyWithoutDealInput
+  deliveries?: Prisma.DeliveryUncheckedCreateNestedManyWithoutDealInput
+  approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutDealInput
+  releases?: Prisma.ReleaseUncheckedCreateNestedManyWithoutDealInput
+  refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutDealInput
+  disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutDealInput
+  ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutDealInput
+  statusHistory?: Prisma.EscrowStatusHistoryUncheckedCreateNestedManyWithoutDealInput
+  reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutDealInput
+}
+
+export type DealCreateOrConnectWithoutConversationEventsInput = {
+  where: Prisma.DealWhereUniqueInput
+  create: Prisma.XOR<Prisma.DealCreateWithoutConversationEventsInput, Prisma.DealUncheckedCreateWithoutConversationEventsInput>
+}
+
+export type DealUpsertWithoutConversationEventsInput = {
+  update: Prisma.XOR<Prisma.DealUpdateWithoutConversationEventsInput, Prisma.DealUncheckedUpdateWithoutConversationEventsInput>
+  create: Prisma.XOR<Prisma.DealCreateWithoutConversationEventsInput, Prisma.DealUncheckedCreateWithoutConversationEventsInput>
+  where?: Prisma.DealWhereInput
+}
+
+export type DealUpdateToOneWithWhereWithoutConversationEventsInput = {
+  where?: Prisma.DealWhereInput
+  data: Prisma.XOR<Prisma.DealUpdateWithoutConversationEventsInput, Prisma.DealUncheckedUpdateWithoutConversationEventsInput>
+}
+
+export type DealUpdateWithoutConversationEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
+  status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
+  valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  currency?: Prisma.StringFieldUpdateOperationsInput | string
+  idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  proposal?: Prisma.ProposalUpdateOneRequiredWithoutDealNestedInput
+  proposalVersion?: Prisma.ProposalVersionUpdateOneRequiredWithoutDealNestedInput
   participants?: Prisma.DealParticipantUpdateManyWithoutDealNestedInput
   milestones?: Prisma.DealMilestoneUpdateManyWithoutDealNestedInput
   deliveries?: Prisma.DeliveryUpdateManyWithoutDealNestedInput
@@ -774,10 +1116,13 @@ export type DealUpdateWithoutProposalInput = {
   reviews?: Prisma.ReviewUpdateManyWithoutDealNestedInput
 }
 
-export type DealUncheckedUpdateWithoutProposalInput = {
+export type DealUncheckedUpdateWithoutConversationEventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalId?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -799,12 +1144,14 @@ export type DealCreateWithoutParticipantsInput = {
   id?: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   proposal: Prisma.ProposalCreateNestedOneWithoutDealInput
+  proposalVersion: Prisma.ProposalVersionCreateNestedOneWithoutDealInput
   milestones?: Prisma.DealMilestoneCreateNestedManyWithoutDealInput
   deliveries?: Prisma.DeliveryCreateNestedManyWithoutDealInput
   approvals?: Prisma.ApprovalCreateNestedManyWithoutDealInput
@@ -814,13 +1161,16 @@ export type DealCreateWithoutParticipantsInput = {
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventCreateNestedManyWithoutDealInput
 }
 
 export type DealUncheckedCreateWithoutParticipantsInput = {
   id?: string
   proposalId: string
+  proposalVersionId: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
@@ -835,6 +1185,7 @@ export type DealUncheckedCreateWithoutParticipantsInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventUncheckedCreateNestedManyWithoutDealInput
 }
 
 export type DealCreateOrConnectWithoutParticipantsInput = {
@@ -857,12 +1208,14 @@ export type DealUpdateWithoutParticipantsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   proposal?: Prisma.ProposalUpdateOneRequiredWithoutDealNestedInput
+  proposalVersion?: Prisma.ProposalVersionUpdateOneRequiredWithoutDealNestedInput
   milestones?: Prisma.DealMilestoneUpdateManyWithoutDealNestedInput
   deliveries?: Prisma.DeliveryUpdateManyWithoutDealNestedInput
   approvals?: Prisma.ApprovalUpdateManyWithoutDealNestedInput
@@ -872,13 +1225,16 @@ export type DealUpdateWithoutParticipantsInput = {
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUpdateManyWithoutDealNestedInput
 }
 
 export type DealUncheckedUpdateWithoutParticipantsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   proposalId?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -893,18 +1249,21 @@ export type DealUncheckedUpdateWithoutParticipantsInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUncheckedUpdateManyWithoutDealNestedInput
 }
 
 export type DealCreateWithoutMilestonesInput = {
   id?: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   proposal: Prisma.ProposalCreateNestedOneWithoutDealInput
+  proposalVersion: Prisma.ProposalVersionCreateNestedOneWithoutDealInput
   participants?: Prisma.DealParticipantCreateNestedManyWithoutDealInput
   deliveries?: Prisma.DeliveryCreateNestedManyWithoutDealInput
   approvals?: Prisma.ApprovalCreateNestedManyWithoutDealInput
@@ -914,13 +1273,16 @@ export type DealCreateWithoutMilestonesInput = {
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventCreateNestedManyWithoutDealInput
 }
 
 export type DealUncheckedCreateWithoutMilestonesInput = {
   id?: string
   proposalId: string
+  proposalVersionId: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
@@ -935,6 +1297,7 @@ export type DealUncheckedCreateWithoutMilestonesInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventUncheckedCreateNestedManyWithoutDealInput
 }
 
 export type DealCreateOrConnectWithoutMilestonesInput = {
@@ -957,12 +1320,14 @@ export type DealUpdateWithoutMilestonesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   proposal?: Prisma.ProposalUpdateOneRequiredWithoutDealNestedInput
+  proposalVersion?: Prisma.ProposalVersionUpdateOneRequiredWithoutDealNestedInput
   participants?: Prisma.DealParticipantUpdateManyWithoutDealNestedInput
   deliveries?: Prisma.DeliveryUpdateManyWithoutDealNestedInput
   approvals?: Prisma.ApprovalUpdateManyWithoutDealNestedInput
@@ -972,13 +1337,16 @@ export type DealUpdateWithoutMilestonesInput = {
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUpdateManyWithoutDealNestedInput
 }
 
 export type DealUncheckedUpdateWithoutMilestonesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   proposalId?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -993,18 +1361,21 @@ export type DealUncheckedUpdateWithoutMilestonesInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUncheckedUpdateManyWithoutDealNestedInput
 }
 
 export type DealCreateWithoutDeliveriesInput = {
   id?: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   proposal: Prisma.ProposalCreateNestedOneWithoutDealInput
+  proposalVersion: Prisma.ProposalVersionCreateNestedOneWithoutDealInput
   participants?: Prisma.DealParticipantCreateNestedManyWithoutDealInput
   milestones?: Prisma.DealMilestoneCreateNestedManyWithoutDealInput
   approvals?: Prisma.ApprovalCreateNestedManyWithoutDealInput
@@ -1014,13 +1385,16 @@ export type DealCreateWithoutDeliveriesInput = {
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventCreateNestedManyWithoutDealInput
 }
 
 export type DealUncheckedCreateWithoutDeliveriesInput = {
   id?: string
   proposalId: string
+  proposalVersionId: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
@@ -1035,6 +1409,7 @@ export type DealUncheckedCreateWithoutDeliveriesInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventUncheckedCreateNestedManyWithoutDealInput
 }
 
 export type DealCreateOrConnectWithoutDeliveriesInput = {
@@ -1057,12 +1432,14 @@ export type DealUpdateWithoutDeliveriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   proposal?: Prisma.ProposalUpdateOneRequiredWithoutDealNestedInput
+  proposalVersion?: Prisma.ProposalVersionUpdateOneRequiredWithoutDealNestedInput
   participants?: Prisma.DealParticipantUpdateManyWithoutDealNestedInput
   milestones?: Prisma.DealMilestoneUpdateManyWithoutDealNestedInput
   approvals?: Prisma.ApprovalUpdateManyWithoutDealNestedInput
@@ -1072,13 +1449,16 @@ export type DealUpdateWithoutDeliveriesInput = {
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUpdateManyWithoutDealNestedInput
 }
 
 export type DealUncheckedUpdateWithoutDeliveriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   proposalId?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1093,18 +1473,21 @@ export type DealUncheckedUpdateWithoutDeliveriesInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUncheckedUpdateManyWithoutDealNestedInput
 }
 
 export type DealCreateWithoutApprovalsInput = {
   id?: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   proposal: Prisma.ProposalCreateNestedOneWithoutDealInput
+  proposalVersion: Prisma.ProposalVersionCreateNestedOneWithoutDealInput
   participants?: Prisma.DealParticipantCreateNestedManyWithoutDealInput
   milestones?: Prisma.DealMilestoneCreateNestedManyWithoutDealInput
   deliveries?: Prisma.DeliveryCreateNestedManyWithoutDealInput
@@ -1114,13 +1497,16 @@ export type DealCreateWithoutApprovalsInput = {
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventCreateNestedManyWithoutDealInput
 }
 
 export type DealUncheckedCreateWithoutApprovalsInput = {
   id?: string
   proposalId: string
+  proposalVersionId: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
@@ -1135,6 +1521,7 @@ export type DealUncheckedCreateWithoutApprovalsInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventUncheckedCreateNestedManyWithoutDealInput
 }
 
 export type DealCreateOrConnectWithoutApprovalsInput = {
@@ -1157,12 +1544,14 @@ export type DealUpdateWithoutApprovalsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   proposal?: Prisma.ProposalUpdateOneRequiredWithoutDealNestedInput
+  proposalVersion?: Prisma.ProposalVersionUpdateOneRequiredWithoutDealNestedInput
   participants?: Prisma.DealParticipantUpdateManyWithoutDealNestedInput
   milestones?: Prisma.DealMilestoneUpdateManyWithoutDealNestedInput
   deliveries?: Prisma.DeliveryUpdateManyWithoutDealNestedInput
@@ -1172,13 +1561,16 @@ export type DealUpdateWithoutApprovalsInput = {
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUpdateManyWithoutDealNestedInput
 }
 
 export type DealUncheckedUpdateWithoutApprovalsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   proposalId?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1193,18 +1585,21 @@ export type DealUncheckedUpdateWithoutApprovalsInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUncheckedUpdateManyWithoutDealNestedInput
 }
 
 export type DealCreateWithoutReleasesInput = {
   id?: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   proposal: Prisma.ProposalCreateNestedOneWithoutDealInput
+  proposalVersion: Prisma.ProposalVersionCreateNestedOneWithoutDealInput
   participants?: Prisma.DealParticipantCreateNestedManyWithoutDealInput
   milestones?: Prisma.DealMilestoneCreateNestedManyWithoutDealInput
   deliveries?: Prisma.DeliveryCreateNestedManyWithoutDealInput
@@ -1214,13 +1609,16 @@ export type DealCreateWithoutReleasesInput = {
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventCreateNestedManyWithoutDealInput
 }
 
 export type DealUncheckedCreateWithoutReleasesInput = {
   id?: string
   proposalId: string
+  proposalVersionId: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
@@ -1235,6 +1633,7 @@ export type DealUncheckedCreateWithoutReleasesInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventUncheckedCreateNestedManyWithoutDealInput
 }
 
 export type DealCreateOrConnectWithoutReleasesInput = {
@@ -1257,12 +1656,14 @@ export type DealUpdateWithoutReleasesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   proposal?: Prisma.ProposalUpdateOneRequiredWithoutDealNestedInput
+  proposalVersion?: Prisma.ProposalVersionUpdateOneRequiredWithoutDealNestedInput
   participants?: Prisma.DealParticipantUpdateManyWithoutDealNestedInput
   milestones?: Prisma.DealMilestoneUpdateManyWithoutDealNestedInput
   deliveries?: Prisma.DeliveryUpdateManyWithoutDealNestedInput
@@ -1272,13 +1673,16 @@ export type DealUpdateWithoutReleasesInput = {
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUpdateManyWithoutDealNestedInput
 }
 
 export type DealUncheckedUpdateWithoutReleasesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   proposalId?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1293,18 +1697,21 @@ export type DealUncheckedUpdateWithoutReleasesInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUncheckedUpdateManyWithoutDealNestedInput
 }
 
 export type DealCreateWithoutRefundsInput = {
   id?: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   proposal: Prisma.ProposalCreateNestedOneWithoutDealInput
+  proposalVersion: Prisma.ProposalVersionCreateNestedOneWithoutDealInput
   participants?: Prisma.DealParticipantCreateNestedManyWithoutDealInput
   milestones?: Prisma.DealMilestoneCreateNestedManyWithoutDealInput
   deliveries?: Prisma.DeliveryCreateNestedManyWithoutDealInput
@@ -1314,13 +1721,16 @@ export type DealCreateWithoutRefundsInput = {
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventCreateNestedManyWithoutDealInput
 }
 
 export type DealUncheckedCreateWithoutRefundsInput = {
   id?: string
   proposalId: string
+  proposalVersionId: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
@@ -1335,6 +1745,7 @@ export type DealUncheckedCreateWithoutRefundsInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventUncheckedCreateNestedManyWithoutDealInput
 }
 
 export type DealCreateOrConnectWithoutRefundsInput = {
@@ -1357,12 +1768,14 @@ export type DealUpdateWithoutRefundsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   proposal?: Prisma.ProposalUpdateOneRequiredWithoutDealNestedInput
+  proposalVersion?: Prisma.ProposalVersionUpdateOneRequiredWithoutDealNestedInput
   participants?: Prisma.DealParticipantUpdateManyWithoutDealNestedInput
   milestones?: Prisma.DealMilestoneUpdateManyWithoutDealNestedInput
   deliveries?: Prisma.DeliveryUpdateManyWithoutDealNestedInput
@@ -1372,13 +1785,16 @@ export type DealUpdateWithoutRefundsInput = {
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUpdateManyWithoutDealNestedInput
 }
 
 export type DealUncheckedUpdateWithoutRefundsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   proposalId?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1393,18 +1809,21 @@ export type DealUncheckedUpdateWithoutRefundsInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUncheckedUpdateManyWithoutDealNestedInput
 }
 
 export type DealCreateWithoutDisputesInput = {
   id?: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   proposal: Prisma.ProposalCreateNestedOneWithoutDealInput
+  proposalVersion: Prisma.ProposalVersionCreateNestedOneWithoutDealInput
   participants?: Prisma.DealParticipantCreateNestedManyWithoutDealInput
   milestones?: Prisma.DealMilestoneCreateNestedManyWithoutDealInput
   deliveries?: Prisma.DeliveryCreateNestedManyWithoutDealInput
@@ -1414,13 +1833,16 @@ export type DealCreateWithoutDisputesInput = {
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventCreateNestedManyWithoutDealInput
 }
 
 export type DealUncheckedCreateWithoutDisputesInput = {
   id?: string
   proposalId: string
+  proposalVersionId: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
@@ -1435,6 +1857,7 @@ export type DealUncheckedCreateWithoutDisputesInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventUncheckedCreateNestedManyWithoutDealInput
 }
 
 export type DealCreateOrConnectWithoutDisputesInput = {
@@ -1457,12 +1880,14 @@ export type DealUpdateWithoutDisputesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   proposal?: Prisma.ProposalUpdateOneRequiredWithoutDealNestedInput
+  proposalVersion?: Prisma.ProposalVersionUpdateOneRequiredWithoutDealNestedInput
   participants?: Prisma.DealParticipantUpdateManyWithoutDealNestedInput
   milestones?: Prisma.DealMilestoneUpdateManyWithoutDealNestedInput
   deliveries?: Prisma.DeliveryUpdateManyWithoutDealNestedInput
@@ -1472,13 +1897,16 @@ export type DealUpdateWithoutDisputesInput = {
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUpdateManyWithoutDealNestedInput
 }
 
 export type DealUncheckedUpdateWithoutDisputesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   proposalId?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1493,18 +1921,21 @@ export type DealUncheckedUpdateWithoutDisputesInput = {
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUncheckedUpdateManyWithoutDealNestedInput
 }
 
 export type DealCreateWithoutLedgerEntriesInput = {
   id?: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   proposal: Prisma.ProposalCreateNestedOneWithoutDealInput
+  proposalVersion: Prisma.ProposalVersionCreateNestedOneWithoutDealInput
   participants?: Prisma.DealParticipantCreateNestedManyWithoutDealInput
   milestones?: Prisma.DealMilestoneCreateNestedManyWithoutDealInput
   deliveries?: Prisma.DeliveryCreateNestedManyWithoutDealInput
@@ -1514,13 +1945,16 @@ export type DealCreateWithoutLedgerEntriesInput = {
   disputes?: Prisma.DisputeCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventCreateNestedManyWithoutDealInput
 }
 
 export type DealUncheckedCreateWithoutLedgerEntriesInput = {
   id?: string
   proposalId: string
+  proposalVersionId: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
@@ -1535,6 +1969,7 @@ export type DealUncheckedCreateWithoutLedgerEntriesInput = {
   disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventUncheckedCreateNestedManyWithoutDealInput
 }
 
 export type DealCreateOrConnectWithoutLedgerEntriesInput = {
@@ -1557,12 +1992,14 @@ export type DealUpdateWithoutLedgerEntriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   proposal?: Prisma.ProposalUpdateOneRequiredWithoutDealNestedInput
+  proposalVersion?: Prisma.ProposalVersionUpdateOneRequiredWithoutDealNestedInput
   participants?: Prisma.DealParticipantUpdateManyWithoutDealNestedInput
   milestones?: Prisma.DealMilestoneUpdateManyWithoutDealNestedInput
   deliveries?: Prisma.DeliveryUpdateManyWithoutDealNestedInput
@@ -1572,13 +2009,16 @@ export type DealUpdateWithoutLedgerEntriesInput = {
   disputes?: Prisma.DisputeUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUpdateManyWithoutDealNestedInput
 }
 
 export type DealUncheckedUpdateWithoutLedgerEntriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   proposalId?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1593,18 +2033,21 @@ export type DealUncheckedUpdateWithoutLedgerEntriesInput = {
   disputes?: Prisma.DisputeUncheckedUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUncheckedUpdateManyWithoutDealNestedInput
 }
 
 export type DealCreateWithoutStatusHistoryInput = {
   id?: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   proposal: Prisma.ProposalCreateNestedOneWithoutDealInput
+  proposalVersion: Prisma.ProposalVersionCreateNestedOneWithoutDealInput
   participants?: Prisma.DealParticipantCreateNestedManyWithoutDealInput
   milestones?: Prisma.DealMilestoneCreateNestedManyWithoutDealInput
   deliveries?: Prisma.DeliveryCreateNestedManyWithoutDealInput
@@ -1614,13 +2057,16 @@ export type DealCreateWithoutStatusHistoryInput = {
   disputes?: Prisma.DisputeCreateNestedManyWithoutDealInput
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventCreateNestedManyWithoutDealInput
 }
 
 export type DealUncheckedCreateWithoutStatusHistoryInput = {
   id?: string
   proposalId: string
+  proposalVersionId: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
@@ -1635,6 +2081,7 @@ export type DealUncheckedCreateWithoutStatusHistoryInput = {
   disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutDealInput
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutDealInput
   reviews?: Prisma.ReviewUncheckedCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventUncheckedCreateNestedManyWithoutDealInput
 }
 
 export type DealCreateOrConnectWithoutStatusHistoryInput = {
@@ -1657,12 +2104,14 @@ export type DealUpdateWithoutStatusHistoryInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   proposal?: Prisma.ProposalUpdateOneRequiredWithoutDealNestedInput
+  proposalVersion?: Prisma.ProposalVersionUpdateOneRequiredWithoutDealNestedInput
   participants?: Prisma.DealParticipantUpdateManyWithoutDealNestedInput
   milestones?: Prisma.DealMilestoneUpdateManyWithoutDealNestedInput
   deliveries?: Prisma.DeliveryUpdateManyWithoutDealNestedInput
@@ -1672,13 +2121,16 @@ export type DealUpdateWithoutStatusHistoryInput = {
   disputes?: Prisma.DisputeUpdateManyWithoutDealNestedInput
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUpdateManyWithoutDealNestedInput
 }
 
 export type DealUncheckedUpdateWithoutStatusHistoryInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   proposalId?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1693,18 +2145,21 @@ export type DealUncheckedUpdateWithoutStatusHistoryInput = {
   disputes?: Prisma.DisputeUncheckedUpdateManyWithoutDealNestedInput
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutDealNestedInput
   reviews?: Prisma.ReviewUncheckedUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUncheckedUpdateManyWithoutDealNestedInput
 }
 
 export type DealCreateWithoutReviewsInput = {
   id?: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   proposal: Prisma.ProposalCreateNestedOneWithoutDealInput
+  proposalVersion: Prisma.ProposalVersionCreateNestedOneWithoutDealInput
   participants?: Prisma.DealParticipantCreateNestedManyWithoutDealInput
   milestones?: Prisma.DealMilestoneCreateNestedManyWithoutDealInput
   deliveries?: Prisma.DeliveryCreateNestedManyWithoutDealInput
@@ -1714,13 +2169,16 @@ export type DealCreateWithoutReviewsInput = {
   disputes?: Prisma.DisputeCreateNestedManyWithoutDealInput
   ledgerEntries?: Prisma.LedgerEntryCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventCreateNestedManyWithoutDealInput
 }
 
 export type DealUncheckedCreateWithoutReviewsInput = {
   id?: string
   proposalId: string
+  proposalVersionId: string
   opportunityId: string
   status?: $Enums.DealStatus
+  settlementMode?: $Enums.DealSettlementMode
   valueMinor: bigint | number
   currency?: string
   idempotencyKey?: string | null
@@ -1735,6 +2193,7 @@ export type DealUncheckedCreateWithoutReviewsInput = {
   disputes?: Prisma.DisputeUncheckedCreateNestedManyWithoutDealInput
   ledgerEntries?: Prisma.LedgerEntryUncheckedCreateNestedManyWithoutDealInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedCreateNestedManyWithoutDealInput
+  conversationEvents?: Prisma.ConversationEventUncheckedCreateNestedManyWithoutDealInput
 }
 
 export type DealCreateOrConnectWithoutReviewsInput = {
@@ -1757,12 +2216,14 @@ export type DealUpdateWithoutReviewsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   proposal?: Prisma.ProposalUpdateOneRequiredWithoutDealNestedInput
+  proposalVersion?: Prisma.ProposalVersionUpdateOneRequiredWithoutDealNestedInput
   participants?: Prisma.DealParticipantUpdateManyWithoutDealNestedInput
   milestones?: Prisma.DealMilestoneUpdateManyWithoutDealNestedInput
   deliveries?: Prisma.DeliveryUpdateManyWithoutDealNestedInput
@@ -1772,13 +2233,16 @@ export type DealUpdateWithoutReviewsInput = {
   disputes?: Prisma.DisputeUpdateManyWithoutDealNestedInput
   ledgerEntries?: Prisma.LedgerEntryUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUpdateManyWithoutDealNestedInput
 }
 
 export type DealUncheckedUpdateWithoutReviewsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   proposalId?: Prisma.StringFieldUpdateOperationsInput | string
+  proposalVersionId?: Prisma.StringFieldUpdateOperationsInput | string
   opportunityId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.EnumDealStatusFieldUpdateOperationsInput | $Enums.DealStatus
+  settlementMode?: Prisma.EnumDealSettlementModeFieldUpdateOperationsInput | $Enums.DealSettlementMode
   valueMinor?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1793,6 +2257,7 @@ export type DealUncheckedUpdateWithoutReviewsInput = {
   disputes?: Prisma.DisputeUncheckedUpdateManyWithoutDealNestedInput
   ledgerEntries?: Prisma.LedgerEntryUncheckedUpdateManyWithoutDealNestedInput
   statusHistory?: Prisma.EscrowStatusHistoryUncheckedUpdateManyWithoutDealNestedInput
+  conversationEvents?: Prisma.ConversationEventUncheckedUpdateManyWithoutDealNestedInput
 }
 
 
@@ -1811,6 +2276,7 @@ export type DealCountOutputType = {
   ledgerEntries: number
   statusHistory: number
   reviews: number
+  conversationEvents: number
 }
 
 export type DealCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1824,6 +2290,7 @@ export type DealCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   ledgerEntries?: boolean | DealCountOutputTypeCountLedgerEntriesArgs
   statusHistory?: boolean | DealCountOutputTypeCountStatusHistoryArgs
   reviews?: boolean | DealCountOutputTypeCountReviewsArgs
+  conversationEvents?: boolean | DealCountOutputTypeCountConversationEventsArgs
 }
 
 /**
@@ -1906,18 +2373,28 @@ export type DealCountOutputTypeCountReviewsArgs<ExtArgs extends runtime.Types.Ex
   where?: Prisma.ReviewWhereInput
 }
 
+/**
+ * DealCountOutputType without action
+ */
+export type DealCountOutputTypeCountConversationEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.ConversationEventWhereInput
+}
+
 
 export type DealSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   proposalId?: boolean
+  proposalVersionId?: boolean
   opportunityId?: boolean
   status?: boolean
+  settlementMode?: boolean
   valueMinor?: boolean
   currency?: boolean
   idempotencyKey?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   proposal?: boolean | Prisma.ProposalDefaultArgs<ExtArgs>
+  proposalVersion?: boolean | Prisma.ProposalVersionDefaultArgs<ExtArgs>
   participants?: boolean | Prisma.Deal$participantsArgs<ExtArgs>
   milestones?: boolean | Prisma.Deal$milestonesArgs<ExtArgs>
   deliveries?: boolean | Prisma.Deal$deliveriesArgs<ExtArgs>
@@ -1928,40 +2405,49 @@ export type DealSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   ledgerEntries?: boolean | Prisma.Deal$ledgerEntriesArgs<ExtArgs>
   statusHistory?: boolean | Prisma.Deal$statusHistoryArgs<ExtArgs>
   reviews?: boolean | Prisma.Deal$reviewsArgs<ExtArgs>
+  conversationEvents?: boolean | Prisma.Deal$conversationEventsArgs<ExtArgs>
   _count?: boolean | Prisma.DealCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["deal"]>
 
 export type DealSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   proposalId?: boolean
+  proposalVersionId?: boolean
   opportunityId?: boolean
   status?: boolean
+  settlementMode?: boolean
   valueMinor?: boolean
   currency?: boolean
   idempotencyKey?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   proposal?: boolean | Prisma.ProposalDefaultArgs<ExtArgs>
+  proposalVersion?: boolean | Prisma.ProposalVersionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["deal"]>
 
 export type DealSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   proposalId?: boolean
+  proposalVersionId?: boolean
   opportunityId?: boolean
   status?: boolean
+  settlementMode?: boolean
   valueMinor?: boolean
   currency?: boolean
   idempotencyKey?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   proposal?: boolean | Prisma.ProposalDefaultArgs<ExtArgs>
+  proposalVersion?: boolean | Prisma.ProposalVersionDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["deal"]>
 
 export type DealSelectScalar = {
   id?: boolean
   proposalId?: boolean
+  proposalVersionId?: boolean
   opportunityId?: boolean
   status?: boolean
+  settlementMode?: boolean
   valueMinor?: boolean
   currency?: boolean
   idempotencyKey?: boolean
@@ -1969,9 +2455,10 @@ export type DealSelectScalar = {
   updatedAt?: boolean
 }
 
-export type DealOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "proposalId" | "opportunityId" | "status" | "valueMinor" | "currency" | "idempotencyKey" | "createdAt" | "updatedAt", ExtArgs["result"]["deal"]>
+export type DealOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "proposalId" | "proposalVersionId" | "opportunityId" | "status" | "settlementMode" | "valueMinor" | "currency" | "idempotencyKey" | "createdAt" | "updatedAt", ExtArgs["result"]["deal"]>
 export type DealInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   proposal?: boolean | Prisma.ProposalDefaultArgs<ExtArgs>
+  proposalVersion?: boolean | Prisma.ProposalVersionDefaultArgs<ExtArgs>
   participants?: boolean | Prisma.Deal$participantsArgs<ExtArgs>
   milestones?: boolean | Prisma.Deal$milestonesArgs<ExtArgs>
   deliveries?: boolean | Prisma.Deal$deliveriesArgs<ExtArgs>
@@ -1982,19 +2469,23 @@ export type DealInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   ledgerEntries?: boolean | Prisma.Deal$ledgerEntriesArgs<ExtArgs>
   statusHistory?: boolean | Prisma.Deal$statusHistoryArgs<ExtArgs>
   reviews?: boolean | Prisma.Deal$reviewsArgs<ExtArgs>
+  conversationEvents?: boolean | Prisma.Deal$conversationEventsArgs<ExtArgs>
   _count?: boolean | Prisma.DealCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type DealIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   proposal?: boolean | Prisma.ProposalDefaultArgs<ExtArgs>
+  proposalVersion?: boolean | Prisma.ProposalVersionDefaultArgs<ExtArgs>
 }
 export type DealIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   proposal?: boolean | Prisma.ProposalDefaultArgs<ExtArgs>
+  proposalVersion?: boolean | Prisma.ProposalVersionDefaultArgs<ExtArgs>
 }
 
 export type $DealPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Deal"
   objects: {
     proposal: Prisma.$ProposalPayload<ExtArgs>
+    proposalVersion: Prisma.$ProposalVersionPayload<ExtArgs>
     participants: Prisma.$DealParticipantPayload<ExtArgs>[]
     milestones: Prisma.$DealMilestonePayload<ExtArgs>[]
     deliveries: Prisma.$DeliveryPayload<ExtArgs>[]
@@ -2005,12 +2496,15 @@ export type $DealPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     ledgerEntries: Prisma.$LedgerEntryPayload<ExtArgs>[]
     statusHistory: Prisma.$EscrowStatusHistoryPayload<ExtArgs>[]
     reviews: Prisma.$ReviewPayload<ExtArgs>[]
+    conversationEvents: Prisma.$ConversationEventPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     proposalId: string
+    proposalVersionId: string
     opportunityId: string
     status: $Enums.DealStatus
+    settlementMode: $Enums.DealSettlementMode
     valueMinor: bigint
     currency: string
     idempotencyKey: string | null
@@ -2411,6 +2905,7 @@ readonly fields: DealFieldRefs;
 export interface Prisma__DealClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   proposal<T extends Prisma.ProposalDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProposalDefaultArgs<ExtArgs>>): Prisma.Prisma__ProposalClient<runtime.Types.Result.GetResult<Prisma.$ProposalPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  proposalVersion<T extends Prisma.ProposalVersionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ProposalVersionDefaultArgs<ExtArgs>>): Prisma.Prisma__ProposalVersionClient<runtime.Types.Result.GetResult<Prisma.$ProposalVersionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   participants<T extends Prisma.Deal$participantsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deal$participantsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DealParticipantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   milestones<T extends Prisma.Deal$milestonesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deal$milestonesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DealMilestonePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   deliveries<T extends Prisma.Deal$deliveriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deal$deliveriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DeliveryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2421,6 +2916,7 @@ export interface Prisma__DealClient<T, Null = never, ExtArgs extends runtime.Typ
   ledgerEntries<T extends Prisma.Deal$ledgerEntriesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deal$ledgerEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LedgerEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   statusHistory<T extends Prisma.Deal$statusHistoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deal$statusHistoryArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EscrowStatusHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reviews<T extends Prisma.Deal$reviewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deal$reviewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  conversationEvents<T extends Prisma.Deal$conversationEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Deal$conversationEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ConversationEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2452,8 +2948,10 @@ export interface Prisma__DealClient<T, Null = never, ExtArgs extends runtime.Typ
 export interface DealFieldRefs {
   readonly id: Prisma.FieldRef<"Deal", 'String'>
   readonly proposalId: Prisma.FieldRef<"Deal", 'String'>
+  readonly proposalVersionId: Prisma.FieldRef<"Deal", 'String'>
   readonly opportunityId: Prisma.FieldRef<"Deal", 'String'>
   readonly status: Prisma.FieldRef<"Deal", 'DealStatus'>
+  readonly settlementMode: Prisma.FieldRef<"Deal", 'DealSettlementMode'>
   readonly valueMinor: Prisma.FieldRef<"Deal", 'BigInt'>
   readonly currency: Prisma.FieldRef<"Deal", 'String'>
   readonly idempotencyKey: Prisma.FieldRef<"Deal", 'String'>
@@ -3097,6 +3595,30 @@ export type Deal$reviewsArgs<ExtArgs extends runtime.Types.Extensions.InternalAr
   take?: number
   skip?: number
   distinct?: Prisma.ReviewScalarFieldEnum | Prisma.ReviewScalarFieldEnum[]
+}
+
+/**
+ * Deal.conversationEvents
+ */
+export type Deal$conversationEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ConversationEvent
+   */
+  select?: Prisma.ConversationEventSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ConversationEvent
+   */
+  omit?: Prisma.ConversationEventOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ConversationEventInclude<ExtArgs> | null
+  where?: Prisma.ConversationEventWhereInput
+  orderBy?: Prisma.ConversationEventOrderByWithRelationInput | Prisma.ConversationEventOrderByWithRelationInput[]
+  cursor?: Prisma.ConversationEventWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.ConversationEventScalarFieldEnum | Prisma.ConversationEventScalarFieldEnum[]
 }
 
 /**

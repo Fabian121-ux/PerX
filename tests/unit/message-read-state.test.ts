@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const tx = vi.hoisted(() => ({
+  conversationEvent: { findFirst: vi.fn() },
   conversationParticipant: {
     findUnique: vi.fn(),
     update: vi.fn(),
@@ -27,7 +28,9 @@ describe("message read state", () => {
     tx.conversationParticipant.findUnique.mockResolvedValue({
       id: "participant-1",
       lastReadAt: null,
+      removedAt: null,
     });
+    tx.conversationEvent.findFirst.mockResolvedValue(null);
     tx.message.findMany.mockResolvedValue([
       { id: "message-1" },
       { id: "message-2" },
@@ -45,7 +48,7 @@ describe("message read state", () => {
     ).resolves.toBe(true);
 
     expect(tx.conversationParticipant.findUnique).toHaveBeenCalledWith({
-      select: { id: true, lastReadAt: true },
+      select: { id: true, lastReadAt: true, removedAt: true },
       where: {
         conversationId_userId: {
           conversationId: "conversation-1",
@@ -92,10 +95,54 @@ describe("message read state", () => {
           },
         ],
         readAt: null,
-        type: { in: ["MESSAGE", "MESSAGE_REQUEST_RECEIVED", "NEW_MESSAGE"] },
+        type: {
+          in: [
+            "DEAL",
+            "DEAL_UPDATE",
+            "MESSAGE",
+            "MESSAGE_REQUEST_RECEIVED",
+            "NEW_MESSAGE",
+            "PROPOSAL",
+            "PROPOSAL_UPDATE",
+          ],
+        },
         userId: "user-1",
       },
     });
+  });
+
+  it("marks read through a newer immutable conversation event", async () => {
+    const messageAt = new Date("2026-07-31T12:00:00.000Z");
+    const eventAt = new Date("2026-07-31T12:05:00.000Z");
+    tx.message.findFirst.mockResolvedValue({ createdAt: messageAt });
+    tx.conversationEvent.findFirst.mockResolvedValue({ createdAt: eventAt });
+
+    await expect(
+      markConversationReadForUser("conversation-1", "user-1"),
+    ).resolves.toBe(true);
+    expect(tx.conversationParticipant.update).toHaveBeenCalledWith({
+      data: { lastReadAt: eventAt },
+      where: {
+        conversationId_userId: {
+          conversationId: "conversation-1",
+          userId: "user-1",
+        },
+      },
+    });
+  });
+
+  it("does not reopen a participant-locally removed conversation", async () => {
+    tx.conversationParticipant.findUnique.mockResolvedValue({
+      id: "participant-1",
+      lastReadAt: null,
+      removedAt: new Date(),
+    });
+
+    await expect(
+      markConversationReadForUser("conversation-1", "user-1"),
+    ).resolves.toBe(false);
+    expect(tx.message.findFirst).not.toHaveBeenCalled();
+    expect(tx.conversationEvent.findFirst).not.toHaveBeenCalled();
   });
 
   it("does not expose or mutate a conversation for a non-participant", async () => {

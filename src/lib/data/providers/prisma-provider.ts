@@ -96,9 +96,26 @@ export const prismaProvider: PerXDataProvider = {
     },
     getUserProposals: async (userId: string, direction: "sent" | "received") => {
       return getPrisma().proposal.findMany({
-        include: { opportunity: true, sender: true },
+        include: {
+          opportunity: true,
+          sender: true,
+          versions: {
+            include: { milestones: { orderBy: { position: "asc" } } },
+            orderBy: { versionNumber: "desc" },
+            where:
+              direction === "received"
+                ? { submittedAt: { not: null } }
+                : undefined,
+          },
+        },
         orderBy: { createdAt: "desc" },
-        where: direction === "sent" ? { senderId: userId } : { opportunity: { ownerId: userId } },
+        where:
+          direction === "sent"
+            ? { senderId: userId }
+            : {
+                opportunity: { ownerId: userId },
+                status: { not: "DRAFT" },
+              },
       });
     },
     getUserDeals: async (userId: string) => {
@@ -106,6 +123,7 @@ export const prismaProvider: PerXDataProvider = {
         include: {
           participants: { include: { user: true } },
           proposal: { include: { opportunity: true } },
+          proposalVersion: true,
           statusHistory: { orderBy: { createdAt: "desc" }, take: 8 },
         },
         orderBy: { updatedAt: "desc" },
@@ -121,6 +139,7 @@ export const prismaProvider: PerXDataProvider = {
           milestones: true,
           participants: { include: { user: true } },
           proposal: { include: { opportunity: true } },
+          proposalVersion: true,
           releases: true,
           reviews: true,
           statusHistory: { orderBy: { createdAt: "asc" } },
@@ -147,6 +166,10 @@ export const prismaProvider: PerXDataProvider = {
 
       return getPrisma().conversation.findMany({
         include: {
+          events: {
+            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+            take: 50,
+          },
           messages: {
             include: {
               readReceipts: { select: { userId: true } },
@@ -190,7 +213,18 @@ export const prismaProvider: PerXDataProvider = {
           },
           proposals: {
             orderBy: { createdAt: "desc" },
-            select: { deal: { select: { id: true, status: true } } },
+            select: {
+              deal: {
+                select: {
+                  currency: true,
+                  id: true,
+                  proposalVersion: { select: { versionNumber: true } },
+                  settlementMode: true,
+                  status: true,
+                  valueMinor: true,
+                },
+              },
+            },
             take: 1,
             where: { deal: { isNot: null } },
           },
@@ -202,14 +236,20 @@ export const prismaProvider: PerXDataProvider = {
             every: blockedUserIds.length
               ? { userId: { notIn: blockedUserIds } }
               : {},
-            some: { userId },
+            some: { removedAt: null, userId },
           },
         },
       });
     },
-    getConversationMessages: async (conversationId: string) => {
+    getConversationMessages: async (conversationId: string, userId: string) => {
       const messages = await getPrisma().message.findMany({
-        where: { conversationId },
+        where: {
+          conversation: {
+            participants: { some: { removedAt: null, userId } },
+            status: "ACTIVE",
+          },
+          conversationId,
+        },
         orderBy: { createdAt: "desc" },
         take: 50,
         include: {
