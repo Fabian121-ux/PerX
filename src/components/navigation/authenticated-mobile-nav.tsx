@@ -23,7 +23,7 @@ export function AuthenticatedMobileNav({
   return (
     <nav
       aria-label="Primary navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--px-border)] bg-[color:var(--px-surface)]/96 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_30px_rgba(15,23,42,0.12)] backdrop-blur-xl lg:hidden"
+      className="authenticated-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--px-border)] bg-[color:var(--px-surface)]/96 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_30px_rgba(15,23,42,0.12)] backdrop-blur-xl lg:hidden"
     >
       <div className="mx-auto grid h-[var(--mobile-nav-height)] max-w-xl grid-cols-5 px-1">
         {authenticatedMobileNavigation.map((item) => {
@@ -36,9 +36,7 @@ export function AuthenticatedMobileNav({
             item.featureId === "messages"
               ? formatNavigationBadge(unreadCounts.unreadConversations)
               : item.featureId === "connections"
-                ? formatNavigationBadge(
-                    unreadCounts.pendingConnectionRequests,
-                  )
+                ? formatNavigationBadge(unreadCounts.pendingConnectionRequests)
                 : null;
           const Icon = feature.icon;
 

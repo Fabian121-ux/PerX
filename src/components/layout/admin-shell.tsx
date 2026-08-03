@@ -29,7 +29,7 @@ export function AdminShell({
 }) {
   return (
     <div className="min-h-dvh bg-slate-950 text-white">
-      <header className="border-b border-white/10 bg-slate-950">
+      <header className="admin-header border-b border-white/10 bg-slate-950">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
             className="inline-flex items-center gap-3"

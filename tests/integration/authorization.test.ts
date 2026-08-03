@@ -2,14 +2,20 @@ import { describe, it, expect, afterAll } from "vitest";
 import { getPrisma } from "@/lib/db/prisma";
 import { signUpAction } from "@/features/auth/actions";
 import { getDeliveryApprovalDecision } from "@/features/deals/authorization";
-import { getConnectedLabel, isEligiblePartnerDealStatus } from "@/features/network/data";
+import {
+  getConnectedLabel,
+  isEligiblePartnerDealStatus,
+} from "@/features/network/data";
 import { isEligibleNetworkAccount } from "@/features/network/eligibility";
 import type { DealStatus } from "@/generated/prisma/enums";
 import { prismaProvider } from "@/lib/data/providers/prisma-provider";
+import { enforceTestDatabaseIsolation } from "../e2e/utils/db-guard";
 
 const testDbUrl = process.env.TEST_DATABASE_URL || "";
-if (testDbUrl.includes("qtmvausduxiqcguckfql")) {
-  throw new Error("Safety Guard: TEST_DATABASE_URL matches a protected database.");
+if (testDbUrl) {
+  enforceTestDatabaseIsolation();
+  process.env.DATABASE_URL = testDbUrl;
+  process.env.DIRECT_URL = process.env.TEST_DIRECT_URL || testDbUrl;
 }
 
 const describeWithTestDatabase = testDbUrl ? describe : describe.skip;
@@ -20,7 +26,7 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
 
   afterAll(async () => {
     await prisma?.user.deleteMany({
-      where: { email: { startsWith: `audit-${runId}-` } }
+      where: { email: { startsWith: `audit-${runId}-` } },
     });
     await prisma?.$disconnect();
   });
@@ -41,7 +47,7 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
 
     const user = await prisma.user.findUnique({
       where: { email: `audit-${runId}-hacker@example.com` },
-      include: { roles: { include: { role: true } } }
+      include: { roles: { include: { role: true } } },
     });
 
     if (user) {
@@ -55,9 +61,15 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
 
   it("User C cannot access User A/B conversation via direct query", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
-    const alice = await prisma.user.findUnique({ where: { email: "alice-test@perx.test" } });
-    const bob = await prisma.user.findUnique({ where: { email: "bob-test@perx.test" } });
-    const carol = await prisma.user.findUnique({ where: { email: "carol-test@perx.test" } });
+    const alice = await prisma.user.findUnique({
+      where: { email: "alice-test@perx.test" },
+    });
+    const bob = await prisma.user.findUnique({
+      where: { email: "bob-test@perx.test" },
+    });
+    const carol = await prisma.user.findUnique({
+      where: { email: "carol-test@perx.test" },
+    });
     if (!alice || !bob || !carol) throw new Error("Seed users missing");
 
     const conversation = await prisma.conversation.findFirst({
@@ -82,11 +94,17 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
 
   it("user cannot edit another user's listing (ownership check)", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
-    const alice = await prisma.user.findUnique({ where: { email: "alice-test@perx.test" } });
-    const bob = await prisma.user.findUnique({ where: { email: "bob-test@perx.test" } });
+    const alice = await prisma.user.findUnique({
+      where: { email: "alice-test@perx.test" },
+    });
+    const bob = await prisma.user.findUnique({
+      where: { email: "bob-test@perx.test" },
+    });
     if (!alice || !bob) throw new Error("Seed users missing");
 
-    const bobListing = await prisma.opportunity.findUnique({ where: { slug: "bob-mech-keyboard" } });
+    const bobListing = await prisma.opportunity.findUnique({
+      where: { slug: "bob-mech-keyboard" },
+    });
     if (!bobListing) throw new Error("Seed product missing");
 
     const listingForAlice = await prisma.opportunity.findFirst({
@@ -113,12 +131,11 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
       "alice",
     );
     expect(providerDecision.allowed).toBe(false);
-    expect(providerDecision.allowed ? "" : providerDecision.reason).toBe("not-client");
-
-    const clientDecision = getDeliveryApprovalDecision(
-      deal as never,
-      "bob",
+    expect(providerDecision.allowed ? "" : providerDecision.reason).toBe(
+      "not-client",
     );
+
+    const clientDecision = getDeliveryApprovalDecision(deal as never, "bob");
     expect(clientDecision.allowed).toBe(true);
   });
 
@@ -137,12 +154,11 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
       "carol",
     );
     expect(nonParticipantDecision.allowed).toBe(false);
-    expect(nonParticipantDecision.allowed ? "" : nonParticipantDecision.reason).toBe("not-participant");
+    expect(
+      nonParticipantDecision.allowed ? "" : nonParticipantDecision.reason,
+    ).toBe("not-participant");
 
-    const clientDecision = getDeliveryApprovalDecision(
-      deal as never,
-      "alice",
-    );
+    const clientDecision = getDeliveryApprovalDecision(deal as never, "alice");
     expect(clientDecision.allowed).toBe(true);
   });
 
@@ -150,9 +166,17 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
 
     const nonQualifyingStatuses: DealStatus[] = [
-      "DRAFT", "AWAITING_FUNDING", "FUNDED", "IN_PROGRESS",
-      "SUBMITTED", "UNDER_REVIEW", "CANCELLED",
-      "REFUND_PENDING", "REFUNDED", "DISPUTED", "RESOLVED",
+      "DRAFT",
+      "AWAITING_FUNDING",
+      "FUNDED",
+      "IN_PROGRESS",
+      "SUBMITTED",
+      "UNDER_REVIEW",
+      "CANCELLED",
+      "REFUND_PENDING",
+      "REFUNDED",
+      "DISPUTED",
+      "RESOLVED",
     ];
     for (const status of nonQualifyingStatuses) {
       expect(isEligiblePartnerDealStatus(status)).toBe(false);
@@ -168,8 +192,12 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
 
   it("verifies seeded APPROVED deal between Alice and Bob qualifies as partner", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
-    const alice = await prisma.user.findUnique({ where: { email: "alice-test@perx.test" } });
-    const bob = await prisma.user.findUnique({ where: { email: "bob-test@perx.test" } });
+    const alice = await prisma.user.findUnique({
+      where: { email: "alice-test@perx.test" },
+    });
+    const bob = await prisma.user.findUnique({
+      where: { email: "bob-test@perx.test" },
+    });
     if (!alice || !bob) throw new Error("Seed users missing");
 
     const approvedDeal = await prisma.deal.findFirst({
@@ -183,13 +211,19 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
 
     expect(approvedDeal).not.toBeNull();
     expect(approvedDeal!.status).toBe("APPROVED");
-    expect(isEligiblePartnerDealStatus(approvedDeal!.status as DealStatus)).toBe(true);
+    expect(
+      isEligiblePartnerDealStatus(approvedDeal!.status as DealStatus),
+    ).toBe(true);
   });
 
   it("verifies seeded IN_PROGRESS deal does NOT qualify as partner", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
-    const alice = await prisma.user.findUnique({ where: { email: "alice-test@perx.test" } });
-    const carol = await prisma.user.findUnique({ where: { email: "carol-test@perx.test" } });
+    const alice = await prisma.user.findUnique({
+      where: { email: "alice-test@perx.test" },
+    });
+    const carol = await prisma.user.findUnique({
+      where: { email: "carol-test@perx.test" },
+    });
     if (!alice || !carol) throw new Error("Seed users missing");
 
     const inProgressDeal = await prisma.deal.findFirst({
@@ -202,12 +236,16 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
 
     expect(inProgressDeal).not.toBeNull();
     expect(inProgressDeal!.status).toBe("IN_PROGRESS");
-    expect(isEligiblePartnerDealStatus(inProgressDeal!.status as DealStatus)).toBe(false);
+    expect(
+      isEligiblePartnerDealStatus(inProgressDeal!.status as DealStatus),
+    ).toBe(false);
   });
 
   it("published content from Alice is discoverable by others excluding draft/paused/rejected", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
-    const alice = await prisma.user.findUnique({ where: { email: "alice-test@perx.test" } });
+    const alice = await prisma.user.findUnique({
+      where: { email: "alice-test@perx.test" },
+    });
     if (!alice) throw new Error("Seed user missing");
 
     const published = await prisma.opportunity.findMany({
@@ -440,5 +478,89 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
         });
       }),
     ).rejects.toThrow();
+  });
+
+  it("loads conversations with the current messaging schema and legacy JSON snapshots", async () => {
+    if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
+    const alice = await prisma.user.findUniqueOrThrow({
+      where: { email: "alice-test@perx.test" },
+    });
+    const conversation = await prisma.conversation.findFirstOrThrow({
+      where: { participants: { some: { userId: alice.id } } },
+    });
+    const eventId = `schema_regression_${runId}`;
+
+    await prisma.$executeRaw`
+      INSERT INTO "ConversationEvent" (
+        "id",
+        "conversationId",
+        "actorId",
+        "type",
+        "snapshot",
+        "idempotencyKey",
+        "createdAt"
+      ) VALUES (
+        ${eventId},
+        ${conversation.id},
+        ${alice.id},
+        'DEAL_STATUS_CHANGED'::"ConversationEventType",
+        'null'::jsonb,
+        ${`schema-regression:${runId}`},
+        NOW()
+      )
+    `;
+
+    try {
+      const conversations = await prismaProvider.app.getConversations(alice.id);
+      const loaded = conversations.find(
+        (entry: { id: string }) => entry.id === conversation.id,
+      );
+      expect(loaded).toBeDefined();
+      expect(
+        loaded?.participants.some(
+          (entry: { userId: string }) => entry.userId === alice.id,
+        ),
+      ).toBe(true);
+      expect(
+        loaded?.events.some((entry: { id: string }) => entry.id === eventId),
+      ).toBe(true);
+    } finally {
+      await prisma.conversationEvent.delete({ where: { id: eventId } });
+    }
+  });
+
+  it("filters a participant-locally removed conversation without a render-time query failure", async () => {
+    if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
+    const alice = await prisma.user.findUniqueOrThrow({
+      where: { email: "alice-test@perx.test" },
+    });
+    const participant = await prisma.conversationParticipant.findFirstOrThrow({
+      where: { userId: alice.id },
+    });
+    const originalRemovedAt = participant.removedAt;
+
+    await prisma.conversationParticipant.update({
+      data: { removedAt: new Date() },
+      where: { id: participant.id },
+    });
+    try {
+      const conversations = await prismaProvider.app.getConversations(alice.id);
+      expect(
+        conversations.some(
+          (entry: { id: string }) => entry.id === participant.conversationId,
+        ),
+      ).toBe(false);
+      await expect(
+        prismaProvider.app.getConversationMessages(
+          participant.conversationId,
+          alice.id,
+        ),
+      ).resolves.toEqual([]);
+    } finally {
+      await prisma.conversationParticipant.update({
+        data: { removedAt: originalRemovedAt },
+        where: { id: participant.id },
+      });
+    }
   });
 });

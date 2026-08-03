@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   getCurrentUser: vi.fn(),
   markConversationReadForUser: vi.fn(),
   messageFindFirst: vi.fn(),
+  getRequestCorrelationId: vi.fn(),
+  logServerDataError: vi.fn(),
   notFound: vi.fn(() => {
     throw new Error("NOT_FOUND");
   }),
@@ -34,9 +36,15 @@ vi.mock("@/lib/db/prisma", () => ({
 vi.mock("@/lib/messages/entry", () => ({
   findOwnedConversationEventTarget: mocks.findOwnedConversationEventTarget,
   findOwnedMessageTarget: mocks.findOwnedMessageTarget,
+  parseMessageRouteId: (value: unknown) =>
+    typeof value === "string" && /^[A-Za-z0-9_-]+$/.test(value) ? value : null,
 }));
 vi.mock("@/lib/messages/read-state", () => ({
   markConversationReadForUser: mocks.markConversationReadForUser,
+}));
+vi.mock("@/lib/logging/runtime", () => ({
+  getRequestCorrelationId: mocks.getRequestCorrelationId,
+  logServerDataError: mocks.logServerDataError,
 }));
 vi.mock("next/navigation", () => ({
   notFound: mocks.notFound,
@@ -90,16 +98,15 @@ describe("conversation exact message entry", () => {
     mocks.getCurrentUser.mockResolvedValue({
       id: "user-1",
       name: "Current User",
+      roles: [],
     });
+    mocks.getRequestCorrelationId.mockResolvedValue("request-test");
     mocks.markConversationReadForUser.mockResolvedValue(true);
   });
 
   it("loads an older owned target outside recent history and passes it to the exact chat", async () => {
     const selected = conversation();
-    const olderTarget = message(
-      "message-target",
-      "2026-07-01T12:00:00.000Z",
-    );
+    const olderTarget = message("message-target", "2026-07-01T12:00:00.000Z");
     mocks.getConversations.mockResolvedValue([selected]);
     mocks.getConversationMessages.mockResolvedValue([
       message("message-latest", "2026-07-31T12:00:00.000Z"),
@@ -211,5 +218,76 @@ describe("conversation exact message entry", () => {
     ).rejects.toThrow("NOT_FOUND");
     expect(mocks.getConversationMessages).not.toHaveBeenCalled();
     expect(mocks.markConversationReadForUser).not.toHaveBeenCalled();
+  });
+
+  it("rejects duplicate or malformed route targets before querying Prisma", async () => {
+    await expect(
+      ConversationPage({
+        params: Promise.resolve({ conversationId: "conversation-1" }),
+        searchParams: Promise.resolve({
+          message: ["message-1", "message-2"],
+        }),
+      }),
+    ).rejects.toThrow("NOT_FOUND");
+
+    expect(mocks.getConversations).not.toHaveBeenCalled();
+    expect(mocks.findOwnedMessageTarget).not.toHaveBeenCalled();
+  });
+
+  it("renders legacy event snapshots and missing optional participant data safely", async () => {
+    const selected = conversation();
+    selected.participants[1]!.user = null;
+    const event = {
+      actorId: null,
+      conversationId: "conversation-1",
+      createdAt: new Date("2026-07-01T12:00:00.000Z"),
+      dealId: null,
+      id: "event-legacy",
+      idempotencyKey: "legacy:null-snapshot",
+      proposalVersionId: null,
+      snapshot: null,
+      type: "DEAL_STATUS_CHANGED",
+    };
+    selected.events.push(event);
+    mocks.getConversations.mockResolvedValue([selected]);
+    mocks.getConversationMessages.mockResolvedValue(selected.messages);
+    mocks.findOwnedConversationEventTarget.mockResolvedValue(event);
+
+    const element = await ConversationPage({
+      params: Promise.resolve({ conversationId: "conversation-1" }),
+      searchParams: Promise.resolve({ event: "event-legacy" }),
+    });
+    const props = element.props as {
+      conversations: Array<{
+        events: Array<{ snapshot: Record<string, unknown> }>;
+        participantName: string;
+      }>;
+    };
+
+    expect(props.conversations[0]?.events[0]?.snapshot).toEqual({});
+    expect(props.conversations[0]?.participantName).toBe("Conversation");
+  });
+
+  it("keeps the conversation render available when marking read fails", async () => {
+    const selected = conversation();
+    mocks.getConversations.mockResolvedValue([selected]);
+    mocks.getConversationMessages.mockResolvedValue(selected.messages);
+    mocks.markConversationReadForUser.mockRejectedValue(
+      Object.assign(new Error("write unavailable"), { code: "P2024" }),
+    );
+
+    const element = await ConversationPage({
+      params: Promise.resolve({ conversationId: "conversation-1" }),
+      searchParams: Promise.resolve({}),
+    });
+
+    expect(element.props.defaultConversationId).toBe("conversation-1");
+    expect(mocks.logServerDataError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operation: "mark-conversation-read",
+        recordId: "conversation-1",
+        route: "/app/messages/[conversationId]",
+      }),
+    );
   });
 });

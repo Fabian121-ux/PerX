@@ -1,6 +1,13 @@
 // @vitest-environment jsdom
 
-import { act, cleanup, fireEvent, render, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -21,6 +28,9 @@ vi.mock("@/features/messages/actions", () => ({
 }));
 vi.mock("@/features/network/actions", () => ({
   blockUserAction: mocks.blockUserAction,
+}));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/app/messages/conversation-1",
 }));
 
 import { MessageWorkspace } from "@/components/messages/message-workspace";
@@ -45,6 +55,10 @@ class EventSourceMock {
   emit(name: string, data: unknown) {
     this.listeners.get(name)?.({ data: JSON.stringify(data) } as MessageEvent);
   }
+
+  emitRaw(name: string, data: string) {
+    this.listeners.get(name)?.({ data } as MessageEvent);
+  }
 }
 
 describe("message workspace exact targets", () => {
@@ -52,6 +66,8 @@ describe("message workspace exact targets", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    window.sessionStorage.clear();
+    window.history.replaceState(null, "", "/");
     EventSourceMock.current = null;
     mocks.markConversationReadAction.mockResolvedValue({ success: true });
     mocks.sendMessageAction.mockResolvedValue({ success: true });
@@ -107,10 +123,12 @@ describe("message workspace exact targets", () => {
       '[data-message-id="message-target"]',
     );
     expect(target?.getAttribute("aria-current")).toBe("true");
-    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({
-      behavior: "smooth",
-      block: "center",
-    }));
+    await waitFor(() =>
+      expect(scrollIntoView).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "center",
+      }),
+    );
     await waitFor(() =>
       expect(mocks.markConversationReadAction).toHaveBeenCalledWith(
         "conversation-2",
@@ -186,7 +204,9 @@ describe("message workspace exact targets", () => {
 
     fireEvent.change(composer, { target: { value: "Second message" } });
     fireEvent.keyDown(composer, { key: "Enter", metaKey: true });
-    await waitFor(() => expect(mocks.sendMessageAction).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(mocks.sendMessageAction).toHaveBeenCalledTimes(2),
+    );
   });
 
   it("renders and highlights structured immutable Deal events", async () => {
@@ -225,4 +245,229 @@ describe("message workspace exact targets", () => {
     expect(view.getByText("Open Deal")).toBeTruthy();
     await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
   });
+
+  it("keeps persisted drafts scoped to the authenticated user", async () => {
+    const conversation = {
+      id: "conversation-shared",
+      messages: [],
+      participantName: "Shared participant",
+    };
+    const firstUser = render(
+      <MessageWorkspace
+        conversations={[conversation]}
+        currentUserId="user-1"
+      />,
+    );
+    fireEvent.change(firstUser.getByLabelText("Message"), {
+      target: { value: "First user's private draft" },
+    });
+    expect(
+      window.sessionStorage.getItem("perx:messages:user-1:drafts"),
+    ).toContain("First user's private draft");
+    firstUser.unmount();
+
+    const secondUser = render(
+      <MessageWorkspace
+        conversations={[conversation]}
+        currentUserId="user-2"
+      />,
+    );
+    await act(async () => Promise.resolve());
+    expect((secondUser.getByLabelText("Message") as HTMLTextAreaElement).value).toBe(
+      "",
+    );
+  });
+
+  it("ignores malformed streamed envelopes without replacing persisted messages", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [
+              {
+                body: "Persisted message",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-1",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+
+    await act(async () => {
+      expect(() =>
+        EventSourceMock.current?.emitRaw("conversations", "not-json"),
+      ).not.toThrow();
+      EventSourceMock.current?.emitRaw("conversations", "null");
+      EventSourceMock.current?.emit("conversations", {
+        conversations: { id: "not-an-array" },
+      });
+      await Promise.resolve();
+    });
+
+    expect(view.getByText("Persisted message")).toBeTruthy();
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversations: [
+          {
+            events: [
+              {
+                createdAt: "2026-07-31T11:00:00.000Z",
+                id: "legacy-event",
+                snapshot: null,
+                type: "DEAL_CREATED",
+              },
+            ],
+            id: "conversation-1",
+            messages: [
+              {
+                body: "Valid streamed message",
+                createdAt: "2026-07-31T11:00:00.000Z",
+                id: "message-2",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+
+    expect(view.getByText("Valid streamed message")).toBeTruthy();
+    expect(
+      view.container.querySelector('[data-event-id="legacy-event"]'),
+    ).toBeNull();
+  });
+
+  it("preserves chat state while app navigation opens and closes", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            deal: {
+              amountMinor: "25000000",
+              currency: "NGN",
+              id: "deal-1",
+              status: "IN_PROGRESS",
+              title: "Keyboard delivery",
+              versionLabel: "v2",
+            },
+            dealHref: "/app/deals/deal-1",
+            id: "conversation-1",
+            messages: [
+              {
+                body: "Incoming message",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-other",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+              {
+                body: "Editable message",
+                createdAt: "2026-07-31T10:05:00.000Z",
+                id: "message-own",
+                senderId: "user-1",
+                senderName: "Current User",
+              },
+            ],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+        userRoles={[]}
+      />,
+    );
+    const workspace = view.getByLabelText("Message workspace");
+    const list = view.getByLabelText("Conversation list");
+    const listScroller = list.querySelector<HTMLElement>(
+      '[data-conversation-list-scroll="true"]',
+    );
+    if (!listScroller) throw new Error("Conversation list scroller missing");
+    listScroller.scrollTop = 48;
+
+    fireEvent.click(within(list).getByRole("button", { name: /Other User/ }));
+    expect(workspace.getAttribute("data-mobile-view")).toBe("conversation");
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        view.container.querySelector(".message-conversation-header"),
+      ),
+    );
+
+    const composer = view.getByLabelText("Message") as HTMLTextAreaElement;
+    fireEvent.change(composer, { target: { value: "Unsent draft" } });
+    const history = view.getByLabelText("Message history");
+    history.scrollTop = 96;
+
+    const incomingBubble = view.container.querySelector(
+      '[data-message-id="message-other"]',
+    );
+    if (!incomingBubble) throw new Error("Incoming message bubble missing");
+    fireEvent.click(
+      within(incomingBubble as HTMLElement).getByLabelText("Message actions"),
+    );
+    fireEvent.click(
+      within(incomingBubble as HTMLElement).getByRole("button", {
+        name: "Reply",
+      }),
+    );
+    expect(view.getByText("Replying to Other User")).toBeTruthy();
+
+    const showNavigation = view.getByRole("button", {
+      name: "Show app navigation",
+    });
+    fireEvent.click(showNavigation);
+    expect(view.getByRole("dialog", { name: "App navigation" })).toBeTruthy();
+    expect(view.getByText("Go to Home")).toBeTruthy();
+    expect(
+      view.getByRole("link", { name: /Messages/ }).getAttribute("aria-current"),
+    ).toBe("page");
+    expect(composer.value).toBe("Unsent draft");
+    expect(history.scrollTop).toBe(96);
+    expect(view.getByText("Replying to Other User")).toBeTruthy();
+    expect(view.getByText("Keyboard delivery")).toBeTruthy();
+
+    fireEvent.click(view.getByRole("button", { name: "Hide app navigation" }));
+    await waitFor(() => expect(document.activeElement).toBe(showNavigation));
+    expect(composer.value).toBe("Unsent draft");
+    expect(history.scrollTop).toBe(96);
+    expect(view.getByText("Replying to Other User")).toBeTruthy();
+
+    const ownBubble = view.container.querySelector(
+      '[data-message-id="message-own"]',
+    );
+    if (!ownBubble) throw new Error("Current-user message bubble missing");
+    fireEvent.click(
+      within(ownBubble as HTMLElement).getByLabelText("Message actions"),
+    );
+    fireEvent.click(
+      within(ownBubble as HTMLElement).getByRole("button", {
+        name: "Edit",
+      }),
+    );
+    const editDraft = view.getByLabelText(
+      "Edit message",
+    ) as HTMLTextAreaElement;
+    expect(editDraft.value).toBe("Editable message");
+    fireEvent.change(editDraft, { target: { value: "Unsaved edit remains" } });
+    fireEvent.click(showNavigation);
+    fireEvent.click(view.getByRole("button", { name: "Hide app navigation" }));
+    expect(
+      (view.getByLabelText("Edit message") as HTMLTextAreaElement).value,
+    ).toBe("Unsaved edit remains");
+
+    fireEvent.click(
+      view.getByRole("button", { name: "Back to conversations" }),
+    );
+    expect(workspace.getAttribute("data-mobile-view")).toBe("list");
+    expect(listScroller.scrollTop).toBe(48);
+  }, 15_000);
 });

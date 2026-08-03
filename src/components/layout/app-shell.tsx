@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { CurrentUser } from "@/lib/auth/session";
 
 import {
@@ -28,6 +29,8 @@ export function AppShell({
   user: CurrentUser;
 }) {
   const [liveUnreadCounts, setLiveUnreadCounts] = useState(unreadCounts);
+  const pathname = usePathname();
+  const directMessageConversation = /^\/app\/messages\/[^/]+$/.test(pathname);
 
   useEffect(() => {
     let stopped = false;
@@ -71,7 +74,9 @@ export function AppShell({
   }, []);
 
   return (
-    <div className="perx-shell relative flex h-dvh overflow-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200">
+    <div
+      className={`perx-shell relative flex h-dvh overflow-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200 ${directMessageConversation ? "perx-mobile-conversation-active" : ""}`}
+    >
       <AnimatedBackground />
       <PresenceHeartbeat />
       <DashboardSidebar
@@ -90,7 +95,9 @@ export function AppShell({
 
         <main className="dashboard-main min-h-0 flex-1 overflow-y-auto px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
           <AppScrollRestoration />
-          <div className="mx-auto max-w-[1480px]">{children}</div>
+          <div className="dashboard-content mx-auto max-w-[1480px]">
+            {children}
+          </div>
         </main>
       </div>
       <AuthenticatedMobileNav unreadCounts={liveUnreadCounts} />

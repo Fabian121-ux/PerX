@@ -3,6 +3,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowRight, Search, X } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useRef, useState, type ReactElement } from "react";
 
 import {
@@ -10,17 +11,25 @@ import {
   getFeatureById,
   searchFeatures,
 } from "@/lib/navigation/feature-registry";
+import { isNavigationItemActive } from "@/lib/navigation/navigation-state";
 
 export function FeatureDirectory({
   children,
+  closeLabel = "Close feature directory",
+  description = "Search all available app destinations from one place.",
+  title = "Explore PerX",
   userRoles,
 }: {
   children: ReactElement;
+  closeLabel?: string;
+  description?: string;
+  title?: string;
   userRoles?: readonly string[];
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const pathname = usePathname();
   const home = getFeatureById("home");
   const HomeIcon = home.icon;
   const matches = searchFeatures(query, { roles: userRoles });
@@ -39,6 +48,7 @@ export function FeatureDirectory({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[70] bg-[color:var(--px-overlay)] backdrop-blur-[2px]" />
         <Dialog.Content
+          data-app-navigation="true"
           className="fixed inset-x-0 bottom-0 z-[71] flex max-h-[94dvh] flex-col overflow-hidden rounded-t-[28px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] shadow-[var(--px-shadow-strong)] focus:outline-none sm:bottom-auto sm:left-1/2 sm:right-auto sm:top-1/2 sm:w-[min(960px,calc(100vw-2rem))] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[28px]"
           onOpenAutoFocus={(event) => {
             event.preventDefault();
@@ -48,15 +58,15 @@ export function FeatureDirectory({
           <div className="flex items-start justify-between gap-4 border-b border-[color:var(--px-border)] px-4 py-4 sm:px-6 sm:py-5">
             <div className="min-w-0">
               <Dialog.Title className="text-xl font-black text-[color:var(--px-text)] sm:text-2xl">
-                Explore PerX
+                {title}
               </Dialog.Title>
               <Dialog.Description className="mt-1 text-sm leading-5 text-[color:var(--px-text-muted)]">
-                Search all available app destinations from one place.
+                {description}
               </Dialog.Description>
             </div>
             <Dialog.Close asChild>
               <button
-                aria-label="Close feature directory"
+                aria-label={closeLabel}
                 className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[color:var(--px-text-muted)] transition hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                 ref={closeButtonRef}
                 type="button"
@@ -70,6 +80,14 @@ export function FeatureDirectory({
             <Dialog.Close asChild>
               <Link
                 className="group flex min-h-20 items-center gap-4 rounded-2xl bg-[linear-gradient(135deg,var(--px-navy),var(--px-navy-3))] p-4 text-white shadow-[0_16px_36px_rgba(6,25,54,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(6,25,54,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--px-surface)] sm:p-5"
+                aria-current={
+                  isNavigationItemActive(pathname, home.href, {
+                    aliases: home.activePaths,
+                    exact: home.exact,
+                  })
+                    ? "page"
+                    : undefined
+                }
                 href={home.href}
               >
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/12 ring-1 ring-white/15">
@@ -152,11 +170,20 @@ export function FeatureDirectory({
                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                       {groupFeatures.map((feature) => {
                         const Icon = feature.icon;
+                        const active = isNavigationItemActive(
+                          pathname,
+                          feature.href,
+                          {
+                            aliases: feature.activePaths,
+                            exact: feature.exact,
+                          },
+                        );
 
                         return (
                           <Dialog.Close asChild key={feature.id}>
                             <Link
                               className="group flex min-h-[88px] items-start gap-3 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface-elevated)] p-3 text-left transition hover:border-[color:var(--px-primary)] hover:bg-[color:var(--px-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                              aria-current={active ? "page" : undefined}
                               href={feature.href}
                             >
                               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)]">

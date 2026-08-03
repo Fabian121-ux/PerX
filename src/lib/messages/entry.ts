@@ -14,7 +14,13 @@ export type ExactConversationEventTarget = {
 
 const routeIdPattern = /^[A-Za-z0-9_-]+$/;
 
-export function parseExactMessageTarget(value: string): ExactMessageTarget | null {
+export function parseMessageRouteId(value: unknown): string | null {
+  return typeof value === "string" && routeIdPattern.test(value) ? value : null;
+}
+
+export function parseExactMessageTarget(
+  value: string,
+): ExactMessageTarget | null {
   try {
     const url = new URL(value, "https://perx.local");
     const segments = url.pathname.split("/").filter(Boolean);

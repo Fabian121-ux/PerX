@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { hasIsolatedTestDatabase } from "./utils/db-guard";
+import { getIsolatedTestDatabaseUrl } from "./utils/db-guard";
 
 type TestPrisma = {
   $disconnect: () => Promise<void>;
@@ -15,9 +15,12 @@ type TestPrisma = {
   };
 };
 
-const describeWithDatabase = hasIsolatedTestDatabase()
-  ? test.describe
-  : test.describe.skip;
+const testDatabaseUrl = getIsolatedTestDatabaseUrl();
+if (testDatabaseUrl) {
+  process.env.DATABASE_URL = testDatabaseUrl;
+  process.env.DIRECT_URL = process.env.TEST_DIRECT_URL || testDatabaseUrl;
+}
+const describeWithDatabase = testDatabaseUrl ? test.describe : test.describe.skip;
 
 describeWithDatabase("10-User Beta constraints and Core Workflow", () => {
   const runId = Date.now();

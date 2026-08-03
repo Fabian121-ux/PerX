@@ -18,6 +18,7 @@ import {
   Flag,
   Handshake,
   Info,
+  Menu,
   Loader2,
   LockKeyhole,
   MoreVertical,
@@ -31,6 +32,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { FeatureDirectory } from "@/components/navigation/feature-directory";
 import {
   deleteMessageAction,
   editMessageAction,
@@ -118,6 +120,7 @@ export function MessageWorkspace({
   defaultConversationId,
   highlightEventId,
   highlightMessageId,
+  userRoles,
 }: {
   backHref?: string;
   conversations: WorkspaceConversation[];
@@ -125,12 +128,19 @@ export function MessageWorkspace({
   defaultConversationId?: string;
   highlightEventId?: string;
   highlightMessageId?: string;
+  userRoles?: readonly string[];
 }) {
-  const [activeId, setActiveId] = useState(defaultConversationId ?? conversations[0]?.id ?? "");
-  const [mobileDetailOpen, setMobileDetailOpen] = useState(Boolean(defaultConversationId));
+  const [activeId, setActiveId] = useState(
+    defaultConversationId ?? conversations[0]?.id ?? "",
+  );
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(
+    Boolean(defaultConversationId),
+  );
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [conversationQuery, setConversationQuery] = useState("");
-  const [conversationFilter, setConversationFilter] = useState<"all" | "unread" | "deals">("all");
+  const [conversationFilter, setConversationFilter] = useState<
+    "all" | "unread" | "deals"
+  >("all");
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [editDraft, setEditDraft] = useState("");
   const [editingMessageId, setEditingMessageId] = useState("");
@@ -140,12 +150,27 @@ export function MessageWorkspace({
   const [highlightedMessageId, setHighlightedMessageId] = useState(
     highlightMessageId ?? highlightEventId ?? "",
   );
-  const [syncedConversations, setSyncedConversations] = useState(() => conversations);
-  const [localMessages, setLocalMessages] = useState<Record<string, WorkspaceMessage[]>>({});
-  const [liveState, setLiveState] = useState<"connecting" | "live" | "reconnecting" | "fallback">("connecting");
+  const [syncedConversations, setSyncedConversations] = useState(
+    () => conversations,
+  );
+  const [localMessages, setLocalMessages] = useState<
+    Record<string, WorkspaceMessage[]>
+  >({});
+  const [liveState, setLiveState] = useState<
+    "connecting" | "live" | "reconnecting" | "fallback"
+  >("connecting");
   const [isPending, startTransition] = useTransition();
   const [isEditPending, startEditTransition] = useTransition();
+  const draftStorageKey = `perx:messages:${currentUserId}:drafts`;
+  const filterStorageKey = `perx:messages:${currentUserId}:filter`;
+  const listScrollStorageKey = `perx:messages:${currentUserId}:list-scroll`;
+  const queryStorageKey = `perx:messages:${currentUserId}:query`;
+  const conversationButtonRefs = useRef<
+    Record<string, HTMLButtonElement | null>
+  >({});
+  const conversationHeaderRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
+  const inlineDetailHistoryRef = useRef(false);
   const isComposingRef = useRef(false);
   const listRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -153,14 +178,92 @@ export function MessageWorkspace({
   useEffect(() => {
     const node = listRef.current;
     if (!node) return;
-    const key = "perx:messages:list-scroll";
-    const saved = Number(window.sessionStorage.getItem(key) ?? 0);
+    const saved = Number(
+      window.sessionStorage.getItem(listScrollStorageKey) ?? 0,
+    );
     if (saved > 0) node.scrollTop = saved;
 
-    const save = () => window.sessionStorage.setItem(key, String(node.scrollTop));
+    const save = () =>
+      window.sessionStorage.setItem(
+        listScrollStorageKey,
+        String(node.scrollTop),
+      );
     node.addEventListener("scroll", save, { passive: true });
     return () => node.removeEventListener("scroll", save);
-  }, []);
+  }, [listScrollStorageKey]);
+
+  useEffect(() => {
+    let restoredDrafts: Record<string, string> = {};
+    try {
+      const storedDrafts = JSON.parse(
+        window.sessionStorage.getItem(draftStorageKey) ?? "{}",
+      ) as Record<string, unknown>;
+      restoredDrafts = Object.fromEntries(
+        Object.entries(storedDrafts).filter(
+          (entry): entry is [string, string] =>
+            typeof entry[1] === "string" && Boolean(entry[1]),
+        ),
+      );
+    } catch {
+      window.sessionStorage.removeItem(draftStorageKey);
+    }
+    const restoredQuery =
+      window.sessionStorage.getItem(queryStorageKey)?.slice(0, 120) ?? "";
+    const restoredFilter = window.sessionStorage.getItem(filterStorageKey);
+    let active = true;
+    window.queueMicrotask(() => {
+      if (!active) return;
+      setDrafts(restoredDrafts);
+      setConversationQuery(restoredQuery);
+      if (
+        restoredFilter === "all" ||
+        restoredFilter === "unread" ||
+        restoredFilter === "deals"
+      ) {
+        setConversationFilter(restoredFilter);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [draftStorageKey, filterStorageKey, queryStorageKey]);
+
+  useEffect(() => {
+    const className = "perx-mobile-conversation-active";
+    document.documentElement.classList.toggle(className, mobileDetailOpen);
+    return () => document.documentElement.classList.remove(className);
+  }, [mobileDetailOpen]);
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      const conversationId = (event.state as {
+        perxMessagesConversationId?: unknown;
+      } | null)?.perxMessagesConversationId;
+      if (
+        typeof conversationId === "string" &&
+        syncedConversations.some(
+          (conversation) => conversation.id === conversationId,
+        )
+      ) {
+        inlineDetailHistoryRef.current = true;
+        setActiveId(conversationId);
+        setMobileDetailOpen(true);
+        document.documentElement.classList.add(
+          "perx-mobile-conversation-active",
+        );
+        window.requestAnimationFrame(() => conversationHeaderRef.current?.focus());
+        return;
+      }
+      if (!inlineDetailHistoryRef.current && !mobileDetailOpen) return;
+      inlineDetailHistoryRef.current = false;
+      setMobileDetailOpen(false);
+      window.requestAnimationFrame(() => {
+        conversationButtonRefs.current[activeId]?.focus();
+      });
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [activeId, mobileDetailOpen, syncedConversations]);
 
   useEffect(() => {
     let active = true;
@@ -200,7 +303,10 @@ export function MessageWorkspace({
                     new Date(b.createdAt).getTime(),
                 )
               : next.events;
-          if (mergedMessages === next.messages && mergedEvents === next.events) {
+          if (
+            mergedMessages === next.messages &&
+            mergedEvents === next.events
+          ) {
             return next;
           }
           return {
@@ -226,11 +332,9 @@ export function MessageWorkspace({
           { cache: "no-store" },
         );
         if (!response.ok) return;
-        const payload = (await response.json()) as {
-          conversations?: WorkspaceConversation[];
-        };
-        if (active && payload.conversations) {
-          updateConversations(payload.conversations);
+        const incoming = parseConversationEnvelope(await response.json());
+        if (active && incoming) {
+          updateConversations(incoming);
         }
       } catch {
         // Polling is the fallback freshness path; persisted messages remain available after refresh.
@@ -261,11 +365,16 @@ export function MessageWorkspace({
       });
       eventSource.addEventListener("conversations", (event) => {
         if (!active) return;
-        const payload = JSON.parse((event as MessageEvent).data) as {
-          conversations?: WorkspaceConversation[];
-        };
-        if (payload.conversations) {
-          updateConversations(payload.conversations);
+        let incoming: WorkspaceConversation[] | null = null;
+        try {
+          incoming = parseConversationEnvelope(
+            JSON.parse((event as MessageEvent).data),
+          );
+        } catch {
+          return;
+        }
+        if (incoming) {
+          updateConversations(incoming);
           setLiveState("live");
           window.dispatchEvent(new Event("perx-unread-refresh"));
         }
@@ -301,8 +410,10 @@ export function MessageWorkspace({
   const visibleConversations = useMemo(() => {
     const query = conversationQuery.trim().toLocaleLowerCase();
     return syncedConversations.filter((conversation) => {
-      if (conversationFilter === "unread" && !conversation.unreadCount) return false;
-      if (conversationFilter === "deals" && !conversation.dealHref) return false;
+      if (conversationFilter === "unread" && !conversation.unreadCount)
+        return false;
+      if (conversationFilter === "deals" && !conversation.dealHref)
+        return false;
       if (!query) return true;
       return [
         conversation.participantName,
@@ -363,9 +474,14 @@ export function MessageWorkspace({
 
   useEffect(() => {
     if (!activeConversation?.id) return;
-    void markConversationReadAction(activeConversation.id)
-      .then((result) => {
-        if (result.error) return;
+    let stopped = false;
+    let retryTimer: number | null = null;
+    let retryCount = 0;
+    const markRead = async () => {
+      try {
+        const result = await markConversationReadAction(activeConversation.id);
+        if (result.error) throw new Error(result.error);
+        if (stopped) return;
         setSyncedConversations((current) =>
           current.map((conversation) =>
             conversation.id === activeConversation.id
@@ -374,11 +490,56 @@ export function MessageWorkspace({
           ),
         );
         window.dispatchEvent(new Event("perx-unread-refresh"));
-      })
-      .catch(() => {
-        // The participant-scoped stream or polling fallback will retry freshness.
-      });
+      } catch {
+        if (!stopped && retryCount < 3) {
+          const retryDelay = 5000 * 2 ** retryCount;
+          retryCount += 1;
+          retryTimer = window.setTimeout(() => void markRead(), retryDelay);
+        }
+      }
+    };
+    void markRead();
+    return () => {
+      stopped = true;
+      if (retryTimer !== null) window.clearTimeout(retryTimer);
+    };
   }, [activeConversation?.id, latestEntryId]);
+
+  const openMobileConversation = (conversationId: string) => {
+    const mobile =
+      typeof window.matchMedia !== "function" ||
+      window.matchMedia("(max-width: 1023px)").matches;
+    if (mobile && !backHref && !mobileDetailOpen) {
+      window.history.pushState(
+        {
+          ...window.history.state,
+          perxMessagesConversationId: conversationId,
+        },
+        "",
+        window.location.href,
+      );
+      inlineDetailHistoryRef.current = true;
+    }
+    setActiveId(conversationId);
+    if (mobile) {
+      document.documentElement.classList.add("perx-mobile-conversation-active");
+      setMobileDetailOpen(true);
+      window.requestAnimationFrame(() => conversationHeaderRef.current?.focus());
+    }
+  };
+
+  const closeMobileConversation = () => {
+    if (inlineDetailHistoryRef.current) {
+      inlineDetailHistoryRef.current = false;
+      setMobileDetailOpen(false);
+      window.history.back();
+      window.requestAnimationFrame(() => {
+        conversationButtonRefs.current[activeId]?.focus();
+      });
+      return;
+    }
+    setMobileDetailOpen(false);
+  };
 
   const sendMessage = (event?: FormEvent) => {
     event?.preventDefault();
@@ -405,22 +566,32 @@ export function MessageWorkspace({
       [conversationId]: [...(value[conversationId] ?? []), message],
     }));
     setDrafts((value) => ({ ...value, [conversationId]: "" }));
+    persistDraft(draftStorageKey, conversationId, "");
     setReplyTarget(null);
 
     startTransition(async () => {
-      const result = await sendMessageAction(conversationId, body, localReply?.id ?? null);
+      const result = await sendMessageAction(
+        conversationId,
+        body,
+        localReply?.id ?? null,
+      );
       if (result.error) {
         setLocalMessages((value) => ({
           ...value,
-          [conversationId]: (value[conversationId] ?? []).filter((m) => m.id !== messageId),
+          [conversationId]: (value[conversationId] ?? []).filter(
+            (m) => m.id !== messageId,
+          ),
         }));
         setDrafts((value) => ({ ...value, [conversationId]: body }));
+        persistDraft(draftStorageKey, conversationId, body);
         setReplyTarget(replyTarget);
         setSendError(result.error);
       } else {
         setLocalMessages((value) => ({
           ...value,
-          [conversationId]: (value[conversationId] ?? []).filter((m) => m.id !== messageId),
+          [conversationId]: (value[conversationId] ?? []).filter(
+            (m) => m.id !== messageId,
+          ),
         }));
         window.dispatchEvent(new Event("perx-unread-refresh"));
       }
@@ -455,12 +626,18 @@ export function MessageWorkspace({
     setHighlightedMessageId(messageId);
     const target = messageRefs.current[messageId];
     if (!target) {
-      setSendError("Original message is outside the loaded history. Refresh the conversation to load more context.");
+      setSendError(
+        "Original message is outside the loaded history. Refresh the conversation to load more context.",
+      );
     }
   };
 
   const deleteMessage = async (message: WorkspaceMessage) => {
-    if (!window.confirm("Remove this message from participant view? A tombstone remains, and the original content is retained for safety, reports, and audit history.")) {
+    if (
+      !window.confirm(
+        "Remove this message from participant view? A tombstone remains, and the original content is retained for safety, reports, and audit history.",
+      )
+    ) {
       return;
     }
     const result = await deleteMessageAction(message.id);
@@ -473,9 +650,7 @@ export function MessageWorkspace({
       current.map((conversation) => ({
         ...conversation,
         messages: conversation.messages.map((candidate) =>
-          candidate.id === message.id
-            ? { ...candidate, deletedAt }
-            : candidate,
+          candidate.id === message.id ? { ...candidate, deletedAt } : candidate,
         ),
       })),
     );
@@ -483,7 +658,11 @@ export function MessageWorkspace({
 
   const removeConversation = async () => {
     if (!activeConversation) return;
-    if (!window.confirm("Remove this chat from your list? It remains available to other participants and may return after a new message.")) {
+    if (
+      !window.confirm(
+        "Remove this chat from your list? It remains available to other participants and may return after a new message.",
+      )
+    ) {
       return;
     }
     const result = await removeConversationForMeAction(activeConversation.id);
@@ -495,8 +674,13 @@ export function MessageWorkspace({
       (conversation) => conversation.id !== activeConversation.id,
     );
     setSyncedConversations(remaining);
+    persistDraft(draftStorageKey, activeConversation.id, "");
     setActiveId(remaining[0]?.id ?? "");
     setDetailsOpen(false);
+    if (inlineDetailHistoryRef.current) {
+      inlineDetailHistoryRef.current = false;
+      window.history.back();
+    }
     setMobileDetailOpen(false);
   };
 
@@ -507,9 +691,12 @@ export function MessageWorkspace({
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)]">
             <ShieldCheck size={24} />
           </div>
-          <h1 className="mt-5 text-2xl font-black text-[color:var(--px-text)]">No conversations yet</h1>
+          <h1 className="mt-5 text-2xl font-black text-[color:var(--px-text)]">
+            No conversations yet
+          </h1>
           <p className="mt-3 text-sm leading-6 text-[color:var(--px-text-muted)]">
-            Conversations open after accepted connections or approved opportunity workflows.
+            Conversations open after accepted connections or approved
+            opportunity workflows.
           </p>
         </div>
       </section>
@@ -517,14 +704,25 @@ export function MessageWorkspace({
   }
 
   return (
-    <section className="relative grid h-[calc(100dvh-9rem)] min-h-0 max-w-full overflow-hidden rounded-[18px] bg-[color:var(--px-surface)] shadow-[var(--px-shadow)] ring-1 ring-[color:var(--px-border)] sm:h-[min(780px,calc(100dvh-7rem))] sm:rounded-[24px] lg:grid-cols-[300px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)_320px]">
-      <aside className={`${mobileDetailOpen ? "hidden lg:flex" : "flex"} min-h-0 flex-col border-r border-[color:var(--px-border)] bg-[color:var(--px-surface)]`}>
+    <section
+      aria-label="Message workspace"
+      className="message-workspace relative grid h-[calc(100dvh-9rem)] min-h-0 max-w-full overflow-hidden rounded-[18px] bg-[color:var(--px-surface)] shadow-[var(--px-shadow)] ring-1 ring-[color:var(--px-border)] sm:h-[min(780px,calc(100dvh-7rem))] sm:rounded-[24px] lg:grid-cols-[300px_minmax(0,1fr)] 2xl:grid-cols-[300px_minmax(0,1fr)_320px]"
+      data-mobile-view={mobileDetailOpen ? "conversation" : "list"}
+    >
+      <aside
+        aria-label="Conversation list"
+        className={`${mobileDetailOpen ? "hidden lg:flex" : "flex"} min-h-0 flex-col border-r border-[color:var(--px-border)] bg-[color:var(--px-surface)]`}
+      >
         <div className="border-b border-[color:var(--px-border)] bg-[linear-gradient(145deg,var(--px-navy),var(--px-navy-3))] p-4 text-white">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/55">PerX workspace</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/55">
+                PerX workspace
+              </p>
               <h1 className="mt-1 text-xl font-black">Messages</h1>
-              <p className="truncate text-xs text-white/65">Conversations, terms, and Deal records.</p>
+              <p className="truncate text-xs text-white/65">
+                Conversations, terms, and Deal records.
+              </p>
             </div>
             <span
               className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${
@@ -553,13 +751,23 @@ export function MessageWorkspace({
             <span className="sr-only">Search conversations</span>
             <input
               className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/45"
-              onChange={(event) => setConversationQuery(event.target.value)}
+                onChange={(event) => {
+                  setConversationQuery(event.target.value);
+                  window.sessionStorage.setItem(
+                    queryStorageKey,
+                    event.target.value,
+                  );
+                }}
               placeholder="Search people or conversations"
               type="search"
               value={conversationQuery}
             />
           </label>
-          <div aria-label="Conversation filters" className="mt-3 flex gap-1.5" role="group">
+          <div
+            aria-label="Conversation filters"
+            className="mt-3 flex gap-1.5"
+            role="group"
+          >
             {(["all", "unread", "deals"] as const).map((filter) => (
               <button
                 aria-pressed={conversationFilter === filter}
@@ -569,7 +777,10 @@ export function MessageWorkspace({
                     : "bg-white/8 text-white/70 hover:bg-white/14 hover:text-white"
                 }`}
                 key={filter}
-                onClick={() => setConversationFilter(filter)}
+                onClick={() => {
+                  setConversationFilter(filter);
+                  window.sessionStorage.setItem(filterStorageKey, filter);
+                }}
                 type="button"
               >
                 {filter}
@@ -578,7 +789,11 @@ export function MessageWorkspace({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-3" ref={listRef}>
+        <div
+          className="min-h-0 flex-1 overflow-y-auto p-3"
+          data-conversation-list-scroll="true"
+          ref={listRef}
+        >
           {visibleConversations.map((conversation) => {
             const active = conversation.id === activeConversation?.id;
             return (
@@ -589,9 +804,9 @@ export function MessageWorkspace({
                     : "hover:bg-[color:var(--px-surface-soft)]"
                 }`}
                 key={conversation.id}
-                onClick={() => {
-                  setActiveId(conversation.id);
-                  setMobileDetailOpen(true);
+                onClick={() => openMobileConversation(conversation.id)}
+                ref={(node) => {
+                  conversationButtonRefs.current[conversation.id] = node;
                 }}
                 type="button"
               >
@@ -602,22 +817,37 @@ export function MessageWorkspace({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-bold text-[color:var(--px-text)]">{conversation.participantName}</p>
-                    <span className="shrink-0 text-[10px] font-semibold text-[color:var(--px-text-muted)]">{formatConversationTime(conversation.timestamp)}</span>
+                    <p className="truncate text-sm font-bold text-[color:var(--px-text)]">
+                      {conversation.participantName}
+                    </p>
+                    <span className="shrink-0 text-[10px] font-semibold text-[color:var(--px-text-muted)]">
+                      {formatConversationTime(conversation.timestamp)}
+                    </span>
                   </div>
-                  <p className="truncate text-xs font-semibold text-[color:var(--px-primary)]">{conversation.opportunityTitle ?? conversation.context}</p>
-                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
-                     {drafts[conversation.id]?.trim() ? (
-                       <><span className="font-black text-[color:var(--px-error)]">Draft: </span>{drafts[conversation.id]}</>
-                     ) : conversation.lastMessage ?? "No messages yet."}
-                   </p>
+                  <p className="truncate text-xs font-semibold text-[color:var(--px-primary)]">
+                    {conversation.opportunityTitle ?? conversation.context}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
+                    {drafts[conversation.id]?.trim() ? (
+                      <>
+                        <span className="font-black text-[color:var(--px-error)]">
+                          Draft:{" "}
+                        </span>
+                        {drafts[conversation.id]}
+                      </>
+                    ) : (
+                      (conversation.lastMessage ?? "No messages yet.")
+                    )}
+                  </p>
                 </div>
                 {conversation.unreadCount ? (
                   <span
                     aria-label={`${conversation.unreadCount} unread message${conversation.unreadCount === 1 ? "" : "s"}`}
                     className="grid h-5 min-w-5 place-items-center rounded-full bg-[color:var(--px-warning)] px-1.5 text-[10px] font-black text-white"
                   >
-                    {conversation.unreadCount > 99 ? "99+" : conversation.unreadCount}
+                    {conversation.unreadCount > 99
+                      ? "99+"
+                      : conversation.unreadCount}
                   </span>
                 ) : null}
               </button>
@@ -626,9 +856,16 @@ export function MessageWorkspace({
           {!visibleConversations.length ? (
             <div className="grid min-h-40 place-items-center rounded-2xl border border-dashed border-[color:var(--px-border-strong)] p-5 text-center">
               <div>
-                <Search className="mx-auto text-[color:var(--px-text-muted)]" size={20} />
-                <p className="mt-2 text-sm font-black text-[color:var(--px-text)]">No conversations found</p>
-                <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">Try another search or filter.</p>
+                <Search
+                  className="mx-auto text-[color:var(--px-text-muted)]"
+                  size={20}
+                />
+                <p className="mt-2 text-sm font-black text-[color:var(--px-text)]">
+                  No conversations found
+                </p>
+                <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">
+                  Try another search or filter.
+                </p>
               </div>
             </div>
           ) : null}
@@ -636,18 +873,36 @@ export function MessageWorkspace({
       </aside>
 
       {activeConversation ? (
-        <main className={`${mobileDetailOpen ? "flex" : "hidden lg:flex"} min-w-0 min-h-0 flex-col bg-[color:var(--px-page)]`}>
-          <div className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 sm:px-4">
-            <div className="flex min-w-0 items-center gap-3">
+        <section
+          aria-label="Active conversation"
+          className={`${mobileDetailOpen ? "flex" : "hidden lg:flex"} min-w-0 min-h-0 flex-col bg-[color:var(--px-page)]`}
+        >
+          <div
+            className="message-conversation-header flex h-16 shrink-0 items-center justify-between gap-2 border-b border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-2 outline-none sm:gap-3 sm:px-4"
+            ref={conversationHeaderRef}
+            tabIndex={-1}
+          >
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              {backHref ? (
+                <Link
+                  aria-label="Back to conversations"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:hidden"
+                  href={backHref}
+                >
+                  <ArrowLeft aria-hidden size={19} />
+                </Link>
+              ) : (
+                <button
+                  aria-label="Back to conversations"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:hidden"
+                  onClick={closeMobileConversation}
+                  type="button"
+                >
+                  <ArrowLeft aria-hidden size={19} />
+                </button>
+              )}
               <button
-                aria-label="Back to conversations"
-                className="grid h-10 w-10 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:hidden"
-                onClick={() => setMobileDetailOpen(false)}
-                type="button"
-              >
-                <ArrowLeft size={18} />
-              </button>
-              <button
+                aria-label={`Open details for ${activeConversation.participantName}`}
                 className="contents"
                 onClick={() => setDetailsOpen(true)}
                 type="button"
@@ -659,11 +914,13 @@ export function MessageWorkspace({
                 />
               </button>
               <button
-                className="min-w-0 text-left focus:outline-none focus-visible:rounded-md focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                className="min-w-0 overflow-hidden text-left focus:outline-none focus-visible:rounded-md focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                 onClick={() => setDetailsOpen(true)}
                 type="button"
               >
-                <h2 className="truncate text-sm font-black text-[color:var(--px-text)]">{activeConversation.participantName}</h2>
+                <h2 className="truncate text-sm font-black text-[color:var(--px-text)]">
+                  {activeConversation.participantName}
+                </h2>
                 <p className="truncate text-xs text-[color:var(--px-text-muted)]">
                   {presenceLabel(activeConversation.participantPresence) ??
                     activeConversation.participantRole ??
@@ -672,34 +929,70 @@ export function MessageWorkspace({
                 </p>
               </button>
             </div>
-            <button
-              aria-label="Open conversation details"
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-              onClick={() => setDetailsOpen(true)}
-              type="button"
-            >
-              <Info aria-hidden size={18} />
-            </button>
+            <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+              {userRoles !== undefined ? (
+                <FeatureDirectory
+                  closeLabel="Hide app navigation"
+                  description="Move around PerX without leaving or reloading this conversation."
+                  title="App navigation"
+                  userRoles={userRoles}
+                >
+                  <button
+                    aria-label="Show app navigation"
+                    className="grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:hidden"
+                    type="button"
+                  >
+                    <Menu aria-hidden size={19} />
+                  </button>
+                </FeatureDirectory>
+              ) : null}
+              <button
+                aria-label="Open conversation details"
+                className="grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                onClick={() => setDetailsOpen(true)}
+                type="button"
+              >
+                <Info aria-hidden size={18} />
+              </button>
+            </div>
           </div>
 
-          <div className="bg-dot-pattern min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4" ref={historyRef}>
+          <div
+            aria-label="Message history"
+            className="bg-dot-pattern min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4"
+            ref={historyRef}
+          >
             <div className="mx-auto flex max-w-3xl flex-col gap-4">
               <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4">
                 <div className="flex items-center gap-2 text-[color:var(--px-primary)]">
                   <LockKeyhole aria-hidden size={15} />
-                  <p className="text-xs font-bold uppercase tracking-wide">Keep a clear record</p>
+                  <p className="text-xs font-bold uppercase tracking-wide">
+                    Keep a clear record
+                  </p>
                 </div>
-                <p className="mt-1 text-sm font-bold text-[color:var(--px-text)]">{activeConversation.opportunityTitle ?? activeConversation.context ?? "Professional conversation"}</p>
+                <p className="mt-1 text-sm font-bold text-[color:var(--px-text)]">
+                  {activeConversation.opportunityTitle ??
+                    activeConversation.context ??
+                    "Professional conversation"}
+                </p>
                 <p className="mt-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
-                  Keep important conversations and agreements on PerX. This helps preserve records that may support dispute resolution, safety reviews and account protection.{" "}
-                  <Link className="font-bold text-[color:var(--px-primary)] hover:underline" href="/trust-safety">
+                  Keep important conversations and agreements on PerX. This
+                  helps preserve records that may support dispute resolution,
+                  safety reviews and account protection.{" "}
+                  <Link
+                    className="font-bold text-[color:var(--px-primary)] hover:underline"
+                    href="/trust-safety"
+                  >
                     Trust & Safety
                   </Link>
                 </p>
               </div>
 
               {activeConversation.deal ? (
-                <DealSummaryCard deal={activeConversation.deal} href={activeConversation.dealHref} />
+                <DealSummaryCard
+                  deal={activeConversation.deal}
+                  href={activeConversation.dealHref}
+                />
               ) : null}
 
               {timeline.map((entry, index) => (
@@ -734,7 +1027,9 @@ export function MessageWorkspace({
                   ) : (
                     <ConversationEventCard
                       event={entry.conversationEvent}
-                      highlighted={highlightedMessageId === entry.conversationEvent.id}
+                      highlighted={
+                        highlightedMessageId === entry.conversationEvent.id
+                      }
                       refCallback={(node) => {
                         messageRefs.current[entry.conversationEvent.id] = node;
                       }}
@@ -745,13 +1040,21 @@ export function MessageWorkspace({
             </div>
           </div>
 
-          <form className="shrink-0 border-t border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-3" onSubmit={sendMessage}>
+          <form
+            aria-label="Message composer"
+            className="message-composer shrink-0 border-t border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-3"
+            onSubmit={sendMessage}
+          >
             <div className="mx-auto grid max-w-3xl gap-2">
               {replyTarget ? (
                 <div className="flex items-start justify-between gap-3 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-primary-soft)] p-3">
                   <div className="min-w-0 border-l-4 border-[color:var(--px-primary)] pl-3">
-                    <p className="text-xs font-black text-[color:var(--px-primary)]">Replying to {replyTarget.senderName}</p>
-                    <p className="mt-1 truncate text-sm text-[color:var(--px-text-muted)]">{messageExcerpt(replyTarget)}</p>
+                    <p className="text-xs font-black text-[color:var(--px-primary)]">
+                      Replying to {replyTarget.senderName}
+                    </p>
+                    <p className="mt-1 truncate text-sm text-[color:var(--px-text-muted)]">
+                      {messageExcerpt(replyTarget)}
+                    </p>
                   </div>
                   <button
                     aria-label="Cancel reply"
@@ -764,33 +1067,44 @@ export function MessageWorkspace({
                 </div>
               ) : null}
               <div className="flex items-end gap-2 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-2">
-                <label className="sr-only" htmlFor="message-draft">Message</label>
-                 <textarea
+                <label className="sr-only" htmlFor="message-draft">
+                  Message
+                </label>
+                <textarea
                   className="max-h-36 min-h-11 flex-1 resize-none bg-transparent px-2 py-2 text-sm text-[color:var(--px-text)] outline-none placeholder:text-[color:var(--px-text-muted)]"
                   id="message-draft"
                   maxLength={2000}
-                   onChange={(event) => {
-                     const conversationId = activeConversation.id;
-                     setDrafts((value) => ({ ...value, [conversationId]: event.target.value }));
-                   }}
-                   onCompositionEnd={() => {
-                     isComposingRef.current = false;
-                   }}
-                   onCompositionStart={() => {
-                     isComposingRef.current = true;
-                   }}
+                  onChange={(event) => {
+                    const conversationId = activeConversation.id;
+                    const nextDraft = event.target.value;
+                    setDrafts((value) => ({
+                      ...value,
+                      [conversationId]: nextDraft,
+                    }));
+                    persistDraft(draftStorageKey, conversationId, nextDraft);
+                  }}
+                  onCompositionEnd={() => {
+                    isComposingRef.current = false;
+                  }}
+                  onCompositionStart={() => {
+                    isComposingRef.current = true;
+                  }}
                   onInput={autoResize}
                   onKeyDown={(event) => {
-                     if (shouldSubmitMessage({
-                       ctrlKey: event.ctrlKey,
-                       isComposing: isComposingRef.current || event.nativeEvent.isComposing,
-                       key: event.key,
-                       keyCode: event.keyCode,
-                       metaKey: event.metaKey,
-                     })) {
-                       event.preventDefault();
-                       event.currentTarget.form?.requestSubmit();
-                     }
+                    if (
+                      shouldSubmitMessage({
+                        ctrlKey: event.ctrlKey,
+                        isComposing:
+                          isComposingRef.current ||
+                          event.nativeEvent.isComposing,
+                        key: event.key,
+                        keyCode: event.keyCode,
+                        metaKey: event.metaKey,
+                      })
+                    ) {
+                      event.preventDefault();
+                      event.currentTarget.form?.requestSubmit();
+                    }
                   }}
                   placeholder="Type a message..."
                   rows={1}
@@ -802,20 +1116,24 @@ export function MessageWorkspace({
                   disabled={!draft.trim() || isPending}
                   type="submit"
                 >
-                  {isPending ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
+                  {isPending ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : (
+                    <Send size={18} />
+                  )}
                 </button>
-               </div>
-               <p className="px-1 text-[10px] font-semibold text-[color:var(--px-text-muted)]">
-                 Enter adds a new line. Ctrl+Enter or Command+Enter sends.
-               </p>
-             </div>
+              </div>
+              <p className="px-1 text-[10px] font-semibold text-[color:var(--px-text-muted)]">
+                Enter adds a new line. Ctrl+Enter or Command+Enter sends.
+              </p>
+            </div>
             {sendError ? (
               <p className="mx-auto mt-2 max-w-3xl text-sm font-semibold text-[color:var(--px-error)]">
                 {sendError}
               </p>
             ) : null}
           </form>
-        </main>
+        </section>
       ) : null}
 
       <ConversationDetails
@@ -884,7 +1202,11 @@ function MessageBubble({
         } ${highlighted ? "ring-4 ring-[color:var(--px-warning)]" : ""}`}
       >
         <div className="mb-1 flex items-center justify-between gap-3">
-          <p className={`truncate text-[10px] font-black uppercase tracking-wide ${mine ? "text-blue-100" : "text-[color:var(--px-primary)]"}`}>{message.senderName}</p>
+          <p
+            className={`truncate text-[10px] font-black uppercase tracking-wide ${mine ? "text-blue-100" : "text-[color:var(--px-primary)]"}`}
+          >
+            {message.senderName}
+          </p>
           {!message.deletedAt ? (
             <MessageActionMenu
               canEdit={canEdit}
@@ -908,13 +1230,23 @@ function MessageBubble({
             onClick={() => jumpToMessage(message.replyTo?.id ?? "")}
             type="button"
           >
-            <p className={`text-xs font-black ${mine ? "text-white" : "text-[color:var(--px-primary)]"}`}>{message.replyTo.senderName}</p>
-            <p className={`mt-1 line-clamp-2 text-xs leading-5 ${mine ? "text-blue-50" : "text-[color:var(--px-text-muted)]"}`}>{messageExcerpt(message.replyTo)}</p>
+            <p
+              className={`text-xs font-black ${mine ? "text-white" : "text-[color:var(--px-primary)]"}`}
+            >
+              {message.replyTo.senderName}
+            </p>
+            <p
+              className={`mt-1 line-clamp-2 text-xs leading-5 ${mine ? "text-blue-50" : "text-[color:var(--px-text-muted)]"}`}
+            >
+              {messageExcerpt(message.replyTo)}
+            </p>
           </button>
         ) : null}
 
         {message.deletedAt ? (
-          <p className="text-sm italic leading-6 opacity-80">This message was removed from the chat view.</p>
+          <p className="text-sm italic leading-6 opacity-80">
+            This message was removed from the chat view.
+          </p>
         ) : editing ? (
           <div className="grid gap-2">
             <label className="sr-only" htmlFor={`edit-${message.id}`}>
@@ -923,25 +1255,26 @@ function MessageBubble({
             <textarea
               className="min-h-20 resize-none rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-3 py-2 text-sm leading-6 text-[color:var(--px-text)] caret-[color:var(--px-primary)] outline-none placeholder:text-[color:var(--px-text-muted)] focus:ring-2 focus:ring-[color:var(--px-focus)]"
               id={`edit-${message.id}`}
-               maxLength={2000}
-                onChange={(event) => onChangeEdit(event.target.value)}
-                onCompositionEnd={() => {
-                  editIsComposingRef.current = false;
-                }}
-                onCompositionStart={() => {
-                  editIsComposingRef.current = true;
-                }}
-                onInput={autoResize}
-                onKeyDown={(event) => {
-                  const composing =
-                    editIsComposingRef.current ||
-                    event.nativeEvent.isComposing ||
-                    event.keyCode === 229;
-                  if (event.key === "Escape" && !composing) {
-                    event.preventDefault();
-                    onCancelEdit();
-                  }
-                  if (shouldSubmitMessage({
+              maxLength={2000}
+              onChange={(event) => onChangeEdit(event.target.value)}
+              onCompositionEnd={() => {
+                editIsComposingRef.current = false;
+              }}
+              onCompositionStart={() => {
+                editIsComposingRef.current = true;
+              }}
+              onInput={autoResize}
+              onKeyDown={(event) => {
+                const composing =
+                  editIsComposingRef.current ||
+                  event.nativeEvent.isComposing ||
+                  event.keyCode === 229;
+                if (event.key === "Escape" && !composing) {
+                  event.preventDefault();
+                  onCancelEdit();
+                }
+                if (
+                  shouldSubmitMessage({
                     ctrlKey: event.ctrlKey,
                     isComposing:
                       editIsComposingRef.current ||
@@ -949,16 +1282,19 @@ function MessageBubble({
                     key: event.key,
                     keyCode: event.keyCode,
                     metaKey: event.metaKey,
-                  })) {
-                    event.preventDefault();
-                    onSaveEdit(message);
-                  }
+                  })
+                ) {
+                  event.preventDefault();
+                  onSaveEdit(message);
+                }
               }}
               rows={2}
               value={editDraft}
             />
             {editError ? (
-              <p className="text-xs font-semibold text-[color:var(--px-error)]">{editError}</p>
+              <p className="text-xs font-semibold text-[color:var(--px-error)]">
+                {editError}
+              </p>
             ) : null}
             <div className="flex justify-end gap-2">
               <button
@@ -979,9 +1315,13 @@ function MessageBubble({
             </div>
           </div>
         ) : (
-          <p className="whitespace-pre-wrap break-words text-sm leading-6">{message.body}</p>
+          <p className="whitespace-pre-wrap break-words text-sm leading-6">
+            {message.body}
+          </p>
         )}
-        <div className={`mt-2 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-blue-100" : "text-[color:var(--px-text-muted)]"}`}>
+        <div
+          className={`mt-2 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-blue-100" : "text-[color:var(--px-text-muted)]"}`}
+        >
           {message.editedAt ? <span>Edited</span> : null}
           <span>{formatMessageTime(message.createdAt)}</span>
           {mine ? <MessageStateIcon message={message} /> : null}
@@ -1005,7 +1345,8 @@ function ConversationEventCard({
   const currency = getSnapshotString(event.snapshot, "currency");
   const reason = getSnapshotString(event.snapshot, "reason");
   const description = getSnapshotString(event.snapshot, "description");
-  const dealEvent = event.type === "DEAL_CREATED" || event.type.startsWith("DEAL_");
+  const dealEvent =
+    event.type === "DEAL_CREATED" || event.type.startsWith("DEAL_");
   const objection = event.type === "PROPOSAL_OBJECTION_RAISED";
   const accepted = event.type === "PROPOSAL_ACCEPTED";
   const rejected = event.type === "PROPOSAL_REJECTED";
@@ -1054,10 +1395,16 @@ function ConversationEventCard({
         >
           <div className="flex min-w-0 items-center gap-2.5">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-current/10">
-              {dealEvent ? <Handshake aria-hidden size={17} /> : <ShieldCheck aria-hidden size={17} />}
+              {dealEvent ? (
+                <Handshake aria-hidden size={17} />
+              ) : (
+                <ShieldCheck aria-hidden size={17} />
+              )}
             </span>
             <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] opacity-65">PerX system record</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] opacity-65">
+                PerX system record
+              </p>
               <h3 className="truncate text-sm font-black">{title}</h3>
             </div>
           </div>
@@ -1096,7 +1443,9 @@ function ConversationEventCard({
           </p>
           <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--px-border)] pt-3">
             <p className="text-[10px] font-bold text-[color:var(--px-text-muted)]">
-              {event.actorName ? `Recorded by ${event.actorName}` : "Recorded by PerX"}
+              {event.actorName
+                ? `Recorded by ${event.actorName}`
+                : "Recorded by PerX"}
             </p>
             {event.dealHref ? (
               <Link
@@ -1213,12 +1562,20 @@ function MessageActionMenu({
         <MoreVertical aria-hidden size={15} />
       </summary>
       <div className="absolute right-0 z-30 mt-1 grid min-w-36 gap-1 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-1 text-[color:var(--px-text)] shadow-lg">
-        <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]" onClick={onReply} type="button">
+        <button
+          className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
+          onClick={onReply}
+          type="button"
+        >
           <Reply aria-hidden size={14} />
           Reply
         </button>
         {canEdit ? (
-          <button className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]" onClick={onStartEdit} type="button">
+          <button
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
+            onClick={onStartEdit}
+            type="button"
+          >
             <Pencil aria-hidden size={14} />
             Edit
           </button>
@@ -1297,9 +1654,17 @@ function ConversationDetails({
           presence={conversation.participantPresence}
           size="lg"
         />
-        <h3 className="mt-3 truncate font-black text-[color:var(--px-text)]">{conversation.participantName}</h3>
-        <p className="truncate text-xs text-[color:var(--px-text-muted)]">@{conversation.participantUsername ?? "perx-member"}</p>
-        <p className="mt-2 text-xs text-[color:var(--px-text-muted)]">{presenceLabel(conversation.participantPresence) ?? conversation.participantRole ?? "PerX member"}</p>
+        <h3 className="mt-3 truncate font-black text-[color:var(--px-text)]">
+          {conversation.participantName}
+        </h3>
+        <p className="truncate text-xs text-[color:var(--px-text-muted)]">
+          @{conversation.participantUsername ?? "perx-member"}
+        </p>
+        <p className="mt-2 text-xs text-[color:var(--px-text-muted)]">
+          {presenceLabel(conversation.participantPresence) ??
+            conversation.participantRole ??
+            "PerX member"}
+        </p>
         {profileHref ? (
           <Link
             className="mt-4 inline-flex min-h-10 items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
@@ -1318,7 +1683,9 @@ function ConversationDetails({
             >
               Report profile
             </Link>
-            <form action={blockUserAction.bind(null, conversation.participantId)}>
+            <form
+              action={blockUserAction.bind(null, conversation.participantId)}
+            >
               <button
                 className="inline-flex min-h-10 w-full items-center justify-center rounded-[var(--px-radius-sm)] border border-red-200 px-4 text-sm font-bold text-red-700 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                 type="submit"
@@ -1333,7 +1700,8 @@ function ConversationDetails({
       <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-4 ring-1 ring-[color:var(--px-border)]">
         <h3 className="font-bold text-[color:var(--px-text)]">Deal</h3>
         <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
-          Deal workspaces are separate from chat. Real custody, transfers, and protected-funds actions are not active in beta.
+          Deal workspaces are separate from chat. Real custody, transfers, and
+          protected-funds actions are not active in beta.
         </p>
         {conversation.dealHref ? (
           <Link
@@ -1355,9 +1723,13 @@ function ConversationDetails({
             <UserRoundX aria-hidden size={18} />
           </span>
           <div>
-            <h3 className="text-sm font-black text-[color:var(--px-text)]">Your chat list</h3>
+            <h3 className="text-sm font-black text-[color:var(--px-text)]">
+              Your chat list
+            </h3>
             <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">
-              Removing this chat only hides it for you. It does not erase messages, Deal records, reports, or another participant&apos;s copy.
+              Removing this chat only hides it for you. It does not erase
+              messages, Deal records, reports, or another participant&apos;s
+              copy.
             </p>
           </div>
         </div>
@@ -1378,7 +1750,11 @@ function ConversationDetails({
         {content}
       </aside>
       {open ? (
-        <div className="absolute inset-0 z-40 bg-black/30 2xl:hidden" role="presentation" onClick={onClose}>
+        <div
+          className="absolute inset-0 z-40 bg-black/30 2xl:hidden"
+          role="presentation"
+          onClick={onClose}
+        >
           <aside
             aria-label="Conversation details"
             className="ml-auto h-full w-full max-w-sm overflow-hidden shadow-2xl"
@@ -1410,11 +1786,14 @@ function Avatar({
     .join("")
     .slice(0, 2)
     .toUpperCase();
-  const dimensions = size === "lg" ? "mx-auto h-20 w-20 text-xl" : "h-11 w-11 text-sm";
+  const dimensions =
+    size === "lg" ? "mx-auto h-20 w-20 text-xl" : "h-11 w-11 text-sm";
 
   return (
     <div className="relative shrink-0">
-      <div className={`${dimensions} grid overflow-hidden place-items-center rounded-full bg-[color:var(--px-primary)] font-black text-white ring-2 ring-[color:var(--px-surface)]`}>
+      <div
+        className={`${dimensions} grid overflow-hidden place-items-center rounded-full bg-[color:var(--px-primary)] font-black text-white ring-2 ring-[color:var(--px-surface)]`}
+      >
         {imageUrl && !imageFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -1448,6 +1827,93 @@ function autoResize(event: FormEvent<HTMLTextAreaElement>) {
   const target = event.currentTarget;
   target.style.height = "auto";
   target.style.height = `${Math.min(target.scrollHeight, 160)}px`;
+}
+
+function persistDraft(
+  storageKey: string,
+  conversationId: string,
+  draft: string,
+) {
+  try {
+    const stored = JSON.parse(
+      window.sessionStorage.getItem(storageKey) ?? "{}",
+    ) as Record<string, unknown>;
+    if (draft) stored[conversationId] = draft;
+    else delete stored[conversationId];
+    window.sessionStorage.setItem(storageKey, JSON.stringify(stored));
+  } catch {
+    window.sessionStorage.setItem(
+      storageKey,
+      draft ? JSON.stringify({ [conversationId]: draft }) : "{}",
+    );
+  }
+}
+
+function parseConversationEnvelope(
+  value: unknown,
+): WorkspaceConversation[] | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const conversations = (value as { conversations?: unknown }).conversations;
+  if (!Array.isArray(conversations)) return null;
+
+  return conversations.flatMap((candidate) => {
+    if (
+      !candidate ||
+      typeof candidate !== "object" ||
+      Array.isArray(candidate)
+    ) {
+      return [];
+    }
+    const conversation = candidate as Partial<WorkspaceConversation>;
+    if (
+      typeof conversation.id !== "string" ||
+      typeof conversation.participantName !== "string" ||
+      !Array.isArray(conversation.messages)
+    ) {
+      return [];
+    }
+    const messages = conversation.messages.filter(
+      (message): message is WorkspaceMessage =>
+        Boolean(message) &&
+        typeof message.id === "string" &&
+        typeof message.body === "string" &&
+        typeof message.createdAt === "string" &&
+        typeof message.senderId === "string" &&
+        typeof message.senderName === "string",
+    );
+    const events = Array.isArray(conversation.events)
+      ? conversation.events.filter(
+          (event): event is WorkspaceConversationEvent =>
+            Boolean(event) &&
+            typeof event.id === "string" &&
+            typeof event.createdAt === "string" &&
+            isConversationEventType(event.type) &&
+            Boolean(event.snapshot) &&
+            typeof event.snapshot === "object" &&
+            !Array.isArray(event.snapshot),
+        )
+      : undefined;
+
+    return [{ ...conversation, events, messages } as WorkspaceConversation];
+  });
+}
+
+function isConversationEventType(
+  value: unknown,
+): value is WorkspaceConversationEvent["type"] {
+  return [
+    "PROPOSAL_SUBMITTED",
+    "PROPOSAL_OBJECTION_RAISED",
+    "PROPOSAL_REVISION_CREATED",
+    "PROPOSAL_REVISION_SUBMITTED",
+    "PROPOSAL_ACCEPTED",
+    "PROPOSAL_REJECTED",
+    "DEAL_CREATED",
+    "DEAL_STATUS_CHANGED",
+    "MILESTONE_SUBMITTED",
+    "MILESTONE_APPROVED",
+    "SIMULATED_RELEASE_RECORDED",
+  ].includes(value as WorkspaceConversationEvent["type"]);
 }
 
 function toReplyPreview(message: WorkspaceMessage): ReplyPreview {
@@ -1491,18 +1957,29 @@ function formatConversationTime(value?: string) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const thatDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const dayDiff = Math.round((today.getTime() - thatDay.getTime()) / 86_400_000);
+  const dayDiff = Math.round(
+    (today.getTime() - thatDay.getTime()) / 86_400_000,
+  );
 
   if (dayDiff === 0) return formatMessageTime(value);
   if (dayDiff === 1) return "Yesterday";
-  return new Intl.DateTimeFormat(undefined, { day: "2-digit", month: "short" }).format(date);
+  return new Intl.DateTimeFormat(undefined, {
+    day: "2-digit",
+    month: "short",
+  }).format(date);
 }
 
-function shouldShowDateSeparator(previous: string | undefined, current: string) {
+function shouldShowDateSeparator(
+  previous: string | undefined,
+  current: string,
+) {
   if (!previous) return true;
   const previousDate = new Date(previous);
   const currentDate = new Date(current);
-  if (Number.isNaN(previousDate.getTime()) || Number.isNaN(currentDate.getTime())) {
+  if (
+    Number.isNaN(previousDate.getTime()) ||
+    Number.isNaN(currentDate.getTime())
+  ) {
     return false;
   }
   return previousDate.toDateString() !== currentDate.toDateString();
@@ -1532,7 +2009,11 @@ function formatMessageDay(value: string) {
 
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const messageDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const messageDay = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
   const dayDiff = Math.round(
     (today.getTime() - messageDay.getTime()) / 86_400_000,
   );
@@ -1567,7 +2048,9 @@ function MessageStateIcon({ message }: { message: WorkspaceMessage }) {
     return <span aria-label="Failed">Failed</span>;
   }
   if (message.readByOtherParticipants) {
-    return <CheckCheck aria-label="Read" className="text-green-200" size={14} />;
+    return (
+      <CheckCheck aria-label="Read" className="text-green-200" size={14} />
+    );
   }
   return <Check aria-label="Sent" size={13} />;
 }

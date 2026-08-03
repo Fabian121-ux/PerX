@@ -12,8 +12,13 @@ import { getPrisma } from "@/lib/db/prisma";
 import {
   findOwnedConversationEventTarget,
   findOwnedMessageTarget,
+  parseMessageRouteId,
 } from "@/lib/messages/entry";
 import { markConversationReadForUser } from "@/lib/messages/read-state";
+import {
+  getRequestCorrelationId,
+  logServerDataError,
+} from "@/lib/logging/runtime";
 
 type PreviewConversationLike = {
   id: string;
@@ -115,16 +120,19 @@ function toWorkspaceConversation(
   }
 
   const dbConversation = conversation as DbConversationLike;
-  const otherParticipant = dbConversation.participants.map((participant: any) => participant).find(
-    (participant) => participant.userId !== user.id,
-  )?.user;
+  const otherParticipant = dbConversation.participants
+    .map((participant: any) => participant)
+    .find((participant) => participant.userId !== user.id)?.user;
   const otherParticipantIds = dbConversation.participants
     .map((participant) => participant.userId)
     .filter((participantId) => participantId !== user.id);
-  const latestMessage = dbConversation.messages.length > 1 
-    ? dbConversation.messages[dbConversation.messages.length - 1] // ascending full messages
-    : dbConversation.messages[0]; // descending single message
-  const linkedDeal = dbConversation.proposals?.find((proposal) => proposal.deal)?.deal;
+  const latestMessage =
+    dbConversation.messages.length > 1
+      ? dbConversation.messages[dbConversation.messages.length - 1] // ascending full messages
+      : dbConversation.messages[0]; // descending single message
+  const linkedDeal = dbConversation.proposals?.find(
+    (proposal) => proposal.deal,
+  )?.deal;
 
   return {
     context: dbConversation.opportunity?.title ?? "Professional conversation",
@@ -156,7 +164,7 @@ function toWorkspaceConversation(
     })),
     id: dbConversation.id,
     lastMessage: latestMessage?.body ?? "No messages yet.",
-    messages: dbConversation.messages.map(msg => ({
+    messages: dbConversation.messages.map((msg) => ({
       body: msg.deletedAt ? "" : msg.body,
       createdAt: msg.createdAt.toISOString(),
       deletedAt: msg.deletedAt?.toISOString() ?? null,
@@ -175,10 +183,14 @@ function toWorkspaceConversation(
           : (otherParticipant?.name ?? "Participant"),
     })),
     opportunityTitle: dbConversation.opportunity?.title ?? undefined,
-    participantId: dbConversation.participants.find(
-      (participant) => participant.userId !== user.id,
-    )?.userId ?? null,
-    participantImageUrl: otherParticipant?.imageUrl ?? otherParticipant?.profile?.profileImageUrl ?? null,
+    participantId:
+      dbConversation.participants.find(
+        (participant) => participant.userId !== user.id,
+      )?.userId ?? null,
+    participantImageUrl:
+      otherParticipant?.imageUrl ??
+      otherParticipant?.profile?.profileImageUrl ??
+      null,
     participantName:
       otherParticipant?.name ??
       dbConversation.opportunity?.title ??
@@ -201,63 +213,100 @@ export default async function ConversationPage({
   searchParams,
 }: {
   params: Promise<{ conversationId: string }>;
-  searchParams: Promise<{ event?: string; message?: string }>;
+  searchParams: Promise<{
+    event?: string | string[];
+    message?: string | string[];
+  }>;
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
 
-  const { conversationId } = await params;
-  const {
-    event: highlightEventId,
-    message: highlightMessageId,
-  } = await searchParams;
+  const rawConversationId = (await params).conversationId;
+  const conversationId = parseMessageRouteId(rawConversationId);
+  if (!conversationId) notFound();
+  const { event: rawHighlightEventId, message: rawHighlightMessageId } =
+    await searchParams;
+  const highlightEventId =
+    rawHighlightEventId === undefined
+      ? undefined
+      : parseMessageRouteId(rawHighlightEventId);
+  const highlightMessageId =
+    rawHighlightMessageId === undefined
+      ? undefined
+      : parseMessageRouteId(rawHighlightMessageId);
+  if (
+    (rawHighlightEventId !== undefined && !highlightEventId) ||
+    (rawHighlightMessageId !== undefined && !highlightMessageId)
+  ) {
+    notFound();
+  }
   if (highlightEventId && highlightMessageId) notFound();
-  const conversations = await getConversations(user.id);
+  const conversations = await loadConversationRouteData(
+    "load-conversations",
+    conversationId,
+    () => getConversations(user.id),
+  );
   const selected = conversations.find(
     (conversation) => conversation.id === conversationId,
   );
   if (!selected) notFound();
 
   const exactTarget = highlightMessageId
-    ? await findOwnedMessageTarget(user.id, {
+    ? await loadConversationRouteData(
+        "load-message-target",
         conversationId,
-        messageId: highlightMessageId,
-      })
+        () =>
+          findOwnedMessageTarget(user.id, {
+            conversationId,
+            messageId: highlightMessageId,
+          }),
+      )
     : null;
   if (highlightMessageId && !exactTarget) notFound();
   const exactEventTarget = highlightEventId
-    ? await findOwnedConversationEventTarget(user.id, {
-        conversationId,
-        eventId: highlightEventId,
-      })
+    ? await loadConversationRouteData("load-event-target", conversationId, () =>
+        findOwnedConversationEventTarget(user.id, {
+          conversationId,
+          eventId: highlightEventId,
+        }),
+      )
     : null;
   if (highlightEventId && !exactEventTarget) notFound();
 
-  let fullMessages = await getConversationMessages(conversationId, user.id);
+  let fullMessages = await loadConversationRouteData(
+    "load-message-history",
+    conversationId,
+    () => getConversationMessages(conversationId, user.id),
+  );
   if (
     exactTarget &&
     !fullMessages.some((message) => message.id === exactTarget.id)
   ) {
-    const targetMessage = await getPrisma().message.findFirst({
-      include: {
-        readReceipts: { select: { userId: true } },
-        replyTo: {
-          select: {
-            body: true,
-            deletedAt: true,
-            id: true,
-            sender: { select: { id: true, name: true, username: true } },
-            senderId: true,
+    const targetMessage = await loadConversationRouteData(
+      "load-older-message-target",
+      conversationId,
+      () =>
+        getPrisma().message.findFirst({
+          include: {
+            readReceipts: { select: { userId: true } },
+            replyTo: {
+              select: {
+                body: true,
+                deletedAt: true,
+                id: true,
+                sender: { select: { id: true, name: true, username: true } },
+                senderId: true,
+              },
+            },
+            sender: true,
           },
-        },
-        sender: true,
-      },
-      where: {
-        conversationId,
-        deletedAt: null,
-        id: exactTarget.id,
-      },
-    });
+          where: {
+            conversationId,
+            deletedAt: null,
+            id: exactTarget.id,
+          },
+        }),
+    );
     if (!targetMessage) notFound();
     fullMessages = [...fullMessages, targetMessage].sort((a, b) => {
       const timeDifference = a.createdAt.getTime() - b.createdAt.getTime();
@@ -281,7 +330,17 @@ export default async function ConversationPage({
       ];
     }
   }
-  await markConversationReadForUser(conversationId, user.id);
+  try {
+    await markConversationReadForUser(conversationId, user.id);
+  } catch (error) {
+    logServerDataError({
+      error,
+      operation: "mark-conversation-read",
+      recordId: conversationId,
+      requestId: await getRequestCorrelationId(),
+      route: "/app/messages/[conversationId]",
+    });
+  }
 
   const workspaceConversations: WorkspaceConversation[] = conversations.map(
     (conversation) => toWorkspaceConversation(conversation, user),
@@ -296,18 +355,41 @@ export default async function ConversationPage({
       highlightEventId={exactEventTarget?.id}
       highlightMessageId={exactTarget?.id}
       key={`${conversationId}:${exactTarget?.id ?? exactEventTarget?.id ?? "latest"}`}
+      userRoles={user.roles}
     />
   );
+}
+
+async function loadConversationRouteData<T>(
+  operation: string,
+  conversationId: string,
+  load: () => Promise<T>,
+) {
+  try {
+    return await load();
+  } catch (error) {
+    logServerDataError({
+      error,
+      operation,
+      recordId: conversationId,
+      requestId: await getRequestCorrelationId(),
+      route: "/app/messages/[conversationId]",
+    });
+    throw error;
+  }
 }
 
 function toWorkspaceReply(replyTo: any) {
   if (!replyTo) return null;
   return {
     body: replyTo.deletedAt ? "" : replyTo.body,
-    deletedAt: replyTo.deletedAt ? replyTo.deletedAt.toISOString?.() ?? String(replyTo.deletedAt) : null,
+    deletedAt: replyTo.deletedAt
+      ? (replyTo.deletedAt.toISOString?.() ?? String(replyTo.deletedAt))
+      : null,
     id: replyTo.id,
     senderId: replyTo.senderId,
-    senderName: replyTo.sender?.name ?? replyTo.sender?.username ?? "Participant",
+    senderName:
+      replyTo.sender?.name ?? replyTo.sender?.username ?? "Participant",
   };
 }
 

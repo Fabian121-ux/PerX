@@ -1,10 +1,17 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { MockModeIndicator } from "@/components/dev/mock-mode-indicator";
 
 import "./globals.css";
+
+export const viewport: Viewport = {
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
+  viewportFit: "cover",
+  width: "device-width",
+};
 
 export const metadata: Metadata = {
   appleWebApp: {
