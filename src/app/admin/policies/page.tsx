@@ -1,8 +1,12 @@
 import { AdminSection } from "@/components/admin-section";
 import { Card } from "@/components/ui/card";
+import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 import { policyCategories, policyOutcomes } from "@/lib/policy/enforcement";
 
-export default function AdminPoliciesPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminPoliciesPage() {
+  await requireCapabilityOrNotFound("policies:manage");
   return (
     <AdminSection
       description="Inspect the central policy categories and outcomes used by server-side content checks."

@@ -17,18 +17,25 @@ import {
   moderationCaseStatuses,
   safeUserLabel,
 } from "@/lib/admin/moderation-records";
+import { requireCapabilityOrNotFound } from "@/lib/auth/session";
+import { hasCapability } from "@/lib/permissions/capabilities";
 
 export default async function AdminModerationCasePage({
   params,
 }: {
   params: Promise<{ caseId: string }>;
 }) {
+  const admin = await requireCapabilityOrNotFound("admin:moderate");
+  const canReadMessages = hasCapability(admin.roles, "messages:moderate");
+  const canEnforce = hasCapability(admin.roles, "enforcement:manage");
   const { caseId } = await params;
   const moderationCase = await getAdminModerationCase(caseId);
   if (!moderationCase) notFound();
 
   const messages =
-    moderationCase.conversationId && moderationCase.messageScopes.length
+    canReadMessages &&
+    moderationCase.conversationId &&
+    moderationCase.messageScopes.length
       ? await getScopedMessageContext({
           conversationId: moderationCase.conversationId,
           messageId: moderationCase.messageId,
@@ -232,7 +239,7 @@ export default async function AdminModerationCasePage({
             </Button>
           </form>
 
-          {moderationCase.reportedUserId ? (
+          {canEnforce && moderationCase.reportedUserId ? (
             <form
               action={applyEnforcementAction}
               className="grid gap-3 rounded-[var(--px-radius)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4"

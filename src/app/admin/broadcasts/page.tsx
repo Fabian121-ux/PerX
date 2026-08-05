@@ -16,6 +16,15 @@ export default async function AdminBroadcastsPage() {
   await requireCapabilityOrNotFound("broadcasts:create");
   const broadcasts = await getPrisma().adminBroadcast.findMany({
     orderBy: { createdAt: "desc" },
+    select: {
+      audience: true,
+      createdAt: true,
+      deliveryCount: true,
+      failedCount: true,
+      id: true,
+      priority: true,
+      title: true,
+    },
     take: 20,
   });
 

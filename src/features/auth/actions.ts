@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { getPrisma } from "@/lib/db/prisma";
+import { evaluateAccountAccess } from "@/lib/account/enforcement";
 import { writeAuditLog } from "@/lib/logging/audit";
 import {
   createSession,
@@ -360,9 +361,26 @@ export async function signInAction(
     };
   }
 
-  if (!user.isActive) {
+  const access = evaluateAccountAccess(user);
+  if (!access.canAuthenticate) {
+    try {
+      await writeAuditLog({
+        action: "auth.sign_in_blocked_by_enforcement",
+        actorId: user.id,
+        entityId: user.id,
+        entityType: "user",
+        metadata: { reasonCode: access.reasonCode },
+      });
+    } catch {
+      // A denied sign-in must not reveal internal audit infrastructure failures.
+    }
     return {
-      message: "This account is deactivated. Contact support if you believe this is a mistake.",
+      message:
+        user.bannedAt || user.deactivatedAt
+          ? "Access to this account is unavailable."
+          : !user.isActive
+            ? "This account is deactivated. Contact support if you believe this is a mistake."
+            : access.publicExplanation ?? "This account is currently restricted.",
       status: "error",
       values,
     };

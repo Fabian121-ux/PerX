@@ -1,7 +1,9 @@
 import { AdminList, AdminSection } from "@/components/admin-section";
 import { getAdminList } from "@/lib/data/admin";
+import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 
 export default async function AdminUsersPage() {
+  await requireCapabilityOrNotFound("users:read");
   const users = await getAdminList("users");
   return (
     <AdminSection description="Review account state, roles, activity, and moderation risk." title="Users">

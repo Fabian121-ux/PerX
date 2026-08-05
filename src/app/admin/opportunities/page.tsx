@@ -1,7 +1,9 @@
 import { AdminList, AdminSection } from "@/components/admin-section";
 import { getAdminList } from "@/lib/data/admin";
+import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 
 export default async function AdminOpportunitiesPage() {
+  await requireCapabilityOrNotFound("opportunity:moderate");
   const opportunities = await getAdminList("opportunities");
   return (
     <AdminSection description="Moderate opportunity status, ownership, publication state, and reports." title="Opportunities">

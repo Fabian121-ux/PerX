@@ -6,6 +6,7 @@ import { getPrisma } from "@/lib/db/prisma";
 import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { requireUser } from "@/lib/auth/session";
+import { assertCanEditProfile } from "@/lib/account/enforcement";
 import { profileSetupSchema } from "@/lib/validation/auth";
 
 function checkboxValue(
@@ -20,6 +21,8 @@ function checkboxValue(
 
 export async function setupProfileAction(formData: FormData) {
   const user = await requireUser();
+  const accountRestriction = await assertCanEditProfile(user.id);
+  if (accountRestriction) redirect(`/app/profile/setup?error=${encodeURIComponent(accountRestriction)}`);
   if (getResolvedDataMode() === "mock") redirect("/app?mock=true");
   if (!hasDatabaseUrl())
     redirect("/app/profile/setup?error=database-not-configured");

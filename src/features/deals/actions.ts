@@ -12,6 +12,8 @@ import {
   type EscrowState,
 } from "@/features/escrow/state-machine";
 import { requireUser } from "@/lib/auth/session";
+import { assertCanCreateDeal } from "@/lib/account/enforcement";
+import { hasCapability } from "@/lib/permissions/capabilities";
 
 const deliverySchema = z.object({
   dealId: z.string().cuid(),
@@ -50,6 +52,11 @@ async function requireDealParticipant(dealId: string, userId: string) {
 
 export async function submitDeliveryAction(formData: FormData) {
   const user = await requireUser();
+  if (!hasCapability(user.roles, "deal:transition:participant")) {
+    redirect("/app?error=forbidden");
+  }
+  const accountRestriction = await assertCanCreateDeal(user.id);
+  if (accountRestriction) redirect(`/app/deals?error=${encodeURIComponent(accountRestriction)}`);
   if (getResolvedDataMode() === "mock") redirect(`/app/deals/${String(formData.get("dealId") ?? "")}?mock=true`);
   if (!hasDatabaseUrl()) redirect("/app?error=database-not-configured");
 
@@ -169,6 +176,11 @@ export async function submitDeliveryAction(formData: FormData) {
 
 export async function approveDeliveryAction(formData: FormData) {
   const user = await requireUser();
+  if (!hasCapability(user.roles, "deal:transition:participant")) {
+    redirect("/app?error=forbidden");
+  }
+  const accountRestriction = await assertCanCreateDeal(user.id);
+  if (accountRestriction) redirect(`/app/deals?error=${encodeURIComponent(accountRestriction)}`);
   if (getResolvedDataMode() === "mock") redirect(`/app/deals/${String(formData.get("dealId") ?? "")}?mock=true`);
   if (!hasDatabaseUrl()) redirect("/app?error=database-not-configured");
 
@@ -411,6 +423,11 @@ export async function approveDeliveryAction(formData: FormData) {
 
 export async function createReviewAction(formData: FormData) {
   const user = await requireUser();
+  if (!hasCapability(user.roles, "review:create:eligible")) {
+    redirect("/app?error=forbidden");
+  }
+  const accountRestriction = await assertCanCreateDeal(user.id);
+  if (accountRestriction) redirect(`/app/deals?error=${encodeURIComponent(accountRestriction)}`);
   if (getResolvedDataMode() === "mock") redirect("/app/reviews?mock=true");
   if (!hasDatabaseUrl()) redirect("/app/reviews?error=database-not-configured");
 

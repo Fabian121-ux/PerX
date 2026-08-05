@@ -382,7 +382,7 @@ describe("Auth Actions", () => {
       });
     });
 
-    it("redirects to account-deactivated if user is not active", async () => {
+  it("redirects to account-deactivated if user is not active", async () => {
       vi.mocked(getPrisma).mockReturnValue({
         user: {
           findUnique: vi
@@ -404,6 +404,36 @@ describe("Auth Actions", () => {
           "This account is deactivated. Contact support if you believe this is a mistake.",
         status: "error",
       });
+  });
+
+    it("denies an active temporary suspension after password verification", async () => {
+      vi.mocked(getPrisma).mockReturnValue({
+        user: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: "user_1",
+            bannedAt: null,
+            connectionRequestsRestrictedUntil: null,
+            deactivatedAt: null,
+            enforcementReasonPublic: "Internal case note must not leak",
+            isActive: true,
+            messagingRestrictedUntil: null,
+            passwordHash: "hashed_validpass",
+            publishingRestrictedUntil: null,
+            suspendedAt: new Date(Date.now() - 60_000),
+            suspendedUntil: new Date(Date.now() + 60_000),
+          }),
+        },
+      } as never);
+
+      const formData = new FormData();
+      formData.set("email", "test@test.com");
+      formData.set("password", "validpass");
+
+      await expect(signInAction(idleState, formData)).resolves.toMatchObject({
+        message: "This account is currently suspended.",
+        status: "error",
+      });
+      expect(session.createSession).not.toHaveBeenCalled();
     });
 
     it("creates session and redirects to /app on success", async () => {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth/session";
+import { assertCanPublish } from "@/lib/account/enforcement";
 import { getPrisma } from "@/lib/db/prisma";
 import {
   deleteListingImage,
@@ -26,6 +27,10 @@ export async function POST(request: Request, context: RouteContext) {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+  const accountRestriction = await assertCanPublish(user.id);
+  if (accountRestriction) {
+    return NextResponse.json({ error: accountRestriction }, { status: 403 });
   }
 
   if (!isListingImageStorageConfigured()) {
@@ -112,6 +117,10 @@ export async function PATCH(request: Request, context: RouteContext) {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+  const accountRestriction = await assertCanPublish(user.id);
+  if (accountRestriction) {
+    return NextResponse.json({ error: accountRestriction }, { status: 403 });
   }
   const { opportunityId } = await context.params;
   const opportunity = await getOwnedOpportunity(opportunityId, user.id);

@@ -335,21 +335,126 @@ export const prismaProvider: PerXDataProvider = {
     getAdminList: async (kind) => {
       switch (kind) {
         case "users":
-          return getPrisma().user.findMany({ orderBy: { createdAt: "desc" }, take: 20 });
+          return getPrisma().user.findMany({
+            orderBy: { createdAt: "desc" },
+            select: {
+              accountClassification: true,
+              createdAt: true,
+              email: true,
+              id: true,
+              isActive: true,
+              name: true,
+              roles: {
+                select: { role: { select: { label: true, name: true } } },
+              },
+              username: true,
+              verificationStatus: true,
+            },
+            take: 20,
+          });
         case "profiles":
-          return getPrisma().profile.findMany({ include: { user: true }, orderBy: { updatedAt: "desc" }, take: 20 });
+          return getPrisma().profile.findMany({
+            orderBy: { updatedAt: "desc" },
+            select: {
+              headline: true,
+              id: true,
+              profileCompleteness: true,
+              trustScore: true,
+              updatedAt: true,
+              user: { select: { id: true, name: true, username: true } },
+            },
+            take: 20,
+          });
         case "opportunities":
-          return getPrisma().opportunity.findMany({ include: { owner: true }, orderBy: { updatedAt: "desc" }, take: 20 });
+          return getPrisma().opportunity.findMany({
+            orderBy: { updatedAt: "desc" },
+            select: {
+              id: true,
+              moderationStatus: true,
+              owner: { select: { id: true, name: true, username: true } },
+              status: true,
+              title: true,
+              type: true,
+              updatedAt: true,
+            },
+            take: 20,
+          });
         case "reports":
-          return getPrisma().opportunityReport.findMany({ include: { opportunity: true, reporter: true }, orderBy: { createdAt: "desc" }, take: 20 });
+          return getPrisma().opportunityReport.findMany({
+            orderBy: { createdAt: "desc" },
+            select: {
+              createdAt: true,
+              id: true,
+              opportunity: { select: { id: true, slug: true, title: true } },
+              reason: true,
+              reporter: { select: { id: true, name: true, username: true } },
+              status: true,
+            },
+            take: 20,
+          });
         case "reviews":
-          return getPrisma().review.findMany({ include: { author: true, subject: true }, orderBy: { createdAt: "desc" }, take: 20 });
+          return getPrisma().review.findMany({
+            orderBy: { createdAt: "desc" },
+            select: {
+              author: { select: { id: true, name: true, username: true } },
+              body: true,
+              createdAt: true,
+              dealId: true,
+              id: true,
+              rating: true,
+              subject: { select: { id: true, name: true, username: true } },
+              title: true,
+              visibility: true,
+            },
+            take: 20,
+          });
         case "disputes":
-          return getPrisma().dispute.findMany({ include: { openedBy: true }, orderBy: { createdAt: "desc" }, take: 20 });
+          return getPrisma().dispute.findMany({
+            orderBy: { createdAt: "desc" },
+            select: {
+              createdAt: true,
+              id: true,
+              openedBy: { select: { id: true, name: true, username: true } },
+              reason: true,
+              resolution: true,
+              status: true,
+              updatedAt: true,
+            },
+            take: 20,
+          });
         case "verification":
-          return getPrisma().verificationRequest.findMany({ include: { profile: { include: { user: true } } }, orderBy: { createdAt: "desc" }, take: 20 });
+          return getPrisma().verificationRequest.findMany({
+            orderBy: { createdAt: "desc" },
+            select: {
+              createdAt: true,
+              id: true,
+              notes: true,
+              profile: {
+                select: {
+                  headline: true,
+                  id: true,
+                  user: { select: { id: true, name: true, username: true } },
+                },
+              },
+              status: true,
+              updatedAt: true,
+            },
+            take: 20,
+          });
         case "audit":
-          return getPrisma().auditLog.findMany({ include: { actor: true }, orderBy: { createdAt: "desc" }, take: 30 });
+          return getPrisma().auditLog.findMany({
+            orderBy: { createdAt: "desc" },
+            select: {
+              action: true,
+              actor: { select: { id: true, name: true, username: true } },
+              createdAt: true,
+              entityId: true,
+              entityType: true,
+              id: true,
+              metadata: true,
+            },
+            take: 30,
+          });
       }
     },
   },

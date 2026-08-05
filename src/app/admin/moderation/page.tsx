@@ -3,8 +3,10 @@ import Link from "next/link";
 import { AdminSection } from "@/components/admin-section";
 import { Card, EmptyState } from "@/components/ui/card";
 import { getPrisma } from "@/lib/db/prisma";
+import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 
 export default async function AdminModerationPage() {
+  await requireCapabilityOrNotFound("admin:moderate");
   const [
     messageCases,
     listingCases,

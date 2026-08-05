@@ -2,6 +2,7 @@
 
 import {
   Fragment,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -161,6 +162,9 @@ export function MessageWorkspace({
   >("connecting");
   const [isPending, startTransition] = useTransition();
   const [isEditPending, startEditTransition] = useTransition();
+  const [openActionMenuMessageId, setOpenActionMenuMessageId] =
+    useState("");
+  const actionMenuRef = useRef<HTMLDivElement>(null);
   const draftStorageKey = `perx:messages:${currentUserId}:drafts`;
   const filterStorageKey = `perx:messages:${currentUserId}:filter`;
   const listScrollStorageKey = `perx:messages:${currentUserId}:list-scroll`;
@@ -233,6 +237,34 @@ export function MessageWorkspace({
     document.documentElement.classList.toggle(className, mobileDetailOpen);
     return () => document.documentElement.classList.remove(className);
   }, [mobileDetailOpen]);
+
+  useEffect(() => {
+    const handleGlobalClick = (event: MouseEvent) => {
+      if (
+        openActionMenuMessageId &&
+        actionMenuRef.current &&
+        !actionMenuRef.current.contains(event.target as Node)
+      ) {
+        setOpenActionMenuMessageId("");
+      }
+    };
+    document.addEventListener("click", handleGlobalClick, true);
+    return () =>
+      document.removeEventListener("click", handleGlobalClick, true);
+  }, [openActionMenuMessageId]);
+
+  const toggleActionMenu = useCallback(
+    (messageId: string) => {
+      setOpenActionMenuMessageId((current) =>
+        current === messageId ? "" : messageId,
+      );
+    },
+    [],
+  );
+
+  const closeActionMenu = useCallback(() => {
+    setOpenActionMenuMessageId("");
+  }, []);
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
@@ -506,6 +538,7 @@ export function MessageWorkspace({
   }, [activeConversation?.id, latestEntryId]);
 
   const openMobileConversation = (conversationId: string) => {
+    setOpenActionMenuMessageId("");
     const mobile =
       typeof window.matchMedia !== "function" ||
       window.matchMedia("(max-width: 1023px)").matches;
@@ -529,6 +562,7 @@ export function MessageWorkspace({
   };
 
   const closeMobileConversation = () => {
+    setOpenActionMenuMessageId("");
     if (inlineDetailHistoryRef.current) {
       inlineDetailHistoryRef.current = false;
       setMobileDetailOpen(false);
@@ -1016,10 +1050,13 @@ export function MessageWorkspace({
                       message={entry.message}
                       onCancelEdit={cancelEditing}
                       onChangeEdit={setEditDraft}
+                      onCloseActionMenu={closeActionMenu}
                       onDelete={() => void deleteMessage(entry.message)}
                       onReply={() => setReplyTarget(entry.message)}
                       onSaveEdit={saveEdit}
                       onStartEdit={startEditing}
+                      onToggleActionMenu={toggleActionMenu}
+                      openActionMenu={openActionMenuMessageId === entry.message.id}
                       refCallback={(node) => {
                         messageRefs.current[entry.message.id] = node;
                       }}
@@ -1158,10 +1195,13 @@ function MessageBubble({
   message,
   onCancelEdit,
   onChangeEdit,
+  onCloseActionMenu,
   onDelete,
   onReply,
   onSaveEdit,
   onStartEdit,
+  onToggleActionMenu,
+  openActionMenu,
   refCallback,
 }: {
   conversationId: string;
@@ -1175,10 +1215,13 @@ function MessageBubble({
   message: WorkspaceMessage;
   onCancelEdit: () => void;
   onChangeEdit: (value: string) => void;
+  onCloseActionMenu: () => void;
   onDelete: () => void;
   onReply: () => void;
   onSaveEdit: (message: WorkspaceMessage) => void;
   onStartEdit: (message: WorkspaceMessage) => void;
+  onToggleActionMenu: (messageId: string) => void;
+  openActionMenu: boolean;
   refCallback: (node: HTMLDivElement | null) => void;
 }) {
   const mine = message.senderId === currentUserId;
@@ -1186,16 +1229,97 @@ function MessageBubble({
   const isLocal = message.id.startsWith("local-");
   const canEdit = mine && !isLocal && !message.deletedAt;
   const editIsComposingRef = useRef(false);
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressStartRef = useRef<{ x: number; y: number } | null>(null);
+  const swipeStartRef = useRef<{ x: number; y: number; time: number } | null>(
+    null,
+  );
+  const [swipeOffset, setSwipeOffset] = useState(0);
+
+  const handleTouchStart = useCallback(
+    (event: React.TouchEvent) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      if (
+        (event.target as HTMLElement).closest(
+          "a, button, [role=button], input, textarea, select, summary",
+        )
+      )
+        return;
+      longPressStartRef.current = { x: touch.clientX, y: touch.clientY };
+      longPressTimerRef.current = window.setTimeout(() => {
+        longPressTimerRef.current = null;
+        onToggleActionMenu(message.id);
+      }, 500);
+      swipeStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        time: Date.now(),
+      };
+    },
+    [message.id, onToggleActionMenu],
+  );
+
+  const handleTouchMove = useCallback(
+    (event: React.TouchEvent) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      if (longPressTimerRef.current && longPressStartRef.current) {
+        const dx = Math.abs(touch.clientX - longPressStartRef.current.x);
+        const dy = Math.abs(touch.clientY - longPressStartRef.current.y);
+        if (dx > 10 || dy > 10) {
+          window.clearTimeout(longPressTimerRef.current);
+          longPressTimerRef.current = null;
+        }
+      }
+      if (swipeStartRef.current && !mine) {
+        const dx = touch.clientX - swipeStartRef.current.x;
+        const dy = Math.abs(touch.clientY - swipeStartRef.current.y);
+        if (dx > 10 && dx > dy * 1.5) {
+          setSwipeOffset(Math.min(dx, 100));
+        }
+      }
+    },
+    [mine],
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    longPressStartRef.current = null;
+    if (swipeOffset >= 70 && !mine) {
+      onReply();
+    }
+    setSwipeOffset(0);
+    swipeStartRef.current = null;
+  }, [swipeOffset, mine, onReply]);
+
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent) => {
+      if (openActionMenu) return;
+      event.preventDefault();
+      onToggleActionMenu(message.id);
+    },
+    [message.id, onToggleActionMenu, openActionMenu],
+  );
 
   return (
     <div
       aria-current={highlighted ? "true" : undefined}
       className={`flex scroll-mt-24 ${mine ? "justify-end" : "justify-start"}`}
       data-message-id={message.id}
+      onContextMenu={handleContextMenu}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
+      onTouchStart={handleTouchStart}
       ref={refCallback}
     >
       <div
         className={`group max-w-[min(82%,42rem)] overflow-visible rounded-3xl px-4 py-3 shadow-sm transition ${
+          swipeOffset > 0 ? "relative" : ""
+        } ${
           mine
             ? "rounded-br-md bg-[linear-gradient(135deg,var(--px-primary),var(--px-secondary))] text-white"
             : "rounded-bl-md bg-[color:var(--px-surface)] text-[color:var(--px-text)] ring-1 ring-[color:var(--px-border)]"
@@ -1208,15 +1332,64 @@ function MessageBubble({
             {message.senderName}
           </p>
           {!message.deletedAt ? (
-            <MessageActionMenu
-              canEdit={canEdit}
-              conversationId={conversationId}
-              mine={mine}
-              message={message}
-              onDelete={onDelete}
-              onReply={onReply}
-              onStartEdit={() => onStartEdit(message)}
-            />
+            <div className="relative flex items-center gap-1">
+              <div
+                className={`hidden items-center gap-0.5 rounded-xl bg-[color:var(--px-surface-soft)] p-0.5 opacity-0 transition group-hover:opacity-100 sm:flex ${
+                  mine ? "order-first" : "order-last"
+                }`}
+              >
+                <button
+                  aria-label="Reply"
+                  className="grid h-8 w-8 place-items-center rounded-lg text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-hover)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  type="button"
+                  onClick={onReply}
+                >
+                  <Reply aria-hidden size={14} />
+                </button>
+                <button
+                  aria-label="Copy"
+                  className="grid h-8 w-8 place-items-center rounded-lg text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-hover)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  type="button"
+                  onClick={() =>
+                    void navigator.clipboard?.writeText(message.body)
+                  }
+                >
+                  <Copy aria-hidden size={14} />
+                </button>
+                {canEdit ? (
+                  <button
+                    aria-label="Edit"
+                    className="grid h-8 w-8 place-items-center rounded-lg text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-hover)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    type="button"
+                    onClick={() => onStartEdit(message)}
+                  >
+                    <Pencil aria-hidden size={14} />
+                  </button>
+                ) : null}
+                {canEdit ? (
+                  <button
+                    aria-label="Remove message"
+                    className="grid h-8 w-8 place-items-center rounded-lg text-[color:var(--px-error)] hover:bg-red-50 dark:hover:bg-red-950/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    type="button"
+                    onClick={onDelete}
+                  >
+                    <Trash2 aria-hidden size={14} />
+                  </button>
+                ) : null}
+              </div>
+              <MessageActionMenu
+                canEdit={canEdit}
+                conversationId={conversationId}
+                isOpen={openActionMenu}
+                message={message}
+                mine={mine}
+                onClose={onCloseActionMenu}
+                onDelete={onDelete}
+                onReply={onReply}
+                onStartEdit={() => onStartEdit(message)}
+                onToggle={() => onToggleActionMenu(message.id)}
+              />
+            </div>
           ) : null}
         </div>
 
@@ -1535,84 +1708,135 @@ function DateSeparator({ value }: { value: string }) {
 function MessageActionMenu({
   canEdit,
   conversationId,
+  isOpen,
   message,
   mine,
+  onClose,
   onDelete,
   onReply,
   onStartEdit,
+  onToggle,
 }: {
   canEdit: boolean;
   conversationId: string;
+  isOpen: boolean;
   message: WorkspaceMessage;
   mine: boolean;
+  onClose: () => void;
   onDelete: () => void;
   onReply: () => void;
   onStartEdit: () => void;
+  onToggle: () => void;
 }) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  const action = (fn: () => void) => {
+    onClose();
+    fn();
+  };
+
+  const reportHref = `/app/reports/new?targetType=MESSAGE&targetId=${encodeURIComponent(message.id)}&conversationId=${encodeURIComponent(conversationId)}&messageId=${encodeURIComponent(message.id)}`;
+
   return (
-    <details className="relative">
-      <summary
+    <div className="relative inline-flex">
+      <button
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
         aria-label="Message actions"
-        className={`grid h-7 w-7 list-none place-items-center rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 ${
+        className={`grid h-7 w-7 shrink-0 list-none place-items-center rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 ${
           mine
             ? "text-blue-100 hover:bg-white/10 focus-visible:ring-white"
             : "text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)] focus-visible:ring-[color:var(--px-focus)]"
         }`}
+        onClick={onToggle}
+        ref={triggerRef}
+        type="button"
       >
         <MoreVertical aria-hidden size={15} />
-      </summary>
-      <div className="absolute right-0 z-30 mt-1 grid min-w-36 gap-1 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-1 text-[color:var(--px-text)] shadow-lg">
-        <button
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
-          onClick={onReply}
-          type="button"
+      </button>
+      {isOpen ? (
+        <div
+          className="absolute right-0 z-30 mt-1 grid min-w-36 gap-1 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-1 text-[color:var(--px-text)] shadow-lg"
+          ref={menuRef}
+          role="menu"
         >
-          <Reply aria-hidden size={14} />
-          Reply
-        </button>
-        {canEdit ? (
           <button
             className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
-            onClick={onStartEdit}
+            onClick={() => {
+              action(onReply);
+            }}
+            role="menuitem"
             type="button"
           >
-            <Pencil aria-hidden size={14} />
-            Edit
+            <Reply aria-hidden size={14} />
+            Reply
           </button>
-        ) : null}
-        {canEdit ? (
           <button
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-[color:var(--px-error)] hover:bg-red-50 dark:hover:bg-red-950/30"
-            onClick={onDelete}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
+            onClick={() => {
+              action(() => {
+                void navigator.clipboard?.writeText(message.body);
+              });
+            }}
+            role="menuitem"
             type="button"
           >
-            <Trash2 aria-hidden size={14} />
-            Remove message
+            <Copy aria-hidden size={14} />
+            Copy
           </button>
-        ) : null}
-        <button
-          className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
-          onClick={() => void navigator.clipboard?.writeText(message.body)}
-          type="button"
-        >
-          <Copy aria-hidden size={14} />
-          Copy
-        </button>
-        {!message.id.startsWith("local-") ? (
-          <Link
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
-            href={`/app/reports/new?targetType=MESSAGE&targetId=${encodeURIComponent(
-              message.id,
-            )}&conversationId=${encodeURIComponent(
-              conversationId,
-            )}&messageId=${encodeURIComponent(message.id)}`}
-          >
-            <Flag aria-hidden size={14} />
-            Report
-          </Link>
-        ) : null}
-      </div>
-    </details>
+          {canEdit ? (
+            <button
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
+              onClick={() => {
+                action(onStartEdit);
+              }}
+              role="menuitem"
+              type="button"
+            >
+              <Pencil aria-hidden size={14} />
+              Edit
+            </button>
+          ) : null}
+          {canEdit ? (
+            <button
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-[color:var(--px-error)] hover:bg-red-50 dark:hover:bg-red-950/30"
+              onClick={() => {
+                action(onDelete);
+              }}
+              role="menuitem"
+              type="button"
+            >
+              <Trash2 aria-hidden size={14} />
+              Remove message
+            </button>
+          ) : null}
+          {!message.id.startsWith("local-") ? (
+            <Link
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
+              href={reportHref}
+              onClick={onClose}
+              role="menuitem"
+            >
+              <Flag aria-hidden size={14} />
+              Report
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

@@ -6,6 +6,10 @@ import { redirect } from "next/navigation";
 
 import { getPrisma } from "@/lib/db/prisma";
 import { requireUser } from "@/lib/auth/session";
+import {
+  assertAccountAccess,
+  assertCanMessage,
+} from "@/lib/account/enforcement";
 import { assertCanRequestConnection } from "@/lib/account/enforcement";
 import { writeAuditLog } from "@/lib/logging/audit";
 import {
@@ -659,6 +663,8 @@ export async function disconnectAction(connectionId: string) {
 
 export async function blockUserAction(targetUserId: string) {
   const user = await requireUser();
+  const accountRestriction = await assertAccountAccess(user.id, "block");
+  if (accountRestriction) throw new Error(accountRestriction);
   if (user.id === targetUserId) throw new Error("Cannot block yourself");
 
   await getPrisma().$transaction(async (tx) => {
@@ -738,6 +744,8 @@ export async function unblockUserAction(targetUserId: string) {
 
 export async function startConversationAction(targetUserId: string) {
   const user = await requireUser();
+  const accountRestriction = await assertCanMessage(user.id);
+  if (accountRestriction) throw new Error(accountRestriction);
 
   if (user.id === targetUserId) {
     throw new Error("Cannot message yourself");

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth/session";
+import { assertCanEditProfile } from "@/lib/account/enforcement";
 import { getPrisma } from "@/lib/db/prisma";
 import {
   deleteProfileImage,
@@ -15,6 +16,10 @@ export async function POST(request: Request) {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+  const accountRestriction = await assertCanEditProfile(user.id);
+  if (accountRestriction) {
+    return NextResponse.json({ error: accountRestriction }, { status: 403 });
   }
 
   if (!isProfileImageStorageConfigured()) {
@@ -95,6 +100,10 @@ export async function DELETE() {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  }
+  const accountRestriction = await assertCanEditProfile(user.id);
+  if (accountRestriction) {
+    return NextResponse.json({ error: accountRestriction }, { status: 403 });
   }
 
   const previous = await getPrisma().user.findUnique({

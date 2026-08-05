@@ -120,7 +120,20 @@ export const mockProvider: PerXDataProvider = {
     },
     getAdminList: async (kind) => {
       switch (kind) {
-        case "users": return [previewUser];
+        case "users":
+          return [
+            {
+              accountClassification: "PUBLIC_BETA_USER",
+              createdAt: null,
+              email: previewUser.email,
+              id: previewUser.id,
+              isActive: true,
+              name: previewUser.name,
+              roles: previewUser.roles.map((name) => ({ role: { label: name, name } })),
+              username: previewUser.username,
+              verificationStatus: "VERIFIED",
+            },
+          ];
         case "profiles": return demoProfiles;
         case "opportunities": return opportunitiesStore;
         case "reports": return [];

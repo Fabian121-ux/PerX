@@ -5,6 +5,10 @@ import { notFound, redirect } from "next/navigation";
 
 import type { RoleName } from "@/lib/permissions/capabilities";
 import { hasCapability, type Capability } from "@/lib/permissions/capabilities";
+import {
+  evaluateAccountAccess,
+  getAccountAccessPolicy,
+} from "@/lib/account/enforcement";
 import { getPrisma } from "@/lib/db/prisma";
 import { getServerEnv, hasDatabaseUrl } from "@/lib/env";
 
@@ -47,6 +51,10 @@ function hashToken(token: string) {
 
 function sessionCookieName() {
   return getServerEnv().SESSION_COOKIE_NAME;
+}
+
+function secureSessionCookie() {
+  return process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
 }
 
 type SessionCookie = {
@@ -93,11 +101,15 @@ export async function setSessionCookie(sessionCookie: SessionCookie) {
     maxAge: sessionCookie.maxAge,
     path: "/",
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: secureSessionCookie(),
   });
 }
 
 export async function createSession(userId: string) {
+  const access = await getAccountAccessPolicy(userId);
+  if (!access?.canAuthenticate) {
+    throw new Error(access?.publicExplanation ?? "Account access is unavailable.");
+  }
   const sessionCookie = await createSessionRecord(userId);
   await setSessionCookie(sessionCookie);
 }
@@ -115,7 +127,7 @@ export async function destroySession() {
     maxAge: 0,
     path: "/",
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: secureSessionCookie(),
   });
 }
 
@@ -133,16 +145,21 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       id: true,
       user: {
         select: {
-          accountClassification: true,
-          createdAt: true,
-          email: true,
+           accountClassification: true,
+           bannedAt: true,
+           createdAt: true,
+           connectionRequestsRestrictedUntil: true,
+           deactivatedAt: true,
+           email: true,
           emailVerifiedAt: true,
           id: true,
           imageUrl: true,
-          isActive: true,
+           isActive: true,
+           enforcementReasonPublic: true,
+           messagingRestrictedUntil: true,
           name: true,
           onboardingDismissedAt: true,
-          profile: {
+           profile: {
             select: {
               biography: true,
               averageRating: true,
@@ -157,7 +174,10 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
               trustScore: true,
             },
           },
-          roles: { include: { role: true } },
+           roles: { include: { role: true } },
+           publishingRestrictedUntil: true,
+           suspendedAt: true,
+           suspendedUntil: true,
           username: true,
           verificationStatus: true,
         },
@@ -170,6 +190,27 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       // Clear invalid session from DB
       await getPrisma().session.delete({ where: { id: session.id } });
     }
+    return null;
+  }
+
+  const access = evaluateAccountAccess(
+    {
+      bannedAt: session.user.bannedAt,
+      connectionRequestsRestrictedUntil:
+        session.user.connectionRequestsRestrictedUntil,
+      deactivatedAt: session.user.deactivatedAt,
+      enforcementReasonPublic: session.user.enforcementReasonPublic,
+      isActive: session.user.isActive,
+      messagingRestrictedUntil: session.user.messagingRestrictedUntil,
+      publishingRestrictedUntil: session.user.publishingRestrictedUntil,
+      suspendedAt: session.user.suspendedAt,
+      suspendedUntil: session.user.suspendedUntil,
+      verificationStatus: session.user.verificationStatus,
+    },
+    new Date(),
+  );
+  if (!access.canAccessApplication) {
+    await getPrisma().session.delete({ where: { id: session.id } }).catch(() => {});
     return null;
   }
 
@@ -203,9 +244,53 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   };
 }
 
+export async function validateCurrentSessionAccess() {
+  if (!hasDatabaseUrl()) return false;
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get(sessionCookieName())?.value;
+  if (!token) return false;
+
+  const session = await getPrisma().session.findUnique({
+    where: { tokenHash: hashToken(token) },
+    select: {
+      expiresAt: true,
+      id: true,
+      user: {
+        select: {
+          bannedAt: true,
+          connectionRequestsRestrictedUntil: true,
+          deactivatedAt: true,
+          enforcementReasonPublic: true,
+          isActive: true,
+          messagingRestrictedUntil: true,
+          publishingRestrictedUntil: true,
+          suspendedAt: true,
+          suspendedUntil: true,
+          verificationStatus: true,
+        },
+      },
+    },
+  });
+
+  if (!session || session.expiresAt <= new Date()) {
+    if (session) await getPrisma().session.delete({ where: { id: session.id } }).catch(() => {});
+    return false;
+  }
+
+  const access = evaluateAccountAccess(session.user);
+  if (!access.canAccessApplication) {
+    await getPrisma().session.delete({ where: { id: session.id } }).catch(() => {});
+    return false;
+  }
+
+  return true;
+}
+
 export async function touchCurrentSession() {
   if (!hasDatabaseUrl()) return false;
 
+  if (!(await validateCurrentSessionAccess())) return false;
   const cookieStore = await cookies();
   const token = cookieStore.get(sessionCookieName())?.value;
   if (!token) return false;
@@ -215,7 +300,6 @@ export async function touchCurrentSession() {
     where: {
       expiresAt: { gt: new Date() },
       tokenHash: hashToken(token),
-      user: { isActive: true },
     },
   });
 

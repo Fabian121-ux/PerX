@@ -563,4 +563,19 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
       });
     }
   });
+
+  it("returns minimized administrator user rows without authentication secrets", async () => {
+    if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
+
+    const rows = await prismaProvider.admin.getAdminList("users");
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(row).not.toHaveProperty("passwordHash");
+      expect(row).not.toHaveProperty("imageStorageKey");
+      expect(row).not.toHaveProperty("sessions");
+      expect(row).toHaveProperty("id");
+      expect(row).toHaveProperty("isActive");
+      expect(row).toHaveProperty("roles");
+    }
+  });
 });

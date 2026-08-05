@@ -1,8 +1,12 @@
 import { AdminSection } from "@/components/admin-section";
 import { Card } from "@/components/ui/card";
+import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 import { getSignupConfig } from "@/lib/env";
 
-export default function AdminSettingsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AdminSettingsPage() {
+  await requireCapabilityOrNotFound("settings:manage");
   const signup = getSignupConfig();
 
   return (

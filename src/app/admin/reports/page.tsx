@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, EmptyState } from "@/components/ui/card";
 import { AdminSection } from "@/components/admin-section";
 import { ButtonLink } from "@/components/ui/button";
+import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 import { createModerationCaseForReportAction } from "@/features/admin/actions";
 import {
   formatAdminValue,
@@ -11,6 +12,7 @@ import {
 } from "@/lib/admin/moderation-records";
 
 export default async function AdminReportsPage() {
+  await requireCapabilityOrNotFound("reports:review");
   const [reports, blockRows] = await Promise.all([
     getAdminReportsOverview(),
     getRecentBlockRows(),

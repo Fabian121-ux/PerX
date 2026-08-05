@@ -11,10 +11,19 @@ export const dynamic = "force-dynamic";
 export default async function AdminRealEstatePage() {
   await requireCapabilityOrNotFound("opportunity:moderate");
   const listings = await getPrisma().opportunity.findMany({
-    include: {
+    select: {
       _count: { select: { reports: true } },
-      images: { orderBy: [{ isCover: "desc" }, { createdAt: "asc" }] },
+      authorityDeclaration: true,
+      id: true,
+      images: {
+        orderBy: [{ isCover: "desc" }, { createdAt: "asc" }],
+        select: { createdAt: true, isCover: true, url: true },
+      },
+      moderationStatus: true,
       owner: { select: { id: true, name: true, username: true } },
+      propertyVerificationState: true,
+      status: true,
+      title: true,
     },
     orderBy: [{ updatedAt: "desc" }],
     take: 50,

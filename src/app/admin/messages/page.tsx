@@ -1,6 +1,7 @@
 import { AdminSection } from "@/components/admin-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 import { Card, EmptyState } from "@/components/ui/card";
 import {
   applyEnforcementAction,
@@ -17,6 +18,7 @@ import {
 } from "@/lib/admin/moderation-records";
 
 export default async function AdminMessagesPage() {
+  await requireCapabilityOrNotFound("messages:moderate");
   const cases = await getAdminMessageCases();
 
   type ScopedMessageContext = Awaited<

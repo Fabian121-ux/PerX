@@ -1,7 +1,9 @@
 import { AdminList, AdminSection } from "@/components/admin-section";
 import { getAdminList } from "@/lib/data/admin";
+import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 
 export default async function AdminProfilesPage() {
+  await requireCapabilityOrNotFound("users:read");
   const profiles = await getAdminList("profiles");
   return (
     <AdminSection description="Inspect profile completeness, verification status, and trust presentation." title="Profiles">

@@ -1,12 +1,19 @@
 import { AdminSection } from "@/components/admin-section";
 import { Card, EmptyState } from "@/components/ui/card";
 import { getPrisma } from "@/lib/db/prisma";
+import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 
 export default async function AdminSupportPage() {
+  await requireCapabilityOrNotFound("support:manage");
   const tickets = await getPrisma().supportTicket.findMany({
-    include: {
+    select: {
       _count: { select: { messages: true } },
       author: { select: { name: true, username: true } },
+      category: true,
+      id: true,
+      status: true,
+      subject: true,
+      updatedAt: true,
     },
     orderBy: { updatedAt: "desc" },
     take: 50,

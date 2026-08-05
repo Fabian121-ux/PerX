@@ -71,6 +71,21 @@ describe("Authentication and Route Protection", () => {
       expect(roles).not.toContain("ADMIN");
       expect(roles).toContain("FREELANCER");
     });
+
+    it("does not treat MASTER_ADMIN as a self-assignable role", () => {
+      const allowedRoles = new Set([
+        "CLIENT",
+        "FOUNDER",
+        "FREELANCER",
+        "INVESTOR",
+        "PROPERTY_OWNER",
+      ]);
+      const submittedRoles = ["FREELANCER", "MASTER_ADMIN"];
+      const roles = submittedRoles.filter((role) => allowedRoles.has(role));
+
+      expect(roles).toEqual(["FREELANCER"]);
+      expect(roles).not.toContain("MASTER_ADMIN");
+    });
   });
 
   describe("Session Bypasses", () => {

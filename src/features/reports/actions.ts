@@ -10,6 +10,7 @@ import type {
   UserReportTargetType,
 } from "@/generated/prisma/enums";
 import { requireUser } from "@/lib/auth/session";
+import { assertAccountAccess } from "@/lib/account/enforcement";
 import { getPrisma } from "@/lib/db/prisma";
 import { reportReasonValues } from "@/lib/options";
 import { writeAuditLog } from "@/lib/logging/audit";
@@ -43,6 +44,8 @@ type ReportContext = {
 
 export async function submitUserReportAction(formData: FormData) {
   const user = await requireUser();
+  const accountRestriction = await assertAccountAccess(user.id, "report");
+  if (accountRestriction) redirect(`/app/reports/new?error=${encodeURIComponent(accountRestriction)}`);
   const parsed = reportSchema.safeParse({
     blockAfterReport: formData.get("blockAfterReport") === "on",
     category: formData.get("category"),

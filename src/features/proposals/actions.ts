@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireUser } from "@/lib/auth/session";
+import { assertCanCreateDeal } from "@/lib/account/enforcement";
 import { getPrisma } from "@/lib/db/prisma";
 import { getResolvedDataMode, hasDatabaseUrl } from "@/lib/env";
 import { parseMoneyToMinor } from "@/lib/money";
@@ -856,6 +857,8 @@ export async function rejectProposalAction(formData: FormData) {
 export async function acceptProposalAction(formData: FormData) {
   const user = await requireUser();
   requireProposalDecisionCapability(user.roles);
+  const accountRestriction = await assertCanCreateDeal(user.id);
+  if (accountRestriction) throw new Error(accountRestriction);
   if (getResolvedDataMode() === "mock") redirect("/app/deals/mock-deal-1?mock=true");
   if (!hasDatabaseUrl()) redirect("/app/proposals/received?error=database-not-configured");
 

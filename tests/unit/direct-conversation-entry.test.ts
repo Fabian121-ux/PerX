@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  assertCanMessage: vi.fn(),
   assertCanRequestConnection: vi.fn(),
   redirect: vi.fn(),
   revalidatePath: vi.fn(),
@@ -26,6 +27,7 @@ const prisma = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/account/enforcement", () => ({
+  assertCanMessage: mocks.assertCanMessage,
   assertCanRequestConnection: mocks.assertCanRequestConnection,
 }));
 vi.mock("@/lib/auth/session", () => ({
@@ -57,6 +59,7 @@ function eligibleAccount(id: string, allowMessagesFromConnections = true) {
 describe("direct conversation entry", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.assertCanMessage.mockResolvedValue(null);
     mocks.requireUser.mockResolvedValue({ id: "user-b", name: "Current User" });
     mocks.writeAuditLog.mockResolvedValue(undefined);
     tx.$executeRawUnsafe.mockResolvedValue(undefined);

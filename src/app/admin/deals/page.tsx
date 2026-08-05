@@ -2,15 +2,25 @@ import { AdminSection } from "@/components/admin-section";
 import { Card, EmptyState } from "@/components/ui/card";
 import { formatMoney } from "@/lib/money";
 import { getPrisma } from "@/lib/db/prisma";
+import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 
 export default async function AdminDealsPage() {
+  await requireCapabilityOrNotFound("deals:review");
   const deals = await getPrisma().deal.findMany({
-    include: {
+    select: {
+      currency: true,
+      id: true,
       participants: {
-        include: { user: { select: { name: true, username: true } } },
+        select: {
+          role: true,
+          user: { select: { name: true, username: true } },
+        },
         take: 6,
       },
-      proposal: { include: { opportunity: { select: { title: true } } } },
+      proposal: { select: { opportunity: { select: { title: true } } } },
+      status: true,
+      updatedAt: true,
+      valueMinor: true,
     },
     orderBy: { updatedAt: "desc" },
     take: 50,

@@ -1,4 +1,7 @@
-import { getCurrentUser } from "@/lib/auth/session";
+import {
+  getCurrentUser,
+  validateCurrentSessionAccess,
+} from "@/lib/auth/session";
 import { getMessageSnapshot } from "@/lib/messages/snapshot";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +38,9 @@ export async function GET(request: Request) {
       let closed = false;
       let interval: ReturnType<typeof setInterval> | null = null;
       let keepAlive: ReturnType<typeof setInterval> | null = null;
+      let lastAccessValidationAt = Date.now();
+      let accessValid = true;
+      let snapshotInFlight = false;
 
       const enqueue = (chunk: string) => {
         if (closed) return;
@@ -57,7 +63,18 @@ export async function GET(request: Request) {
       };
 
       const sendSnapshot = async () => {
+        if (closed || snapshotInFlight) return;
+        snapshotInFlight = true;
         try {
+          if (Date.now() - lastAccessValidationAt >= keepAliveIntervalMs) {
+            lastAccessValidationAt = Date.now();
+            accessValid = await validateCurrentSessionAccess();
+          }
+          if (!accessValid) {
+            enqueue("event: unavailable\ndata: {}\n\n");
+            close();
+            return;
+          }
           const snapshot = await getMessageSnapshot({
             conversationId,
             userId: user.id,
@@ -97,6 +114,8 @@ export async function GET(request: Request) {
               message: "Message updates are reconnecting.",
             })}\n\n`,
           );
+        } finally {
+          snapshotInFlight = false;
         }
       };
 

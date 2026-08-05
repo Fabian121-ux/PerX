@@ -20,6 +20,14 @@ async function ensureRole(role: RoleName) {
   });
 }
 
+const selfAssignableRoles = new Set<RoleName>([
+  "CLIENT",
+  "FOUNDER",
+  "FREELANCER",
+  "INVESTOR",
+  "PROPERTY_OWNER",
+]);
+
 export async function updateRolesAction(formData: FormData) {
   const user = await requireUser();
   if (getResolvedDataMode() === "mock") redirect("/app?mock=true");
@@ -28,7 +36,10 @@ export async function updateRolesAction(formData: FormData) {
   const roles = formData
     .getAll("roles")
     .map((role) => normalizeRole(role))
-    .filter((role): role is RoleName => Boolean(role) && role !== "ADMIN");
+    .filter(
+      (role): role is RoleName =>
+        role !== null && selfAssignableRoles.has(role),
+    );
   if (roles.length === 0) redirect("/app/roles?error=choose-role");
 
   try {
