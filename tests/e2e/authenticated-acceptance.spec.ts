@@ -297,8 +297,11 @@ describeOrSkip(
     test("mobile active chat is immersive and app navigation preserves state", async ({
       browser,
     }) => {
+      const mobileWidth = Number(process.env.PERX_MESSAGES_TEST_WIDTH ?? 320);
+      const mobileHeight =
+        mobileWidth === 430 ? 932 : mobileWidth === 375 ? 812 : 568;
       const page = await browser.newPage({
-        viewport: { width: 320, height: 568 },
+        viewport: { width: mobileWidth, height: mobileHeight },
       });
       const pageErrors: string[] = [];
       page.on("pageerror", (error) => pageErrors.push(error.message));
@@ -329,6 +332,7 @@ describeOrSkip(
         .getByText("Bob Test", { exact: true })
         .first()
         .locator("xpath=ancestor::button[1]");
+      const historyBeforeOpen = await page.evaluate(() => window.history.length);
       await conversationButton.click();
 
       const workspace = page.getByLabel("Message workspace");
@@ -341,6 +345,9 @@ describeOrSkip(
       await expect(
         page.getByRole("button", { name: "Back to conversations" }),
       ).toBeVisible();
+      expect(await page.evaluate(() => window.history.length)).toBe(
+        historyBeforeOpen + 1,
+      );
       await expect(page.locator(".message-conversation-header")).toBeFocused();
 
       for (const control of [
@@ -357,8 +364,8 @@ describeOrSkip(
       const workspaceBox = await workspace.boundingBox();
       expect(workspaceBox).not.toBeNull();
       expect(Math.abs(workspaceBox!.y)).toBeLessThanOrEqual(1);
-      expect(workspaceBox!.height).toBeGreaterThanOrEqual(567);
-      expect(workspaceBox!.height).toBeLessThanOrEqual(569);
+      expect(workspaceBox!.height).toBeGreaterThanOrEqual(mobileHeight - 1);
+      expect(workspaceBox!.height).toBeLessThanOrEqual(mobileHeight + 1);
 
       const composer = page.locator("#message-draft");
       const history = page.getByLabel("Message history");
@@ -370,6 +377,9 @@ describeOrSkip(
         return element.scrollTop;
       });
       await composer.fill("Draft remains while app navigation is open");
+      const historyBeforeOverlay = await page.evaluate(
+        () => window.history.length,
+      );
       await page.getByRole("button", { name: "Show app navigation" }).click();
 
       const appNavigation = page.getByRole("dialog", {
@@ -385,6 +395,9 @@ describeOrSkip(
       await expect(appNavigation).not.toContainText("Hello from Alice!");
       await expect(composer).toHaveValue(
         "Draft remains while app navigation is open",
+      );
+      expect(await page.evaluate(() => window.history.length)).toBe(
+        historyBeforeOverlay,
       );
 
       await appNavigation
@@ -414,7 +427,9 @@ describeOrSkip(
         .getByRole("form", { name: "Message composer" })
         .boundingBox();
       expect(composerBox).not.toBeNull();
-      expect(composerBox!.y + composerBox!.height).toBeLessThanOrEqual(568);
+      expect(composerBox!.y + composerBox!.height).toBeLessThanOrEqual(
+        mobileHeight,
+      );
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= window.innerWidth + 1,

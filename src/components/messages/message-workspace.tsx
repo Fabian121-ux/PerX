@@ -4,6 +4,7 @@ import {
   Fragment,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -175,9 +176,19 @@ export function MessageWorkspace({
   const conversationHeaderRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const inlineDetailHistoryRef = useRef(false);
+  const activeIdRef = useRef(activeId);
+  const mobileDetailOpenRef = useRef(mobileDetailOpen);
+  const syncedConversationsRef = useRef(syncedConversations);
+  const previousHistoryConversationRef = useRef<string | undefined>(undefined);
   const isComposingRef = useRef(false);
   const listRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useLayoutEffect(() => {
+    activeIdRef.current = activeId;
+    mobileDetailOpenRef.current = mobileDetailOpen;
+    syncedConversationsRef.current = syncedConversations;
+  }, [activeId, mobileDetailOpen, syncedConversations]);
 
   useEffect(() => {
     const node = listRef.current;
@@ -273,7 +284,7 @@ export function MessageWorkspace({
       } | null)?.perxMessagesConversationId;
       if (
         typeof conversationId === "string" &&
-        syncedConversations.some(
+        syncedConversationsRef.current.some(
           (conversation) => conversation.id === conversationId,
         )
       ) {
@@ -286,16 +297,18 @@ export function MessageWorkspace({
         window.requestAnimationFrame(() => conversationHeaderRef.current?.focus());
         return;
       }
-      if (!inlineDetailHistoryRef.current && !mobileDetailOpen) return;
+      if (!inlineDetailHistoryRef.current && !mobileDetailOpenRef.current) {
+        return;
+      }
       inlineDetailHistoryRef.current = false;
       setMobileDetailOpen(false);
       window.requestAnimationFrame(() => {
-        conversationButtonRefs.current[activeId]?.focus();
+        conversationButtonRefs.current[activeIdRef.current]?.focus();
       });
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [activeId, mobileDetailOpen, syncedConversations]);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -489,9 +502,17 @@ export function MessageWorkspace({
 
   useEffect(() => {
     if (highlightedMessageId) return;
-    historyRef.current?.scrollTo({
+    const node = historyRef.current;
+    if (!node) return;
+    const conversationChanged =
+      previousHistoryConversationRef.current !== activeConversation?.id;
+    previousHistoryConversationRef.current = activeConversation?.id;
+    const distanceFromBottom =
+      node.scrollHeight - node.scrollTop - node.clientHeight;
+    if (!conversationChanged && distanceFromBottom > 32) return;
+    node.scrollTo({
       behavior: "smooth",
-      top: historyRef.current.scrollHeight,
+      top: node.scrollHeight,
     });
   }, [activeConversation?.id, highlightedMessageId, timeline.length]);
 
