@@ -93,9 +93,11 @@ export async function GET(request: Request) {
               conversation.unreadCount,
               conversation.messages.map((message) => [
                 message.id,
+                message.deletedAt,
                 message.editedAt,
                 message.readByOtherParticipants,
                 message.replyTo?.id ?? null,
+                message.replyTo?.deletedAt ?? null,
               ]),
             ]),
           );

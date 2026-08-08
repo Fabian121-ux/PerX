@@ -6,6 +6,7 @@ const prismaMocks = vi.hoisted(() => ({
   conversationFindUnique: vi.fn(),
   messageFindFirst: vi.fn(),
   messageFindMany: vi.fn(),
+  moderationMessageScopeFindFirst: vi.fn(),
   opportunityFindMany: vi.fn(),
   opportunityReportFindMany: vi.fn(),
   userFindMany: vi.fn(),
@@ -19,6 +20,9 @@ vi.mock("@/lib/db/prisma", () => ({
     message: {
       findFirst: prismaMocks.messageFindFirst,
       findMany: prismaMocks.messageFindMany,
+    },
+    moderationMessageScope: {
+      findFirst: prismaMocks.moderationMessageScopeFindFirst,
     },
     moderationCase: { findMany: prismaMocks.caseFindMany },
     opportunity: { findMany: prismaMocks.opportunityFindMany },
@@ -39,6 +43,10 @@ describe("admin moderation records", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prismaMocks.userFindMany.mockResolvedValue([]);
+    prismaMocks.moderationMessageScopeFindFirst.mockResolvedValue({
+      id: "scope-authorized",
+      reason: "A sufficiently clear reason",
+    });
   });
 
   it("renders report and block metadata when related users or targets are unavailable", async () => {
@@ -150,11 +158,60 @@ describe("admin moderation records", () => {
     expect(cases[0].messageScopes[0].id).toBe("scope-valid");
   });
 
+  it("keeps admin case listing metadata-only without eager message evidence", async () => {
+    prismaMocks.caseFindMany.mockResolvedValue([
+      {
+        category: "HARASSMENT",
+        conversationId: "conversation-1",
+        createdAt: new Date(),
+        id: "case-1",
+        linkedReportId: null,
+        messageId: "message-1",
+        messageScopes: [],
+        priority: "NORMAL",
+        reportedUserId: null,
+        reporterId: null,
+        source: "MESSAGE_REPORT",
+        status: "NEW",
+        summary: "Summary",
+        targetId: "message-1",
+        targetType: "MESSAGE",
+        title: "Message report",
+      },
+    ]);
+
+    const cases = await getAdminMessageCases();
+
+    expect(cases).toHaveLength(1);
+    expect(prismaMocks.conversationFindUnique).not.toHaveBeenCalled();
+    expect(prismaMocks.messageFindFirst).not.toHaveBeenCalled();
+    expect(prismaMocks.messageFindMany).not.toHaveBeenCalled();
+  });
+
   it("does not query private evidence for an unknown stored scope", async () => {
     const result = await getScopedMessageContext({
+      caseId: "case-1",
       conversationId: "conversation-1",
       messageId: "message-1",
       scope: "all-messages",
+    });
+
+    expect(result).toEqual({ kind: "hidden", messages: [] });
+    expect(prismaMocks.conversationFindUnique).not.toHaveBeenCalled();
+    expect(prismaMocks.messageFindFirst).not.toHaveBeenCalled();
+  });
+
+  it("does not query private evidence when the stored reason is insufficient", async () => {
+    prismaMocks.moderationMessageScopeFindFirst.mockResolvedValue({
+      id: "scope-short-reason",
+      reason: "too short",
+    });
+
+    const result = await getScopedMessageContext({
+      caseId: "case-1",
+      conversationId: "conversation-1",
+      messageId: "message-1",
+      scope: "reported-message-only",
     });
 
     expect(result).toEqual({ kind: "hidden", messages: [] });
@@ -177,6 +234,7 @@ describe("admin moderation records", () => {
     prismaMocks.messageFindMany.mockResolvedValue([]);
 
     const result = await getScopedMessageContext({
+      caseId: "case-1",
       conversationId: "conversation-1",
       messageId: "message-m",
       scope: "reported-message-2",

@@ -12,11 +12,11 @@ import {
 import { AppSection } from "@/components/app-section";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
+import { NotificationActionLink } from "@/components/notifications/notification-action-link";
 import {
   markAllNotificationsAsReadAction,
   markNotificationAsReadAction,
   markNotificationAsUnreadAction,
-  openNotificationAction,
 } from "@/features/notifications/actions";
 import {
   acceptConnectionAction,
@@ -25,7 +25,6 @@ import {
 import { requireUser } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import {
-  repairResolvableMessageNotificationActions,
   resolveNotificationAction,
   type NotificationActionResolution,
 } from "@/lib/notifications/action-url";
@@ -66,8 +65,6 @@ export default async function NotificationsPage({
     ? params.type ?? ""
     : "";
   const typeFilter = activeFilter && activeFilter !== "unread" ? filterTypes[activeFilter] : undefined;
-  await repairResolvableMessageNotificationActions(user.id);
-
   const notifications = await getPrisma().notification.findMany({
     orderBy: { createdAt: "desc" },
     take: 50,
@@ -174,7 +171,6 @@ function NotificationCard({
 }) {
   const isUnread = !notification.readAt;
   const canOpen = action.available;
-  const openAction = openNotificationAction.bind(null, notification.id);
   const markReadAction = markNotificationAsReadAction.bind(null, notification.id);
   const markUnreadAction = markNotificationAsUnreadAction.bind(null, notification.id);
 
@@ -186,16 +182,6 @@ function NotificationCard({
           : "bg-[color:var(--px-surface)]"
       }`}
     >
-      {canOpen ? (
-        <form action={openAction} className="absolute inset-0 z-0">
-          <button
-            aria-label={`${action.label}: ${notification.title}`}
-            className="h-full w-full cursor-pointer rounded-[var(--px-radius)] text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-            type="submit"
-          />
-        </form>
-      ) : null}
-
       <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 items-start gap-4">
         <div
           className={`relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
@@ -270,11 +256,13 @@ function NotificationCard({
           </span>
         ) : null}
         {canOpen ? (
-          <form action={openAction}>
-            <Button size="sm" type="submit" variant="secondary">
-              {action.label}
-            </Button>
-          </form>
+          <NotificationActionLink
+            className="inline-flex min-h-9 items-center rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 text-sm font-bold text-[color:var(--px-text)] transition hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            href={action.href!}
+            notificationId={notification.id}
+          >
+            {action.label}
+          </NotificationActionLink>
         ) : null}
         {isUnread ? (
           <form action={markReadAction}>

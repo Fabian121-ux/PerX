@@ -7,14 +7,18 @@ import {
   type WorkspaceConversationEvent,
 } from "@/components/messages/message-workspace";
 import { getCurrentUser, type CurrentUser } from "@/lib/auth/session";
-import { getConversationMessages, getConversations } from "@/lib/data/app";
+import {
+  getConversationMessagesPage,
+  getConversationForUser,
+  getConversationsPage,
+} from "@/lib/data/app";
+import { MAX_CURSOR_PAGE_SIZE } from "@/lib/data/cursor";
 import { getPrisma } from "@/lib/db/prisma";
 import {
   findOwnedConversationEventTarget,
   findOwnedMessageTarget,
   parseMessageRouteId,
 } from "@/lib/messages/entry";
-import { markConversationReadForUser } from "@/lib/messages/read-state";
 import {
   getRequestCorrelationId,
   logServerDataError,
@@ -163,7 +167,9 @@ function toWorkspaceConversation(
       type: event.type,
     })),
     id: dbConversation.id,
-    lastMessage: latestMessage?.body ?? "No messages yet.",
+    lastMessage: latestMessage?.deletedAt
+      ? "Message removed"
+      : (latestMessage?.body ?? "No messages yet."),
     messages: dbConversation.messages.map((msg) => ({
       body: msg.deletedAt ? "" : msg.body,
       createdAt: msg.createdAt.toISOString(),
@@ -241,14 +247,28 @@ export default async function ConversationPage({
     notFound();
   }
   if (highlightEventId && highlightMessageId) notFound();
-  const conversations = await loadConversationRouteData(
+  const conversationPage = await loadConversationRouteData(
     "load-conversations",
     conversationId,
-    () => getConversations(user.id),
+    () =>
+      getConversationsPage(user.id, {
+        pageSize: MAX_CURSOR_PAGE_SIZE,
+      }),
   );
-  const selected = conversations.find(
+  let conversations = conversationPage.items;
+  let selected = conversations.find(
     (conversation) => conversation.id === conversationId,
   );
+  if (!selected) {
+    const authorizedConversation = await loadConversationRouteData(
+      "load-exact-conversation",
+      conversationId,
+      () => getConversationForUser(conversationId, user.id),
+    );
+    if (!authorizedConversation) notFound();
+    conversations = [...conversations, authorizedConversation];
+    selected = authorizedConversation;
+  }
   if (!selected) notFound();
 
   const exactTarget = highlightMessageId
@@ -273,11 +293,16 @@ export default async function ConversationPage({
     : null;
   if (highlightEventId && !exactEventTarget) notFound();
 
-  let fullMessages = await loadConversationRouteData(
+  const messagePage = await loadConversationRouteData(
     "load-message-history",
     conversationId,
-    () => getConversationMessages(conversationId, user.id),
+    () =>
+      getConversationMessagesPage(conversationId, user.id, {
+        pageSize: MAX_CURSOR_PAGE_SIZE,
+      }),
   );
+  let fullMessages = messagePage.items;
+  const olderMessagesCursor = messagePage.nextCursor;
   if (
     exactTarget &&
     !fullMessages.some((message) => message.id === exactTarget.id)
@@ -298,7 +323,9 @@ export default async function ConversationPage({
                 senderId: true,
               },
             },
-            sender: true,
+             sender: {
+               select: { id: true, imageUrl: true, name: true, username: true },
+             },
           },
           where: {
             conversationId,
@@ -330,21 +357,13 @@ export default async function ConversationPage({
       ];
     }
   }
-  try {
-    await markConversationReadForUser(conversationId, user.id);
-  } catch (error) {
-    logServerDataError({
-      error,
-      operation: "mark-conversation-read",
-      recordId: conversationId,
-      requestId: await getRequestCorrelationId(),
-      route: "/app/messages/[conversationId]",
-    });
-  }
-
   const workspaceConversations: WorkspaceConversation[] = conversations.map(
     (conversation) => toWorkspaceConversation(conversation, user),
   );
+  const selectedWorkspace = workspaceConversations.find(
+    (conversation) => conversation.id === conversationId,
+  );
+  if (selectedWorkspace) selectedWorkspace.olderMessagesCursor = olderMessagesCursor;
 
   return (
     <MessageWorkspace
@@ -354,6 +373,7 @@ export default async function ConversationPage({
       defaultConversationId={conversationId}
       highlightEventId={exactEventTarget?.id}
       highlightMessageId={exactTarget?.id}
+      olderConversationsCursor={conversationPage.nextCursor}
       key={`${conversationId}:${exactTarget?.id ?? exactEventTarget?.id ?? "latest"}`}
       userRoles={user.roles}
     />

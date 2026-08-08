@@ -6,6 +6,7 @@ import {
   getPublicOpportunityPage,
   normalizePublicOpportunityCursor,
 } from "@/lib/data/public-opportunities";
+import type { CursorPageParams } from "@/lib/data/cursor";
 
 export { getCanonicalOpportunityPath } from "@/lib/data/opportunity-path";
 
@@ -125,4 +126,12 @@ export async function getCategories() {
 export async function getMyOpportunities(userId: string) {
   const provider = await getPerXDataProvider();
   return provider.opportunities.getMyOpportunities(userId);
+}
+
+export async function getMyOpportunitiesPage(
+  userId: string,
+  params?: CursorPageParams,
+) {
+  const provider = await getPerXDataProvider();
+  return provider.opportunities.getMyOpportunitiesPage(userId, params);
 }

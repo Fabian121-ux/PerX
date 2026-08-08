@@ -4,7 +4,9 @@ const mocks = vi.hoisted(() => ({
   conversationEventFindFirst: vi.fn(),
   findOwnedConversationEventTarget: vi.fn(),
   findOwnedMessageTarget: vi.fn(),
-  getConversationMessages: vi.fn(),
+  getConversationForUser: vi.fn(),
+  getConversationMessagesPage: vi.fn(),
+  getConversationsPage: vi.fn(),
   getConversations: vi.fn(),
   getCurrentUser: vi.fn(),
   markConversationReadForUser: vi.fn(),
@@ -24,7 +26,9 @@ vi.mock("@/lib/auth/session", () => ({
   getCurrentUser: mocks.getCurrentUser,
 }));
 vi.mock("@/lib/data/app", () => ({
-  getConversationMessages: mocks.getConversationMessages,
+  getConversationMessagesPage: mocks.getConversationMessagesPage,
+  getConversationForUser: mocks.getConversationForUser,
+  getConversationsPage: mocks.getConversationsPage,
   getConversations: mocks.getConversations,
 }));
 vi.mock("@/lib/db/prisma", () => ({
@@ -102,15 +106,24 @@ describe("conversation exact message entry", () => {
     });
     mocks.getRequestCorrelationId.mockResolvedValue("request-test");
     mocks.markConversationReadForUser.mockResolvedValue(true);
+    mocks.getConversationsPage.mockImplementation(async () => ({
+      cursor: null,
+      items: await mocks.getConversations(),
+      nextCursor: null,
+      pageSize: 50,
+    }));
   });
 
   it("loads an older owned target outside recent history and passes it to the exact chat", async () => {
     const selected = conversation();
     const olderTarget = message("message-target", "2026-07-01T12:00:00.000Z");
     mocks.getConversations.mockResolvedValue([selected]);
-    mocks.getConversationMessages.mockResolvedValue([
-      message("message-latest", "2026-07-31T12:00:00.000Z"),
-    ]);
+    mocks.getConversationMessagesPage.mockResolvedValue({
+      cursor: null,
+      items: [message("message-latest", "2026-07-31T12:00:00.000Z")],
+      nextCursor: "recent-page-cursor",
+      pageSize: 50,
+    });
     mocks.findOwnedMessageTarget.mockResolvedValue({
       conversationId: "conversation-1",
       id: "message-target",
@@ -123,6 +136,7 @@ describe("conversation exact message entry", () => {
       searchParams: Promise.resolve({ message: "message-target" }),
     });
     const props = element.props as {
+      conversations: Array<{ olderMessagesCursor: string | null }>;
       defaultConversationId: string;
       highlightMessageId: string;
     };
@@ -148,14 +162,41 @@ describe("conversation exact message entry", () => {
       defaultConversationId: "conversation-1",
       highlightMessageId: "message-target",
     });
-    expect(mocks.markConversationReadForUser).toHaveBeenCalledWith(
+    expect(props.conversations[0]?.olderMessagesCursor).toBe(
+      "recent-page-cursor",
+    );
+    expect(mocks.markConversationReadForUser).not.toHaveBeenCalled();
+    expect(mocks.getConversationsPage).toHaveBeenCalledWith("user-1", {
+      pageSize: 50,
+    });
+    expect(mocks.getConversationMessagesPage).toHaveBeenCalledWith(
+      "conversation-1",
+      "user-1",
+      { pageSize: 50 },
+    );
+  });
+
+  it("loads an authorized conversation when it is beyond the bounded list page", async () => {
+    const selected = conversation();
+    mocks.getConversations.mockResolvedValue([]);
+    mocks.getConversationForUser.mockResolvedValue(selected);
+    mocks.getConversationMessagesPage.mockResolvedValue({
+      cursor: null,
+      items: selected.messages,
+      nextCursor: null,
+      pageSize: 50,
+    });
+
+    const element = await ConversationPage({
+      params: Promise.resolve({ conversationId: "conversation-1" }),
+      searchParams: Promise.resolve({}),
+    });
+
+    expect(mocks.getConversationForUser).toHaveBeenCalledWith(
       "conversation-1",
       "user-1",
     );
-    expect(mocks.getConversationMessages).toHaveBeenCalledWith(
-      "conversation-1",
-      "user-1",
-    );
+    expect(element.props.defaultConversationId).toBe("conversation-1");
   });
 
   it("loads and highlights an exact immutable conversation event", async () => {
@@ -172,7 +213,12 @@ describe("conversation exact message entry", () => {
       type: "PROPOSAL_SUBMITTED",
     };
     mocks.getConversations.mockResolvedValue([selected]);
-    mocks.getConversationMessages.mockResolvedValue(selected.messages);
+    mocks.getConversationMessagesPage.mockResolvedValue({
+      cursor: null,
+      items: selected.messages,
+      nextCursor: null,
+      pageSize: 50,
+    });
     mocks.findOwnedConversationEventTarget.mockResolvedValue(event);
 
     const element = await ConversationPage({
@@ -216,7 +262,7 @@ describe("conversation exact message entry", () => {
         searchParams: Promise.resolve({ message: "message-private" }),
       }),
     ).rejects.toThrow("NOT_FOUND");
-    expect(mocks.getConversationMessages).not.toHaveBeenCalled();
+    expect(mocks.getConversationMessagesPage).not.toHaveBeenCalled();
     expect(mocks.markConversationReadForUser).not.toHaveBeenCalled();
   });
 
@@ -250,7 +296,12 @@ describe("conversation exact message entry", () => {
     };
     selected.events.push(event);
     mocks.getConversations.mockResolvedValue([selected]);
-    mocks.getConversationMessages.mockResolvedValue(selected.messages);
+    mocks.getConversationMessagesPage.mockResolvedValue({
+      cursor: null,
+      items: selected.messages,
+      nextCursor: null,
+      pageSize: 50,
+    });
     mocks.findOwnedConversationEventTarget.mockResolvedValue(event);
 
     const element = await ConversationPage({
@@ -268,26 +319,22 @@ describe("conversation exact message entry", () => {
     expect(props.conversations[0]?.participantName).toBe("Conversation");
   });
 
-  it("keeps the conversation render available when marking read fails", async () => {
+  it("does not mark a conversation read during server render", async () => {
     const selected = conversation();
     mocks.getConversations.mockResolvedValue([selected]);
-    mocks.getConversationMessages.mockResolvedValue(selected.messages);
-    mocks.markConversationReadForUser.mockRejectedValue(
-      Object.assign(new Error("write unavailable"), { code: "P2024" }),
-    );
-
+    mocks.getConversationMessagesPage.mockResolvedValue({
+      cursor: null,
+      items: selected.messages,
+      nextCursor: null,
+      pageSize: 50,
+    });
     const element = await ConversationPage({
       params: Promise.resolve({ conversationId: "conversation-1" }),
       searchParams: Promise.resolve({}),
     });
 
     expect(element.props.defaultConversationId).toBe("conversation-1");
-    expect(mocks.logServerDataError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        operation: "mark-conversation-read",
-        recordId: "conversation-1",
-        route: "/app/messages/[conversationId]",
-      }),
-    );
+    expect(mocks.markConversationReadForUser).not.toHaveBeenCalled();
+    expect(mocks.logServerDataError).not.toHaveBeenCalled();
   });
 });

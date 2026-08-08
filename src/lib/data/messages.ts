@@ -1,3 +1,3 @@
-import { getConversationMessages } from "./app";
+import { getConversationMessages, getConversationMessagesPage } from "./app";
 
-export { getConversationMessages };
+export { getConversationMessages, getConversationMessagesPage };

@@ -1,4 +1,5 @@
 import { getPrisma } from "@/lib/db/prisma";
+import { encodeCursor } from "@/lib/data/cursor";
 
 type MessageSnapshotOptions = {
   conversationId?: string | null;
@@ -10,6 +11,21 @@ export async function getMessageSnapshot({
   userId,
 }: MessageSnapshotOptions) {
   const prisma = getPrisma();
+  const blockedUsers = await prisma.blockedUser.findMany({
+    select: { blockedUserId: true, blockerUserId: true },
+    where: {
+      OR: [{ blockerUserId: userId }, { blockedUserId: userId }],
+    },
+  });
+  const blockedUserIds = [
+    ...new Set(
+      blockedUsers.map((block) =>
+        block.blockerUserId === userId
+          ? block.blockedUserId
+          : block.blockerUserId,
+      ),
+    ),
+  ];
 
   if (conversationId) {
     const participant = await prisma.conversationParticipant.findUnique({
@@ -47,8 +63,8 @@ export async function getMessageSnapshot({
             select: { id: true, imageUrl: true, name: true, username: true },
           },
         },
-        orderBy: { createdAt: "desc" },
-        take: conversationId ? 50 : 1,
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: conversationId ? 51 : 1,
       },
       opportunity: { select: { title: true } },
       participants: {
@@ -76,7 +92,7 @@ export async function getMessageSnapshot({
         },
       },
       proposals: {
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         select: {
           deal: {
             select: {
@@ -93,14 +109,23 @@ export async function getMessageSnapshot({
         where: { deal: { isNot: null } },
       },
     },
-    orderBy: { updatedAt: "desc" },
+    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
     take: 50,
     where: {
       ...(conversationId ? { id: conversationId } : {}),
-      participants: { some: { removedAt: null, userId } },
+      participants: {
+        every: blockedUserIds.length
+          ? { userId: { notIn: blockedUserIds } }
+          : {},
+        some: { removedAt: null, userId },
+      },
       status: "ACTIVE",
     },
   });
+
+  if (conversationId && conversations.length === 0) {
+    return { conversations: null, notFound: true };
+  }
 
   return {
     conversations: conversations.map((conversation) => {
@@ -113,11 +138,23 @@ export async function getMessageSnapshot({
       const otherParticipantIds = conversation.participants
         .map((entry) => entry.userId)
         .filter((participantId) => participantId !== userId);
-      const messages = [...conversation.messages].reverse();
+      const visibleMessages = conversation.messages.slice(
+        0,
+        conversationId ? 50 : 1,
+      );
+      const messages = [...visibleMessages].reverse();
+      const olderMessagesCursor =
+        conversationId && conversation.messages.length > visibleMessages.length
+          ? encodeCursor({
+              id: visibleMessages.at(-1)!.id,
+              scope: `messages:${userId}:${conversation.id}`,
+              timestamp: visibleMessages.at(-1)!.createdAt,
+            })
+          : null;
       const linkedDeal = conversation.proposals.find(
         (proposal) => proposal.deal,
       )?.deal;
-      const unreadMessageCount = conversation.messages.filter(
+      const unreadMessageCount = visibleMessages.filter(
         (message) =>
           message.senderId !== userId &&
           (!participant?.lastReadAt ||
@@ -200,6 +237,7 @@ export async function getMessageSnapshot({
           senderImageUrl: message.sender.imageUrl ?? null,
           senderName: message.sender.name,
         })),
+        olderMessagesCursor,
         opportunityTitle: conversation.opportunity?.title ?? null,
         participantImageUrl:
           other?.imageUrl ?? other?.profile?.profileImageUrl ?? null,

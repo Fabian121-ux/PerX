@@ -1,18 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { redirect } from "next/navigation";
-
-import {
-  MessageWorkspace,
-  type WorkspaceConversation,
-  type WorkspaceConversationEvent,
+import type { CurrentUser } from "@/lib/auth/session";
+import type {
+  WorkspaceConversation,
+  WorkspaceConversationEvent,
 } from "@/components/messages/message-workspace";
-import { getCurrentUser, type CurrentUser } from "@/lib/auth/session";
-import { getConversationsPage } from "@/lib/data/app";
-import { MAX_CURSOR_PAGE_SIZE } from "@/lib/data/cursor";
-import {
-  getRequestCorrelationId,
-  logServerDataError,
-} from "@/lib/logging/runtime";
 
 type PreviewConversationLike = {
   id: string;
@@ -47,6 +38,7 @@ type DbConversationLike = {
     editedAt?: Date | null;
     id: string;
     readReceipts?: { userId: string }[];
+    replyTo?: any;
     senderId: string;
   }[];
   opportunity?: { title: string } | null;
@@ -76,27 +68,7 @@ type DbConversationLike = {
   }[];
 };
 
-function getPresenceState(showPresence: boolean, lastSeenAt?: Date | null) {
-  if (!showPresence || !lastSeenAt) return "hidden";
-  const ageMs = Date.now() - lastSeenAt.getTime();
-  if (ageMs <= 2 * 60_000) return "online";
-  if (ageMs <= 30 * 60_000) return "recent";
-  return "offline";
-}
-
-function isPreviewConversation(
-  conversation: unknown,
-): conversation is PreviewConversationLike {
-  return (
-    Boolean(conversation) &&
-    typeof conversation === "object" &&
-    typeof (conversation as { participantName?: unknown }).participantName ===
-      "string" &&
-    Array.isArray((conversation as { messages?: unknown }).messages)
-  );
-}
-
-function toWorkspaceConversation(
+export function toWorkspaceConversation(
   conversation: unknown,
   user: CurrentUser,
 ): WorkspaceConversation {
@@ -197,7 +169,7 @@ function toWorkspaceConversation(
                   (receipt) => receipt.userId === participantId,
                 ),
               ),
-            replyTo: toWorkspaceReply((latestMessage as any).replyTo),
+            replyTo: toWorkspaceReply(latestMessage.replyTo),
             senderId: latestMessage.senderId,
             senderName:
               latestMessage.senderId === user.id
@@ -234,37 +206,24 @@ function toWorkspaceConversation(
   };
 }
 
-export default async function MessagesPage() {
-  const user = await getCurrentUser();
-  if (!user) redirect("/sign-in");
-
-  let conversationPage;
-  try {
-    conversationPage = await getConversationsPage(user.id, {
-      pageSize: MAX_CURSOR_PAGE_SIZE,
-    });
-  } catch (error) {
-    logServerDataError({
-      error,
-      operation: "load-conversations",
-      recordId: user.id,
-      requestId: await getRequestCorrelationId(),
-      route: "/app/messages",
-    });
-    throw error;
-  }
-  const workspaceConversations = conversationPage.items.map((conversation: any) =>
-    toWorkspaceConversation(conversation, user),
-  );
-
+function isPreviewConversation(
+  conversation: unknown,
+): conversation is PreviewConversationLike {
   return (
-    <MessageWorkspace
-      conversations={workspaceConversations}
-      currentUserId={user.id}
-      olderConversationsCursor={conversationPage.nextCursor}
-      userRoles={user.roles}
-    />
+    Boolean(conversation) &&
+    typeof conversation === "object" &&
+    typeof (conversation as { participantName?: unknown }).participantName ===
+      "string" &&
+    Array.isArray((conversation as { messages?: unknown }).messages)
   );
+}
+
+function getPresenceState(showPresence: boolean, lastSeenAt?: Date | null) {
+  if (!showPresence || !lastSeenAt) return "hidden";
+  const ageMs = Date.now() - lastSeenAt.getTime();
+  if (ageMs <= 2 * 60_000) return "online";
+  if (ageMs <= 30 * 60_000) return "recent";
+  return "offline";
 }
 
 function toWorkspaceReply(replyTo: any) {

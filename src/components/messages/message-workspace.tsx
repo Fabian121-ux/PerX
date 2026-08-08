@@ -104,6 +104,7 @@ export type WorkspaceConversation = {
   id: string;
   lastMessage?: string;
   messages: WorkspaceMessage[];
+  olderMessagesCursor?: string | null;
   opportunityTitle?: string;
   participantId?: string | null;
   participantImageUrl?: string | null;
@@ -122,6 +123,7 @@ export function MessageWorkspace({
   defaultConversationId,
   highlightEventId,
   highlightMessageId,
+  olderConversationsCursor,
   userRoles,
 }: {
   backHref?: string;
@@ -130,10 +132,14 @@ export function MessageWorkspace({
   defaultConversationId?: string;
   highlightEventId?: string;
   highlightMessageId?: string;
+  olderConversationsCursor?: string | null;
   userRoles?: readonly string[];
 }) {
   const [activeId, setActiveId] = useState(
     defaultConversationId ?? conversations[0]?.id ?? "",
+  );
+  const [activatedConversationId, setActivatedConversationId] = useState(
+    defaultConversationId ?? "",
   );
   const [mobileDetailOpen, setMobileDetailOpen] = useState(
     Boolean(defaultConversationId),
@@ -162,6 +168,9 @@ export function MessageWorkspace({
     "connecting" | "live" | "reconnecting" | "fallback"
   >("connecting");
   const [isPending, startTransition] = useTransition();
+  const [isOlderPending, startOlderTransition] = useTransition();
+  const [isOlderConversationsPending, startOlderConversationsTransition] =
+    useTransition();
   const [isEditPending, startEditTransition] = useTransition();
   const [openActionMenuMessageId, setOpenActionMenuMessageId] =
     useState("");
@@ -180,6 +189,15 @@ export function MessageWorkspace({
   const mobileDetailOpenRef = useRef(mobileDetailOpen);
   const syncedConversationsRef = useRef(syncedConversations);
   const previousHistoryConversationRef = useRef<string | undefined>(undefined);
+  const historyScrollAnchorRef = useRef<{
+    conversationId: string;
+    scrollHeight: number;
+    scrollTop: number;
+  } | null>(null);
+  const [historyAnchorVersion, setHistoryAnchorVersion] = useState(0);
+  const [olderConversationCursor, setOlderConversationCursor] = useState(
+    olderConversationsCursor ?? null,
+  );
   const isComposingRef = useRef(false);
   const listRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -322,8 +340,25 @@ export function MessageWorkspace({
         );
         const merged = current.map((conversation) => {
           const next = incomingById.get(conversation.id);
-          if (!next || (!highlightMessageId && !highlightEventId)) {
-            return next ?? conversation;
+          if (!next) return conversation;
+          const mergedMessages = mergeWorkspaceMessages(
+            conversation.messages,
+            next.messages,
+          );
+          const mergedEvents = mergeWorkspaceEvents(
+            conversation.events,
+            next.events,
+          );
+          if (!highlightMessageId && !highlightEventId) {
+            return {
+              ...next,
+              events: mergedEvents,
+              messages: mergedMessages,
+              olderMessagesCursor:
+                conversation.olderMessagesCursor === undefined
+                  ? next.olderMessagesCursor
+                  : conversation.olderMessagesCursor,
+            };
           }
           const target = conversation.messages.find(
             (message) => message.id === highlightMessageId,
@@ -331,33 +366,23 @@ export function MessageWorkspace({
           const targetEvent = conversation.events?.find(
             (event) => event.id === highlightEventId,
           );
-          const mergedMessages =
-            target && !next.messages.some((message) => message.id === target.id)
-              ? [...next.messages, target].sort(
-                  (a, b) =>
-                    new Date(a.createdAt).getTime() -
-                    new Date(b.createdAt).getTime(),
-                )
-              : next.messages;
-          const mergedEvents =
-            targetEvent &&
-            !next.events?.some((event) => event.id === targetEvent.id)
-              ? [...(next.events ?? []), targetEvent].sort(
-                  (a, b) =>
-                    new Date(a.createdAt).getTime() -
-                    new Date(b.createdAt).getTime(),
-                )
-              : next.events;
+          if (target && !mergedMessages.some((message) => message.id === target.id)) {
+            mergedMessages.push(target);
+          }
           if (
-            mergedMessages === next.messages &&
-            mergedEvents === next.events
+            targetEvent &&
+            !mergedEvents.some((event) => event.id === targetEvent.id)
           ) {
-            return next;
+            mergedEvents.push(targetEvent);
           }
           return {
             ...next,
-            events: mergedEvents,
-            messages: mergedMessages,
+            events: mergeWorkspaceEvents(undefined, mergedEvents),
+            messages: mergeWorkspaceMessages([], mergedMessages),
+            olderMessagesCursor:
+              conversation.olderMessagesCursor === undefined
+                ? next.olderMessagesCursor
+                : conversation.olderMessagesCursor,
           };
         });
         for (const conversation of incoming) {
@@ -500,13 +525,96 @@ export function MessageWorkspace({
   );
   const latestEntryId = timeline.at(-1)?.id;
 
-  useEffect(() => {
-    if (highlightedMessageId) return;
+  const loadOlderMessages = () => {
+    const conversationId = activeConversation?.id;
+    const cursor = activeConversation?.olderMessagesCursor;
     const node = historyRef.current;
-    if (!node) return;
+    if (!conversationId || !cursor || isOlderPending) return;
+    if (node) {
+      historyScrollAnchorRef.current = {
+        conversationId,
+        scrollHeight: node.scrollHeight,
+        scrollTop: node.scrollTop,
+      };
+    }
+    setSendError("");
+
+    startOlderTransition(async () => {
+      try {
+        const response = await fetch(
+          `/api/messages/history?conversationId=${encodeURIComponent(conversationId)}&cursor=${encodeURIComponent(cursor)}`,
+          { cache: "no-store" },
+        );
+        const payload = parseMessagePageEnvelope(await response.json());
+        if (!response.ok || !payload) {
+          throw new Error("Unable to load older messages.");
+        }
+        const existingMessageIds = new Set(
+          activeConversation?.messages.map((message) => message.id),
+        );
+        const addedMessages = payload.items.some(
+          (message) => !existingMessageIds.has(message.id),
+        );
+        setSyncedConversations((current) =>
+          current.map((conversation) =>
+            conversation.id === conversationId
+              ? {
+                  ...conversation,
+                  messages: mergeWorkspaceMessages(
+                    conversation.messages,
+                    payload.items,
+                  ),
+                  olderMessagesCursor: payload.nextCursor,
+                }
+              : conversation,
+          ),
+        );
+        if (addedMessages) {
+          setHistoryAnchorVersion((version) => version + 1);
+        } else {
+          historyScrollAnchorRef.current = null;
+        }
+      } catch {
+        historyScrollAnchorRef.current = null;
+        setSendError("Unable to load older messages. Please try again.");
+      }
+    });
+  };
+
+  const loadOlderConversations = () => {
+    if (!olderConversationCursor || isOlderConversationsPending) return;
+
+    startOlderConversationsTransition(async () => {
+      try {
+        const response = await fetch(
+          `/api/messages/conversations?cursor=${encodeURIComponent(olderConversationCursor)}`,
+          { cache: "no-store" },
+        );
+        const payload = parseConversationPageEnvelope(await response.json());
+        if (!response.ok || !payload) {
+          throw new Error("Unable to load older conversations.");
+        }
+        setSyncedConversations((current) => {
+          const byId = new Map(current.map((conversation) => [conversation.id, conversation]));
+          for (const conversation of payload.items) {
+            if (!byId.has(conversation.id)) byId.set(conversation.id, conversation);
+          }
+          return [...byId.values()];
+        });
+        setOlderConversationCursor(payload.nextCursor);
+      } catch {
+        setSendError("Unable to load older conversations. Please try again.");
+      }
+    });
+  };
+
+  useEffect(() => {
     const conversationChanged =
       previousHistoryConversationRef.current !== activeConversation?.id;
     previousHistoryConversationRef.current = activeConversation?.id;
+    if (highlightedMessageId) return;
+    const node = historyRef.current;
+    if (!node) return;
     const distanceFromBottom =
       node.scrollHeight - node.scrollTop - node.clientHeight;
     if (!conversationChanged && distanceFromBottom > 32) return;
@@ -515,6 +623,18 @@ export function MessageWorkspace({
       top: node.scrollHeight,
     });
   }, [activeConversation?.id, highlightedMessageId, timeline.length]);
+
+  useLayoutEffect(() => {
+    const anchor = historyScrollAnchorRef.current;
+    const node = historyRef.current;
+    if (!anchor || !node) return;
+    if (anchor.conversationId !== activeConversation?.id) {
+      historyScrollAnchorRef.current = null;
+      return;
+    }
+    historyScrollAnchorRef.current = null;
+    node.scrollTop = anchor.scrollTop + (node.scrollHeight - anchor.scrollHeight);
+  }, [activeConversation?.id, historyAnchorVersion]);
 
   useEffect(() => {
     if (!highlightedMessageId) return;
@@ -526,7 +646,12 @@ export function MessageWorkspace({
   }, [highlightedMessageId, timeline.length]);
 
   useEffect(() => {
-    if (!activeConversation?.id) return;
+    if (
+      !activeConversation?.id ||
+      activatedConversationId !== activeConversation.id
+    ) {
+      return;
+    }
     let stopped = false;
     let retryTimer: number | null = null;
     let retryCount = 0;
@@ -556,10 +681,11 @@ export function MessageWorkspace({
       stopped = true;
       if (retryTimer !== null) window.clearTimeout(retryTimer);
     };
-  }, [activeConversation?.id, latestEntryId]);
+  }, [activatedConversationId, activeConversation?.id, latestEntryId]);
 
   const openMobileConversation = (conversationId: string) => {
     setOpenActionMenuMessageId("");
+    setActivatedConversationId(conversationId);
     const mobile =
       typeof window.matchMedia !== "function" ||
       window.matchMedia("(max-width: 1023px)").matches;
@@ -730,6 +856,7 @@ export function MessageWorkspace({
     );
     setSyncedConversations(remaining);
     persistDraft(draftStorageKey, activeConversation.id, "");
+    setActivatedConversationId("");
     setActiveId(remaining[0]?.id ?? "");
     setDetailsOpen(false);
     if (inlineDetailHistoryRef.current) {
@@ -924,6 +1051,18 @@ export function MessageWorkspace({
               </div>
             </div>
           ) : null}
+          {olderConversationCursor ? (
+            <button
+              className="mt-3 w-full rounded-xl border border-[color:var(--px-border)] px-3 py-2 text-xs font-black text-[color:var(--px-primary)] transition hover:bg-[color:var(--px-primary-soft)] disabled:cursor-wait disabled:opacity-60"
+              disabled={isOlderConversationsPending}
+              onClick={loadOlderConversations}
+              type="button"
+            >
+              {isOlderConversationsPending
+                ? "Loading older conversations..."
+                : "Load older conversations"}
+            </button>
+          ) : null}
         </div>
       </aside>
 
@@ -1018,6 +1157,16 @@ export function MessageWorkspace({
             ref={historyRef}
           >
             <div className="mx-auto flex max-w-3xl flex-col gap-4">
+              {activeConversation.olderMessagesCursor ? (
+                <button
+                  className="self-center rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-2 text-xs font-black text-[color:var(--px-primary)] shadow-sm transition hover:bg-[color:var(--px-primary-soft)] disabled:cursor-wait disabled:opacity-60"
+                  disabled={isOlderPending}
+                  onClick={loadOlderMessages}
+                  type="button"
+                >
+                  {isOlderPending ? "Loading older messages..." : "Load older messages"}
+                </button>
+              ) : null}
               <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4">
                 <div className="flex items-center gap-2 text-[color:var(--px-primary)]">
                   <LockKeyhole aria-hidden size={15} />
@@ -2094,6 +2243,69 @@ function persistDraft(
   }
 }
 
+function mergeWorkspaceMessages(
+  current: WorkspaceMessage[],
+  incoming: WorkspaceMessage[],
+) {
+  const byId = new Map(current.map((message) => [message.id, message]));
+  for (const message of incoming) byId.set(message.id, message);
+
+  return [...byId.values()].sort((left, right) => {
+    const timeDifference =
+      new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+    return timeDifference || left.id.localeCompare(right.id);
+  });
+}
+
+function mergeWorkspaceEvents(
+  current: WorkspaceConversationEvent[] | undefined,
+  incoming: WorkspaceConversationEvent[] | undefined,
+) {
+  const byId = new Map(
+    (current ?? []).map((conversationEvent) => [conversationEvent.id, conversationEvent]),
+  );
+  for (const conversationEvent of incoming ?? []) {
+    byId.set(conversationEvent.id, conversationEvent);
+  }
+
+  return [...byId.values()].sort((left, right) => {
+    const timeDifference =
+      new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+    return timeDifference || left.id.localeCompare(right.id);
+  });
+}
+
+function parseMessagePageEnvelope(value: unknown): {
+  items: WorkspaceMessage[];
+  nextCursor: string | null;
+} | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const payload = value as { items?: unknown; nextCursor?: unknown };
+  if (!Array.isArray(payload.items)) return null;
+
+  const items = payload.items.flatMap((candidate) => {
+    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+      return [];
+    }
+    const message = candidate as Partial<WorkspaceMessage>;
+    if (
+      typeof message.id !== "string" ||
+      typeof message.body !== "string" ||
+      typeof message.createdAt !== "string" ||
+      typeof message.senderId !== "string" ||
+      typeof message.senderName !== "string"
+    ) {
+      return [];
+    }
+    return [message as WorkspaceMessage];
+  });
+
+  return {
+    items,
+    nextCursor: typeof payload.nextCursor === "string" ? payload.nextCursor : null,
+  };
+}
+
 function parseConversationEnvelope(
   value: unknown,
 ): WorkspaceConversation[] | null {
@@ -2141,6 +2353,21 @@ function parseConversationEnvelope(
 
     return [{ ...conversation, events, messages } as WorkspaceConversation];
   });
+}
+
+function parseConversationPageEnvelope(value: unknown): {
+  items: WorkspaceConversation[];
+  nextCursor: string | null;
+} | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const payload = value as { conversations?: unknown; nextCursor?: unknown };
+  const items = parseConversationEnvelope(value);
+  if (!Array.isArray(payload.conversations) || !items) return null;
+
+  return {
+    items,
+    nextCursor: typeof payload.nextCursor === "string" ? payload.nextCursor : null,
+  };
 }
 
 function isConversationEventType(

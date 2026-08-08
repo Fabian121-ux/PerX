@@ -37,6 +37,7 @@ export default async function AdminModerationCasePage({
     moderationCase.conversationId &&
     moderationCase.messageScopes.length
       ? await getScopedMessageContext({
+          caseId: moderationCase.id,
           conversationId: moderationCase.conversationId,
           messageId: moderationCase.messageId,
           scope: moderationCase.messageScopes[0]?.scope,

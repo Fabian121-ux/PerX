@@ -237,13 +237,21 @@ describeOrSkip(
       const page = await browser.newPage();
       await createSession(page, "alice-test@perx.test");
       await page.goto(`${BASE}/app/messages`);
-      await page.waitForLoadState("networkidle");
+      await expect(page.getByLabel("Message workspace")).toBeVisible();
 
       const bodyText = await page.innerText("body");
       expect(bodyText).toContain("Messages");
       expect(bodyText).not.toContain("PrismaClientInitializationError");
 
       const composer = page.locator("#message-draft");
+      if (!(await composer.isVisible())) {
+        await page
+          .getByLabel("Conversation list")
+          .locator('[data-conversation-list-scroll="true"] > button')
+          .first()
+          .click();
+      }
+      await expect(composer).toBeVisible();
       await composer.fill("Keyboard contract check");
       await composer.press("Enter");
       await expect(composer).toHaveValue("Keyboard contract check\n");
@@ -259,6 +267,12 @@ describeOrSkip(
       const conversationSearch = page.getByPlaceholder(
         "Search people or conversations",
       );
+      if (!(await conversationSearch.isVisible())) {
+        await page
+          .getByRole("button", { name: "Back to conversations" })
+          .click();
+      }
+      await expect(conversationSearch).toBeVisible();
       await conversationSearch.fill("No matching participant 404");
       await expect(page.getByText("No conversations found")).toBeVisible();
       await page.close();

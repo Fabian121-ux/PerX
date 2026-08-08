@@ -275,7 +275,7 @@ export async function getAdminReportsOverview(): Promise<SafeReportRow[]> {
 
 export async function getRecentBlockRows() {
   const blocks = await getPrisma().blockedUser.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     select: {
       blockedUserId: true,
       blockerUserId: true,
@@ -297,7 +297,7 @@ export async function getRecentBlockRows() {
 
 export async function getAdminMessageCases() {
   const cases = await getPrisma().moderationCase.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     select: {
       category: true,
       conversationId: true,
@@ -315,7 +315,7 @@ export async function getAdminMessageCases() {
       targetType: true,
       title: true,
       messageScopes: {
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         select: {
           conversationId: true,
           createdAt: true,
@@ -387,7 +387,8 @@ export async function getAdminMessageCases() {
         (scope) =>
           scope.conversationId === moderationCase.conversationId &&
           scope.messageId === moderationCase.messageId &&
-          isMessageReviewScope(scope.scope),
+          isMessageReviewScope(scope.scope) &&
+          scope.reason.trim().length >= 12,
       )
       .slice(0, 1);
     return {
@@ -404,10 +405,12 @@ export async function getAdminMessageCases() {
 }
 
 export async function getScopedMessageContext({
+  caseId,
   conversationId,
   messageId,
   scope,
 }: {
+  caseId: string;
   conversationId: string | null;
   messageId: string | null;
   scope?: string | null;
@@ -420,6 +423,20 @@ export async function getScopedMessageContext({
     (option) => option.value === scope,
   );
   if (!normalizedScope) return { kind: "hidden", messages: [] };
+
+  const authorizedScope = await getPrisma().moderationMessageScope.findFirst({
+    select: { id: true, reason: true },
+    where: {
+      caseId,
+      conversationId,
+      messageId,
+      reason: { not: "" },
+      scope: normalizedScope.value,
+    },
+  });
+  if (!authorizedScope || authorizedScope.reason.trim().length < 12) {
+    return { kind: "hidden", messages: [] };
+  }
 
   const conversation = await getPrisma().conversation.findUnique({
     select: { id: true },
@@ -584,7 +601,8 @@ export async function getAdminModerationCase(caseId: string) {
       (scope) =>
         scope.conversationId === moderationCase.conversationId &&
         scope.messageId === moderationCase.messageId &&
-        isMessageReviewScope(scope.scope),
+        isMessageReviewScope(scope.scope) &&
+        scope.reason.trim().length >= 12,
     )
     .slice(0, 1);
   return {

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { AdminSection } from "@/components/admin-section";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +13,6 @@ import {
 import {
   formatAdminValue,
   getAdminMessageCases,
-  getScopedMessageContext,
   messageReviewScopeOptions,
   moderationCaseStatuses,
   safeUserLabel,
@@ -20,26 +21,6 @@ import {
 export default async function AdminMessagesPage() {
   await requireCapabilityOrNotFound("messages:moderate");
   const cases = await getAdminMessageCases();
-
-  type ScopedMessageContext = Awaited<
-    ReturnType<typeof getScopedMessageContext>
-  >;
-  const contextEntries: Array<[string, ScopedMessageContext]> =
-    await Promise.all(
-      cases.map(
-        async (moderationCase): Promise<[string, ScopedMessageContext]> => [
-          moderationCase.id,
-          moderationCase.messageScopes.length
-            ? await getScopedMessageContext({
-                conversationId: moderationCase.conversationId!,
-                messageId: moderationCase.messageId,
-                scope: moderationCase.messageScopes[0]?.scope,
-              })
-            : { kind: "hidden", messages: [] },
-        ],
-      ),
-    );
-  const contexts = new Map<string, ScopedMessageContext>(contextEntries);
 
   return (
     <AdminSection
@@ -50,10 +31,6 @@ export default async function AdminMessagesPage() {
         <div className="grid gap-4">
           {cases.map((moderationCase) => {
             const revealed = moderationCase.messageScopes[0];
-            const messages = contexts.get(moderationCase.id) ?? {
-              kind: "hidden" as const,
-              messages: [],
-            };
             return (
               <Card key={moderationCase.id}>
                 <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -92,35 +69,16 @@ export default async function AdminMessagesPage() {
                         <p className="mt-1 text-xs text-[color:var(--px-text-muted)]">
                           Reason recorded · Scope: {revealed.scope}
                         </p>
-                        {messages.kind === "available" ? (
-                          <div className="mt-3 grid gap-2">
-                            {messages.messages.map((message) => (
-                              <div
-                                className={`rounded-[var(--px-radius-sm)] p-3 text-sm ${
-                                  message.id === moderationCase.messageId
-                                    ? "border border-[color:var(--px-warning)] bg-amber-50 text-amber-950"
-                                    : "bg-[color:var(--px-surface)] text-[color:var(--px-text)]"
-                                }`}
-                                key={message.id}
-                              >
-                                <p className="text-xs font-bold text-[color:var(--px-text-muted)]">
-                                  {safeUserLabel(
-                                    message.sender,
-                                    message.senderId,
-                                  )}{" "}
-                                  · {message.createdAt.toLocaleString()}
-                                </p>
-                                <p className="mt-1 whitespace-pre-wrap break-words leading-6">
-                                  {message.deletedAt
-                                    ? "This message was deleted."
-                                    : message.body}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <EvidenceUnavailableState kind={messages.kind} />
-                        )}
+                        <p className="mt-3 text-sm leading-6 text-[color:var(--px-text-muted)]">
+                          Scoped message content is loaded only on the case
+                          detail page.
+                        </p>
+                        <Link
+                          className="mt-3 inline-flex min-h-10 items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                          href={`/admin/moderation/cases/${moderationCase.id}`}
+                        >
+                          Open case detail
+                        </Link>
                       </div>
                     ) : moderationCase.messageId ? (
                       <form
