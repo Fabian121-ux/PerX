@@ -5,12 +5,21 @@ import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { requireUser } from "@/lib/auth/session";
-import { assertCanMessage } from "@/lib/account/enforcement";
+import {
+  getCurrentSessionTokenHash,
+  requireUser,
+} from "@/lib/auth/session";
+import {
+  assertAccountAccessWithClient,
+  assertCanMessage,
+} from "@/lib/account/enforcement";
 import { getPrisma } from "@/lib/db/prisma";
 import { getServerEnv, hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
+import { parseMessageRouteId } from "@/lib/messages/entry";
+import { messageMutationTransactionTimeoutMs } from "@/lib/messages/mutations";
 import { markConversationReadForUser } from "@/lib/messages/read-state";
+import { lockUserAccount, lockUserPairs } from "@/lib/network/pair-lock";
 import { evaluatePolicy, isPolicyBlocking } from "@/lib/policy/enforcement";
 
 const sendMessageSchema = z.object({
@@ -40,6 +49,8 @@ export async function sendMessageAction(
   replyToMessageId?: string | null,
 ) {
   const user = await requireUser();
+  const sessionTokenHash = await getCurrentSessionTokenHash();
+  if (!sessionTokenHash) return { error: "Authentication required." };
   const parsed = sendMessageSchema.safeParse({ conversationId, body, replyToMessageId });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid message." };
@@ -58,84 +69,16 @@ export async function sendMessageAction(
 
   try {
     const conversation = await getPrisma().conversation.findFirst({
-      include: { participants: true },
+      select: { id: true },
       where: {
         id: parsed.data.conversationId,
-        participants: { some: { userId: user.id } },
+        participants: { some: { removedAt: null, userId: user.id } },
         status: "ACTIVE",
       },
     });
 
     if (!conversation) {
       return { error: "You are not a participant in this conversation." };
-    }
-
-    const otherParticipantIds = conversation.participants
-      .map((participant) => participant.userId)
-      .filter((participantId) => participantId !== user.id);
-
-    const [blocked, recentMessages, duplicate] = await Promise.all([
-      getPrisma().blockedUser.findFirst({
-        where: {
-          OR: otherParticipantIds.flatMap((participantId) => [
-            { blockerUserId: user.id, blockedUserId: participantId },
-            { blockerUserId: participantId, blockedUserId: user.id },
-          ]),
-        },
-      }),
-      getPrisma().message.count({
-        where: {
-          createdAt: { gte: new Date(Date.now() - rateLimitWindowMs) },
-          senderId: user.id,
-        },
-      }),
-      getPrisma().message.findFirst({
-        where: {
-          body: parsed.data.body.trim(),
-          conversationId: parsed.data.conversationId,
-          createdAt: { gte: new Date(Date.now() - 5_000) },
-          senderId: user.id,
-        },
-      }),
-    ]);
-
-    if (blocked) return { error: "Messaging is unavailable." };
-    if (!conversation.opportunityId && conversation.participants.length === 2) {
-      const [otherParticipantId] = otherParticipantIds;
-      const acceptedConnection = otherParticipantId
-        ? await getPrisma().connection.findFirst({
-            select: { id: true },
-            where: {
-              status: "ACCEPTED",
-              OR: [
-                { requesterId: user.id, receiverId: otherParticipantId },
-                { requesterId: otherParticipantId, receiverId: user.id },
-              ],
-            },
-          })
-        : null;
-      if (!acceptedConnection) {
-        return { error: "Connect before sending a private message." };
-      }
-    }
-    if (recentMessages >= rateLimitMaxMessages) {
-      return { error: "Please slow down before sending more messages." };
-    }
-    if (duplicate) return { success: true };
-
-    let replyTarget: { id: string } | null = null;
-    if (parsed.data.replyToMessageId) {
-      replyTarget = await getPrisma().message.findFirst({
-        select: { id: true },
-        where: {
-          conversationId: parsed.data.conversationId,
-          id: parsed.data.replyToMessageId,
-        },
-      });
-
-      if (!replyTarget) {
-        return { error: "The message you are replying to is unavailable." };
-      }
     }
 
     const policy = evaluatePolicy({
@@ -163,9 +106,111 @@ export async function sendMessageAction(
       };
     }
 
-    let createdMessageId = "";
+    const result = await getPrisma().$transaction(async (tx) => {
+      const currentConversation = await tx.conversation.findFirst({
+        include: { participants: true },
+        where: {
+          id: parsed.data.conversationId,
+          participants: { some: { removedAt: null, userId: user.id } },
+          status: "ACTIVE",
+        },
+      });
+      if (!currentConversation) {
+        return { error: "You are not a participant in this conversation." };
+      }
+      const otherParticipantIds = currentConversation.participants
+        .map((participant) => participant.userId)
+        .filter((participantId) => participantId !== user.id);
+      if (!otherParticipantIds.length) {
+        return { error: "Messaging is unavailable." };
+      }
 
-    await getPrisma().$transaction(async (tx) => {
+      await lockUserAccount(tx, user.id);
+      await lockUserPairs(tx, user.id, otherParticipantIds);
+      const activeSession = await tx.session.findFirst({
+        select: { id: true },
+        where: {
+          expiresAt: { gt: new Date() },
+          tokenHash: sessionTokenHash,
+          userId: user.id,
+        },
+      });
+      if (!activeSession) {
+        return { error: "Authentication required." };
+      }
+      const lockedRestriction = await assertAccountAccessWithClient(
+        tx,
+        user.id,
+        "message:send",
+      );
+      if (lockedRestriction) return { error: lockedRestriction };
+      const [blocked, recentMessages, duplicate] = await Promise.all([
+        tx.blockedUser.findFirst({
+          select: { id: true },
+          where: {
+            OR: otherParticipantIds.flatMap((participantId) => [
+              { blockerUserId: user.id, blockedUserId: participantId },
+              { blockerUserId: participantId, blockedUserId: user.id },
+            ]),
+          },
+        }),
+        tx.message.count({
+          where: {
+            createdAt: { gte: new Date(Date.now() - rateLimitWindowMs) },
+            senderId: user.id,
+          },
+        }),
+        tx.message.findFirst({
+          select: { id: true },
+          where: {
+            body: parsed.data.body.trim(),
+            conversationId: parsed.data.conversationId,
+            createdAt: { gte: new Date(Date.now() - 5_000) },
+            senderId: user.id,
+          },
+        }),
+      ]);
+      if (blocked) return { error: "Messaging is unavailable." };
+      if (recentMessages >= rateLimitMaxMessages) {
+        return { error: "Please slow down before sending more messages." };
+      }
+      if (duplicate) return { duplicate: true };
+
+      if (
+        !currentConversation.opportunityId &&
+        currentConversation.participants.length === 2
+      ) {
+        const [otherParticipantId] = otherParticipantIds;
+        const acceptedConnection = otherParticipantId
+          ? await tx.connection.findFirst({
+              select: { id: true },
+              where: {
+                status: "ACCEPTED",
+                OR: [
+                  { requesterId: user.id, receiverId: otherParticipantId },
+                  { requesterId: otherParticipantId, receiverId: user.id },
+                ],
+              },
+            })
+          : null;
+        if (!acceptedConnection) {
+          return { error: "Connect before sending a private message." };
+        }
+      }
+
+      const replyTarget = parsed.data.replyToMessageId
+        ? await tx.message.findFirst({
+            select: { id: true },
+            where: {
+              conversationId: parsed.data.conversationId,
+              id: parsed.data.replyToMessageId,
+            },
+          })
+        : null;
+      if (parsed.data.replyToMessageId && !replyTarget) {
+        return { error: "The message you are replying to is unavailable." };
+      }
+
       const message = await tx.message.create({
         data: {
           body: parsed.data.body.trim(),
@@ -174,7 +219,6 @@ export async function sendMessageAction(
           senderId: user.id,
         },
       });
-      createdMessageId = message.id;
 
       await tx.conversation.update({
         where: { id: parsed.data.conversationId },
@@ -210,12 +254,16 @@ export async function sendMessageAction(
           userId: participantId,
         })),
       });
+      return { messageId: message.id };
     });
+
+    if ("error" in result) return { error: result.error };
+    if ("duplicate" in result) return { success: true };
 
     revalidatePath("/app/messages");
     revalidatePath(`/app/messages/${parsed.data.conversationId}`);
     revalidatePath("/app/notifications");
-    return { messageId: createdMessageId, success: true };
+    return { messageId: result.messageId, success: true };
   } catch (error) {
     console.error("Failed to send message:", error);
     return { error: "Failed to send message." };
@@ -314,7 +362,7 @@ export async function editMessageAction(messageId: string, body: string) {
         },
       },
     });
-  });
+  }, { timeout: messageMutationTransactionTimeoutMs });
 
   revalidatePath("/app/messages");
   revalidatePath(`/app/messages/${message.conversationId}`);
@@ -373,7 +421,7 @@ export async function deleteMessageAction(messageId: string) {
         },
       },
     });
-  });
+  }, { timeout: messageMutationTransactionTimeoutMs });
 
   revalidatePath("/app/messages");
   revalidatePath(`/app/messages/${message.conversationId}`);
@@ -411,12 +459,33 @@ export async function removeConversationForMeAction(conversationId: string) {
   return { success: true };
 }
 
-export async function markConversationReadAction(conversationId: string) {
+export async function markConversationReadAction(
+  conversationId: string,
+  throughEntryId?: string,
+  throughEntryKind?: "event" | "message",
+) {
   const user = await requireUser();
   const parsed = z.string().cuid().safeParse(conversationId);
   if (!parsed.success) return { error: "Invalid conversation." };
+  const hasReadMarker = Boolean(throughEntryId || throughEntryKind);
+  const parsedEntryId = throughEntryId
+    ? parseMessageRouteId(throughEntryId)
+    : null;
+  if (
+    hasReadMarker &&
+    (!parsedEntryId ||
+      (throughEntryKind !== "event" && throughEntryKind !== "message"))
+  ) {
+    return { error: "Invalid read marker." };
+  }
 
-  const marked = await markConversationReadForUser(parsed.data, user.id);
+  const marked = await markConversationReadForUser(
+    parsed.data,
+    user.id,
+    parsedEntryId && throughEntryKind
+      ? { id: parsedEntryId, kind: throughEntryKind }
+      : null,
+  );
   if (!marked) return { error: "Conversation not found." };
 
   revalidatePath("/app/messages");

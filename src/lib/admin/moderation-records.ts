@@ -14,6 +14,25 @@ export const moderationCaseStatuses = [
   "CLOSED",
 ] as const;
 
+export const messageModerationCaseSources = [
+  "MESSAGE_REPORT",
+  "CONVERSATION_REPORT",
+  "POLICY_FLAG",
+  "SUPPORT_CASE",
+  "SECURITY_INVESTIGATION",
+] as const;
+
+export const activeMessageModerationCaseStatuses = [
+  "NEW",
+  "TRIAGED",
+  "ASSIGNED",
+  "IN_REVIEW",
+  "NEEDS_INFORMATION",
+  "ACTION_REQUIRED",
+  "ESCALATED",
+  "APPEALED",
+] as const;
+
 export const messageReviewScopeOptions = [
   {
     after: 0,
@@ -330,27 +349,8 @@ export async function getAdminMessageCases() {
     take: 50,
     where: {
       conversationId: { not: null },
-      source: {
-        in: [
-          "MESSAGE_REPORT",
-          "CONVERSATION_REPORT",
-          "POLICY_FLAG",
-          "SUPPORT_CASE",
-          "SECURITY_INVESTIGATION",
-        ],
-      },
-      status: {
-        in: [
-          "NEW",
-          "TRIAGED",
-          "ASSIGNED",
-          "IN_REVIEW",
-          "NEEDS_INFORMATION",
-          "ACTION_REQUIRED",
-          "ESCALATED",
-          "APPEALED",
-        ],
-      },
+      source: { in: [...messageModerationCaseSources] },
+      status: { in: [...activeMessageModerationCaseStatuses] },
     },
   });
 
@@ -425,8 +425,29 @@ export async function getScopedMessageContext({
   if (!normalizedScope) return { kind: "hidden", messages: [] };
 
   const authorizedScope = await getPrisma().moderationMessageScope.findFirst({
-    select: { id: true, reason: true },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: {
+      case: {
+        select: {
+          reporterId: true,
+          source: true,
+          targetId: true,
+          targetType: true,
+        },
+      },
+      id: true,
+      reason: true,
+    },
     where: {
+      case: {
+        is: {
+          conversationId,
+          id: caseId,
+          messageId,
+          source: { in: [...messageModerationCaseSources] },
+          status: { in: [...activeMessageModerationCaseStatuses] },
+        },
+      },
       caseId,
       conversationId,
       messageId,
@@ -455,6 +476,15 @@ export async function getScopedMessageContext({
     where: { conversationId, id: messageId },
   });
   if (!reportedMessage) return { kind: "message-unavailable", messages: [] };
+  if (
+    authorizedScope.case.source === "MESSAGE_REPORT" &&
+    (!authorizedScope.case.reporterId ||
+      authorizedScope.case.targetType !== "MESSAGE" ||
+      authorizedScope.case.targetId !== reportedMessage.id ||
+      authorizedScope.case.reporterId === reportedMessage.senderId)
+  ) {
+    return { kind: "hidden", messages: [] };
+  }
   const [before, after] = await Promise.all([
     normalizedScope.before
       ? getPrisma().message.findMany({
@@ -511,6 +541,7 @@ export async function getScopedMessageContext({
     kind: "available",
     messages: rows.map((message) => ({
       ...message,
+      body: message.deletedAt ? "" : message.body,
       sender: users.get(message.senderId) ?? null,
     })),
   };
@@ -550,7 +581,7 @@ export async function getAdminModerationCase(caseId: string) {
       linkedReportId: true,
       messageId: true,
       messageScopes: {
-        orderBy: { createdAt: "desc" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         select: {
           conversationId: true,
           createdAt: true,

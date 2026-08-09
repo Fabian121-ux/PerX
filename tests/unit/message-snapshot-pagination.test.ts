@@ -1,18 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const prismaMocks = vi.hoisted(() => ({
-  blockedUserFindMany: vi.fn(),
   conversationFindMany: vi.fn(),
-  conversationParticipantFindUnique: vi.fn(),
 }));
 
 vi.mock("@/lib/db/prisma", () => ({
   getPrisma: () => ({
-    blockedUser: { findMany: prismaMocks.blockedUserFindMany },
     conversation: { findMany: prismaMocks.conversationFindMany },
-    conversationParticipant: {
-      findUnique: prismaMocks.conversationParticipantFindUnique,
-    },
   }),
 }));
 
@@ -22,10 +16,6 @@ import { decodeCursor } from "@/lib/data/cursor";
 describe("message snapshot history bounds", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    prismaMocks.blockedUserFindMany.mockResolvedValue([]);
-    prismaMocks.conversationParticipantFindUnique.mockResolvedValue({
-      removedAt: null,
-    });
   });
 
   it("returns a cursor for messages beyond the bounded live snapshot", async () => {
@@ -113,10 +103,7 @@ describe("message snapshot history bounds", () => {
     });
   });
 
-  it("denies an exact conversation after either participant blocks the other", async () => {
-    prismaMocks.blockedUserFindMany.mockResolvedValue([
-      { blockedUserId: "user-2", blockerUserId: "user-1" },
-    ]);
+  it("uses symmetric block relations when loading an exact conversation", async () => {
     prismaMocks.conversationFindMany.mockResolvedValue([]);
 
     const snapshot = await getMessageSnapshot({
@@ -124,16 +111,43 @@ describe("message snapshot history bounds", () => {
       userId: "user-1",
     });
 
-    expect(snapshot).toEqual({ conversations: null, notFound: true });
-    expect(prismaMocks.conversationFindMany).toHaveBeenCalledWith(
+    expect(snapshot).toEqual({
+      conversationList: null,
+      conversations: null,
+      notFound: true,
+    });
+    expect(prismaMocks.conversationFindMany).toHaveBeenNthCalledWith(
+      1,
       expect.objectContaining({
         where: expect.objectContaining({
           participants: {
-            every: { userId: { notIn: ["user-2"] } },
+            none: {
+              user: {
+                OR: [
+                  { blocksMade: { some: { blockedUserId: "user-1" } } },
+                  { blocksReceived: { some: { blockerUserId: "user-1" } } },
+                ],
+              },
+            },
             some: { removedAt: null, userId: "user-1" },
           },
         }),
       }),
+    );
+  });
+
+  it("skips the full conversation list between periodic exact-stream refreshes", async () => {
+    prismaMocks.conversationFindMany.mockResolvedValue([]);
+
+    await getMessageSnapshot({
+      conversationId: "conversation-1",
+      includeConversationList: false,
+      userId: "user-1",
+    });
+
+    expect(prismaMocks.conversationFindMany).toHaveBeenCalledTimes(1);
+    expect(prismaMocks.conversationFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ take: 1 }),
     );
   });
 });

@@ -4,6 +4,7 @@ import {
   Fragment,
   useCallback,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -116,6 +117,19 @@ export type WorkspaceConversation = {
   unreadCount?: number;
 };
 
+type WorkspaceMessageMutation = {
+  body: string;
+  conversationId: string;
+  deletedAt: string | null;
+  editedAt: string | null;
+  id: string;
+};
+
+type WorkspaceConversationListSnapshot = {
+  ids: string[];
+  nextCursor: string | null;
+};
+
 export function MessageWorkspace({
   backHref,
   conversations,
@@ -123,6 +137,7 @@ export function MessageWorkspace({
   defaultConversationId,
   highlightEventId,
   highlightMessageId,
+  initialMutationCursor,
   olderConversationsCursor,
   userRoles,
 }: {
@@ -132,6 +147,7 @@ export function MessageWorkspace({
   defaultConversationId?: string;
   highlightEventId?: string;
   highlightMessageId?: string;
+  initialMutationCursor?: string;
   olderConversationsCursor?: string | null;
   userRoles?: readonly string[];
 }) {
@@ -167,6 +183,7 @@ export function MessageWorkspace({
   const [liveState, setLiveState] = useState<
     "connecting" | "live" | "reconnecting" | "fallback"
   >("connecting");
+  const [liveConnectionVersion, setLiveConnectionVersion] = useState(0);
   const [isPending, startTransition] = useTransition();
   const [isOlderPending, startOlderTransition] = useTransition();
   const [isOlderConversationsPending, startOlderConversationsTransition] =
@@ -198,9 +215,22 @@ export function MessageWorkspace({
   const [olderConversationCursor, setOlderConversationCursor] = useState(
     olderConversationsCursor ?? null,
   );
+  const [documentVisible, setDocumentVisible] = useState(true);
+  const [historyAtBottom, setHistoryAtBottom] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      (typeof window.matchMedia !== "function" ||
+        window.matchMedia("(max-width: 1023px)").matches),
+  );
   const isComposingRef = useRef(false);
   const listRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const mutationCursorsRef = useRef<Record<string, string>>(
+    defaultConversationId && initialMutationCursor
+      ? { [defaultConversationId]: initialMutationCursor }
+      : {},
+  );
 
   useLayoutEffect(() => {
     activeIdRef.current = activeId;
@@ -268,6 +298,23 @@ export function MessageWorkspace({
   }, [mobileDetailOpen]);
 
   useEffect(() => {
+    const updateVisibility = () =>
+      setDocumentVisible(document.visibilityState === "visible");
+    updateVisibility();
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", updateVisibility);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia("(max-width: 1023px)");
+    const updateViewport = () => setIsMobileViewport(media.matches);
+    media.addEventListener?.("change", updateViewport);
+    return () => media.removeEventListener?.("change", updateViewport);
+  }, []);
+
+  useEffect(() => {
     const handleGlobalClick = (event: MouseEvent) => {
       if (
         openActionMenuMessageId &&
@@ -295,6 +342,87 @@ export function MessageWorkspace({
     setOpenActionMenuMessageId("");
   }, []);
 
+  const updateConversations = useEffectEvent(
+    (
+      incoming: WorkspaceConversation[],
+      messageMutations: WorkspaceMessageMutation[] = [],
+      conversationList: WorkspaceConversationListSnapshot | null = null,
+    ) => {
+      if (conversationList) {
+        setOlderConversationCursor(conversationList.nextCursor);
+      }
+      setSyncedConversations((current) =>
+        mergeWorkspaceConversationSnapshots(
+          current,
+          incoming,
+          messageMutations,
+          activeIdRef.current,
+          conversationList,
+          highlightMessageId,
+          highlightEventId,
+        ),
+      );
+    },
+  );
+
+  const openHistoryConversation = useEffectEvent(
+    async (conversationId: string) => {
+      try {
+        const response = await fetch(
+          `/api/messages/sync?conversationId=${encodeURIComponent(conversationId)}`,
+          { cache: "no-store" },
+        );
+        if (!response.ok) {
+          setSyncedConversations((current) =>
+            current.filter((conversation) => conversation.id !== conversationId),
+          );
+          return;
+        }
+        const incoming = parseConversationStreamEnvelope(await response.json());
+        if (
+          !incoming ||
+          !incoming.conversations.some(
+            (conversation) => conversation.id === conversationId,
+          )
+        ) {
+          setSyncedConversations((current) =>
+            current.filter((conversation) => conversation.id !== conversationId),
+          );
+          return;
+        }
+        if (incoming.mutationCursor) {
+          mutationCursorsRef.current[conversationId] = incoming.mutationCursor;
+        }
+        if (incoming.conversationList) {
+          setOlderConversationCursor(incoming.conversationList.nextCursor);
+        }
+        setSyncedConversations((current) =>
+          mergeWorkspaceConversationSnapshots(
+            current,
+            incoming.conversations,
+            incoming.messageMutations,
+            activeIdRef.current,
+            incoming.conversationList,
+            highlightMessageId,
+            highlightEventId,
+          ),
+        );
+        inlineDetailHistoryRef.current = true;
+        setActivatedConversationId(conversationId);
+        setActiveId(conversationId);
+        setMobileDetailOpen(true);
+        document.documentElement.classList.add(
+          "perx-mobile-conversation-active",
+        );
+        window.requestAnimationFrame(() =>
+          conversationHeaderRef.current?.focus(),
+        );
+      } catch {
+        // Keep the current authorized conversation visible on transient failures.
+      }
+    },
+  );
+
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
       const conversationId = (event.state as {
@@ -306,19 +434,14 @@ export function MessageWorkspace({
           (conversation) => conversation.id === conversationId,
         )
       ) {
-        inlineDetailHistoryRef.current = true;
-        setActiveId(conversationId);
-        setMobileDetailOpen(true);
-        document.documentElement.classList.add(
-          "perx-mobile-conversation-active",
-        );
-        window.requestAnimationFrame(() => conversationHeaderRef.current?.focus());
+        void openHistoryConversation(conversationId);
         return;
       }
       if (!inlineDetailHistoryRef.current && !mobileDetailOpenRef.current) {
         return;
       }
       inlineDetailHistoryRef.current = false;
+      setActivatedConversationId("");
       setMobileDetailOpen(false);
       window.requestAnimationFrame(() => {
         conversationButtonRefs.current[activeIdRef.current]?.focus();
@@ -332,79 +455,78 @@ export function MessageWorkspace({
     let active = true;
     let eventSource: EventSource | null = null;
     let fallbackInterval: number | null = null;
-    const updateConversations = (incoming: WorkspaceConversation[]) => {
-      setSyncedConversations((current) => {
-        if (!activeId) return incoming;
-        const incomingById = new Map(
-          incoming.map((conversation) => [conversation.id, conversation]),
-        );
-        const merged = current.map((conversation) => {
-          const next = incomingById.get(conversation.id);
-          if (!next) return conversation;
-          const mergedMessages = mergeWorkspaceMessages(
-            conversation.messages,
-            next.messages,
-          );
-          const mergedEvents = mergeWorkspaceEvents(
-            conversation.events,
-            next.events,
-          );
-          if (!highlightMessageId && !highlightEventId) {
-            return {
-              ...next,
-              events: mergedEvents,
-              messages: mergedMessages,
-              olderMessagesCursor:
-                conversation.olderMessagesCursor === undefined
-                  ? next.olderMessagesCursor
-                  : conversation.olderMessagesCursor,
-            };
-          }
-          const target = conversation.messages.find(
-            (message) => message.id === highlightMessageId,
-          );
-          const targetEvent = conversation.events?.find(
-            (event) => event.id === highlightEventId,
-          );
-          if (target && !mergedMessages.some((message) => message.id === target.id)) {
-            mergedMessages.push(target);
-          }
-          if (
-            targetEvent &&
-            !mergedEvents.some((event) => event.id === targetEvent.id)
-          ) {
-            mergedEvents.push(targetEvent);
-          }
-          return {
-            ...next,
-            events: mergeWorkspaceEvents(undefined, mergedEvents),
-            messages: mergeWorkspaceMessages([], mergedMessages),
-            olderMessagesCursor:
-              conversation.olderMessagesCursor === undefined
-                ? next.olderMessagesCursor
-                : conversation.olderMessagesCursor,
-          };
+    let unavailableHandled = false;
+    const stopFallback = () => {
+      if (fallbackInterval === null) return;
+      window.clearInterval(fallbackInterval);
+      fallbackInterval = null;
+    };
+    const recoverAuthorizedList = async () => {
+      if (unavailableHandled) return;
+      unavailableHandled = true;
+      eventSource?.close();
+      stopFallback();
+      setActivatedConversationId("");
+      setMobileDetailOpen(false);
+      setLocalMessages({});
+      setReplyTarget(null);
+      setSyncedConversations([]);
+      setLiveState("fallback");
+      try {
+        const response = await fetch("/api/messages/sync", {
+          cache: "no-store",
         });
-        for (const conversation of incoming) {
-          if (!current.some((candidate) => candidate.id === conversation.id)) {
-            merged.push(conversation);
-          }
+        if (!response.ok) return;
+        const incoming = parseConversationStreamEnvelope(await response.json());
+        if (!active || !incoming) return;
+        const authorizedConversations = sortWorkspaceConversations(
+          applyWorkspaceMessageMutations(
+            incoming.conversations,
+            incoming.messageMutations,
+          ),
+        );
+        setSyncedConversations(authorizedConversations);
+        if (incoming.conversationList) {
+          setOlderConversationCursor(incoming.conversationList.nextCursor);
         }
-        return merged;
-      });
+        setActiveId(authorizedConversations[0]?.id ?? "");
+        setLiveConnectionVersion((version) => version + 1);
+      } catch {
+        // Private conversation state remains cleared when access cannot be recovered.
+      }
     };
     const sync = async () => {
       try {
+        const params = new URLSearchParams();
+        if (activeId) {
+          params.set("conversationId", activeId);
+          const mutationCursor = mutationCursorsRef.current[activeId];
+          if (mutationCursor) params.set("mutationCursor", mutationCursor);
+        }
         const response = await fetch(
-          activeId
-            ? `/api/messages/sync?conversationId=${encodeURIComponent(activeId)}`
-            : "/api/messages/sync",
+          `/api/messages/sync${params.size ? `?${params}` : ""}`,
           { cache: "no-store" },
         );
+        if (response.status === 400 && activeId) {
+          delete mutationCursorsRef.current[activeId];
+          void recoverAuthorizedList();
+          return;
+        }
+        if ([401, 403, 404].includes(response.status)) {
+          void recoverAuthorizedList();
+          return;
+        }
         if (!response.ok) return;
-        const incoming = parseConversationEnvelope(await response.json());
+        const incoming = parseConversationStreamEnvelope(await response.json());
         if (active && incoming) {
-          updateConversations(incoming);
+          if (activeId && incoming.mutationCursor) {
+            mutationCursorsRef.current[activeId] = incoming.mutationCursor;
+          }
+          updateConversations(
+            incoming.conversations,
+            incoming.messageMutations,
+            incoming.conversationList,
+          );
         }
       } catch {
         // Polling is the fallback freshness path; persisted messages remain available after refresh.
@@ -421,32 +543,49 @@ export function MessageWorkspace({
     if (typeof EventSource === "undefined") {
       startFallback();
     } else {
-      const url = activeId
-        ? `/api/messages/events?conversationId=${encodeURIComponent(activeId)}`
-        : "/api/messages/events";
+      const params = new URLSearchParams();
+      if (activeId) {
+        params.set("conversationId", activeId);
+        const mutationCursor = mutationCursorsRef.current[activeId];
+        if (mutationCursor) params.set("mutationCursor", mutationCursor);
+      }
+      const url = `/api/messages/events${params.size ? `?${params}` : ""}`;
       eventSource = new EventSource(url);
       eventSource.addEventListener("open", () => {
         if (!active) return;
         setLiveState("live");
-        if (fallbackInterval !== null) {
-          window.clearInterval(fallbackInterval);
-          fallbackInterval = null;
-        }
+        stopFallback();
       });
       eventSource.addEventListener("conversations", (event) => {
         if (!active) return;
-        let incoming: WorkspaceConversation[] | null = null;
+        let incoming: ReturnType<typeof parseConversationStreamEnvelope> = null;
         try {
-          incoming = parseConversationEnvelope(
+          incoming = parseConversationStreamEnvelope(
             JSON.parse((event as MessageEvent).data),
           );
         } catch {
           return;
         }
         if (incoming) {
-          updateConversations(incoming);
+          const messageEvent = event as MessageEvent;
+          if (activeId && messageEvent.lastEventId) {
+            mutationCursorsRef.current[activeId] = messageEvent.lastEventId;
+          }
+          updateConversations(
+            incoming.conversations,
+            incoming.messageMutations,
+            incoming.conversationList,
+          );
+          stopFallback();
           setLiveState("live");
           window.dispatchEvent(new Event("perx-unread-refresh"));
+        }
+      });
+      eventSource.addEventListener("mutation-checkpoint", (event) => {
+        if (!active || !activeId) return;
+        const messageEvent = event as MessageEvent;
+        if (messageEvent.lastEventId) {
+          mutationCursorsRef.current[activeId] = messageEvent.lastEventId;
         }
       });
       eventSource.addEventListener("stream-error", () => {
@@ -456,8 +595,7 @@ export function MessageWorkspace({
       });
       eventSource.addEventListener("unavailable", () => {
         if (!active) return;
-        eventSource?.close();
-        startFallback();
+        void recoverAuthorizedList();
       });
       eventSource.onerror = () => {
         if (!active) return;
@@ -469,13 +607,27 @@ export function MessageWorkspace({
     return () => {
       active = false;
       eventSource?.close();
-      if (fallbackInterval !== null) window.clearInterval(fallbackInterval);
+      stopFallback();
     };
-  }, [activeId, highlightEventId, highlightMessageId]);
+  }, [activeId, liveConnectionVersion]);
 
   const activeConversation =
     syncedConversations.find((conversation) => conversation.id === activeId) ??
     syncedConversations[0];
+
+  useEffect(() => {
+    const node = historyRef.current;
+    if (!node) return;
+    const updateHistoryPosition = () => {
+      const distanceFromBottom =
+        node.scrollHeight - node.scrollTop - node.clientHeight;
+      setHistoryAtBottom(distanceFromBottom <= 32);
+    };
+    updateHistoryPosition();
+    node.addEventListener("scroll", updateHistoryPosition, { passive: true });
+    return () => node.removeEventListener("scroll", updateHistoryPosition);
+  }, [activeConversation?.id]);
+
   const draft = drafts[activeConversation?.id ?? activeId] ?? "";
   const visibleConversations = useMemo(() => {
     const query = conversationQuery.trim().toLocaleLowerCase();
@@ -523,7 +675,9 @@ export function MessageWorkspace({
       }),
     [activeConversation?.events, messages],
   );
-  const latestEntryId = timeline.at(-1)?.id;
+  const latestEntry = timeline.at(-1);
+  const latestEntryId = latestEntry?.id;
+  const latestEntryKind = latestEntry?.kind;
 
   const loadOlderMessages = () => {
     const conversationId = activeConversation?.id;
@@ -615,14 +769,24 @@ export function MessageWorkspace({
     if (highlightedMessageId) return;
     const node = historyRef.current;
     if (!node) return;
-    const distanceFromBottom =
-      node.scrollHeight - node.scrollTop - node.clientHeight;
-    if (!conversationChanged && distanceFromBottom > 32) return;
+    if (!conversationChanged && !historyAtBottom) return;
     node.scrollTo({
       behavior: "smooth",
       top: node.scrollHeight,
     });
-  }, [activeConversation?.id, highlightedMessageId, timeline.length]);
+    if (!conversationChanged) return;
+    const frame = window.requestAnimationFrame(() => {
+      const distanceFromBottom =
+        node.scrollHeight - node.scrollTop - node.clientHeight;
+      setHistoryAtBottom(distanceFromBottom <= 32);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [
+    activeConversation?.id,
+    highlightedMessageId,
+    historyAtBottom,
+    timeline.length,
+  ]);
 
   useLayoutEffect(() => {
     const anchor = historyScrollAnchorRef.current;
@@ -648,7 +812,13 @@ export function MessageWorkspace({
   useEffect(() => {
     if (
       !activeConversation?.id ||
-      activatedConversationId !== activeConversation.id
+      activatedConversationId !== activeConversation.id ||
+      !latestEntryId ||
+      !latestEntryKind ||
+      !documentVisible ||
+      !historyAtBottom ||
+      highlightedMessageId ||
+      (isMobileViewport && !mobileDetailOpen)
     ) {
       return;
     }
@@ -657,7 +827,11 @@ export function MessageWorkspace({
     let retryCount = 0;
     const markRead = async () => {
       try {
-        const result = await markConversationReadAction(activeConversation.id);
+        const result = await markConversationReadAction(
+          activeConversation.id,
+          latestEntryId,
+          latestEntryKind,
+        );
         if (result.error) throw new Error(result.error);
         if (stopped) return;
         setSyncedConversations((current) =>
@@ -681,11 +855,80 @@ export function MessageWorkspace({
       stopped = true;
       if (retryTimer !== null) window.clearTimeout(retryTimer);
     };
-  }, [activatedConversationId, activeConversation?.id, latestEntryId]);
+  }, [
+    activatedConversationId,
+    activeConversation?.id,
+    documentVisible,
+    highlightedMessageId,
+    historyAtBottom,
+    isMobileViewport,
+    latestEntryId,
+    latestEntryKind,
+    mobileDetailOpen,
+  ]);
 
-  const openMobileConversation = (conversationId: string) => {
+  const openMobileConversation = async (conversationId: string) => {
+    if (conversationId !== activeIdRef.current) {
+      try {
+        const response = await fetch(
+          `/api/messages/sync?conversationId=${encodeURIComponent(conversationId)}`,
+          { cache: "no-store" },
+        );
+        if (!response.ok) {
+          setSyncedConversations((current) =>
+            current.filter((conversation) => conversation.id !== conversationId),
+          );
+          return;
+        }
+        const incoming = parseConversationStreamEnvelope(await response.json());
+        if (
+          !incoming ||
+          !incoming.conversations.some(
+            (conversation) => conversation.id === conversationId,
+          )
+        ) {
+          setSyncedConversations((current) =>
+            current.filter((conversation) => conversation.id !== conversationId),
+          );
+          return;
+        }
+        if (incoming.mutationCursor) {
+          mutationCursorsRef.current[conversationId] = incoming.mutationCursor;
+        }
+        if (incoming.conversationList) {
+          setOlderConversationCursor(incoming.conversationList.nextCursor);
+        }
+        setSyncedConversations((current) =>
+          mergeWorkspaceConversationSnapshots(
+            current,
+            incoming.conversations,
+            incoming.messageMutations,
+            activeIdRef.current,
+            incoming.conversationList,
+            highlightMessageId,
+            highlightEventId,
+          ),
+        );
+      } catch {
+        setSendError("Unable to open this conversation. Please try again.");
+        return;
+      }
+    }
+
+    setSyncedConversations((current) =>
+      current.map((conversation) =>
+        conversation.id === conversationId
+          ? conversation
+          : {
+              ...conversation,
+              events: conversation.events?.slice(-1),
+              messages: conversation.messages.slice(-1),
+            },
+      ),
+    );
     setOpenActionMenuMessageId("");
     setActivatedConversationId(conversationId);
+    if (conversationId !== activeIdRef.current) setHistoryAtBottom(false);
     const mobile =
       typeof window.matchMedia !== "function" ||
       window.matchMedia("(max-width: 1023px)").matches;
@@ -710,6 +953,7 @@ export function MessageWorkspace({
 
   const closeMobileConversation = () => {
     setOpenActionMenuMessageId("");
+    setActivatedConversationId("");
     if (inlineDetailHistoryRef.current) {
       inlineDetailHistoryRef.current = false;
       setMobileDetailOpen(false);
@@ -804,6 +1048,7 @@ export function MessageWorkspace({
   };
 
   const jumpToMessage = (messageId: string) => {
+    setHistoryAtBottom(false);
     setHighlightedMessageId(messageId);
     const target = messageRefs.current[messageId];
     if (!target) {
@@ -986,7 +1231,7 @@ export function MessageWorkspace({
                     : "hover:bg-[color:var(--px-surface-soft)]"
                 }`}
                 key={conversation.id}
-                onClick={() => openMobileConversation(conversation.id)}
+                onClick={() => void openMobileConversation(conversation.id)}
                 ref={(node) => {
                   conversationButtonRefs.current[conversation.id] = node;
                 }}
@@ -1993,7 +2238,7 @@ function MessageActionMenu({
               Remove message
             </button>
           ) : null}
-          {!message.id.startsWith("local-") ? (
+          {!mine && !message.id.startsWith("local-") ? (
             <Link
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
               href={reportHref}
@@ -2243,6 +2488,153 @@ function persistDraft(
   }
 }
 
+function mergeWorkspaceConversationSnapshots(
+  current: WorkspaceConversation[],
+  incoming: WorkspaceConversation[],
+  messageMutations: WorkspaceMessageMutation[],
+  activeConversationId: string,
+  conversationList: WorkspaceConversationListSnapshot | null,
+  highlightMessageId?: string,
+  highlightEventId?: string,
+) {
+  const authoritativeIds = conversationList
+    ? new Set(conversationList.ids)
+    : null;
+  const retainedCurrent = authoritativeIds
+    ? current.filter(
+        (conversation) =>
+          authoritativeIds.has(conversation.id) ||
+          conversation.id === activeConversationId,
+      )
+    : current;
+  const incomingById = new Map(
+    incoming.map((conversation) => [conversation.id, conversation]),
+  );
+  const merged = retainedCurrent.map((conversation) => {
+    const next = incomingById.get(conversation.id);
+    if (!next) return conversation;
+    const mergedMessages = mergeWorkspaceMessages(
+      conversation.messages,
+      next.messages,
+    );
+    const mergedEvents = mergeWorkspaceEvents(
+      conversation.events,
+      next.events,
+    );
+    if (!highlightMessageId && !highlightEventId) {
+      return {
+        ...next,
+        events: mergedEvents,
+        messages: mergedMessages,
+        olderMessagesCursor:
+          conversation.olderMessagesCursor === undefined
+            ? next.olderMessagesCursor
+            : conversation.olderMessagesCursor,
+      };
+    }
+    const target = conversation.messages.find(
+      (message) => message.id === highlightMessageId,
+    );
+    const targetEvent = conversation.events?.find(
+      (event) => event.id === highlightEventId,
+    );
+    if (
+      target &&
+      !mergedMessages.some((message) => message.id === target.id)
+    ) {
+      mergedMessages.push(target);
+    }
+    if (
+      targetEvent &&
+      !mergedEvents.some((event) => event.id === targetEvent.id)
+    ) {
+      mergedEvents.push(targetEvent);
+    }
+    return {
+      ...next,
+      events: mergeWorkspaceEvents(undefined, mergedEvents),
+      messages: mergeWorkspaceMessages([], mergedMessages),
+      olderMessagesCursor:
+        conversation.olderMessagesCursor === undefined
+          ? next.olderMessagesCursor
+          : conversation.olderMessagesCursor,
+    };
+  });
+  for (const conversation of incoming) {
+    if (
+      !retainedCurrent.some((candidate) => candidate.id === conversation.id)
+    ) {
+      merged.push(conversation);
+    }
+  }
+  return sortWorkspaceConversations(
+    applyWorkspaceMessageMutations(merged, messageMutations),
+  );
+}
+
+function sortWorkspaceConversations(conversations: WorkspaceConversation[]) {
+  return [...conversations].sort((left, right) => {
+    const leftTimestamp = Date.parse(left.timestamp ?? "");
+    const rightTimestamp = Date.parse(right.timestamp ?? "");
+    if (Number.isFinite(leftTimestamp) && Number.isFinite(rightTimestamp)) {
+      return rightTimestamp - leftTimestamp || right.id.localeCompare(left.id);
+    }
+    if (Number.isFinite(leftTimestamp)) return -1;
+    if (Number.isFinite(rightTimestamp)) return 1;
+    return 0;
+  });
+}
+
+function applyWorkspaceMessageMutations(
+  conversations: WorkspaceConversation[],
+  mutations: WorkspaceMessageMutation[],
+) {
+  if (!mutations.length) return conversations;
+  const mutationsByConversation = new Map<
+    string,
+    Map<string, WorkspaceMessageMutation>
+  >();
+  for (const mutation of mutations) {
+    const byMessage =
+      mutationsByConversation.get(mutation.conversationId) ??
+      new Map<string, WorkspaceMessageMutation>();
+    byMessage.set(mutation.id, mutation);
+    mutationsByConversation.set(mutation.conversationId, byMessage);
+  }
+
+  return conversations.map((conversation) => {
+    const byMessage = mutationsByConversation.get(conversation.id);
+    if (!byMessage) return conversation;
+    return {
+      ...conversation,
+      messages: conversation.messages.map((message) => {
+        const mutation = byMessage.get(message.id);
+        const replyMutation = message.replyTo
+          ? byMessage.get(message.replyTo.id)
+          : undefined;
+        return {
+          ...message,
+          ...(mutation
+            ? {
+                body: mutation.body,
+                deletedAt: mutation.deletedAt,
+                editedAt: mutation.editedAt,
+              }
+            : {}),
+          replyTo:
+            message.replyTo && replyMutation
+              ? {
+                  ...message.replyTo,
+                  body: replyMutation.body,
+                  deletedAt: replyMutation.deletedAt,
+                }
+              : message.replyTo,
+        };
+      }),
+    };
+  });
+}
+
 function mergeWorkspaceMessages(
   current: WorkspaceMessage[],
   incoming: WorkspaceMessage[],
@@ -2273,6 +2665,90 @@ function mergeWorkspaceEvents(
       new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
     return timeDifference || left.id.localeCompare(right.id);
   });
+}
+
+function parseConversationStreamEnvelope(value: unknown): {
+  conversationList: WorkspaceConversationListSnapshot | null;
+  conversations: WorkspaceConversation[];
+  messageMutations: WorkspaceMessageMutation[];
+  mutationCursor: string | null;
+} | null {
+  const conversations = parseConversationEnvelope(value);
+  if (!conversations || !value || typeof value !== "object") return null;
+  const payload = value as {
+    conversationList?: unknown;
+    messageMutations?: unknown;
+    mutationCursor?: unknown;
+  };
+  if (
+    payload.messageMutations !== undefined &&
+    !Array.isArray(payload.messageMutations)
+  ) {
+    return null;
+  }
+  let conversationList: WorkspaceConversationListSnapshot | null = null;
+  if (payload.conversationList !== undefined && payload.conversationList !== null) {
+    if (
+      typeof payload.conversationList !== "object" ||
+      Array.isArray(payload.conversationList)
+    ) {
+      return null;
+    }
+    const candidate = payload.conversationList as {
+      ids?: unknown;
+      nextCursor?: unknown;
+    };
+    if (
+      !Array.isArray(candidate.ids) ||
+      candidate.ids.length > 50 ||
+      !candidate.ids.every((id) => typeof id === "string") ||
+      !(
+        candidate.nextCursor === null ||
+        typeof candidate.nextCursor === "string"
+      )
+    ) {
+      return null;
+    }
+    conversationList = {
+      ids: candidate.ids,
+      nextCursor: candidate.nextCursor,
+    };
+  }
+  const messageMutations = (payload.messageMutations ?? []).flatMap(
+    (candidate): WorkspaceMessageMutation[] => {
+      if (
+        !candidate ||
+        typeof candidate !== "object" ||
+        Array.isArray(candidate)
+      ) {
+        return [];
+      }
+      const mutation = candidate as Partial<WorkspaceMessageMutation>;
+      if (
+        typeof mutation.id !== "string" ||
+        typeof mutation.conversationId !== "string" ||
+        typeof mutation.body !== "string" ||
+        !(
+          mutation.deletedAt === null ||
+          typeof mutation.deletedAt === "string"
+        ) ||
+        !(mutation.editedAt === null || typeof mutation.editedAt === "string")
+      ) {
+        return [];
+      }
+      return [mutation as WorkspaceMessageMutation];
+    },
+  );
+
+  return {
+    conversationList,
+    conversations,
+    messageMutations,
+    mutationCursor:
+      typeof payload.mutationCursor === "string"
+        ? payload.mutationCursor
+        : null,
+  };
 }
 
 function parseMessagePageEnvelope(value: unknown): {

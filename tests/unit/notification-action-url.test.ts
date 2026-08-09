@@ -98,7 +98,17 @@ describe("notification action URLs", () => {
       select: { conversationId: true, id: true, senderId: true },
       where: {
         conversation: {
-          participants: { some: { removedAt: null, userId: "user-1" } },
+          participants: {
+            none: {
+              user: {
+                OR: [
+                  { blocksMade: { some: { blockedUserId: "user-1" } } },
+                  { blocksReceived: { some: { blockerUserId: "user-1" } } },
+                ],
+              },
+            },
+            some: { removedAt: null, userId: "user-1" },
+          },
           status: "ACTIVE",
         },
         conversationId: "conversation-1",
@@ -273,7 +283,17 @@ describe("notification action URLs", () => {
     expect(prismaMocks.conversationEventFindFirst).toHaveBeenCalledWith({
       where: {
         conversation: {
-          participants: { some: { removedAt: null, userId: "user-1" } },
+          participants: {
+            none: {
+              user: {
+                OR: [
+                  { blocksMade: { some: { blockedUserId: "user-1" } } },
+                  { blocksReceived: { some: { blockerUserId: "user-1" } } },
+                ],
+              },
+            },
+            some: { removedAt: null, userId: "user-1" },
+          },
           status: "ACTIVE",
         },
         conversationId: "conversation-1",

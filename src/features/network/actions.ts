@@ -12,24 +12,13 @@ import {
 } from "@/lib/account/enforcement";
 import { assertCanRequestConnection } from "@/lib/account/enforcement";
 import { writeAuditLog } from "@/lib/logging/audit";
+import { lockUserPair } from "@/lib/network/pair-lock";
 import {
   isDiscoverableNetworkTarget,
   isEligibleNetworkAccount,
   networkAccountEligibilitySelect,
   type NetworkAccountSnapshot,
 } from "./eligibility";
-
-type PairLockClient = {
-  $executeRawUnsafe: (query: string, ...values: unknown[]) => Promise<unknown>;
-};
-
-function pairKey(a: string, b: string) {
-  return [a, b].sort().join(":");
-}
-
-async function lockUserPair(tx: PairLockClient, a: string, b: string) {
-  await tx.$executeRawUnsafe("SELECT pg_advisory_xact_lock(hashtext($1))", pairKey(a, b));
-}
 
 async function getNetworkPairAccounts(
   tx: Pick<Prisma.TransactionClient, "user">,

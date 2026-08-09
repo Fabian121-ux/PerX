@@ -3,12 +3,20 @@ import {
   validateCurrentSessionAccess,
 } from "@/lib/auth/session";
 import { getMessageSnapshot } from "@/lib/messages/snapshot";
+import { parseMessageRouteId } from "@/lib/messages/entry";
+import {
+  createMessageMutationBaseline,
+  getMessageMutationsAfter,
+  validateMessageMutationCursor,
+} from "@/lib/messages/mutations";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const streamIntervalMs = 2000;
 const keepAliveIntervalMs = 15000;
+const conversationListRefreshIntervalMs = 10000;
+const mutationCheckpointIntervalMs = 60000;
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -20,7 +28,32 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
-  const conversationId = url.searchParams.get("conversationId");
+  const rawConversationId = url.searchParams.get("conversationId");
+  const conversationId = rawConversationId
+    ? parseMessageRouteId(rawConversationId)
+    : null;
+  if (rawConversationId && !conversationId) {
+    return Response.json({ error: "Invalid conversation." }, { status: 400 });
+  }
+  const requestedMutationCursor = conversationId
+    ? (request.headers.get("last-event-id") ??
+      url.searchParams.get("mutationCursor"))
+    : null;
+  let initialMutationCursor = conversationId
+    ? createMessageMutationBaseline(user.id, conversationId)
+    : null;
+  if (requestedMutationCursor && conversationId) {
+    try {
+      validateMessageMutationCursor(
+        requestedMutationCursor,
+        user.id,
+        conversationId,
+      );
+      initialMutationCursor = requestedMutationCursor;
+    } catch {
+      return Response.json({ error: "Invalid cursor." }, { status: 400 });
+    }
+  }
   const initialSnapshot = await getMessageSnapshot({
     conversationId,
     userId: user.id,
@@ -40,6 +73,10 @@ export async function GET(request: Request) {
       let keepAlive: ReturnType<typeof setInterval> | null = null;
       let lastAccessValidationAt = Date.now();
       let accessValid = true;
+      let mutationCursor = initialMutationCursor;
+      let pendingInitialSnapshot: typeof initialSnapshot | null = initialSnapshot;
+      let lastConversationListRefreshAt = 0;
+      let lastMutationCheckpointSentAt = 0;
       let snapshotInFlight = false;
 
       const enqueue = (chunk: string) => {
@@ -75,10 +112,21 @@ export async function GET(request: Request) {
             close();
             return;
           }
-          const snapshot = await getMessageSnapshot({
-            conversationId,
-            userId: user.id,
-          });
+          const includeConversationList =
+            !conversationId ||
+            Date.now() - lastConversationListRefreshAt >=
+              conversationListRefreshIntervalMs;
+          const snapshot = pendingInitialSnapshot
+            ? pendingInitialSnapshot
+            : await getMessageSnapshot({
+                conversationId,
+                includeConversationList,
+                userId: user.id,
+              });
+          if (pendingInitialSnapshot) pendingInitialSnapshot = null;
+          if (includeConversationList || lastConversationListRefreshAt === 0) {
+            lastConversationListRefreshAt = Date.now();
+          }
           if (snapshot.notFound) {
             enqueue("event: unavailable\ndata: {}\n\n");
             close();
@@ -86,6 +134,16 @@ export async function GET(request: Request) {
           }
 
           const conversations = snapshot.conversations ?? [];
+          const previousMutationCursor = mutationCursor;
+          const mutationPage =
+            conversationId && mutationCursor
+              ? await getMessageMutationsAfter({
+                  conversationId,
+                  cursor: mutationCursor,
+                  userId: user.id,
+                })
+              : null;
+          if (mutationPage) mutationCursor = mutationPage.checkpoint;
           const signature = JSON.stringify(
             conversations.map((conversation) => [
               conversation.id,
@@ -102,12 +160,28 @@ export async function GET(request: Request) {
             ]),
           );
 
-          if (signature !== lastSignature) {
+          if (
+            signature !== lastSignature ||
+            Boolean(mutationPage?.items.length)
+          ) {
             lastSignature = signature;
+            lastMutationCheckpointSentAt = Date.now();
             enqueue(
-              `event: conversations\ndata: ${JSON.stringify({
+              `${mutationCursor ? `id: ${mutationCursor}\n` : ""}event: conversations\ndata: ${JSON.stringify({
+                conversationList: snapshot.conversationList,
                 conversations,
+                messageMutations: mutationPage?.items ?? [],
               })}\n\n`,
+            );
+          } else if (
+            mutationCursor &&
+            mutationCursor !== previousMutationCursor &&
+            Date.now() - lastMutationCheckpointSentAt >=
+              mutationCheckpointIntervalMs
+          ) {
+            lastMutationCheckpointSentAt = Date.now();
+            enqueue(
+              `id: ${mutationCursor}\nevent: mutation-checkpoint\ndata: {}\n\n`,
             );
           }
         } catch {

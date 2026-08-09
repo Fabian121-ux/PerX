@@ -17,7 +17,10 @@ const prisma = vi.hoisted(() => ({
   message: { findFirst: mocks.messageFindFirst },
 }));
 
-vi.mock("@/lib/auth/session", () => ({ requireUser: mocks.requireUser }));
+vi.mock("@/lib/auth/session", () => ({
+  getCurrentSessionTokenHash: vi.fn().mockResolvedValue("session-hash"),
+  requireUser: mocks.requireUser,
+}));
 vi.mock("@/lib/db/prisma", () => ({ getPrisma: () => prisma }));
 vi.mock("@/lib/env", () => ({
   getResolvedDataMode: () => "database",

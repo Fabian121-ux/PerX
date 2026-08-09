@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const prismaMocks = vi.hoisted(() => ({
-  blockedUserFindMany: vi.fn(),
   conversationFindMany: vi.fn(),
   messageFindMany: vi.fn(),
   opportunityFindMany: vi.fn(),
@@ -10,7 +9,6 @@ const prismaMocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/db/prisma", () => ({
   getPrisma: () => ({
-    blockedUser: { findMany: prismaMocks.blockedUserFindMany },
     conversation: { findMany: prismaMocks.conversationFindMany },
     message: { findMany: prismaMocks.messageFindMany },
     opportunity: { findMany: prismaMocks.opportunityFindMany },
@@ -37,7 +35,6 @@ describe("cursor pagination", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetMockStore();
-    prismaMocks.blockedUserFindMany.mockResolvedValue([]);
   });
 
   it("round-trips an opaque timestamp and id cursor", () => {
@@ -131,9 +128,6 @@ describe("cursor pagination", () => {
   });
 
   it("retains removed-conversation and blocked-participant filters", async () => {
-    prismaMocks.blockedUserFindMany.mockResolvedValue([
-      { blockedUserId: "blocked-user", blockerUserId: "user-1" },
-    ]);
     prismaMocks.conversationFindMany.mockResolvedValue([]);
 
     await prismaProvider.app.getConversationsPage("user-1", { pageSize: 7 });
@@ -144,7 +138,14 @@ describe("cursor pagination", () => {
         where: {
           status: "ACTIVE",
           participants: {
-            every: { userId: { notIn: ["blocked-user"] } },
+            none: {
+              user: {
+                OR: [
+                  { blocksMade: { some: { blockedUserId: "user-1" } } },
+                  { blocksReceived: { some: { blockerUserId: "user-1" } } },
+                ],
+              },
+            },
             some: { removedAt: null, userId: "user-1" },
           },
         },

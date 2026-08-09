@@ -14,6 +14,7 @@ import { assertAccountAccess } from "@/lib/account/enforcement";
 import { getPrisma } from "@/lib/db/prisma";
 import { reportReasonValues } from "@/lib/options";
 import { writeAuditLog } from "@/lib/logging/audit";
+import { lockUserPair } from "@/lib/network/pair-lock";
 
 const reportTargetValues = [
   "MESSAGE",
@@ -81,12 +82,14 @@ export async function submitUserReportAction(formData: FormData) {
   }
 
   const report = await getPrisma().$transaction(async (tx) => {
+    if (parsed.data.blockAfterReport && access.reportedUserId) {
+      await lockUserPair(tx, user.id, access.reportedUserId);
+    }
     const createdReport = await tx.userReport.create({
       data: {
         category: parsed.data.category,
-        contextConversationId:
-          access.contextConversationId ?? parsed.data.contextConversationId,
-        contextMessageId: access.contextMessageId ?? parsed.data.contextMessageId,
+        contextConversationId: access.contextConversationId ?? null,
+        contextMessageId: access.contextMessageId ?? null,
         details: parsed.data.details || null,
         reporterId: user.id,
         targetId: parsed.data.targetId,
@@ -98,10 +101,9 @@ export async function submitUserReportAction(formData: FormData) {
     const moderationCase = await tx.moderationCase.create({
       data: {
         category: parsed.data.category,
-        conversationId:
-          access.contextConversationId ?? parsed.data.contextConversationId,
+        conversationId: access.contextConversationId ?? null,
         linkedReportId: createdReport.id,
-        messageId: access.contextMessageId ?? parsed.data.contextMessageId,
+        messageId: access.contextMessageId ?? null,
         reporterId: user.id,
         reportedUserId: access.reportedUserId ?? null,
         source: sourceForTarget(parsed.data.targetType),
@@ -218,16 +220,11 @@ async function getReportAccessContext(
         conversation: { participants: { some: { userId: reporterId } } },
       },
     });
-    if (!message) return null;
+    if (!message || message.senderId === reporterId) return null;
     return {
       contextConversationId: message.conversationId,
       contextMessageId: message.id,
-      reportedUserId:
-        message.senderId !== reporterId
-          ? message.senderId
-          : message.conversation.participants.find(
-              (participant) => participant.userId !== reporterId,
-            )?.userId ?? null,
+      reportedUserId: message.senderId,
     };
   }
 

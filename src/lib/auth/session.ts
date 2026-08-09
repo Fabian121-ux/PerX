@@ -53,6 +53,12 @@ function sessionCookieName() {
   return getServerEnv().SESSION_COOKIE_NAME;
 }
 
+export async function getCurrentSessionTokenHash() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(sessionCookieName())?.value;
+  return token ? hashToken(token) : null;
+}
+
 function secureSessionCookie() {
   return process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
 }

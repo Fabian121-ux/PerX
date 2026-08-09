@@ -1,134 +1,92 @@
 import { getPrisma } from "@/lib/db/prisma";
 import { encodeCursor } from "@/lib/data/cursor";
+import { buildConversationAccessWhere } from "@/lib/messages/access";
+import type { Prisma } from "@/generated/prisma/client";
 
 type MessageSnapshotOptions = {
   conversationId?: string | null;
+  includeConversationList?: boolean;
   userId: string;
+};
+
+type ConversationSnapshotRow = Prisma.ConversationGetPayload<{
+  include: ReturnType<typeof conversationSnapshotInclude>;
+}>;
+
+type ConversationListSnapshot = {
+  ids: string[];
+  nextCursor: string | null;
 };
 
 export async function getMessageSnapshot({
   conversationId,
+  includeConversationList = true,
   userId,
 }: MessageSnapshotOptions) {
   const prisma = getPrisma();
-  const blockedUsers = await prisma.blockedUser.findMany({
-    select: { blockedUserId: true, blockerUserId: true },
-    where: {
-      OR: [{ blockerUserId: userId }, { blockedUserId: userId }],
-    },
-  });
-  const blockedUserIds = [
-    ...new Set(
-      blockedUsers.map((block) =>
-        block.blockerUserId === userId
-          ? block.blockedUserId
-          : block.blockerUserId,
-      ),
-    ),
-  ];
-
-  if (conversationId) {
-    const participant = await prisma.conversationParticipant.findUnique({
-      where: {
-        conversationId_userId: {
-          conversationId,
-          userId,
-        },
-      },
+  const accessWhere = buildConversationAccessWhere(userId);
+  const loadConversations = (fullHistory: boolean, exactId?: string) =>
+    prisma.conversation.findMany({
+      include: conversationSnapshotInclude(fullHistory),
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+      take: exactId ? 1 : 51,
+      where: { ...accessWhere, ...(exactId ? { id: exactId } : {}) },
     });
-    if (!participant || participant.removedAt) {
-      return { conversations: null, notFound: true };
+
+  let conversations;
+  if (conversationId) {
+    if (!includeConversationList) {
+      const exactConversations = await loadConversations(true, conversationId);
+      return exactConversations.length
+        ? formatMessageSnapshot(
+            exactConversations,
+            conversationId,
+            userId,
+            null,
+          )
+        : { conversationList: null, conversations: null, notFound: true };
     }
+    const [exactConversations, listConversations] = await Promise.all([
+      loadConversations(true, conversationId),
+      loadConversations(false),
+    ]);
+    if (!exactConversations.length) {
+      return { conversationList: null, conversations: null, notFound: true };
+    }
+    const visibleListConversations = listConversations.slice(0, 50);
+    const conversationsById = new Map(
+      visibleListConversations.map((conversation) => [conversation.id, conversation]),
+    );
+    conversationsById.set(conversationId, exactConversations[0]!);
+    conversations = [...conversationsById.values()];
+    return formatMessageSnapshot(
+      conversations,
+      conversationId,
+      userId,
+      conversationListSnapshot(listConversations, userId),
+    );
+  } else {
+    const listConversations = await loadConversations(false);
+    conversations = listConversations.slice(0, 50);
+    return formatMessageSnapshot(
+      conversations,
+      conversationId,
+      userId,
+      conversationListSnapshot(listConversations, userId),
+    );
   }
+}
 
-  const conversations = await prisma.conversation.findMany({
-    include: {
-      events: {
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: conversationId ? 50 : 1,
-      },
-      messages: {
-        include: {
-          readReceipts: { select: { userId: true } },
-          replyTo: {
-            select: {
-              body: true,
-              deletedAt: true,
-              id: true,
-              sender: { select: { id: true, name: true, username: true } },
-              senderId: true,
-            },
-          },
-          sender: {
-            select: { id: true, imageUrl: true, name: true, username: true },
-          },
-        },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: conversationId ? 51 : 1,
-      },
-      opportunity: { select: { title: true } },
-      participants: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              imageUrl: true,
-              name: true,
-              profile: {
-                select: {
-                  profileImageUrl: true,
-                  showLastActiveTime: true,
-                  showPresence: true,
-                },
-              },
-              sessions: {
-                orderBy: { lastSeenAt: "desc" },
-                select: { lastSeenAt: true },
-                take: 1,
-              },
-              username: true,
-            },
-          },
-        },
-      },
-      proposals: {
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        select: {
-          deal: {
-            select: {
-              currency: true,
-              id: true,
-              proposalVersion: { select: { versionNumber: true } },
-              settlementMode: true,
-              status: true,
-              valueMinor: true,
-            },
-          },
-        },
-        take: 1,
-        where: { deal: { isNot: null } },
-      },
-    },
-    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
-    take: 50,
-    where: {
-      ...(conversationId ? { id: conversationId } : {}),
-      participants: {
-        every: blockedUserIds.length
-          ? { userId: { notIn: blockedUserIds } }
-          : {},
-        some: { removedAt: null, userId },
-      },
-      status: "ACTIVE",
-    },
-  });
-
-  if (conversationId && conversations.length === 0) {
-    return { conversations: null, notFound: true };
-  }
-
+function formatMessageSnapshot(
+  conversations: ConversationSnapshotRow[],
+  conversationId: string | null | undefined,
+  userId: string,
+  conversationList: ConversationListSnapshot | null,
+) {
   return {
+    conversationList,
     conversations: conversations.map((conversation) => {
+      const fullHistory = conversation.id === conversationId;
       const participant = conversation.participants.find(
         (entry) => entry.userId === userId,
       );
@@ -140,11 +98,11 @@ export async function getMessageSnapshot({
         .filter((participantId) => participantId !== userId);
       const visibleMessages = conversation.messages.slice(
         0,
-        conversationId ? 50 : 1,
+        fullHistory ? 50 : 1,
       );
       const messages = [...visibleMessages].reverse();
       const olderMessagesCursor =
-        conversationId && conversation.messages.length > visibleMessages.length
+        fullHistory && conversation.messages.length > visibleMessages.length
           ? encodeCursor({
               id: visibleMessages.at(-1)!.id,
               scope: `messages:${userId}:${conversation.id}`,
@@ -157,8 +115,7 @@ export async function getMessageSnapshot({
       const unreadMessageCount = visibleMessages.filter(
         (message) =>
           message.senderId !== userId &&
-          (!participant?.lastReadAt ||
-            message.createdAt > participant.lastReadAt),
+          !message.readReceipts.some((receipt) => receipt.userId === userId),
       ).length;
       const unreadEventCount = conversation.events.filter(
         (event) =>
@@ -258,6 +215,95 @@ export async function getMessageSnapshot({
     }),
     notFound: false,
   };
+}
+
+function conversationListSnapshot(
+  rows: ConversationSnapshotRow[],
+  userId: string,
+): ConversationListSnapshot {
+  const visibleRows = rows.slice(0, 50);
+  const cursorRow = visibleRows.at(-1);
+  return {
+    ids: visibleRows.map((conversation) => conversation.id),
+    nextCursor:
+      rows.length > 50 && cursorRow
+        ? encodeCursor({
+            id: cursorRow.id,
+            scope: `conversations:${userId}`,
+            timestamp: cursorRow.updatedAt,
+          })
+        : null,
+  };
+}
+
+function conversationSnapshotInclude(fullHistory: boolean) {
+  return {
+      events: {
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: fullHistory ? 50 : 1,
+      },
+      messages: {
+        include: {
+          readReceipts: { select: { userId: true } },
+          replyTo: {
+            select: {
+              body: true,
+              deletedAt: true,
+              id: true,
+              sender: { select: { id: true, name: true, username: true } },
+              senderId: true,
+            },
+          },
+          sender: {
+            select: { id: true, imageUrl: true, name: true, username: true },
+          },
+        },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: fullHistory ? 51 : 1,
+      },
+      opportunity: { select: { title: true } },
+      participants: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              imageUrl: true,
+              name: true,
+              profile: {
+                select: {
+                  profileImageUrl: true,
+                  showLastActiveTime: true,
+                  showPresence: true,
+                },
+              },
+              sessions: {
+                orderBy: { lastSeenAt: "desc" },
+                select: { lastSeenAt: true },
+                take: 1,
+              },
+              username: true,
+            },
+          },
+        },
+      },
+      proposals: {
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        select: {
+          deal: {
+            select: {
+              currency: true,
+              id: true,
+              proposalVersion: { select: { versionNumber: true } },
+              settlementMode: true,
+              status: true,
+              valueMinor: true,
+            },
+          },
+        },
+        take: 1,
+        where: { deal: { isNot: null } },
+      },
+    } satisfies Prisma.ConversationInclude;
 }
 
 function toEventSnapshot(value: unknown): Record<string, unknown> {

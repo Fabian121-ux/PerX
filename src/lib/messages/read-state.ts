@@ -1,40 +1,50 @@
 import { getPrisma } from "@/lib/db/prisma";
+import { buildConversationAccessWhere } from "@/lib/messages/access";
 
 export async function markConversationReadForUser(
   conversationId: string,
   userId: string,
+  throughEntry?: { id: string; kind: "event" | "message" } | null,
 ) {
   return getPrisma().$transaction(async (tx) => {
-    const participant = await tx.conversationParticipant.findUnique({
-      select: { id: true, lastReadAt: true, removedAt: true },
-      where: {
-        conversationId_userId: { conversationId, userId },
+    const conversation = await tx.conversation.findFirst({
+      select: {
+        participants: {
+          select: { id: true, lastReadAt: true },
+          where: { removedAt: null, userId },
+        },
       },
+      where: { ...buildConversationAccessWhere(userId), id: conversationId },
     });
-    if (!participant || participant.removedAt) return false;
+    const participant = conversation?.participants[0];
+    if (!participant) return false;
 
-    const [latestMessage, latestEvent] = await Promise.all([
-      tx.message.findFirst({
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        select: { createdAt: true },
-        where: { conversationId },
-      }),
-      tx.conversationEvent.findFirst({
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        select: { createdAt: true },
-        where: { conversationId },
-      }),
-    ]);
-    const latestEntryAt = [latestMessage?.createdAt, latestEvent?.createdAt]
-      .filter((value): value is Date => Boolean(value))
-      .sort((a, b) => b.getTime() - a.getTime())[0];
-    const readThroughAt = latestEntryAt ?? participant.lastReadAt;
-    const unreadMessages = readThroughAt
+    const readThroughEntry = throughEntry
+      ? throughEntry.kind === "message"
+        ? await tx.message.findFirst({
+            select: { createdAt: true, id: true },
+            where: { conversationId, id: throughEntry.id },
+          })
+        : await tx.conversationEvent.findFirst({
+            select: { createdAt: true, id: true },
+            where: { conversationId, id: throughEntry.id },
+          })
+      : null;
+    if (throughEntry && !readThroughEntry) return false;
+
+    const readThroughAt = readThroughEntry?.createdAt ?? participant.lastReadAt;
+    const unreadMessages = readThroughEntry
       ? await tx.message.findMany({
           select: { id: true },
           where: {
             conversationId,
-            createdAt: { lte: readThroughAt },
+            OR: [
+              { createdAt: { lt: readThroughEntry.createdAt } },
+              {
+                createdAt: readThroughEntry.createdAt,
+                id: { lte: readThroughEntry.id },
+              },
+            ],
             readReceipts: { none: { userId } },
             senderId: { not: userId },
           },
@@ -63,30 +73,33 @@ export async function markConversationReadForUser(
       });
     }
 
-    await tx.notification.updateMany({
-      data: { readAt: new Date() },
-      where: {
-        OR: [
-          { actionUrl: `/app/messages/${conversationId}` },
-          { actionUrl: { startsWith: `/app/messages/${conversationId}?` } },
-          { metadata: { path: ["conversationId"], equals: conversationId } },
-        ],
-        readAt: null,
-        type: {
-          in: [
-            "DEAL",
-            "DEAL_UPDATE",
-            "MESSAGE",
-            "MESSAGE_REQUEST_RECEIVED",
-            "NEW_MESSAGE",
-            "PROPOSAL",
-            "PROPOSAL_UPDATE",
+    if (readThroughEntry) {
+      await tx.notification.updateMany({
+        data: { readAt: new Date() },
+        where: {
+          OR: [
+            { actionUrl: `/app/messages/${conversationId}` },
+            { actionUrl: { startsWith: `/app/messages/${conversationId}?` } },
+            { metadata: { path: ["conversationId"], equals: conversationId } },
           ],
+          createdAt: { lte: readThroughEntry.createdAt },
+          readAt: null,
+          type: {
+            in: [
+              "DEAL",
+              "DEAL_UPDATE",
+              "MESSAGE",
+              "MESSAGE_REQUEST_RECEIVED",
+              "NEW_MESSAGE",
+              "PROPOSAL",
+              "PROPOSAL_UPDATE",
+            ],
+          },
+          userId,
         },
-        userId,
-      },
-    });
+      });
+    }
 
     return true;
-  });
+  }, { isolationLevel: "RepeatableRead" });
 }

@@ -19,6 +19,7 @@ import {
   findOwnedMessageTarget,
   parseMessageRouteId,
 } from "@/lib/messages/entry";
+import { createMessageMutationBaseline } from "@/lib/messages/mutations";
 import {
   getRequestCorrelationId,
   logServerDataError,
@@ -230,6 +231,10 @@ export default async function ConversationPage({
   const rawConversationId = (await params).conversationId;
   const conversationId = parseMessageRouteId(rawConversationId);
   if (!conversationId) notFound();
+  const initialMutationCursor = createMessageMutationBaseline(
+    user.id,
+    conversationId,
+  );
   const { event: rawHighlightEventId, message: rawHighlightMessageId } =
     await searchParams;
   const highlightEventId =
@@ -373,6 +378,7 @@ export default async function ConversationPage({
       defaultConversationId={conversationId}
       highlightEventId={exactEventTarget?.id}
       highlightMessageId={exactTarget?.id}
+      initialMutationCursor={initialMutationCursor}
       olderConversationsCursor={conversationPage.nextCursor}
       key={`${conversationId}:${exactTarget?.id ?? exactEventTarget?.id ?? "latest"}`}
       userRoles={user.roles}

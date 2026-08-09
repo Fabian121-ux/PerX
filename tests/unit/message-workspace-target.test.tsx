@@ -52,8 +52,11 @@ class EventSourceMock {
   }
   close() {}
 
-  emit(name: string, data: unknown) {
-    this.listeners.get(name)?.({ data: JSON.stringify(data) } as MessageEvent);
+  emit(name: string, data: unknown, lastEventId = "") {
+    this.listeners.get(name)?.({
+      data: JSON.stringify(data),
+      lastEventId,
+    } as MessageEvent);
   }
 
   emitRaw(name: string, data: string) {
@@ -116,6 +119,7 @@ describe("message workspace exact targets", () => {
         currentUserId="user-1"
         defaultConversationId="conversation-2"
         highlightMessageId="message-target"
+        initialMutationCursor="server-render-cursor"
       />,
     );
 
@@ -129,13 +133,9 @@ describe("message workspace exact targets", () => {
         block: "center",
       }),
     );
-    await waitFor(() =>
-      expect(mocks.markConversationReadAction).toHaveBeenCalledWith(
-        "conversation-2",
-      ),
-    );
+    expect(mocks.markConversationReadAction).not.toHaveBeenCalled();
     expect(EventSourceMock.current?.url).toBe(
-      "/api/messages/events?conversationId=conversation-2",
+      "/api/messages/events?conversationId=conversation-2&mutationCursor=server-render-cursor",
     );
 
     await act(async () => {
@@ -356,7 +356,7 @@ describe("message workspace exact targets", () => {
     );
   });
 
-  it("replaces a streamed message with its tombstone", async () => {
+  it("applies an older-message mutation tombstone to bubbles and replies", async () => {
     const view = render(
       <MessageWorkspace
         conversations={[
@@ -369,6 +369,19 @@ describe("message workspace exact targets", () => {
                 id: "message-1",
                 senderId: "user-2",
                 senderName: "Other User",
+              },
+              {
+                body: "Reply to old message",
+                createdAt: "2026-07-31T10:05:00.000Z",
+                id: "message-2",
+                replyTo: {
+                  body: "Message to remove",
+                  id: "message-1",
+                  senderId: "user-2",
+                  senderName: "Other User",
+                },
+                senderId: "user-1",
+                senderName: "Current User",
               },
             ],
             participantName: "Other User",
@@ -385,10 +398,9 @@ describe("message workspace exact targets", () => {
             id: "conversation-1",
             messages: [
               {
-                body: "",
-                createdAt: "2026-07-31T10:00:00.000Z",
-                deletedAt: "2026-07-31T11:00:00.000Z",
-                id: "message-1",
+                body: "Newest live message",
+                createdAt: "2026-07-31T11:00:00.000Z",
+                id: "message-new",
                 senderId: "user-2",
                 senderName: "Other User",
               },
@@ -396,7 +408,16 @@ describe("message workspace exact targets", () => {
             participantName: "Other User",
           },
         ],
-      });
+        messageMutations: [
+          {
+            body: "",
+            conversationId: "conversation-1",
+            deletedAt: "2026-07-31T11:00:00.000Z",
+            editedAt: null,
+            id: "message-1",
+          },
+        ],
+      }, "mutation-cursor-1");
       await Promise.resolve();
     });
 
@@ -404,6 +425,88 @@ describe("message workspace exact targets", () => {
     expect(
       view.getByText("This message was removed from the chat view."),
     ).toBeTruthy();
+    expect(view.getByText("Original message unavailable")).toBeTruthy();
+    expect(view.getByText("Newest live message")).toBeTruthy();
+  });
+
+  it("merges a newly promoted conversation from the live list snapshot", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Existing User",
+            timestamp: "2026-07-31T10:00:00.000Z",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversations: [
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Existing User",
+            timestamp: "2026-07-31T10:00:00.000Z",
+          },
+          {
+            id: "conversation-promoted",
+            messages: [],
+            participantName: "Promoted User",
+            timestamp: "2026-07-31T11:00:00.000Z",
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+
+    const rows = view.container.querySelectorAll(
+      '[data-conversation-list-scroll="true"] > button',
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.textContent).toContain("Promoted User");
+  });
+
+  it("purges inactive conversations omitted from an authoritative live list", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Current User",
+          },
+          {
+            id: "conversation-revoked",
+            lastMessage: "Private summary",
+            messages: [],
+            participantName: "Revoked User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversationList: { ids: ["conversation-1"], nextCursor: null },
+        conversations: [
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Current User",
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+
+    expect(view.queryByText("Revoked User")).toBeNull();
+    expect(view.queryByText("Private summary")).toBeNull();
   });
 
   it("loads and deduplicates older conversations through the cursor endpoint", async () => {
@@ -456,7 +559,15 @@ describe("message workspace exact targets", () => {
         conversations={[
           {
             id: "conversation-1",
-            messages: [],
+            messages: [
+              {
+                body: "Rendered unread message",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-rendered",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
             participantName: "Other User",
             unreadCount: 1,
           },
@@ -476,8 +587,142 @@ describe("message workspace exact targets", () => {
     await waitFor(() =>
       expect(mocks.markConversationReadAction).toHaveBeenCalledWith(
         "conversation-1",
+        "message-rendered",
+        "message",
       ),
     );
+  });
+
+  it("does not mark new messages read while history is scrolled up", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [
+              {
+                body: "Rendered unread message",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-rendered",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+            unreadCount: 1,
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+    fireEvent.click(
+      within(view.getByLabelText("Conversation list")).getByRole("button", {
+        name: /Other User/,
+      }),
+    );
+    await waitFor(() =>
+      expect(mocks.markConversationReadAction).toHaveBeenCalledTimes(1),
+    );
+    mocks.markConversationReadAction.mockClear();
+
+    const history = view.getByLabelText("Message history");
+    Object.defineProperties(history, {
+      clientHeight: { configurable: true, value: 200 },
+      scrollHeight: { configurable: true, value: 1000 },
+      scrollTop: { configurable: true, value: 100, writable: true },
+    });
+    fireEvent.scroll(history);
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversations: [
+          {
+            id: "conversation-1",
+            messages: [
+              {
+                body: "Unseen live message",
+                createdAt: "2026-07-31T12:00:00.000Z",
+                id: "message-unseen",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+            unreadCount: 1,
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+    expect(mocks.markConversationReadAction).not.toHaveBeenCalled();
+
+    history.scrollTop = 800;
+    fireEvent.scroll(history);
+    await waitFor(() =>
+      expect(mocks.markConversationReadAction).toHaveBeenCalledWith(
+        "conversation-1",
+        "message-unseen",
+        "message",
+      ),
+    );
+  });
+
+  it("stops marking read after the mobile conversation closes", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [
+              {
+                body: "Rendered unread message",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-rendered",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+            unreadCount: 1,
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+    fireEvent.click(
+      within(view.getByLabelText("Conversation list")).getByRole("button", {
+        name: /Other User/,
+      }),
+    );
+    await waitFor(() =>
+      expect(mocks.markConversationReadAction).toHaveBeenCalledTimes(1),
+    );
+    fireEvent.click(
+      view.getByRole("button", { name: "Back to conversations" }),
+    );
+    mocks.markConversationReadAction.mockClear();
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversations: [
+          {
+            id: "conversation-1",
+            messages: [
+              {
+                body: "Arrived while closed",
+                createdAt: "2026-07-31T12:00:00.000Z",
+                id: "message-closed",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+            unreadCount: 1,
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+    expect(mocks.markConversationReadAction).not.toHaveBeenCalled();
   });
 
   it("keeps persisted drafts scoped to the authenticated user", async () => {
@@ -580,6 +825,243 @@ describe("message workspace exact targets", () => {
     expect(
       view.container.querySelector('[data-event-id="legacy-event"]'),
     ).toBeNull();
+  });
+
+  it("purges loaded private messages when live authorization is revoked", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: async () => ({
+        conversations: [],
+        messageMutations: [],
+        mutationCursor: null,
+      }),
+      ok: true,
+      status: 200,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-private",
+            messages: [
+              {
+                body: "Private persisted message",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-private",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+        defaultConversationId="conversation-private"
+      />,
+    );
+    expect(view.getByText("Private persisted message")).toBeTruthy();
+
+    await act(async () => {
+      EventSourceMock.current?.emit("unavailable", {});
+      await Promise.resolve();
+    });
+
+    await waitFor(() =>
+      expect(view.queryByText("Private persisted message")).toBeNull(),
+    );
+    expect(view.getByText("No conversations yet")).toBeTruthy();
+    expect(fetchMock).toHaveBeenCalledWith("/api/messages/sync", {
+      cache: "no-store",
+    });
+  });
+
+  it("stops fallback polling when the existing stream recovers", async () => {
+    const intervalId = 42 as unknown as ReturnType<typeof window.setInterval>;
+    const setIntervalSpy = vi
+      .spyOn(window, "setInterval")
+      .mockReturnValue(intervalId);
+    const clearIntervalSpy = vi.spyOn(window, "clearInterval");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        json: async () => ({ conversations: [] }),
+        ok: true,
+        status: 200,
+      }),
+    );
+    render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+
+    await act(async () => {
+      EventSourceMock.current?.emit("stream-error", {});
+      await Promise.resolve();
+    });
+    expect(setIntervalSpy).toHaveBeenCalled();
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversations: [
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Other User",
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+    expect(clearIntervalSpy).toHaveBeenCalledWith(intervalId);
+    setIntervalSpy.mockRestore();
+    clearIntervalSpy.mockRestore();
+  });
+
+  it("restarts live sync without an expired mutation cursor", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 400 })
+      .mockResolvedValueOnce({
+        json: async () => ({
+          conversations: [
+            {
+              id: "conversation-1",
+              messages: [],
+              participantName: "Other User",
+            },
+          ],
+        }),
+        ok: true,
+        status: 200,
+      });
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+        defaultConversationId="conversation-1"
+        initialMutationCursor="expired-cursor"
+      />,
+    );
+    const initialEventSource = EventSourceMock.current;
+
+    await act(async () => {
+      initialEventSource?.emit("stream-error", {});
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(EventSourceMock.current).not.toBe(initialEventSource));
+    expect(EventSourceMock.current?.url).toBe(
+      "/api/messages/events?conversationId=conversation-1",
+    );
+  });
+
+  it("does not render cached history before reauthorizing an inactive conversation", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 404 });
+    vi.stubGlobal("fetch", fetchMock);
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Current User",
+          },
+          {
+            id: "conversation-private",
+            messages: [
+              {
+                body: "Cached revoked history",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-private",
+                senderId: "user-3",
+                senderName: "Private User",
+              },
+            ],
+            participantName: "Private User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+
+    fireEvent.click(
+      within(view.getByLabelText("Conversation list")).getByRole("button", {
+        name: /Private User/,
+      }),
+    );
+
+    await waitFor(() =>
+      expect(
+        within(view.getByLabelText("Conversation list")).queryByRole("button", {
+          name: /Private User/,
+        }),
+      ).toBeNull(),
+    );
+    expect(view.queryByText("Cached revoked history")).toBeNull();
+    expect(view.getAllByText("Current User").length).toBeGreaterThan(0);
+  });
+
+  it("reauthorizes browser-history conversation activation", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 404 });
+    vi.stubGlobal("fetch", fetchMock);
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Current User",
+          },
+          {
+            id: "conversation-history",
+            messages: [
+              {
+                body: "Revoked browser history",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-history",
+                senderId: "user-3",
+                senderName: "History User",
+              },
+            ],
+            participantName: "History User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+
+    await act(async () => {
+      window.dispatchEvent(
+        new PopStateEvent("popstate", {
+          state: { perxMessagesConversationId: "conversation-history" },
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/messages/sync?conversationId=conversation-history",
+        { cache: "no-store" },
+      ),
+    );
+    expect(view.queryByText("Revoked browser history")).toBeNull();
+    expect(view.getAllByText("Current User").length).toBeGreaterThan(0);
   });
 
   it("preserves chat state while app navigation opens and closes", async () => {

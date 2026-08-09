@@ -143,6 +143,7 @@ export default async function AdminModerationCasePage({
                     Reason
                     <textarea
                       className="min-h-24 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)] outline-none focus:ring-2 focus:ring-[color:var(--px-focus)]"
+                      maxLength={500}
                       minLength={12}
                       name="reason"
                       required

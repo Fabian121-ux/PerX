@@ -9,7 +9,9 @@ import type {
   ModerationCaseStatus,
 } from "@/generated/prisma/enums";
 import {
+  activeMessageModerationCaseStatuses,
   caseTitleForReport,
+  messageModerationCaseSources,
   messageReviewScopeOptions,
   sourceForReportTarget,
 } from "@/lib/admin/moderation-records";
@@ -17,6 +19,7 @@ import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { normalizeNotificationActionUrl } from "@/lib/notifications/action-url";
+import { lockUserAccount } from "@/lib/network/pair-lock";
 
 function textValue(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -119,12 +122,8 @@ async function resolveReportedUserIdForLegacyReport(
       },
       where: { id: report.targetId },
     });
-    if (!message) return null;
-    return message.senderId !== report.reporterId
-      ? message.senderId
-      : (message.conversation.participants.find(
-          (participant) => participant.userId !== report.reporterId,
-        )?.userId ?? null);
+    if (!message || message.senderId === report.reporterId) return null;
+    return message.senderId;
   }
 
   if (report.targetType === "CONVERSATION") {
@@ -231,62 +230,85 @@ export async function recordMessageScopeRevealAction(formData: FormData) {
   )?.value;
   const confirmed = formData.get("confirmScope") === "on";
 
-  if (!caseId || !scope || reason.length < 12 || !confirmed) {
+  if (
+    !caseId ||
+    !scope ||
+    reason.length < 12 ||
+    reason.length > 500 ||
+    !confirmed
+  ) {
     throw new Error(
       "A case, clear reason, selected scope, and confirmation are required.",
     );
   }
 
-  const moderationCase = await getPrisma().moderationCase.findFirst({
-    select: {
-      conversationId: true,
-      id: true,
-      messageId: true,
-      status: true,
-    },
-    where: { id: caseId, conversationId: { not: null } },
-  });
-  if (!moderationCase?.conversationId) {
-    throw new Error("Message content can only be revealed from a linked case.");
-  }
-
-  const conversation = await getPrisma().conversation.findUnique({
-    select: { id: true },
-    where: { id: moderationCase.conversationId },
-  });
-  if (!conversation) {
-    throw new Error("Conversation unavailable.");
-  }
-
-  if (!moderationCase.messageId) {
-    throw new Error("The report does not identify a message to reveal.");
-  }
-
-  const message = await getPrisma().message.findFirst({
-    select: { id: true },
-    where: {
-      conversationId: moderationCase.conversationId,
-      id: moderationCase.messageId,
-    },
-  });
-  if (!message) {
-    throw new Error("Reported message unavailable.");
-  }
-
   await getPrisma().$transaction(async (tx) => {
+    const moderationCase = await tx.moderationCase.findFirst({
+      select: {
+        conversationId: true,
+        id: true,
+        messageId: true,
+        reporterId: true,
+        source: true,
+        status: true,
+        targetId: true,
+        targetType: true,
+      },
+      where: {
+        conversationId: { not: null },
+        id: caseId,
+        messageId: { not: null },
+        source: { in: [...messageModerationCaseSources] },
+        status: { in: [...activeMessageModerationCaseStatuses] },
+      },
+    });
+    if (!moderationCase?.conversationId || !moderationCase.messageId) {
+      throw new Error(
+        "Message content can only be revealed from an active linked case.",
+      );
+    }
+    const claimedCase = await tx.moderationCase.updateMany({
+      data: { status: "IN_REVIEW" },
+      where: {
+        conversationId: moderationCase.conversationId,
+        id: moderationCase.id,
+        messageId: moderationCase.messageId,
+        source: { in: [...messageModerationCaseSources] },
+        status: { in: [...activeMessageModerationCaseStatuses] },
+      },
+    });
+    if (claimedCase.count !== 1) {
+      throw new Error(
+        "Message content can only be revealed from an active linked case.",
+      );
+    }
+    const message = await tx.message.findFirst({
+      select: { id: true, senderId: true },
+      where: {
+        conversationId: moderationCase.conversationId,
+        id: moderationCase.messageId,
+      },
+    });
+    if (!message) throw new Error("Reported message unavailable.");
+    if (
+      moderationCase.source === "MESSAGE_REPORT" &&
+      (!moderationCase.reporterId ||
+        moderationCase.targetType !== "MESSAGE" ||
+        moderationCase.targetId !== message.id ||
+        moderationCase.reporterId === message.senderId)
+    ) {
+      throw new Error("Reported message unavailable.");
+    }
+
     await tx.moderationMessageScope.create({
       data: {
         caseId: moderationCase.id,
-        conversationId: moderationCase.conversationId!,
+        conversationId: moderationCase.conversationId,
         messageId: message.id,
         reason,
         revealedById: admin.id,
         scope,
       },
-    });
-    await tx.moderationCase.update({
-      data: { status: "IN_REVIEW" },
-      where: { id: moderationCase.id },
     });
     await tx.moderationCaseEvent.create({
       data: {
@@ -356,14 +378,35 @@ export async function createModerationCaseForReportAction(formData: FormData) {
     return;
   }
 
-  const reportedUserId = await resolveReportedUserIdForLegacyReport(report);
+  let canonicalConversationId = report.contextConversationId;
+  let canonicalMessageId = report.contextMessageId;
+  let reportedUserId: string | null;
+  if (report.targetType === "MESSAGE") {
+    const message = await getPrisma().message.findFirst({
+      select: { conversationId: true, id: true, senderId: true },
+      where: {
+        id: report.targetId,
+        conversation: {
+          participants: { some: { userId: report.reporterId } },
+        },
+      },
+    });
+    if (!message || message.senderId === report.reporterId) {
+      throw new Error("Reported message target unavailable.");
+    }
+    canonicalConversationId = message.conversationId;
+    canonicalMessageId = message.id;
+    reportedUserId = message.senderId;
+  } else {
+    reportedUserId = await resolveReportedUserIdForLegacyReport(report);
+  }
   const moderationCase = await getPrisma().$transaction(async (tx) => {
     const created = await tx.moderationCase.create({
       data: {
         category: report.category,
-        conversationId: report.contextConversationId,
+        conversationId: canonicalConversationId,
         linkedReportId: report.id,
-        messageId: report.contextMessageId,
+        messageId: canonicalMessageId,
         priority: "NORMAL",
         reportedUserId,
         reporterId: report.reporterId,
@@ -490,37 +533,6 @@ export async function applyEnforcementAction(formData: FormData) {
     throw new Error("Permanent ban requires confirmation.");
   }
 
-  const moderationCase = await getPrisma().moderationCase.findUnique({
-    select: { id: true, reportedUserId: true, status: true },
-    where: { id: caseId },
-  });
-  if (!moderationCase) throw new Error("Case not found.");
-  if (
-    !moderationCase.reportedUserId ||
-    moderationCase.reportedUserId !== targetUserId
-  ) {
-    throw new Error(
-      "The enforcement target does not match this moderation case.",
-    );
-  }
-
-  const target = await getPrisma().user.findUnique({
-    select: {
-      bannedAt: true,
-      connectionRequestsRestrictedUntil: true,
-      deactivatedAt: true,
-      enforcementReasonPublic: true,
-      id: true,
-      isActive: true,
-      messagingRestrictedUntil: true,
-      publishingRestrictedUntil: true,
-      suspendedAt: true,
-      suspendedUntil: true,
-    },
-    where: { id: targetUserId },
-  });
-  if (!target) throw new Error("Target user not found.");
-
   const expiresAt =
     parsedType.data === "WARNING" ||
     parsedType.data === "INDEFINITE_SUSPENSION" ||
@@ -543,17 +555,6 @@ export async function applyEnforcementAction(formData: FormData) {
   ) {
     throw new Error("Timed enforcement requires a valid expiry.");
   }
-
-  const previousState = jsonSafeState({
-    bannedAt: target.bannedAt,
-    connectionRequestsRestrictedUntil: target.connectionRequestsRestrictedUntil,
-    deactivatedAt: target.deactivatedAt,
-    isActive: target.isActive,
-    messagingRestrictedUntil: target.messagingRestrictedUntil,
-    publishingRestrictedUntil: target.publishingRestrictedUntil,
-    suspendedAt: target.suspendedAt,
-    suspendedUntil: target.suspendedUntil,
-  });
 
   const userUpdate: Record<string, unknown> = {
     enforcementReasonPublic: userFacingExplanation,
@@ -601,6 +602,96 @@ export async function applyEnforcementAction(formData: FormData) {
   }
 
   await getPrisma().$transaction(async (tx) => {
+    await lockUserAccount(tx, targetUserId);
+    const moderationCase = await tx.moderationCase.findFirst({
+      select: {
+        conversationId: true,
+        messageId: true,
+        reportedUserId: true,
+        reporterId: true,
+        source: true,
+        status: true,
+        targetId: true,
+        targetType: true,
+      },
+      where: {
+        id: caseId,
+        status: { in: [...activeMessageModerationCaseStatuses] },
+      },
+    });
+    if (!moderationCase) throw new Error("Case is not eligible for enforcement.");
+    if (
+      !moderationCase.reportedUserId ||
+      moderationCase.reportedUserId !== targetUserId
+    ) {
+      throw new Error(
+        "The enforcement target does not match this moderation case.",
+      );
+    }
+    const claimedCase = await tx.moderationCase.updateMany({
+      data: { status: "ACTION_REQUIRED" },
+      where: {
+        id: caseId,
+        reportedUserId: targetUserId,
+        status: { in: [...activeMessageModerationCaseStatuses] },
+      },
+    });
+    if (claimedCase.count !== 1) {
+      throw new Error("Case is not eligible for enforcement.");
+    }
+    if (moderationCase.source === "MESSAGE_REPORT") {
+      if (
+        !moderationCase.conversationId ||
+        !moderationCase.messageId ||
+        moderationCase.targetType !== "MESSAGE" ||
+        moderationCase.targetId !== moderationCase.messageId
+      ) {
+        throw new Error("Reported message target unavailable.");
+      }
+      const reportedMessage = await tx.message.findFirst({
+        select: { id: true, senderId: true },
+        where: {
+          conversationId: moderationCase.conversationId,
+          id: moderationCase.messageId,
+        },
+      });
+      if (
+        !reportedMessage ||
+        !moderationCase.reporterId ||
+        moderationCase.targetId !== reportedMessage.id ||
+        moderationCase.reportedUserId !== reportedMessage.senderId ||
+        moderationCase.reporterId === reportedMessage.senderId
+      ) {
+        throw new Error("Reported message target unavailable.");
+      }
+    }
+    const target = await tx.user.findUnique({
+      select: {
+        bannedAt: true,
+        connectionRequestsRestrictedUntil: true,
+        deactivatedAt: true,
+        enforcementReasonPublic: true,
+        id: true,
+        isActive: true,
+        messagingRestrictedUntil: true,
+        publishingRestrictedUntil: true,
+        suspendedAt: true,
+        suspendedUntil: true,
+      },
+      where: { id: targetUserId },
+    });
+    if (!target) throw new Error("Target user not found.");
+    const previousState = jsonSafeState({
+      bannedAt: target.bannedAt,
+      connectionRequestsRestrictedUntil:
+        target.connectionRequestsRestrictedUntil,
+      deactivatedAt: target.deactivatedAt,
+      isActive: target.isActive,
+      messagingRestrictedUntil: target.messagingRestrictedUntil,
+      publishingRestrictedUntil: target.publishingRestrictedUntil,
+      suspendedAt: target.suspendedAt,
+      suspendedUntil: target.suspendedUntil,
+    });
     if (
       parsedType.data !== "WARNING" &&
       parsedType.data !== "SESSION_REVOCATION"
@@ -637,10 +728,6 @@ export async function applyEnforcementAction(formData: FormData) {
       select: { id: true },
     });
 
-    await tx.moderationCase.update({
-      data: { status: "ACTION_REQUIRED" },
-      where: { id: caseId },
-    });
     await tx.moderationCaseEvent.create({
       data: {
         actorId: admin.id,

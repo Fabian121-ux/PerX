@@ -4,6 +4,7 @@ import { setCachedDataModeForTest } from "../../src/lib/env";
 
 // Mock auth session
 vi.mock("../../src/lib/auth/session", () => ({
+  getCurrentSessionTokenHash: vi.fn().mockResolvedValue("session-hash"),
   requireUser: vi.fn().mockResolvedValue({ id: "user-1", roles: [] }),
 }));
 

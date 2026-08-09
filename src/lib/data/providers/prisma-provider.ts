@@ -11,6 +11,7 @@ import {
   type CursorPage,
   type CursorPageParams,
 } from "@/lib/data/cursor";
+import { buildConversationAccessWhere } from "@/lib/messages/access";
 import type { Prisma } from "@/generated/prisma/client";
 import type { AdminListKind, PerXDataProvider } from "./interfaces";
 
@@ -159,25 +160,6 @@ async function getUserDealsPage(userId: string, params?: CursorPageParams) {
   });
 }
 
-async function getBlockedUserIds(userId: string) {
-  const blocks = await getPrisma().blockedUser.findMany({
-    select: { blockedUserId: true, blockerUserId: true },
-    where: {
-      OR: [{ blockerUserId: userId }, { blockedUserId: userId }],
-    },
-  });
-
-  return [
-    ...new Set(
-      blocks.map((block) =>
-        block.blockerUserId === userId
-          ? block.blockedUserId
-          : block.blockerUserId,
-      ),
-    ),
-  ];
-}
-
 async function getConversationsPage(
   userId: string,
   params?: CursorPageParams,
@@ -188,16 +170,9 @@ async function getConversationsPage(
     params,
     scope,
   );
-  const blockedUserIds = await getBlockedUserIds(userId);
   const where: Prisma.ConversationWhereInput = {
+    ...buildConversationAccessWhere(userId),
     ...(conversationId ? { id: conversationId } : {}),
-    status: "ACTIVE",
-    participants: {
-      every: blockedUserIds.length
-        ? { userId: { notIn: blockedUserIds } }
-        : {},
-      some: { removedAt: null, userId },
-    },
   };
   const rows = await getPrisma().conversation.findMany({
     include: {
@@ -303,17 +278,8 @@ async function getConversationMessagesPage(
     params,
     scope,
   );
-  const blockedUserIds = await getBlockedUserIds(userId);
   const where: Prisma.MessageWhereInput = {
-    conversation: {
-      participants: {
-        every: blockedUserIds.length
-          ? { userId: { notIn: blockedUserIds } }
-          : {},
-        some: { removedAt: null, userId },
-      },
-      status: "ACTIVE",
-    },
+    conversation: buildConversationAccessWhere(userId),
     conversationId,
   };
   const rows = await getPrisma().message.findMany({

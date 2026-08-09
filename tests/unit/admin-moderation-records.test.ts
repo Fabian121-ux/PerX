@@ -44,6 +44,12 @@ describe("admin moderation records", () => {
     vi.clearAllMocks();
     prismaMocks.userFindMany.mockResolvedValue([]);
     prismaMocks.moderationMessageScopeFindFirst.mockResolvedValue({
+      case: {
+        reporterId: "reporter-1",
+        source: "CONVERSATION_REPORT",
+        targetId: "conversation-1",
+        targetType: "CONVERSATION",
+      },
       id: "scope-authorized",
       reason: "A sufficiently clear reason",
     });
@@ -203,6 +209,12 @@ describe("admin moderation records", () => {
 
   it("does not query private evidence when the stored reason is insufficient", async () => {
     prismaMocks.moderationMessageScopeFindFirst.mockResolvedValue({
+      case: {
+        reporterId: "reporter-1",
+        source: "CONVERSATION_REPORT",
+        targetId: "conversation-1",
+        targetType: "CONVERSATION",
+      },
       id: "scope-short-reason",
       reason: "too short",
     });
@@ -241,6 +253,21 @@ describe("admin moderation records", () => {
     });
 
     expect(result.kind).toBe("available");
+    expect(prismaMocks.moderationMessageScopeFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          case: {
+            is: expect.objectContaining({
+              conversationId: "conversation-1",
+              id: "case-1",
+              messageId: "message-m",
+              source: { in: expect.arrayContaining(["MESSAGE_REPORT"]) },
+              status: { in: expect.arrayContaining(["NEW", "IN_REVIEW"]) },
+            }),
+          },
+        }),
+      }),
+    );
     expect(prismaMocks.messageFindMany).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
@@ -267,5 +294,38 @@ describe("admin moderation records", () => {
         },
       }),
     );
+  });
+
+  it("hides a pre-fix message report targeting the reporter's own message", async () => {
+    prismaMocks.moderationMessageScopeFindFirst.mockResolvedValue({
+      case: {
+        reporterId: "user-1",
+        source: "MESSAGE_REPORT",
+        targetId: "message-m",
+        targetType: "MESSAGE",
+      },
+      id: "scope-invalid-self-report",
+      reason: "A sufficiently clear reason",
+    });
+    prismaMocks.conversationFindUnique.mockResolvedValue({
+      id: "conversation-1",
+    });
+    prismaMocks.messageFindFirst.mockResolvedValue({
+      body: "Reporter-owned message",
+      createdAt: new Date("2026-07-31T12:00:00.000Z"),
+      deletedAt: null,
+      id: "message-m",
+      senderId: "user-1",
+    });
+
+    await expect(
+      getScopedMessageContext({
+        caseId: "case-1",
+        conversationId: "conversation-1",
+        messageId: "message-m",
+        scope: "reported-message-only",
+      }),
+    ).resolves.toEqual({ kind: "hidden", messages: [] });
+    expect(prismaMocks.messageFindMany).not.toHaveBeenCalled();
   });
 });

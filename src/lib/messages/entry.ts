@@ -1,4 +1,5 @@
 import { getPrisma } from "@/lib/db/prisma";
+import { buildConversationAccessWhere } from "@/lib/messages/access";
 
 export type ExactMessageTarget = {
   conversationId: string;
@@ -95,10 +96,7 @@ export async function findOwnedMessageTarget(
   return getPrisma().message.findFirst({
     select: { conversationId: true, id: true, senderId: true },
     where: {
-      conversation: {
-        participants: { some: { removedAt: null, userId } },
-        status: "ACTIVE",
-      },
+      conversation: buildConversationAccessWhere(userId),
       conversationId: target.conversationId,
       deletedAt: null,
       id: target.messageId,
@@ -115,10 +113,7 @@ export async function findOwnedConversationEventTarget(
 ) {
   return getPrisma().conversationEvent.findFirst({
     where: {
-      conversation: {
-        participants: { some: { removedAt: null, userId } },
-        status: "ACTIVE",
-      },
+      conversation: buildConversationAccessWhere(userId),
       conversationId: target.conversationId,
       id: target.eventId,
     },

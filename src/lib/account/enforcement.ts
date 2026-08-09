@@ -1,4 +1,5 @@
 import { getPrisma } from "@/lib/db/prisma";
+import type { Prisma } from "@/generated/prisma/client";
 import type {
   EnforcementActionStatus,
   EnforcementActionType,
@@ -237,6 +238,46 @@ export async function assertAccountAccess(
   const policy = await getAccountAccessPolicy(userId);
   if (!policy) return "Access to this account is unavailable.";
   return getOperationDecision(policy, operation);
+}
+
+export async function assertAccountAccessWithClient(
+  client: Pick<Prisma.TransactionClient, "enforcementAction" | "user">,
+  userId: string,
+  operation: AccountAccessOperation,
+) {
+  const now = new Date();
+  const [state, activeEnforcements] = await Promise.all([
+    client.user.findUnique({
+      select: {
+        bannedAt: true,
+        connectionRequestsRestrictedUntil: true,
+        deactivatedAt: true,
+        enforcementReasonPublic: true,
+        isActive: true,
+        messagingRestrictedUntil: true,
+        publishingRestrictedUntil: true,
+        suspendedAt: true,
+        suspendedUntil: true,
+        verificationStatus: true,
+      },
+      where: { id: userId },
+    }),
+    client.enforcementAction.findMany({
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true, expiresAt: true, status: true, type: true },
+      take: 64,
+      where: {
+        OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+        status: "ACTIVE",
+        targetUserId: userId,
+      },
+    }),
+  ]);
+  if (!state) return "Access to this account is unavailable.";
+  return getOperationDecision(
+    evaluateAccountAccess({ ...state, activeEnforcements }, now),
+    operation,
+  );
 }
 
 export async function getAccountRestrictionState(userId: string) {

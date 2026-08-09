@@ -7,6 +7,7 @@ import {
   type ExactConversationEventTarget,
   type ExactMessageTarget,
 } from "@/lib/messages/entry";
+import { buildConversationAccessWhere } from "@/lib/messages/access";
 
 export type NotificationActionResolution =
   | {
@@ -101,16 +102,11 @@ async function isDestinationAvailable(userId: string, path: string) {
   if (approvedExactPaths.has(path.split("?")[0] ?? path)) return true;
 
   if (segments[0] === "app" && segments[1] === "messages" && segments[2]) {
-    const participant = await prisma.conversationParticipant.findUnique({
-      select: { id: true, removedAt: true },
-      where: {
-        conversationId_userId: {
-          conversationId: segments[2],
-          userId,
-        },
-      },
+    const conversation = await prisma.conversation.findFirst({
+      select: { id: true },
+      where: { ...buildConversationAccessWhere(userId), id: segments[2] },
     });
-    if (!participant || participant.removedAt) return false;
+    if (!conversation) return false;
 
     const messageId = url.searchParams.get("message");
     const eventId = url.searchParams.get("event");
