@@ -234,7 +234,12 @@ describeOrSkip(
     });
 
     test("messages page loads for authenticated user", async ({ browser }) => {
-      const page = await browser.newPage();
+      const page = await browser.newPage({
+        locale: "fr-FR",
+        timezoneId: "America/New_York",
+      });
+      const pageErrors: string[] = [];
+      page.on("pageerror", (error) => pageErrors.push(error.message));
       await createSession(page, "alice-test@perx.test");
       await page.goto(`${BASE}/app/messages`);
       await expect(page.getByLabel("Message workspace")).toBeVisible();
@@ -275,6 +280,7 @@ describeOrSkip(
       await expect(conversationSearch).toBeVisible();
       await conversationSearch.fill("No matching participant 404");
       await expect(page.getByText("No conversations found")).toBeVisible();
+      expect(pageErrors).toEqual([]);
       await page.close();
     });
 

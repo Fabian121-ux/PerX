@@ -9,6 +9,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   useTransition,
   type FormEvent,
 } from "react";
@@ -130,6 +131,10 @@ type WorkspaceConversationListSnapshot = {
   nextCursor: string | null;
 };
 
+const subscribeToHydration = () => () => {};
+const getBrowserSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 export function MessageWorkspace({
   backHref,
   conversations,
@@ -217,6 +222,11 @@ export function MessageWorkspace({
   );
   const [documentVisible, setDocumentVisible] = useState(true);
   const [historyAtBottom, setHistoryAtBottom] = useState(false);
+  const useBrowserFormatting = useSyncExternalStore(
+    subscribeToHydration,
+    getBrowserSnapshot,
+    getServerSnapshot,
+  );
   const [isMobileViewport, setIsMobileViewport] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -1248,7 +1258,10 @@ export function MessageWorkspace({
                       {conversation.participantName}
                     </p>
                     <span className="shrink-0 text-[10px] font-semibold text-[color:var(--px-text-muted)]">
-                      {formatConversationTime(conversation.timestamp)}
+                      {formatConversationTime(
+                        conversation.timestamp,
+                        useBrowserFormatting,
+                      )}
                     </span>
                   </div>
                   <p className="truncate text-xs font-semibold text-[color:var(--px-primary)]">
@@ -1441,6 +1454,7 @@ export function MessageWorkspace({
                 <DealSummaryCard
                   deal={activeConversation.deal}
                   href={activeConversation.dealHref}
+                  useBrowserFormatting={useBrowserFormatting}
                 />
               ) : null}
 
@@ -1449,8 +1463,12 @@ export function MessageWorkspace({
                   {shouldShowDateSeparator(
                     timeline[index - 1]?.createdAt,
                     entry.createdAt,
+                    useBrowserFormatting,
                   ) ? (
-                    <DateSeparator value={entry.createdAt} />
+                    <DateSeparator
+                      useBrowserFormatting={useBrowserFormatting}
+                      value={entry.createdAt}
+                    />
                   ) : null}
                   {entry.kind === "message" ? (
                     <MessageBubble
@@ -1475,6 +1493,7 @@ export function MessageWorkspace({
                       refCallback={(node) => {
                         messageRefs.current[entry.message.id] = node;
                       }}
+                      useBrowserFormatting={useBrowserFormatting}
                     />
                   ) : (
                     <ConversationEventCard
@@ -1485,6 +1504,7 @@ export function MessageWorkspace({
                       refCallback={(node) => {
                         messageRefs.current[entry.conversationEvent.id] = node;
                       }}
+                      useBrowserFormatting={useBrowserFormatting}
                     />
                   )}
                 </Fragment>
@@ -1618,6 +1638,7 @@ function MessageBubble({
   onToggleActionMenu,
   openActionMenu,
   refCallback,
+  useBrowserFormatting,
 }: {
   conversationId: string;
   currentUserId: string;
@@ -1638,6 +1659,7 @@ function MessageBubble({
   onToggleActionMenu: (messageId: string) => void;
   openActionMenu: boolean;
   refCallback: (node: HTMLDivElement | null) => void;
+  useBrowserFormatting: boolean;
 }) {
   const mine = message.senderId === currentUserId;
   const editing = editingMessageId === message.id;
@@ -1911,7 +1933,9 @@ function MessageBubble({
           className={`mt-2 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-blue-100" : "text-[color:var(--px-text-muted)]"}`}
         >
           {message.editedAt ? <span>Edited</span> : null}
-          <span>{formatMessageTime(message.createdAt)}</span>
+          <span>
+            {formatMessageTime(message.createdAt, useBrowserFormatting)}
+          </span>
           {mine ? <MessageStateIcon message={message} /> : null}
         </div>
       </div>
@@ -1923,10 +1947,12 @@ function ConversationEventCard({
   event,
   highlighted,
   refCallback,
+  useBrowserFormatting,
 }: {
   event: WorkspaceConversationEvent;
   highlighted: boolean;
   refCallback: (node: HTMLDivElement | null) => void;
+  useBrowserFormatting: boolean;
 }) {
   const versionNumber = getSnapshotNumber(event.snapshot, "versionNumber");
   const amountMinor = getSnapshotString(event.snapshot, "amountMinor");
@@ -1997,13 +2023,13 @@ function ConversationEventCard({
             </div>
           </div>
           <span className="shrink-0 text-[10px] font-bold opacity-70">
-            {formatMessageTime(event.createdAt)}
+            {formatMessageTime(event.createdAt, useBrowserFormatting)}
           </span>
         </div>
         <div className="p-4">
           {amountMinor && currency ? (
             <p className="text-xl font-black text-[color:var(--px-text)]">
-              {formatMinorMoney(amountMinor, currency)}
+              {formatMinorMoney(amountMinor, currency, useBrowserFormatting)}
             </p>
           ) : null}
           {description && termsEvent ? (
@@ -2060,9 +2086,11 @@ function ConversationEventCard({
 function DealSummaryCard({
   deal,
   href,
+  useBrowserFormatting,
 }: {
   deal: NonNullable<WorkspaceConversation["deal"]>;
   href?: string;
+  useBrowserFormatting: boolean;
 }) {
   const simulated = deal.settlementMode !== "PROVIDER_DISABLED";
 
@@ -2087,7 +2115,11 @@ function DealSummaryCard({
       <div className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-end">
         <div>
           <p className="text-lg font-black text-[color:var(--px-text)]">
-            {formatMinorMoney(deal.amountMinor, deal.currency)}
+            {formatMinorMoney(
+              deal.amountMinor,
+              deal.currency,
+              useBrowserFormatting,
+            )}
           </p>
           <p className="mt-1 max-w-xl text-xs leading-5 text-[color:var(--px-text-muted)]">
             {simulated
@@ -2108,12 +2140,18 @@ function DealSummaryCard({
   );
 }
 
-function DateSeparator({ value }: { value: string }) {
+function DateSeparator({
+  useBrowserFormatting,
+  value,
+}: {
+  useBrowserFormatting: boolean;
+  value: string;
+}) {
   return (
     <div className="flex items-center gap-3 py-1" role="separator">
       <span className="h-px flex-1 bg-[color:var(--px-border)]" />
       <span className="rounded-full bg-[color:var(--px-surface)] px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[color:var(--px-text-muted)] shadow-sm ring-1 ring-[color:var(--px-border)]">
-        {formatMessageDay(value)}
+        {formatMessageDay(value, useBrowserFormatting)}
       </span>
       <span className="h-px flex-1 bg-[color:var(--px-border)]" />
     </div>
@@ -2887,29 +2925,41 @@ function presenceLabel(presence?: "hidden" | "online" | "recent" | "offline") {
   return null;
 }
 
-function formatMessageTime(value?: string) {
+function formatMessageTime(
+  value: string | undefined,
+  useBrowserFormatting: boolean,
+) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(useBrowserFormatting ? undefined : "en-US", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: useBrowserFormatting ? undefined : "UTC",
   }).format(date);
 }
 
-function formatConversationTime(value?: string) {
+function formatConversationTime(
+  value: string | undefined,
+  useBrowserFormatting: boolean,
+) {
   if (!value) return "new";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
+  if (!useBrowserFormatting) {
+    return new Intl.DateTimeFormat("en-US", {
+      day: "2-digit",
+      month: "short",
+      timeZone: "UTC",
+    }).format(date);
+  }
 
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const thatDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const dayDiff = Math.round(
-    (today.getTime() - thatDay.getTime()) / 86_400_000,
-  );
+  const today = getCalendarDayStart(now, true);
+  const thatDay = getCalendarDayStart(date, true);
+  const dayDiff = Math.round((today - thatDay) / 86_400_000);
 
-  if (dayDiff === 0) return formatMessageTime(value);
+  if (dayDiff === 0) return formatMessageTime(value, true);
   if (dayDiff === 1) return "Yesterday";
   return new Intl.DateTimeFormat(undefined, {
     day: "2-digit",
@@ -2920,6 +2970,7 @@ function formatConversationTime(value?: string) {
 function shouldShowDateSeparator(
   previous: string | undefined,
   current: string,
+  useBrowserFormatting: boolean,
 ) {
   if (!previous) return true;
   const previousDate = new Date(previous);
@@ -2930,7 +2981,10 @@ function shouldShowDateSeparator(
   ) {
     return false;
   }
-  return previousDate.toDateString() !== currentDate.toDateString();
+  return (
+    getCalendarDayStart(previousDate, useBrowserFormatting) !==
+    getCalendarDayStart(currentDate, useBrowserFormatting)
+  );
 }
 
 function getSnapshotString(snapshot: Record<string, unknown>, key: string) {
@@ -2951,20 +3005,22 @@ function formatEventType(value: WorkspaceConversationEvent["type"]) {
     .join(" ");
 }
 
-function formatMessageDay(value: string) {
+function formatMessageDay(value: string, useBrowserFormatting: boolean) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Conversation";
+  if (!useBrowserFormatting) {
+    return new Intl.DateTimeFormat("en-US", {
+      day: "numeric",
+      month: "short",
+      timeZone: "UTC",
+      year: "numeric",
+    }).format(date);
+  }
 
   const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const messageDay = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate(),
-  );
-  const dayDiff = Math.round(
-    (today.getTime() - messageDay.getTime()) / 86_400_000,
-  );
+  const today = getCalendarDayStart(now, true);
+  const messageDay = getCalendarDayStart(date, true);
+  const dayDiff = Math.round((today - messageDay) / 86_400_000);
   if (dayDiff === 0) return "Today";
   if (dayDiff === 1) return "Yesterday";
   return new Intl.DateTimeFormat(undefined, {
@@ -2974,10 +3030,29 @@ function formatMessageDay(value: string) {
   }).format(date);
 }
 
-function formatMinorMoney(value: string, currency: string) {
+function getCalendarDayStart(date: Date, useBrowserFormatting: boolean) {
+  if (!useBrowserFormatting) {
+    return Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+    );
+  }
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  ).getTime();
+}
+
+function formatMinorMoney(
+  value: string,
+  currency: string,
+  useBrowserFormatting: boolean,
+) {
   try {
     const amount = Number(BigInt(value)) / 100;
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(useBrowserFormatting ? undefined : "en-US", {
       currency,
       maximumFractionDigits: 2,
       minimumFractionDigits: 0,
