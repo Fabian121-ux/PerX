@@ -2,6 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import type { OpportunityType } from "@/generated/prisma/enums";
 import { getPrisma } from "@/lib/db/prisma";
 import { parseMoneyToMinor } from "@/lib/money";
+import { getTrustRecordEvidenceByUserIds } from "@/lib/trust/records";
 
 export const DEFAULT_PUBLIC_OPPORTUNITY_PAGE_SIZE = 12;
 export const MAX_PUBLIC_OPPORTUNITY_PAGE_SIZE = 24;
@@ -15,6 +16,7 @@ export type PublicOpportunityFilters = {
   minPriceMinor?: bigint;
   q?: string;
   type?: OpportunityType;
+  viewerId?: string;
 };
 
 export type PublicOpportunityPageParams = PublicOpportunityFilters & {
@@ -98,6 +100,13 @@ export function buildPublicOpportunityWhere(
       ? filters.maxPriceMinor
       : undefined;
   const and: Prisma.OpportunityWhereInput[] = [
+    { type: { not: "INVESTMENT" } },
+    {
+      OR: [
+        { propertyListingType: null },
+        { propertyListingType: { not: "CO_INVESTMENT" } },
+      ],
+    },
     {
       OR: [
         { type: { not: "PROPERTY" } },
@@ -129,6 +138,12 @@ export function buildPublicOpportunityWhere(
       deactivatedAt: null,
       isActive: true,
       profile: { is: { isDiscoverable: true } },
+      ...(filters.viewerId
+        ? {
+            blocksMade: { none: { blockedUserId: filters.viewerId } },
+            blocksReceived: { none: { blockerUserId: filters.viewerId } },
+          }
+        : {}),
     },
     ...(filters.excludeOwnerId
       ? { ownerId: { not: filters.excludeOwnerId } }
@@ -165,10 +180,19 @@ export async function getPublicOpportunityPage({
   });
   const hasNextPage = rows.length > pageSize;
   const items = hasNextPage ? rows.slice(0, pageSize) : rows;
+  const trustEvidence = await getTrustRecordEvidenceByUserIds(
+    items.map((item) => item.owner.id),
+  );
 
   return {
     cursor: cursor ?? null,
-    items,
+    items: items.map((item) => ({
+      ...item,
+      owner: {
+        ...item.owner,
+        trustRecordEvidence: trustEvidence.get(item.owner.id),
+      },
+    })),
     nextCursor: hasNextPage ? (items.at(-1)?.id ?? null) : null,
     pageSize,
   };

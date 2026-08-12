@@ -35,6 +35,7 @@ const filters = [
   { label: "Messages", value: "messages" },
   { label: "Connections", value: "connections" },
   { label: "Opportunities", value: "opportunities" },
+  { label: "Reviews", value: "reviews" },
   { label: "Deals", value: "deals" },
   { label: "Support", value: "support" },
   { label: "System", value: "system" },
@@ -49,7 +50,8 @@ const filterTypes: Record<string, string[]> = {
   ],
   deals: ["DEAL", "DEAL_UPDATE"],
   messages: ["MESSAGE", "MESSAGE_REQUEST_RECEIVED", "NEW_MESSAGE"],
-  opportunities: ["OPPORTUNITY_RESPONSE", "PROPOSAL", "PROPOSAL_UPDATE", "REVIEW"],
+  opportunities: ["OPPORTUNITY_RESPONSE", "PROPOSAL", "PROPOSAL_UPDATE"],
+  reviews: ["REVIEW"],
   support: ["SUPPORT", "SUPPORT_REPLY"],
   system: ["BROADCAST", "MODERATION", "MODERATION_UPDATE", "SYSTEM"],
 };
@@ -57,7 +59,7 @@ const filterTypes: Record<string, string[]> = {
 export default async function NotificationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; unavailable?: string }>;
+  searchParams: Promise<{ page?: string; type?: string; unavailable?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -65,17 +67,31 @@ export default async function NotificationsPage({
     ? params.type ?? ""
     : "";
   const typeFilter = activeFilter && activeFilter !== "unread" ? filterTypes[activeFilter] : undefined;
-  const notifications = await getPrisma().notification.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 50,
-    where: {
-      userId: user.id,
-      ...(activeFilter === "unread" ? { readAt: null } : {}),
-      ...(typeFilter ? { type: { in: typeFilter as never[] } } : {}),
-    },
-  });
-
-  const unreadCount = notifications.filter((notification) => !notification.readAt).length;
+  const requestedPage = Number(params.page ?? 0);
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0
+    ? Math.min(requestedPage, 100)
+    : 0;
+  const viewWhere = {
+    userId: user.id,
+    ...(activeFilter === "unread" ? { readAt: null } : {}),
+    ...(typeFilter ? { type: { in: typeFilter as never[] } } : {}),
+  };
+  const [notifications, totalUnreadCount, viewUnreadCount, viewCount] =
+    await Promise.all([
+      getPrisma().notification.findMany({
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        skip: page * 50,
+        take: 50,
+        where: viewWhere,
+      }),
+      getPrisma().notification.count({ where: { readAt: null, userId: user.id } }),
+      getPrisma().notification.count({
+        where: { ...viewWhere, readAt: null },
+      }),
+      getPrisma().notification.count({ where: viewWhere }),
+    ]);
+  const activeFilterLabel =
+    filters.find((filter) => filter.value === activeFilter)?.label ?? "All";
   const cards = await Promise.all(
     notifications.map(async (notification) => ({
       action: await resolveNotificationAction(user.id, notification),
@@ -87,10 +103,10 @@ export default async function NotificationsPage({
   return (
     <AppSection
       actions={
-        unreadCount > 0 ? (
+        totalUnreadCount > 0 ? (
           <form action={markAllNotificationsAsReadAction}>
             <Button size="sm" type="submit" variant="secondary">
-              Mark all as read
+              Mark all account activity read
             </Button>
           </form>
         ) : null
@@ -98,16 +114,41 @@ export default async function NotificationsPage({
       description="Messages, connection requests, content activity, support updates, and trust events."
       title="Notifications"
     >
-      <div className="grid gap-5">
+      <div className="mx-auto grid w-full max-w-5xl gap-5">
         {params.unavailable === "1" ? (
           <Card className="border-[color:var(--px-warning)]/40 bg-amber-50 text-sm font-semibold text-amber-900">
             This item is no longer available.
           </Card>
         ) : null}
 
-        <div className="dashboard-scroll flex gap-2 overflow-x-auto pb-1">
+        <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)]">
+              <Bell aria-hidden size={20} />
+            </span>
+            <div>
+              <p className="font-black text-[color:var(--px-text)]">
+                {activeFilterLabel} activity
+              </p>
+              <p className="text-sm text-[color:var(--px-text-muted)]">
+                 {viewUnreadCount
+                   ? `${viewUnreadCount} unread in this filter`
+                  : "You are caught up in this view"}
+              </p>
+            </div>
+          </div>
+          <ButtonLink href="/app/news" size="sm" variant="ghost">
+            Open PerX News
+          </ButtonLink>
+        </Card>
+
+        <nav
+          aria-label="Notification filters"
+          className="dashboard-scroll flex gap-2 overflow-x-auto pb-1"
+        >
           {filters.map((filter) => (
             <ButtonLink
+              aria-current={activeFilter === filter.value ? "page" : undefined}
               href={filter.value ? `/app/notifications?type=${filter.value}` : "/app/notifications"}
               key={filter.value || "all"}
               size="sm"
@@ -116,7 +157,7 @@ export default async function NotificationsPage({
               {filter.label}
             </ButtonLink>
           ))}
-        </div>
+        </nav>
 
         {notifications.length ? (
           <div className="grid gap-4">
@@ -141,10 +182,50 @@ export default async function NotificationsPage({
           </div>
         ) : (
           <EmptyState
-            body="New account, message, support and workflow updates will appear here."
-            title="No notifications"
+            action={
+              activeFilter ? (
+                <ButtonLink href="/app/notifications" variant="secondary">
+                  View all activity
+                </ButtonLink>
+              ) : undefined
+            }
+            body={
+              activeFilter
+                ? `There are no ${activeFilterLabel.toLocaleLowerCase()} updates in this view.`
+                : "New message, connection, support, and workflow updates will appear here."
+            }
+            title={
+              activeFilter
+                ? `No ${activeFilterLabel.toLocaleLowerCase()} activity`
+                : "No notifications yet"
+            }
           />
         )}
+        {viewCount > 50 ? (
+          <nav
+            aria-label="Notification pagination"
+            className="flex items-center justify-between gap-3"
+          >
+            {page > 0 ? (
+              <ButtonLink
+                href={notificationPageHref(activeFilter, page - 1)}
+                variant="secondary"
+              >
+                Newer notifications
+              </ButtonLink>
+            ) : (
+              <span />
+            )}
+            {(page + 1) * 50 < viewCount ? (
+              <ButtonLink
+                href={notificationPageHref(activeFilter, page + 1)}
+                variant="secondary"
+              >
+                Older notifications
+              </ButtonLink>
+            ) : null}
+          </nav>
+        ) : null}
       </div>
     </AppSection>
   );
@@ -176,10 +257,10 @@ function NotificationCard({
 
   return (
     <Card
-      className={`relative flex flex-col gap-4 overflow-hidden transition-colors sm:flex-row sm:items-start ${
+      className={`relative flex flex-col gap-4 overflow-hidden border-l-4 transition-colors sm:flex-row sm:items-start ${
         isUnread
-          ? "border-[color:var(--px-primary)]/40 bg-[color:var(--px-primary-soft)]"
-          : "bg-[color:var(--px-surface)]"
+          ? "border-l-[color:var(--px-primary)] bg-[color:var(--px-primary-soft)]"
+          : "border-l-transparent bg-[color:var(--px-surface)]"
       }`}
     >
       <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 items-start gap-4">
@@ -192,7 +273,7 @@ function NotificationCard({
         >
           {getIcon(notification.type)}
           {isUnread ? (
-            <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-[color:var(--px-warning)] ring-2 ring-[color:var(--px-surface)]" />
+            <span aria-hidden className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-[color:var(--px-warning)] ring-2 ring-[color:var(--px-surface)]" />
           ) : null}
         </div>
         <div className="min-w-0 flex-1">
@@ -203,6 +284,7 @@ function NotificationCard({
                 : "text-[color:var(--px-text-muted)]"
             }`}
           >
+            <span className="sr-only">{isUnread ? "Unread" : "Read"} notification. </span>
             {notification.title}
           </h3>
           <p
@@ -219,9 +301,13 @@ function NotificationCard({
               {action.label}
             </p>
           ) : null}
-          <p className="mt-2 text-xs text-[color:var(--px-text-muted)]">
-            {notification.createdAt.toLocaleString()}
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[color:var(--px-text-muted)]">
+            <time dateTime={notification.createdAt.toISOString()}>
+              {notification.createdAt.toLocaleString()}
+            </time>
+            <span aria-hidden>·</span>
+            <span>{notificationTypeLabel(notification.type)}</span>
+          </div>
         </div>
       </div>
 
@@ -257,7 +343,7 @@ function NotificationCard({
         ) : null}
         {canOpen ? (
           <NotificationActionLink
-            className="inline-flex min-h-9 items-center rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 text-sm font-bold text-[color:var(--px-text)] transition hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            className="inline-flex min-h-11 items-center rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 text-sm font-bold text-[color:var(--px-text)] transition hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={action.href!}
             notificationId={notification.id}
           >
@@ -305,6 +391,24 @@ function getIcon(type: string) {
   return <Bell aria-hidden size={20} />;
 }
 
+function notificationTypeLabel(type: string) {
+  if (["MESSAGE", "MESSAGE_REQUEST_RECEIVED", "NEW_MESSAGE"].includes(type)) {
+    return "Message";
+  }
+  if (type.startsWith("CONNECTION")) return "Connection";
+  if (["PROPOSAL", "PROPOSAL_UPDATE", "OPPORTUNITY_RESPONSE"].includes(type)) {
+    return "Opportunity";
+  }
+  if (["DEAL", "DEAL_UPDATE"].includes(type)) return "Deal";
+  if (["SUPPORT", "SUPPORT_REPLY"].includes(type)) return "Support";
+  if (type === "REVIEW") return "Review";
+  if (["MODERATION", "MODERATION_UPDATE"].includes(type)) {
+    return "Trust & safety";
+  }
+  if (type === "BROADCAST") return "PerX News";
+  return "Account";
+}
+
 async function getConnectionRequestState(userId: string, notification: {
   actionState: string | null;
   metadata: unknown;
@@ -335,8 +439,16 @@ async function getConnectionRequestState(userId: string, notification: {
   return {
     id: connection.id,
     profileHref: connection.requester.username ? `/u/${connection.requester.username}` : null,
-    status: notification.actionState ?? connection.status,
+    status: connection.status,
   };
+}
+
+function notificationPageHref(type: string, page: number) {
+  const query = new URLSearchParams();
+  if (type) query.set("type", type);
+  if (page > 0) query.set("page", String(page));
+  const value = query.toString();
+  return value ? `/app/notifications?${value}` : "/app/notifications";
 }
 
 function getConnectionId(metadata: unknown) {

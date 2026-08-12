@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { UnreadCounts } from "@/lib/data/unread-counts";
 import {
   authenticatedMobileNavigation,
+  canAccessFeature,
   getFeatureById,
 } from "@/lib/navigation/feature-registry";
 import {
@@ -15,18 +16,26 @@ import {
 
 export function AuthenticatedMobileNav({
   unreadCounts,
+  userRoles,
 }: {
   unreadCounts: UnreadCounts;
+  userRoles: readonly string[];
 }) {
   const pathname = usePathname();
+  const navigation = authenticatedMobileNavigation.filter((item) =>
+    canAccessFeature(getFeatureById(item.featureId), userRoles),
+  );
 
   return (
     <nav
       aria-label="Primary navigation"
       className="authenticated-mobile-nav fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--px-border)] bg-[color:var(--px-surface)]/96 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_30px_rgba(15,23,42,0.12)] backdrop-blur-xl lg:hidden"
     >
-      <div className="mx-auto grid h-[var(--mobile-nav-height)] max-w-xl grid-cols-5 px-1">
-        {authenticatedMobileNavigation.map((item) => {
+      <div
+        className="mx-auto grid h-[var(--mobile-nav-height)] max-w-xl px-1"
+        style={{ gridTemplateColumns: `repeat(${navigation.length}, minmax(0, 1fr))` }}
+      >
+        {navigation.map((item) => {
           const feature = getFeatureById(item.featureId);
           const active = isNavigationItemActive(pathname, feature.href, {
             aliases: feature.activePaths,

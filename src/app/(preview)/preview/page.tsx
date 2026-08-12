@@ -56,6 +56,7 @@ export default function PreviewDashboardPage() {
         id: opp.id,
         slug: opp.slug,
         title: opp.title,
+        summary: opp.summary,
         organisation: opp.owner.name,
         location: opp.location,
         remote: opp.remote,
@@ -64,6 +65,11 @@ export default function PreviewDashboardPage() {
         currency: opp.currency,
         type: opp.type,
         postedTimeAgo: "2h ago",
+        trust: calculateTrustSummary({
+          emailVerifiedAt: new Date().toISOString(),
+          profileCompleteness: 85,
+        }),
+        viewerHasSaved: false,
         imageAlt: image.alt,
         imageUrl: image.src,
       };

@@ -1,105 +1,156 @@
 import { getPrisma } from "@/lib/db/prisma";
 import { buildConversationAccessWhere } from "@/lib/messages/access";
 
+const readStateTransactionAttempts = 3;
+const readStateRetryDelayMs = 25;
+
+function isTransactionWriteConflict(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "P2034"
+  );
+}
+
 export async function markConversationReadForUser(
   conversationId: string,
   userId: string,
   throughEntry?: { id: string; kind: "event" | "message" } | null,
 ) {
-  return getPrisma().$transaction(async (tx) => {
-    const conversation = await tx.conversation.findFirst({
-      select: {
-        participants: {
-          select: { id: true, lastReadAt: true },
-          where: { removedAt: null, userId },
-        },
-      },
-      where: { ...buildConversationAccessWhere(userId), id: conversationId },
-    });
-    const participant = conversation?.participants[0];
-    if (!participant) return false;
+  const prisma = getPrisma();
+  let transactionResult: {
+    readThroughEntry: { createdAt: Date; id: string } | null;
+  } | null = null;
 
-    const readThroughEntry = throughEntry
-      ? throughEntry.kind === "message"
-        ? await tx.message.findFirst({
-            select: { createdAt: true, id: true },
-            where: { conversationId, id: throughEntry.id },
-          })
-        : await tx.conversationEvent.findFirst({
-            select: { createdAt: true, id: true },
-            where: { conversationId, id: throughEntry.id },
-          })
-      : null;
-    if (throughEntry && !readThroughEntry) return false;
-
-    const readThroughAt = readThroughEntry?.createdAt ?? participant.lastReadAt;
-    const unreadMessages = readThroughEntry
-      ? await tx.message.findMany({
-          select: { id: true },
-          where: {
-            conversationId,
-            OR: [
-              { createdAt: { lt: readThroughEntry.createdAt } },
-              {
-                createdAt: readThroughEntry.createdAt,
-                id: { lte: readThroughEntry.id },
+  for (let attempt = 0; attempt < readStateTransactionAttempts; attempt += 1) {
+    try {
+      transactionResult = await prisma.$transaction(
+        async (tx) => {
+          const conversation = await tx.conversation.findFirst({
+            select: {
+              participants: {
+                select: { id: true, lastReadAt: true },
+                where: { removedAt: null, userId },
               },
-            ],
-            readReceipts: { none: { userId } },
-            senderId: { not: userId },
-          },
-        })
-      : [];
+            },
+            where: {
+              ...buildConversationAccessWhere(userId),
+              id: conversationId,
+            },
+          });
+          const participant = conversation?.participants[0];
+          if (!participant) return null;
 
-    if (
-      readThroughAt &&
-      (!participant.lastReadAt || participant.lastReadAt < readThroughAt)
-    ) {
-      await tx.conversationParticipant.update({
-        data: { lastReadAt: readThroughAt },
-        where: {
-          conversationId_userId: { conversationId, userId },
+          await tx.$queryRaw`
+            SELECT "id"
+            FROM "ConversationParticipant"
+            WHERE "id" = ${participant.id}
+            FOR UPDATE
+          `;
+
+          const readThroughEntry = throughEntry
+            ? throughEntry.kind === "message"
+              ? await tx.message.findFirst({
+                  select: { createdAt: true, id: true },
+                  where: { conversationId, id: throughEntry.id },
+                })
+              : await tx.conversationEvent.findFirst({
+                  select: { createdAt: true, id: true },
+                  where: { conversationId, id: throughEntry.id },
+                })
+            : null;
+          if (throughEntry && !readThroughEntry) return null;
+
+          const readThroughAt =
+            readThroughEntry?.createdAt ?? participant.lastReadAt;
+
+          if (readThroughAt) {
+            await tx.conversationParticipant.updateMany({
+              data: { lastReadAt: readThroughAt },
+              where: {
+                conversationId,
+                OR: [
+                  { lastReadAt: null },
+                  { lastReadAt: { lt: readThroughAt } },
+                ],
+                removedAt: null,
+                userId,
+              },
+            });
+          }
+
+          return { readThroughEntry };
         },
-      });
+        { isolationLevel: "ReadCommitted" },
+      );
+      break;
+    } catch (error) {
+      const finalAttempt = attempt === readStateTransactionAttempts - 1;
+      if (!isTransactionWriteConflict(error) || finalAttempt) throw error;
+      await new Promise((resolve) =>
+        setTimeout(resolve, readStateRetryDelayMs * (attempt + 1)),
+      );
     }
+  }
 
-    if (unreadMessages.length) {
-      await tx.messageReadReceipt.createMany({
-        data: unreadMessages.map((message) => ({
-          messageId: message.id,
-          userId,
-        })),
-        skipDuplicates: true,
-      });
-    }
+  if (!transactionResult) return false;
+  const { readThroughEntry } = transactionResult;
+  if (!readThroughEntry) return true;
 
-    if (readThroughEntry) {
-      await tx.notification.updateMany({
-        data: { readAt: new Date() },
-        where: {
-          OR: [
-            { actionUrl: `/app/messages/${conversationId}` },
-            { actionUrl: { startsWith: `/app/messages/${conversationId}?` } },
-            { metadata: { path: ["conversationId"], equals: conversationId } },
+  const [unreadMessages] = await Promise.all([
+    prisma.message.findMany({
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: { id: true },
+      take: 100,
+      where: {
+        conversationId,
+        OR: [
+          { createdAt: { lt: readThroughEntry.createdAt } },
+          {
+            createdAt: readThroughEntry.createdAt,
+            id: { lte: readThroughEntry.id },
+          },
+        ],
+        readReceipts: { none: { userId } },
+        senderId: { not: userId },
+      },
+    }),
+    prisma.notification.updateMany({
+      data: { readAt: new Date() },
+      where: {
+        OR: [
+          { actionUrl: `/app/messages/${conversationId}` },
+          { actionUrl: { startsWith: `/app/messages/${conversationId}?` } },
+          { metadata: { path: ["conversationId"], equals: conversationId } },
+        ],
+        createdAt: { lte: readThroughEntry.createdAt },
+        readAt: null,
+        type: {
+          in: [
+            "DEAL",
+            "DEAL_UPDATE",
+            "MESSAGE",
+            "MESSAGE_REQUEST_RECEIVED",
+            "NEW_MESSAGE",
+            "PROPOSAL",
+            "PROPOSAL_UPDATE",
           ],
-          createdAt: { lte: readThroughEntry.createdAt },
-          readAt: null,
-          type: {
-            in: [
-              "DEAL",
-              "DEAL_UPDATE",
-              "MESSAGE",
-              "MESSAGE_REQUEST_RECEIVED",
-              "NEW_MESSAGE",
-              "PROPOSAL",
-              "PROPOSAL_UPDATE",
-            ],
-          },
-          userId,
         },
-      });
-    }
+        userId,
+      },
+    }),
+  ]);
 
-    return true;
-  }, { isolationLevel: "RepeatableRead" });
+  if (unreadMessages.length) {
+    await prisma.messageReadReceipt.createMany({
+      data: unreadMessages.map((message) => ({
+        messageId: message.id,
+        userId,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  return true;
 }

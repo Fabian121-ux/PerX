@@ -7,6 +7,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { Card, EmptyState } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/form";
+import { RouteFeedback } from "@/components/ui/route-feedback";
 import {
   archiveOpportunityAction,
   deleteOpportunityAction,
@@ -18,6 +19,7 @@ import {
 import { requireUser } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import { opportunityTypeOptions } from "@/lib/options";
+import { hasCapability } from "@/lib/permissions/capabilities";
 import type { OpportunityStatus, OpportunityType } from "@/generated/prisma/enums";
 
 export const dynamic = "force-dynamic";
@@ -34,9 +36,19 @@ const statusOptions = [
 export default async function ManageContentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; type?: string }>;
+  searchParams: Promise<{
+    created?: string;
+    error?: string;
+    q?: string;
+    status?: string;
+    submitted?: string;
+    type?: string;
+    updated?: string;
+  }>;
 }) {
   const user = await requireUser();
+  const canCreate = hasCapability(user.roles, "opportunity:create");
+  const canUpdate = hasCapability(user.roles, "opportunity:update:own");
   const params = await searchParams;
   const q = params.q?.trim();
   const status = statusOptions.some((option) => option.value === params.status)
@@ -45,6 +57,31 @@ export default async function ManageContentPage({
   const type = opportunityTypeOptions.some((option) => option.value === params.type)
     ? (params.type as OpportunityType)
     : "";
+  const feedback = params.created
+    ? {
+        description: "You can edit, pause, duplicate, or archive it from here.",
+        title: "Post created",
+        tone: "success" as const,
+      }
+    : params.updated
+      ? { title: "Changes saved", tone: "success" as const }
+      : params.submitted
+        ? {
+            description: "The listing is now awaiting review.",
+            title: "Submitted for review",
+            tone: "success" as const,
+          }
+        : params.error
+          ? {
+              description:
+                params.error === "publishing-restricted"
+                  ? "Publishing is currently restricted for this account. Your existing drafts remain available."
+                  : "The requested change could not be completed.",
+              duration: null,
+              title: "Action not completed",
+              tone: "error" as const,
+            }
+          : null;
 
   const opportunities = (await getPrisma().opportunity.findMany({
     include: {
@@ -86,11 +123,16 @@ export default async function ManageContentPage({
 
   return (
     <AppSection
-      actions={<ButtonLink href="/app/opportunities/new">Create</ButtonLink>}
+      actions={
+        canCreate ? (
+          <ButtonLink href="/app/opportunities/new">Create</ButtonLink>
+        ) : undefined
+      }
       description="Manage every opportunity, service, property, partnership, and startup listing you own."
       title="Manage my content"
     >
       <div className="grid gap-5">
+        <RouteFeedback feedback={feedback} />
         <Card>
           <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_180px_auto]">
             <label className="relative">
@@ -182,15 +224,23 @@ export default async function ManageContentPage({
                       <Eye aria-hidden className="mr-1.5" size={14} />
                       Preview
                     </ButtonLink>
-                    <ButtonLink
-                      href={`/app/opportunities/${opportunity.id}/edit`}
-                      size="sm"
-                      variant="secondary"
-                    >
-                      <Pencil aria-hidden className="mr-1.5" size={14} />
-                      Edit
-                    </ButtonLink>
-                    <StateActions id={opportunity.id} status={opportunity.status} />
+                    {canUpdate ? (
+                      <ButtonLink
+                        href={`/app/opportunities/${opportunity.id}/edit`}
+                        size="sm"
+                        variant="secondary"
+                      >
+                        <Pencil aria-hidden className="mr-1.5" size={14} />
+                        Edit
+                      </ButtonLink>
+                    ) : null}
+                    {canUpdate ? (
+                      <StateActions
+                        canDuplicate={canCreate}
+                        id={opportunity.id}
+                        status={opportunity.status}
+                      />
+                    ) : null}
                   </div>
                 </div>
               </Card>
@@ -198,7 +248,13 @@ export default async function ManageContentPage({
           </div>
         ) : (
           <EmptyState
-            action={<ButtonLink href="/app/opportunities/new">Create opportunity</ButtonLink>}
+            action={
+              canCreate ? (
+                <ButtonLink href="/app/opportunities/new">
+                  Create opportunity
+                </ButtonLink>
+              ) : undefined
+            }
             body="Drafts, published listings, paused items, and archived records you own will appear here."
             title="No managed content found"
           />
@@ -208,7 +264,15 @@ export default async function ManageContentPage({
   );
 }
 
-function StateActions({ id, status }: { id: string; status: string }) {
+function StateActions({
+  canDuplicate,
+  id,
+  status,
+}: {
+  canDuplicate: boolean;
+  id: string;
+  status: string;
+}) {
   return (
     <>
       {status !== "PUBLISHED" ? (
@@ -241,12 +305,14 @@ function StateActions({ id, status }: { id: string; status: string }) {
           </Button>
         </form>
       )}
-      <form action={async () => { "use server"; await duplicateOpportunityAction(id); }}>
-        <Button size="sm" type="submit" variant="secondary">
-          <Copy aria-hidden className="mr-1.5" size={14} />
-          Duplicate
-        </Button>
-      </form>
+      {canDuplicate ? (
+        <form action={async () => { "use server"; await duplicateOpportunityAction(id); }}>
+          <Button size="sm" type="submit" variant="secondary">
+            <Copy aria-hidden className="mr-1.5" size={14} />
+            Duplicate
+          </Button>
+        </form>
+      ) : null}
       {["DRAFT", "ARCHIVED"].includes(status) ? (
         <form action={async () => { "use server"; await deleteOpportunityAction(id); }}>
           <ConfirmSubmitButton message="Delete this item? This cannot be undone.">

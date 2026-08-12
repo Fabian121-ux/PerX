@@ -8,6 +8,9 @@ Current examples:
 - Message attachments.
 - Deal tools where no persisted deal exists.
 - Advanced filters that require backend persistence.
+- Generic feed comments, reactions, post replies, and engagement notifications.
+- An authoritative, versioned numeric Trust Score.
+- Server-owned capability grants and type-sensitive creation permissions.
 
 Rules:
 

@@ -14,6 +14,7 @@ import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
 import { formatBudgetRange } from "@/lib/money";
 import { bookmarkOpportunityAction } from "@/features/opportunities/actions";
 import { calculateTrustSummary, trustBadgeClassName } from "@/lib/trust/engine";
+import type { TrustRecordEvidence } from "@/lib/trust/records";
 import { getCanonicalOpportunityPath } from "@/lib/data/opportunity-path";
 
 type OpportunityCardProps = {
@@ -43,6 +44,7 @@ type OpportunityCardProps = {
         completedDeals?: number | string | null;
         profileCompleteness?: number | string | null;
       } | null;
+      trustRecordEvidence?: TrustRecordEvidence;
       username?: string;
       verificationStatus?: string | null;
     } | null;
@@ -51,8 +53,9 @@ type OpportunityCardProps = {
 
 export function OpportunityCard({ href, opportunity }: OpportunityCardProps) {
   const trust = calculateTrustSummary({
-    averageRating: String(opportunity.owner?.profile?.averageRating ?? 0),
-    completedDeals: opportunity.owner?.profile?.completedDeals ?? 0,
+    averageRating: opportunity.owner?.trustRecordEvidence?.averageRating ?? 0,
+    completedDeals:
+      opportunity.owner?.trustRecordEvidence?.completedAgreements ?? 0,
     emailVerifiedAt: opportunity.owner?.emailVerifiedAt ?? null,
     profileCompleteness: opportunity.owner?.profile?.profileCompleteness ?? 0,
     verificationStatus: opportunity.owner?.verificationStatus ?? null,

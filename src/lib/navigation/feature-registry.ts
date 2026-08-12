@@ -111,6 +111,13 @@ export const featureRegistry = [
     id: "create-post",
     keywords: ["new", "publish", "listing", "opportunity", "content"],
     label: "Create Post",
+    requiredRoles: [
+      "ADMIN",
+      "CLIENT",
+      "FOUNDER",
+      "MASTER_ADMIN",
+      "PROPERTY_OWNER",
+    ],
   },
   {
     description: "Review your drafts and published posts.",

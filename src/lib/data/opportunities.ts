@@ -59,6 +59,7 @@ export async function getAuthenticatedHomeOpportunityPageResult({
       cursor,
       excludeOwnerId: viewerId,
       pageSize,
+      viewerId,
     });
     return { ...page, unavailable: false };
   } catch (error) {

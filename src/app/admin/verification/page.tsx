@@ -1,7 +1,9 @@
 import { AdminList, AdminSection } from "@/components/admin-section";
+import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 import { getAdminList } from "@/lib/data/admin";
 
 export default async function AdminVerificationPage() {
+  await requireCapabilityOrNotFound("admin:moderate");
   const requests = await getAdminList("verification");
   return (
     <AdminSection description="Review verification requests and account trust evidence." title="Verification requests">

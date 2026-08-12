@@ -1,5 +1,7 @@
 "use client";
 
+import * as Dialog from "@radix-ui/react-dialog";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   Fragment,
   useCallback,
@@ -14,6 +16,7 @@ import {
   type FormEvent,
 } from "react";
 import {
+  ArrowDown,
   ArrowLeft,
   Check,
   CheckCheck,
@@ -37,6 +40,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { FeatureDirectory } from "@/components/navigation/feature-directory";
+import { useConfirm, useToast } from "@/components/ui/feedback-provider";
 import {
   deleteMessageAction,
   editMessageAction,
@@ -46,6 +50,7 @@ import {
 } from "@/features/messages/actions";
 import { blockUserAction } from "@/features/network/actions";
 import { shouldSubmitMessage } from "@/lib/messages/composer-keyboard";
+import { MAX_LOADED_CONVERSATIONS } from "@/lib/messages/limits";
 
 type ReplyPreview = {
   body: string;
@@ -103,6 +108,7 @@ export type WorkspaceConversation = {
   };
   dealHref?: string;
   events?: WorkspaceConversationEvent[];
+  historyLoaded?: boolean;
   id: string;
   lastMessage?: string;
   messages: WorkspaceMessage[];
@@ -194,9 +200,7 @@ export function MessageWorkspace({
   const [isOlderConversationsPending, startOlderConversationsTransition] =
     useTransition();
   const [isEditPending, startEditTransition] = useTransition();
-  const [openActionMenuMessageId, setOpenActionMenuMessageId] =
-    useState("");
-  const actionMenuRef = useRef<HTMLDivElement>(null);
+  const [openActionMenuMessageId, setOpenActionMenuMessageId] = useState("");
   const draftStorageKey = `perx:messages:${currentUserId}:drafts`;
   const filterStorageKey = `perx:messages:${currentUserId}:filter`;
   const listScrollStorageKey = `perx:messages:${currentUserId}:list-scroll`;
@@ -206,13 +210,18 @@ export function MessageWorkspace({
   >({});
   const conversationHeaderRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<HTMLDivElement>(null);
+  const appNavigationScrollRef = useRef<{
+    conversationId: string;
+    distanceFromBottom: number;
+  } | null>(null);
   const inlineDetailHistoryRef = useRef(false);
   const activeIdRef = useRef(activeId);
   const mobileDetailOpenRef = useRef(mobileDetailOpen);
   const syncedConversationsRef = useRef(syncedConversations);
-  const previousHistoryConversationRef = useRef<string | undefined>(undefined);
   const historyScrollAnchorRef = useRef<{
     conversationId: string;
+    entryId?: string;
+    entryTop?: number;
     scrollHeight: number;
     scrollTop: number;
   } | null>(null);
@@ -220,8 +229,10 @@ export function MessageWorkspace({
   const [olderConversationCursor, setOlderConversationCursor] = useState(
     olderConversationsCursor ?? null,
   );
-  const [documentVisible, setDocumentVisible] = useState(true);
+  const [documentVisible, setDocumentVisible] = useState(false);
   const [historyAtBottom, setHistoryAtBottom] = useState(false);
+  const [historyPositioned, setHistoryPositioned] = useState(false);
+  const [newMessageCount, setNewMessageCount] = useState(0);
   const useBrowserFormatting = useSyncExternalStore(
     subscribeToHydration,
     getBrowserSnapshot,
@@ -234,6 +245,18 @@ export function MessageWorkspace({
         window.matchMedia("(max-width: 1023px)").matches),
   );
   const isComposingRef = useRef(false);
+  const historyAtBottomRef = useRef(false);
+  const historyPositionedRef = useRef(false);
+  const pendingLatestPositionRef = useRef(
+    highlightMessageId || highlightEventId
+      ? ""
+      : (defaultConversationId ?? conversations[0]?.id ?? ""),
+  );
+  const previousTimelineRef = useRef<{
+    conversationId: string;
+    messageIds: Set<string>;
+  } | null>(null);
+  const restoringHistoryRef = useRef(false);
   const listRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const mutationCursorsRef = useRef<Record<string, string>>(
@@ -241,12 +264,38 @@ export function MessageWorkspace({
       ? { [defaultConversationId]: initialMutationCursor }
       : {},
   );
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  const conversationAuthorizationAbortRef = useRef<AbortController | null>(
+    null,
+  );
+  const conversationAuthorizationRequestRef = useRef(0);
+  const conversationOpenRequestRef = useRef(0);
+  const fullHistoryConversationIdsRef = useRef(
+    new Set(
+      conversations
+        .filter((conversation) => conversation.historyLoaded !== false)
+        .map((conversation) => conversation.id),
+    ),
+  );
+  const editingMessageIdRef = useRef(editingMessageId);
+  const confirm = useConfirm();
+  const toast = useToast();
 
   useLayoutEffect(() => {
     activeIdRef.current = activeId;
+    historyAtBottomRef.current = historyAtBottom;
+    historyPositionedRef.current = historyPositioned;
     mobileDetailOpenRef.current = mobileDetailOpen;
     syncedConversationsRef.current = syncedConversations;
-  }, [activeId, mobileDetailOpen, syncedConversations]);
+    editingMessageIdRef.current = editingMessageId;
+  }, [
+    activeId,
+    editingMessageId,
+    historyAtBottom,
+    historyPositioned,
+    mobileDetailOpen,
+    syncedConversations,
+  ]);
 
   useEffect(() => {
     const node = listRef.current;
@@ -316,6 +365,8 @@ export function MessageWorkspace({
       document.removeEventListener("visibilitychange", updateVisibility);
   }, []);
 
+  useEffect(() => () => conversationAuthorizationAbortRef.current?.abort(), []);
+
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
     const media = window.matchMedia("(max-width: 1023px)");
@@ -324,29 +375,11 @@ export function MessageWorkspace({
     return () => media.removeEventListener?.("change", updateViewport);
   }, []);
 
-  useEffect(() => {
-    const handleGlobalClick = (event: MouseEvent) => {
-      if (
-        openActionMenuMessageId &&
-        actionMenuRef.current &&
-        !actionMenuRef.current.contains(event.target as Node)
-      ) {
-        setOpenActionMenuMessageId("");
-      }
-    };
-    document.addEventListener("click", handleGlobalClick, true);
-    return () =>
-      document.removeEventListener("click", handleGlobalClick, true);
-  }, [openActionMenuMessageId]);
-
-  const toggleActionMenu = useCallback(
-    (messageId: string) => {
-      setOpenActionMenuMessageId((current) =>
-        current === messageId ? "" : messageId,
-      );
-    },
-    [],
-  );
+  const toggleActionMenu = useCallback((messageId: string) => {
+    setOpenActionMenuMessageId((current) =>
+      current === messageId ? "" : messageId,
+    );
+  }, []);
 
   const closeActionMenu = useCallback(() => {
     setOpenActionMenuMessageId("");
@@ -360,6 +393,17 @@ export function MessageWorkspace({
     ) => {
       if (conversationList) {
         setOlderConversationCursor(conversationList.nextCursor);
+        if (
+          activeIdRef.current &&
+          !conversationList.ids.includes(activeIdRef.current) &&
+          !incoming.some(
+            (conversation) => conversation.id === activeIdRef.current,
+          )
+        ) {
+          activeIdRef.current = "";
+          setActivatedConversationId("");
+          setActiveId("");
+        }
       }
       setSyncedConversations((current) =>
         mergeWorkspaceConversationSnapshots(
@@ -375,20 +419,122 @@ export function MessageWorkspace({
     },
   );
 
+  const reconcileConversationSnapshot = useEffectEvent(
+    async (
+      incoming: NonNullable<ReturnType<typeof parseConversationStreamEnvelope>>,
+    ) => {
+      const conversationList = incoming.conversationList;
+      if (!conversationList) {
+        updateConversations(
+          incoming.conversations,
+          incoming.messageMutations,
+          null,
+        );
+        return;
+      }
+
+      const requestVersion = ++conversationAuthorizationRequestRef.current;
+      conversationAuthorizationAbortRef.current?.abort();
+      conversationAuthorizationAbortRef.current = null;
+      if (!conversationList.nextCursor) {
+        updateConversations(
+          incoming.conversations,
+          incoming.messageMutations,
+          conversationList,
+        );
+        return;
+      }
+
+      const listedIds = new Set(conversationList.ids);
+      const incomingIds = new Set(
+        incoming.conversations.map((conversation) => conversation.id),
+      );
+      const omittedIds = syncedConversationsRef.current
+        .map((conversation) => conversation.id)
+        .filter((id) => !listedIds.has(id) && !incomingIds.has(id));
+      if (!omittedIds.length) {
+        updateConversations(
+          incoming.conversations,
+          incoming.messageMutations,
+          conversationList,
+        );
+        return;
+      }
+
+      const controller = new AbortController();
+      conversationAuthorizationAbortRef.current = controller;
+      const timeout = window.setTimeout(() => controller.abort(), 5000);
+      let authorizedIds: string[] | null = null;
+      try {
+        const response = await fetch("/api/messages/authorization", {
+          body: JSON.stringify({ conversationIds: omittedIds }),
+          cache: "no-store",
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+          signal: controller.signal,
+        });
+        const payload = (await response.json().catch(() => null)) as {
+          ids?: unknown;
+        } | null;
+        if (
+          response.ok &&
+          Array.isArray(payload?.ids) &&
+          payload.ids.length <= MAX_LOADED_CONVERSATIONS &&
+          payload.ids.every((id) => typeof id === "string")
+        ) {
+          authorizedIds = payload.ids;
+        }
+      } catch {
+        // A later bounded refresh retries without treating network failure as revocation.
+      } finally {
+        window.clearTimeout(timeout);
+        if (conversationAuthorizationAbortRef.current === controller) {
+          conversationAuthorizationAbortRef.current = null;
+        }
+      }
+      if (requestVersion !== conversationAuthorizationRequestRef.current)
+        return;
+      if (!authorizedIds) {
+        updateConversations(
+          incoming.conversations,
+          incoming.messageMutations,
+          null,
+        );
+        return;
+      }
+
+      updateConversations(incoming.conversations, incoming.messageMutations, {
+        ...conversationList,
+        ids: [
+          ...new Set([
+            ...conversationList.ids,
+            ...incoming.conversations.map((conversation) => conversation.id),
+            ...authorizedIds,
+          ]),
+        ],
+      });
+    },
+  );
+
   const openHistoryConversation = useEffectEvent(
     async (conversationId: string) => {
+      const requestId = ++conversationOpenRequestRef.current;
       try {
         const response = await fetch(
           `/api/messages/sync?conversationId=${encodeURIComponent(conversationId)}`,
           { cache: "no-store" },
         );
+        if (requestId !== conversationOpenRequestRef.current) return;
         if (!response.ok) {
           setSyncedConversations((current) =>
-            current.filter((conversation) => conversation.id !== conversationId),
+            current.filter(
+              (conversation) => conversation.id !== conversationId,
+            ),
           );
           return;
         }
         const incoming = parseConversationStreamEnvelope(await response.json());
+        if (requestId !== conversationOpenRequestRef.current) return;
         if (
           !incoming ||
           !incoming.conversations.some(
@@ -396,7 +542,9 @@ export function MessageWorkspace({
           )
         ) {
           setSyncedConversations((current) =>
-            current.filter((conversation) => conversation.id !== conversationId),
+            current.filter(
+              (conversation) => conversation.id !== conversationId,
+            ),
           );
           return;
         }
@@ -417,6 +565,15 @@ export function MessageWorkspace({
             highlightEventId,
           ),
         );
+        pendingLatestPositionRef.current = conversationId;
+        historyPositionedRef.current = false;
+        historyAtBottomRef.current = false;
+        setHistoryPositioned(false);
+        setHistoryAtBottom(false);
+        setNewMessageCount(0);
+        setReplyTarget(null);
+        setSendError("");
+        setDetailsOpen(false);
         inlineDetailHistoryRef.current = true;
         setActivatedConversationId(conversationId);
         setActiveId(conversationId);
@@ -428,6 +585,7 @@ export function MessageWorkspace({
           conversationHeaderRef.current?.focus(),
         );
       } catch {
+        if (requestId !== conversationOpenRequestRef.current) return;
         // Keep the current authorized conversation visible on transient failures.
       }
     },
@@ -435,9 +593,11 @@ export function MessageWorkspace({
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
-      const conversationId = (event.state as {
-        perxMessagesConversationId?: unknown;
-      } | null)?.perxMessagesConversationId;
+      const conversationId = (
+        event.state as {
+          perxMessagesConversationId?: unknown;
+        } | null
+      )?.perxMessagesConversationId;
       if (
         typeof conversationId === "string" &&
         syncedConversationsRef.current.some(
@@ -466,6 +626,8 @@ export function MessageWorkspace({
     let eventSource: EventSource | null = null;
     let fallbackInterval: number | null = null;
     let unavailableHandled = false;
+    let syncInFlight = false;
+    let syncVersion = 0;
     const stopFallback = () => {
       if (fallbackInterval === null) return;
       window.clearInterval(fallbackInterval);
@@ -474,6 +636,8 @@ export function MessageWorkspace({
     const recoverAuthorizedList = async () => {
       if (unavailableHandled) return;
       unavailableHandled = true;
+      syncVersion += 1;
+      conversationOpenRequestRef.current += 1;
       eventSource?.close();
       stopFallback();
       setActivatedConversationId("");
@@ -506,6 +670,9 @@ export function MessageWorkspace({
       }
     };
     const sync = async () => {
+      if (syncInFlight) return;
+      syncInFlight = true;
+      const requestVersion = ++syncVersion;
       try {
         const params = new URLSearchParams();
         if (activeId) {
@@ -517,6 +684,7 @@ export function MessageWorkspace({
           `/api/messages/sync${params.size ? `?${params}` : ""}`,
           { cache: "no-store" },
         );
+        if (!active || requestVersion !== syncVersion) return;
         if (response.status === 400 && activeId) {
           delete mutationCursorsRef.current[activeId];
           void recoverAuthorizedList();
@@ -528,18 +696,16 @@ export function MessageWorkspace({
         }
         if (!response.ok) return;
         const incoming = parseConversationStreamEnvelope(await response.json());
-        if (active && incoming) {
+        if (active && requestVersion === syncVersion && incoming) {
           if (activeId && incoming.mutationCursor) {
             mutationCursorsRef.current[activeId] = incoming.mutationCursor;
           }
-          updateConversations(
-            incoming.conversations,
-            incoming.messageMutations,
-            incoming.conversationList,
-          );
+          await reconcileConversationSnapshot(incoming);
         }
       } catch {
         // Polling is the fallback freshness path; persisted messages remain available after refresh.
+      } finally {
+        syncInFlight = false;
       }
     };
 
@@ -568,6 +734,7 @@ export function MessageWorkspace({
       });
       eventSource.addEventListener("conversations", (event) => {
         if (!active) return;
+        syncVersion += 1;
         let incoming: ReturnType<typeof parseConversationStreamEnvelope> = null;
         try {
           incoming = parseConversationStreamEnvelope(
@@ -581,11 +748,7 @@ export function MessageWorkspace({
           if (activeId && messageEvent.lastEventId) {
             mutationCursorsRef.current[activeId] = messageEvent.lastEventId;
           }
-          updateConversations(
-            incoming.conversations,
-            incoming.messageMutations,
-            incoming.conversationList,
-          );
+          void reconcileConversationSnapshot(incoming);
           stopFallback();
           setLiveState("live");
           window.dispatchEvent(new Event("perx-unread-refresh"));
@@ -616,6 +779,7 @@ export function MessageWorkspace({
 
     return () => {
       active = false;
+      syncVersion += 1;
       eventSource?.close();
       stopFallback();
     };
@@ -624,19 +788,88 @@ export function MessageWorkspace({
   const activeConversation =
     syncedConversations.find((conversation) => conversation.id === activeId) ??
     syncedConversations[0];
+  const historyVisible =
+    Boolean(activeConversation) && (!isMobileViewport || mobileDetailOpen);
 
   useEffect(() => {
     const node = historyRef.current;
-    if (!node) return;
-    const updateHistoryPosition = () => {
+    if (!node || !historyVisible) {
+      historyAtBottomRef.current = false;
+      setHistoryAtBottom(false);
+      return;
+    }
+    const conversationId = activeConversation?.id;
+    const positionPendingLatest = () => {
+      if (
+        !conversationId ||
+        !node.clientHeight ||
+        highlightedMessageId ||
+        pendingLatestPositionRef.current !== conversationId
+      ) {
+        return false;
+      }
+      node.scrollTop = node.scrollHeight;
+      historyPositionedRef.current = true;
+      historyAtBottomRef.current = true;
+      setHistoryPositioned(true);
+      setHistoryAtBottom(true);
+      setNewMessageCount(0);
+      return true;
+    };
+    positionPendingLatest();
+    const updateHistoryPosition = (event?: Event) => {
+      if (!node.clientHeight || !historyPositionedRef.current) {
+        historyAtBottomRef.current = false;
+        setHistoryAtBottom(false);
+        return;
+      }
       const distanceFromBottom =
         node.scrollHeight - node.scrollTop - node.clientHeight;
-      setHistoryAtBottom(distanceFromBottom <= 32);
+      const atBottom = distanceFromBottom <= 72;
+      if (
+        !atBottom &&
+        event &&
+        pendingLatestPositionRef.current === conversationId
+      ) {
+        pendingLatestPositionRef.current = "";
+      }
+      historyAtBottomRef.current = atBottom;
+      setHistoryAtBottom(atBottom);
+      if (atBottom) setNewMessageCount(0);
     };
     updateHistoryPosition();
-    node.addEventListener("scroll", updateHistoryPosition, { passive: true });
-    return () => node.removeEventListener("scroll", updateHistoryPosition);
-  }, [activeConversation?.id]);
+    const handleHistoryScroll = (event: Event) => updateHistoryPosition(event);
+    node.addEventListener("scroll", handleHistoryScroll, { passive: true });
+    let previousScrollHeight = node.scrollHeight;
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => {
+            const wasAtBottomBeforeResize =
+              previousScrollHeight - node.scrollTop - node.clientHeight <= 72;
+            if (
+              !positionPendingLatest() &&
+              (historyAtBottomRef.current || wasAtBottomBeforeResize) &&
+              !restoringHistoryRef.current
+            ) {
+              node.scrollTop = node.scrollHeight;
+            }
+            previousScrollHeight = node.scrollHeight;
+            updateHistoryPosition();
+          });
+    resizeObserver?.observe(node);
+    if (node.firstElementChild) {
+      resizeObserver?.observe(node.firstElementChild);
+    }
+    const viewport = window.visualViewport;
+    const handleViewportResize = () => updateHistoryPosition();
+    viewport?.addEventListener("resize", handleViewportResize);
+    return () => {
+      node.removeEventListener("scroll", handleHistoryScroll);
+      resizeObserver?.disconnect();
+      viewport?.removeEventListener("resize", handleViewportResize);
+    };
+  }, [activeConversation?.id, highlightedMessageId, historyVisible]);
 
   const draft = drafts[activeConversation?.id ?? activeId] ?? "";
   const visibleConversations = useMemo(() => {
@@ -685,9 +918,11 @@ export function MessageWorkspace({
       }),
     [activeConversation?.events, messages],
   );
-  const latestEntry = timeline.at(-1);
-  const latestEntryId = latestEntry?.id;
-  const latestEntryKind = latestEntry?.kind;
+  const latestPersistedEntry = [...timeline]
+    .reverse()
+    .find((entry) => entry.kind === "event" || !entry.id.startsWith("local-"));
+  const latestEntryId = latestPersistedEntry?.id;
+  const latestEntryKind = latestPersistedEntry?.kind;
 
   const loadOlderMessages = () => {
     const conversationId = activeConversation?.id;
@@ -695,11 +930,23 @@ export function MessageWorkspace({
     const node = historyRef.current;
     if (!conversationId || !cursor || isOlderPending) return;
     if (node) {
+      const nodeTop = node.getBoundingClientRect().top;
+      const anchorElement = Array.from(
+        node.querySelectorAll<HTMLElement>(
+          "[data-message-id], [data-event-id]",
+        ),
+      ).find((entry) => entry.getBoundingClientRect().bottom >= nodeTop);
       historyScrollAnchorRef.current = {
         conversationId,
+        entryId:
+          anchorElement?.dataset.messageId ?? anchorElement?.dataset.eventId,
+        entryTop: anchorElement?.getBoundingClientRect().top,
         scrollHeight: node.scrollHeight,
         scrollTop: node.scrollTop,
       };
+      restoringHistoryRef.current = true;
+      historyAtBottomRef.current = false;
+      setHistoryAtBottom(false);
     }
     setSendError("");
 
@@ -737,10 +984,16 @@ export function MessageWorkspace({
           setHistoryAnchorVersion((version) => version + 1);
         } else {
           historyScrollAnchorRef.current = null;
+          restoringHistoryRef.current = false;
         }
       } catch {
         historyScrollAnchorRef.current = null;
-        setSendError("Unable to load older messages. Please try again.");
+        restoringHistoryRef.current = false;
+        toast({
+          description: "Please try again.",
+          title: "Unable to load older messages",
+          tone: "error",
+        });
       }
     });
   };
@@ -758,45 +1011,143 @@ export function MessageWorkspace({
         if (!response.ok || !payload) {
           throw new Error("Unable to load older conversations.");
         }
+        const currentIds = new Set(
+          syncedConversationsRef.current.map((conversation) => conversation.id),
+        );
+        const addedCount = payload.items.filter(
+          (conversation) => !currentIds.has(conversation.id),
+        ).length;
+        const reachedLimit =
+          currentIds.size + addedCount >= MAX_LOADED_CONVERSATIONS;
         setSyncedConversations((current) => {
-          const byId = new Map(current.map((conversation) => [conversation.id, conversation]));
+          const byId = new Map(
+            current.map((conversation) => [conversation.id, conversation]),
+          );
           for (const conversation of payload.items) {
-            if (!byId.has(conversation.id)) byId.set(conversation.id, conversation);
+            if (!byId.has(conversation.id))
+              byId.set(conversation.id, conversation);
           }
-          return [...byId.values()];
+          return sortWorkspaceConversations([...byId.values()]).slice(
+            0,
+            MAX_LOADED_CONVERSATIONS,
+          );
         });
-        setOlderConversationCursor(payload.nextCursor);
+        setOlderConversationCursor(reachedLimit ? null : payload.nextCursor);
       } catch {
-        setSendError("Unable to load older conversations. Please try again.");
+        toast({
+          description: "Please try again.",
+          title: "Unable to load older conversations",
+          tone: "error",
+        });
       }
     });
   };
 
-  useEffect(() => {
-    const conversationChanged =
-      previousHistoryConversationRef.current !== activeConversation?.id;
-    previousHistoryConversationRef.current = activeConversation?.id;
-    if (highlightedMessageId) return;
+  const preserveHistoryAcrossAppNavigation = (open: boolean) => {
     const node = historyRef.current;
-    if (!node) return;
-    if (!conversationChanged && !historyAtBottom) return;
-    node.scrollTo({
-      behavior: "smooth",
-      top: node.scrollHeight,
+    const conversationId = activeConversation?.id;
+    if (open) {
+      appNavigationScrollRef.current =
+        node && conversationId
+          ? {
+              conversationId,
+              distanceFromBottom:
+                node.scrollHeight - node.scrollTop - node.clientHeight,
+            }
+          : null;
+      return;
+    }
+
+    const anchor = appNavigationScrollRef.current;
+    appNavigationScrollRef.current = null;
+    if (!anchor) return;
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const current = historyRef.current;
+        if (!current || activeIdRef.current !== anchor.conversationId) return;
+        current.scrollTop = Math.max(
+          0,
+          current.scrollHeight -
+            current.clientHeight -
+            anchor.distanceFromBottom,
+        );
+      });
     });
-    if (!conversationChanged) return;
+  };
+
+  useLayoutEffect(() => {
+    const node = historyRef.current;
+    const conversationId = activeConversation?.id;
+    if (
+      !node ||
+      !conversationId ||
+      !historyVisible ||
+      !node.clientHeight ||
+      highlightedMessageId ||
+      pendingLatestPositionRef.current !== conversationId
+    ) {
+      return;
+    }
+    node.scrollTo({ behavior: "auto", top: node.scrollHeight });
+    historyPositionedRef.current = true;
+    historyAtBottomRef.current = true;
+    setHistoryPositioned(true);
+    setHistoryAtBottom(true);
+    setNewMessageCount(0);
     const frame = window.requestAnimationFrame(() => {
-      const distanceFromBottom =
-        node.scrollHeight - node.scrollTop - node.clientHeight;
-      setHistoryAtBottom(distanceFromBottom <= 32);
+      node.scrollTop = node.scrollHeight;
     });
     return () => window.cancelAnimationFrame(frame);
   }, [
     activeConversation?.id,
     highlightedMessageId,
-    historyAtBottom,
+    historyVisible,
     timeline.length,
   ]);
+
+  useEffect(() => {
+    const conversationId = activeConversation?.id;
+    if (!conversationId) return;
+    const messageIds = new Set(
+      timeline
+        .filter(
+          (entry) =>
+            entry.kind === "message" &&
+            entry.message.senderId !== currentUserId &&
+            !entry.message.id.startsWith("local-"),
+        )
+        .map((entry) => entry.id),
+    );
+    const previous = previousTimelineRef.current;
+    previousTimelineRef.current = { conversationId, messageIds };
+    if (
+      !previous ||
+      previous.conversationId !== conversationId ||
+      !historyVisible ||
+      !historyPositionedRef.current ||
+      restoringHistoryRef.current
+    ) {
+      return;
+    }
+
+    const node = historyRef.current;
+    if (historyAtBottomRef.current && node) {
+      const frame = window.requestAnimationFrame(() => {
+        node.scrollTo({ behavior: "auto", top: node.scrollHeight });
+      });
+      return () => window.cancelAnimationFrame(frame);
+    }
+
+    const addedCount = [...messageIds].filter(
+      (messageId) => !previous.messageIds.has(messageId),
+    ).length;
+    if (addedCount) {
+      const frame = window.requestAnimationFrame(() =>
+        setNewMessageCount((count) => count + addedCount),
+      );
+      return () => window.cancelAnimationFrame(frame);
+    }
+  }, [activeConversation?.id, currentUserId, historyVisible, timeline]);
 
   useLayoutEffect(() => {
     const anchor = historyScrollAnchorRef.current;
@@ -804,17 +1155,44 @@ export function MessageWorkspace({
     if (!anchor || !node) return;
     if (anchor.conversationId !== activeConversation?.id) {
       historyScrollAnchorRef.current = null;
+      restoringHistoryRef.current = false;
       return;
     }
     historyScrollAnchorRef.current = null;
-    node.scrollTop = anchor.scrollTop + (node.scrollHeight - anchor.scrollHeight);
+    const anchorElement = anchor.entryId
+      ? Array.from(
+          node.querySelectorAll<HTMLElement>(
+            "[data-message-id], [data-event-id]",
+          ),
+        ).find(
+          (entry) =>
+            entry.dataset.messageId === anchor.entryId ||
+            entry.dataset.eventId === anchor.entryId,
+        )
+      : null;
+    if (anchorElement && anchor.entryTop !== undefined) {
+      node.scrollTop +=
+        anchorElement.getBoundingClientRect().top - anchor.entryTop;
+    } else {
+      node.scrollTop =
+        anchor.scrollTop + (node.scrollHeight - anchor.scrollHeight);
+    }
+    const timer = window.setTimeout(() => {
+      restoringHistoryRef.current = false;
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [activeConversation?.id, historyAnchorVersion]);
 
   useEffect(() => {
     if (!highlightedMessageId) return;
     const target = messageRefs.current[highlightedMessageId];
     if (!target) return;
-    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    target.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "center",
+    });
+    historyPositionedRef.current = true;
+    setHistoryPositioned(true);
     const timeout = window.setTimeout(() => setHighlightedMessageId(""), 2200);
     return () => window.clearTimeout(timeout);
   }, [highlightedMessageId, timeline.length]);
@@ -826,7 +1204,10 @@ export function MessageWorkspace({
       !latestEntryId ||
       !latestEntryKind ||
       !documentVisible ||
+      document.visibilityState !== "visible" ||
       !historyAtBottom ||
+      !historyPositioned ||
+      detailsOpen ||
       highlightedMessageId ||
       (isMobileViewport && !mobileDetailOpen)
     ) {
@@ -869,8 +1250,10 @@ export function MessageWorkspace({
     activatedConversationId,
     activeConversation?.id,
     documentVisible,
+    detailsOpen,
     highlightedMessageId,
     historyAtBottom,
+    historyPositioned,
     isMobileViewport,
     latestEntryId,
     latestEntryKind,
@@ -878,19 +1261,24 @@ export function MessageWorkspace({
   ]);
 
   const openMobileConversation = async (conversationId: string) => {
-    if (conversationId !== activeIdRef.current) {
+    const requestId = ++conversationOpenRequestRef.current;
+    if (!fullHistoryConversationIdsRef.current.has(conversationId)) {
       try {
         const response = await fetch(
           `/api/messages/sync?conversationId=${encodeURIComponent(conversationId)}`,
           { cache: "no-store" },
         );
+        if (requestId !== conversationOpenRequestRef.current) return;
         if (!response.ok) {
           setSyncedConversations((current) =>
-            current.filter((conversation) => conversation.id !== conversationId),
+            current.filter(
+              (conversation) => conversation.id !== conversationId,
+            ),
           );
           return;
         }
         const incoming = parseConversationStreamEnvelope(await response.json());
+        if (requestId !== conversationOpenRequestRef.current) return;
         if (
           !incoming ||
           !incoming.conversations.some(
@@ -898,10 +1286,13 @@ export function MessageWorkspace({
           )
         ) {
           setSyncedConversations((current) =>
-            current.filter((conversation) => conversation.id !== conversationId),
+            current.filter(
+              (conversation) => conversation.id !== conversationId,
+            ),
           );
           return;
         }
+        fullHistoryConversationIdsRef.current.add(conversationId);
         if (incoming.mutationCursor) {
           mutationCursorsRef.current[conversationId] = incoming.mutationCursor;
         }
@@ -920,10 +1311,17 @@ export function MessageWorkspace({
           ),
         );
       } catch {
-        setSendError("Unable to open this conversation. Please try again.");
+        if (requestId !== conversationOpenRequestRef.current) return;
+        toast({
+          description: "Please try again.",
+          title: "Unable to open this conversation",
+          tone: "error",
+        });
         return;
       }
     }
+
+    if (requestId !== conversationOpenRequestRef.current) return;
 
     setSyncedConversations((current) =>
       current.map((conversation) =>
@@ -937,8 +1335,16 @@ export function MessageWorkspace({
       ),
     );
     setOpenActionMenuMessageId("");
+    pendingLatestPositionRef.current = conversationId;
+    historyPositionedRef.current = false;
+    historyAtBottomRef.current = false;
+    setHistoryPositioned(false);
+    setHistoryAtBottom(false);
+    setNewMessageCount(0);
+    setDetailsOpen(false);
+    setReplyTarget(null);
+    setSendError("");
     setActivatedConversationId(conversationId);
-    if (conversationId !== activeIdRef.current) setHistoryAtBottom(false);
     const mobile =
       typeof window.matchMedia !== "function" ||
       window.matchMedia("(max-width: 1023px)").matches;
@@ -957,12 +1363,16 @@ export function MessageWorkspace({
     if (mobile) {
       document.documentElement.classList.add("perx-mobile-conversation-active");
       setMobileDetailOpen(true);
-      window.requestAnimationFrame(() => conversationHeaderRef.current?.focus());
+      window.requestAnimationFrame(() =>
+        conversationHeaderRef.current?.focus(),
+      );
     }
   };
 
   const closeMobileConversation = () => {
+    conversationOpenRequestRef.current += 1;
     setOpenActionMenuMessageId("");
+    setDetailsOpen(false);
     setActivatedConversationId("");
     if (inlineDetailHistoryRef.current) {
       inlineDetailHistoryRef.current = false;
@@ -983,8 +1393,17 @@ export function MessageWorkspace({
     const body = draft.trim();
     const conversationId = activeConversation.id;
     const messageId = `local-${Date.now()}`;
-    const localReply = replyTarget ? toReplyPreview(replyTarget) : null;
+    const originalReplyTarget = replyTarget;
+    const localReply = originalReplyTarget
+      ? toReplyPreview(originalReplyTarget)
+      : null;
     setSendError("");
+    pendingLatestPositionRef.current = conversationId;
+    historyPositionedRef.current = false;
+    historyAtBottomRef.current = false;
+    setHistoryPositioned(false);
+    setHistoryAtBottom(false);
+    setActivatedConversationId(conversationId);
 
     const message: WorkspaceMessage = {
       body,
@@ -1005,11 +1424,16 @@ export function MessageWorkspace({
     setReplyTarget(null);
 
     startTransition(async () => {
-      const result = await sendMessageAction(
-        conversationId,
-        body,
-        localReply?.id ?? null,
-      );
+      let result: Awaited<ReturnType<typeof sendMessageAction>>;
+      try {
+        result = await sendMessageAction(
+          conversationId,
+          body,
+          localReply?.id ?? null,
+        );
+      } catch {
+        result = { error: "Unable to send this message. Please try again." };
+      }
       if (result.error) {
         setLocalMessages((value) => ({
           ...value,
@@ -1017,10 +1441,21 @@ export function MessageWorkspace({
             (m) => m.id !== messageId,
           ),
         }));
-        setDrafts((value) => ({ ...value, [conversationId]: body }));
-        persistDraft(draftStorageKey, conversationId, body);
-        setReplyTarget(replyTarget);
-        setSendError(result.error);
+        setDrafts((value) => {
+          if (value[conversationId]?.trim()) return value;
+          persistDraft(draftStorageKey, conversationId, body);
+          return { ...value, [conversationId]: body };
+        });
+        if (activeIdRef.current === conversationId) {
+          setReplyTarget(originalReplyTarget);
+          setSendError(result.error);
+        } else {
+          toast({
+            description: result.error,
+            title: "Message not sent",
+            tone: "error",
+          });
+        }
       } else {
         setLocalMessages((value) => ({
           ...value,
@@ -1028,6 +1463,7 @@ export function MessageWorkspace({
             (m) => m.id !== messageId,
           ),
         }));
+        toast({ title: "Message sent", tone: "success" });
         window.dispatchEvent(new Event("perx-unread-refresh"));
       }
     });
@@ -1039,6 +1475,11 @@ export function MessageWorkspace({
     setEditError("");
   };
 
+  const startReply = (message: WorkspaceMessage) => {
+    setReplyTarget(message);
+    composerRef.current?.focus();
+  };
+
   const cancelEditing = () => {
     setEditingMessageId("");
     setEditDraft("");
@@ -1048,34 +1489,55 @@ export function MessageWorkspace({
   const saveEdit = (message: WorkspaceMessage) => {
     if (!editDraft.trim() || isEditPending) return;
     startEditTransition(async () => {
-      const result = await editMessageAction(message.id, editDraft);
+      let result: Awaited<ReturnType<typeof editMessageAction>>;
+      try {
+        result = await editMessageAction(message.id, editDraft);
+      } catch {
+        result = { error: "Unable to update this message. Please try again." };
+      }
+      if (editingMessageIdRef.current !== message.id) return;
       if (result.error) {
         setEditError(result.error);
         return;
       }
       cancelEditing();
+      toast({ title: "Message updated", tone: "success" });
     });
   };
 
+  const jumpToLatest = () => {
+    const node = historyRef.current;
+    if (!node) return;
+    node.scrollTo({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      top: node.scrollHeight,
+    });
+    node.focus({ preventScroll: true });
+  };
+
   const jumpToMessage = (messageId: string) => {
-    setHistoryAtBottom(false);
-    setHighlightedMessageId(messageId);
     const target = messageRefs.current[messageId];
     if (!target) {
-      setSendError(
-        "Original message is outside the loaded history. Refresh the conversation to load more context.",
-      );
+      toast({
+        description: "Refresh the conversation to load more context.",
+        title: "Original message is outside the loaded history",
+        tone: "error",
+      });
+      return;
     }
+    setHistoryAtBottom(false);
+    setHighlightedMessageId(messageId);
   };
 
   const deleteMessage = async (message: WorkspaceMessage) => {
-    if (
-      !window.confirm(
-        "Remove this message from participant view? A tombstone remains, and the original content is retained for safety, reports, and audit history.",
-      )
-    ) {
-      return;
-    }
+    const approved = await confirm({
+      confirmLabel: "Remove message",
+      description:
+        "A tombstone will remain in the conversation. The original content is retained for safety, reporting, and audit history.",
+      title: "Remove this message for everyone?",
+      tone: "danger",
+    });
+    if (!approved) return;
     const result = await deleteMessageAction(message.id);
     if (result.error) {
       setSendError(result.error);
@@ -1090,30 +1552,37 @@ export function MessageWorkspace({
         ),
       })),
     );
+    toast({ title: "Message removed", tone: "success" });
   };
 
   const removeConversation = async () => {
     if (!activeConversation) return;
-    if (
-      !window.confirm(
-        "Remove this chat from your list? It remains available to other participants and may return after a new message.",
-      )
-    ) {
-      return;
-    }
-    const result = await removeConversationForMeAction(activeConversation.id);
+    const conversationId = activeConversation.id;
+    const approved = await confirm({
+      confirmLabel: "Remove chat",
+      description:
+        "This only hides the chat from your list. It remains available to other participants and can return after a new message.",
+      title: "Remove chat from your list?",
+      tone: "danger",
+    });
+    if (!approved) return;
+    const result = await removeConversationForMeAction(conversationId);
     if (result.error) {
-      setSendError(result.error);
+      toast({
+        description: result.error,
+        title: "Could not remove this chat",
+        tone: "error",
+      });
       return;
     }
-    const remaining = syncedConversations.filter(
-      (conversation) => conversation.id !== activeConversation.id,
+    setSyncedConversations((current) =>
+      current.filter((conversation) => conversation.id !== conversationId),
     );
-    setSyncedConversations(remaining);
-    persistDraft(draftStorageKey, activeConversation.id, "");
+    persistDraft(draftStorageKey, conversationId, "");
     setActivatedConversationId("");
-    setActiveId(remaining[0]?.id ?? "");
+    setActiveId((current) => (current === conversationId ? "" : current));
     setDetailsOpen(false);
+    toast({ title: "Chat removed from your list", tone: "success" });
     if (inlineDetailHistoryRef.current) {
       inlineDetailHistoryRef.current = false;
       window.history.back();
@@ -1188,13 +1657,13 @@ export function MessageWorkspace({
             <span className="sr-only">Search conversations</span>
             <input
               className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/45"
-                onChange={(event) => {
-                  setConversationQuery(event.target.value);
-                  window.sessionStorage.setItem(
-                    queryStorageKey,
-                    event.target.value,
-                  );
-                }}
+              onChange={(event) => {
+                setConversationQuery(event.target.value);
+                window.sessionStorage.setItem(
+                  queryStorageKey,
+                  event.target.value,
+                );
+              }}
               placeholder="Search people or conversations"
               type="search"
               value={conversationQuery}
@@ -1235,11 +1704,13 @@ export function MessageWorkspace({
             const active = conversation.id === activeConversation?.id;
             return (
               <button
+                aria-current={active ? "true" : undefined}
                 className={`flex w-full min-w-0 items-start gap-3 rounded-2xl p-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${
                   active
                     ? "bg-[color:var(--px-primary-soft)] ring-1 ring-[color:var(--px-primary)]/25"
                     : "hover:bg-[color:var(--px-surface-soft)]"
                 }`}
+                data-conversation-id={conversation.id}
                 key={conversation.id}
                 onClick={() => void openMobileConversation(conversation.id)}
                 ref={(node) => {
@@ -1327,7 +1798,7 @@ export function MessageWorkspace({
       {activeConversation ? (
         <section
           aria-label="Active conversation"
-          className={`${mobileDetailOpen ? "flex" : "hidden lg:flex"} min-w-0 min-h-0 flex-col bg-[color:var(--px-page)]`}
+          className={`${mobileDetailOpen ? "flex" : "hidden lg:flex"} relative min-w-0 min-h-0 flex-col bg-[color:var(--px-page)]`}
         >
           <div
             className="message-conversation-header flex h-16 shrink-0 items-center justify-between gap-2 border-b border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-2 outline-none sm:gap-3 sm:px-4"
@@ -1354,8 +1825,8 @@ export function MessageWorkspace({
                 </button>
               )}
               <button
-                aria-label={`Open details for ${activeConversation.participantName}`}
-                className="contents"
+                aria-label={`Open profile preview for ${activeConversation.participantName}`}
+                className="flex min-w-0 items-center gap-3 overflow-hidden rounded-xl text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                 onClick={() => setDetailsOpen(true)}
                 type="button"
               >
@@ -1364,21 +1835,17 @@ export function MessageWorkspace({
                   name={activeConversation.participantName}
                   presence={activeConversation.participantPresence}
                 />
-              </button>
-              <button
-                className="min-w-0 overflow-hidden text-left focus:outline-none focus-visible:rounded-md focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                onClick={() => setDetailsOpen(true)}
-                type="button"
-              >
-                <h2 className="truncate text-sm font-black text-[color:var(--px-text)]">
-                  {activeConversation.participantName}
-                </h2>
-                <p className="truncate text-xs text-[color:var(--px-text-muted)]">
-                  {presenceLabel(activeConversation.participantPresence) ??
-                    activeConversation.participantRole ??
-                    activeConversation.opportunityTitle ??
-                    "PerX conversation"}
-                </p>
+                <span className="min-w-0 overflow-hidden">
+                  <span className="block truncate text-sm font-black text-[color:var(--px-text)]">
+                    {activeConversation.participantName}
+                  </span>
+                  <span className="block truncate text-xs text-[color:var(--px-text-muted)]">
+                    {presenceLabel(activeConversation.participantPresence) ??
+                      activeConversation.participantRole ??
+                      activeConversation.opportunityTitle ??
+                      "PerX conversation"}
+                  </span>
+                </span>
               </button>
             </div>
             <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
@@ -1386,6 +1853,7 @@ export function MessageWorkspace({
                 <FeatureDirectory
                   closeLabel="Hide app navigation"
                   description="Move around PerX without leaving or reloading this conversation."
+                  onOpenChange={preserveHistoryAcrossAppNavigation}
                   title="App navigation"
                   userRoles={userRoles}
                 >
@@ -1409,112 +1877,158 @@ export function MessageWorkspace({
             </div>
           </div>
 
-          <div
-            aria-label="Message history"
-            className="bg-dot-pattern min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4"
-            ref={historyRef}
-          >
-            <div className="mx-auto flex max-w-3xl flex-col gap-4">
-              {activeConversation.olderMessagesCursor ? (
-                <button
-                  className="self-center rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-2 text-xs font-black text-[color:var(--px-primary)] shadow-sm transition hover:bg-[color:var(--px-primary-soft)] disabled:cursor-wait disabled:opacity-60"
-                  disabled={isOlderPending}
-                  onClick={loadOlderMessages}
-                  type="button"
-                >
-                  {isOlderPending ? "Loading older messages..." : "Load older messages"}
-                </button>
-              ) : null}
-              <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4">
-                <div className="flex items-center gap-2 text-[color:var(--px-primary)]">
-                  <LockKeyhole aria-hidden size={15} />
-                  <p className="text-xs font-bold uppercase tracking-wide">
-                    Keep a clear record
+          <div className="relative min-h-0 flex-1">
+            <div
+              aria-label="Message history"
+              aria-live="off"
+              className="bg-dot-pattern h-full overflow-y-auto overscroll-contain p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--px-focus)] sm:p-4"
+              onFocusCapture={() =>
+                setActivatedConversationId(activeConversation.id)
+              }
+              onPointerDown={() =>
+                setActivatedConversationId(activeConversation.id)
+              }
+              ref={historyRef}
+              role="log"
+              tabIndex={-1}
+            >
+              <div className="mx-auto flex max-w-3xl flex-col gap-4">
+                {activeConversation.olderMessagesCursor ? (
+                  <button
+                    className="self-center rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-2 text-xs font-black text-[color:var(--px-primary)] shadow-sm transition hover:bg-[color:var(--px-primary-soft)] disabled:cursor-wait disabled:opacity-60"
+                    disabled={isOlderPending}
+                    onClick={loadOlderMessages}
+                    type="button"
+                  >
+                    {isOlderPending
+                      ? "Loading older messages..."
+                      : "Load older messages"}
+                  </button>
+                ) : null}
+                <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4">
+                  <div className="flex items-center gap-2 text-[color:var(--px-primary)]">
+                    <LockKeyhole aria-hidden size={15} />
+                    <p className="text-xs font-bold uppercase tracking-wide">
+                      Keep a clear record
+                    </p>
+                  </div>
+                  <p className="mt-1 text-sm font-bold text-[color:var(--px-text)]">
+                    {activeConversation.opportunityTitle ??
+                      activeConversation.context ??
+                      "Professional conversation"}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
+                    Keep important conversations and agreements on PerX. This
+                    helps preserve records that may support dispute resolution,
+                    safety reviews and account protection.{" "}
+                    <Link
+                      className="font-bold text-[color:var(--px-primary)] hover:underline"
+                      href="/trust-safety"
+                    >
+                      Trust & Safety
+                    </Link>
                   </p>
                 </div>
-                <p className="mt-1 text-sm font-bold text-[color:var(--px-text)]">
-                  {activeConversation.opportunityTitle ??
-                    activeConversation.context ??
-                    "Professional conversation"}
-                </p>
-                <p className="mt-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
-                  Keep important conversations and agreements on PerX. This
-                  helps preserve records that may support dispute resolution,
-                  safety reviews and account protection.{" "}
-                  <Link
-                    className="font-bold text-[color:var(--px-primary)] hover:underline"
-                    href="/trust-safety"
-                  >
-                    Trust & Safety
-                  </Link>
-                </p>
+
+                {activeConversation.deal ? (
+                  <DealSummaryCard
+                    deal={activeConversation.deal}
+                    href={activeConversation.dealHref}
+                    useBrowserFormatting={useBrowserFormatting}
+                  />
+                ) : null}
+
+                {timeline.map((entry, index) => (
+                  <Fragment key={`${entry.kind}:${entry.id}`}>
+                    {shouldShowDateSeparator(
+                      timeline[index - 1]?.createdAt,
+                      entry.createdAt,
+                      useBrowserFormatting,
+                    ) ? (
+                      <DateSeparator
+                        useBrowserFormatting={useBrowserFormatting}
+                        value={entry.createdAt}
+                      />
+                    ) : null}
+                    {entry.kind === "message" ? (
+                      <MessageBubble
+                        conversationId={activeConversation.id}
+                        currentUserId={currentUserId}
+                        editingMessageId={editingMessageId}
+                        editDraft={editDraft}
+                        editError={editError}
+                        highlighted={highlightedMessageId === entry.message.id}
+                        isEditPending={isEditPending}
+                        jumpToMessage={jumpToMessage}
+                        message={entry.message}
+                        onCancelEdit={cancelEditing}
+                        onChangeEdit={setEditDraft}
+                        onCloseActionMenu={closeActionMenu}
+                        onDelete={() => void deleteMessage(entry.message)}
+                        onReply={() => startReply(entry.message)}
+                        onSaveEdit={saveEdit}
+                        onStartEdit={startEditing}
+                        onToggleActionMenu={toggleActionMenu}
+                        openActionMenu={
+                          openActionMenuMessageId === entry.message.id
+                        }
+                        refCallback={(node) => {
+                          messageRefs.current[entry.message.id] = node;
+                        }}
+                        useBrowserFormatting={useBrowserFormatting}
+                      />
+                    ) : (
+                      <ConversationEventCard
+                        event={entry.conversationEvent}
+                        highlighted={
+                          highlightedMessageId === entry.conversationEvent.id
+                        }
+                        refCallback={(node) => {
+                          messageRefs.current[entry.conversationEvent.id] =
+                            node;
+                        }}
+                        useBrowserFormatting={useBrowserFormatting}
+                      />
+                    )}
+                  </Fragment>
+                ))}
               </div>
-
-              {activeConversation.deal ? (
-                <DealSummaryCard
-                  deal={activeConversation.deal}
-                  href={activeConversation.dealHref}
-                  useBrowserFormatting={useBrowserFormatting}
-                />
-              ) : null}
-
-              {timeline.map((entry, index) => (
-                <Fragment key={`${entry.kind}:${entry.id}`}>
-                  {shouldShowDateSeparator(
-                    timeline[index - 1]?.createdAt,
-                    entry.createdAt,
-                    useBrowserFormatting,
-                  ) ? (
-                    <DateSeparator
-                      useBrowserFormatting={useBrowserFormatting}
-                      value={entry.createdAt}
-                    />
-                  ) : null}
-                  {entry.kind === "message" ? (
-                    <MessageBubble
-                      conversationId={activeConversation.id}
-                      currentUserId={currentUserId}
-                      editingMessageId={editingMessageId}
-                      editDraft={editDraft}
-                      editError={editError}
-                      highlighted={highlightedMessageId === entry.message.id}
-                      isEditPending={isEditPending}
-                      jumpToMessage={jumpToMessage}
-                      message={entry.message}
-                      onCancelEdit={cancelEditing}
-                      onChangeEdit={setEditDraft}
-                      onCloseActionMenu={closeActionMenu}
-                      onDelete={() => void deleteMessage(entry.message)}
-                      onReply={() => setReplyTarget(entry.message)}
-                      onSaveEdit={saveEdit}
-                      onStartEdit={startEditing}
-                      onToggleActionMenu={toggleActionMenu}
-                      openActionMenu={openActionMenuMessageId === entry.message.id}
-                      refCallback={(node) => {
-                        messageRefs.current[entry.message.id] = node;
-                      }}
-                      useBrowserFormatting={useBrowserFormatting}
-                    />
-                  ) : (
-                    <ConversationEventCard
-                      event={entry.conversationEvent}
-                      highlighted={
-                        highlightedMessageId === entry.conversationEvent.id
-                      }
-                      refCallback={(node) => {
-                        messageRefs.current[entry.conversationEvent.id] = node;
-                      }}
-                      useBrowserFormatting={useBrowserFormatting}
-                    />
-                  )}
-                </Fragment>
-              ))}
             </div>
+            {historyVisible &&
+            historyPositioned &&
+            !historyAtBottom &&
+            !highlightedMessageId ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center px-3">
+                <button
+                  aria-label={
+                    newMessageCount
+                      ? `${newMessageCount} new ${newMessageCount === 1 ? "message" : "messages"}. Jump to latest`
+                      : "Jump to latest"
+                  }
+                  className="pointer-events-auto inline-flex min-h-11 items-center gap-2 rounded-full bg-[color:var(--px-navy)] px-4 text-sm font-black text-white shadow-[var(--px-shadow-strong)] transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] focus-visible:ring-offset-2 motion-reduce:transform-none"
+                  onClick={jumpToLatest}
+                  type="button"
+                >
+                  <ArrowDown aria-hidden size={17} />
+                  {newMessageCount
+                    ? `${newMessageCount} new · Jump to latest`
+                    : "Jump to latest"}
+                </button>
+              </div>
+            ) : null}
+            <p aria-live="polite" className="sr-only">
+              {newMessageCount
+                ? `${newMessageCount} new ${newMessageCount === 1 ? "message" : "messages"}`
+                : ""}
+            </p>
           </div>
 
           <form
             aria-label="Message composer"
             className="message-composer shrink-0 border-t border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-3"
+            onFocusCapture={() =>
+              setActivatedConversationId(activeConversation.id)
+            }
             onSubmit={sendMessage}
           >
             <div className="mx-auto grid max-w-3xl gap-2">
@@ -1579,6 +2093,7 @@ export function MessageWorkspace({
                     }
                   }}
                   placeholder="Type a message..."
+                  ref={composerRef}
                   rows={1}
                   value={draft}
                 />
@@ -1600,7 +2115,10 @@ export function MessageWorkspace({
               </p>
             </div>
             {sendError ? (
-              <p className="mx-auto mt-2 max-w-3xl text-sm font-semibold text-[color:var(--px-error)]">
+              <p
+                className="mx-auto mt-2 max-w-3xl text-sm font-semibold text-[color:var(--px-error)]"
+                role="alert"
+              >
                 {sendError}
               </p>
             ) : null}
@@ -1713,6 +2231,7 @@ function MessageBubble({
         const dx = touch.clientX - swipeStartRef.current.x;
         const dy = Math.abs(touch.clientY - swipeStartRef.current.y);
         if (dx > 10 && dx > dy * 1.5) {
+          event.preventDefault();
           setSwipeOffset(Math.min(dx, 100));
         }
       }
@@ -1733,9 +2252,32 @@ function MessageBubble({
     swipeStartRef.current = null;
   }, [swipeOffset, mine, onReply]);
 
+  const handleTouchCancel = useCallback(() => {
+    if (longPressTimerRef.current) {
+      window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    longPressStartRef.current = null;
+    swipeStartRef.current = null;
+    setSwipeOffset(0);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (longPressTimerRef.current) {
+        window.clearTimeout(longPressTimerRef.current);
+      }
+    },
+    [],
+  );
+
   const handleContextMenu = useCallback(
     (event: React.MouseEvent) => {
       if (openActionMenu) return;
+      if (longPressTimerRef.current) {
+        window.clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+      }
       event.preventDefault();
       onToggleActionMenu(message.id);
     },
@@ -1748,19 +2290,25 @@ function MessageBubble({
       className={`flex scroll-mt-24 ${mine ? "justify-end" : "justify-start"}`}
       data-message-id={message.id}
       onContextMenu={handleContextMenu}
+      onTouchCancel={handleTouchCancel}
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchMove}
       onTouchStart={handleTouchStart}
       ref={refCallback}
     >
       <div
-        className={`group max-w-[min(82%,42rem)] overflow-visible rounded-3xl px-4 py-3 shadow-sm transition ${
+        className={`group max-w-[min(82%,42rem)] touch-pan-y overflow-visible rounded-3xl px-4 py-3 shadow-sm transition motion-reduce:transform-none ${
           swipeOffset > 0 ? "relative" : ""
         } ${
           mine
             ? "rounded-br-md bg-[linear-gradient(135deg,var(--px-primary),var(--px-secondary))] text-white"
             : "rounded-bl-md bg-[color:var(--px-surface)] text-[color:var(--px-text)] ring-1 ring-[color:var(--px-border)]"
         } ${highlighted ? "ring-4 ring-[color:var(--px-warning)]" : ""}`}
+        style={
+          swipeOffset > 0
+            ? { transform: `translateX(${Math.round(swipeOffset * 0.35)}px)` }
+            : undefined
+        }
       >
         <div className="mb-1 flex items-center justify-between gap-3">
           <p
@@ -1771,7 +2319,7 @@ function MessageBubble({
           {!message.deletedAt ? (
             <div className="relative flex items-center gap-1">
               <div
-                className={`hidden items-center gap-0.5 rounded-xl bg-[color:var(--px-surface-soft)] p-0.5 opacity-0 transition group-hover:opacity-100 sm:flex ${
+                className={`hidden items-center gap-0.5 rounded-xl bg-[color:var(--px-surface-soft)] p-0.5 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 sm:flex ${
                   mine ? "order-first" : "order-last"
                 }`}
               >
@@ -2181,115 +2729,109 @@ function MessageActionMenu({
   onStartEdit: () => void;
   onToggle: () => void;
 }) {
-  const menuRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const toast = useToast();
 
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-        triggerRef.current?.focus();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  const action = (fn: () => void) => {
-    onClose();
-    fn();
+  const copyMessage = async () => {
+    try {
+      if (!navigator.clipboard) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(message.body);
+      toast({ title: "Message copied", tone: "success" });
+    } catch {
+      toast({
+        description: "Select the message text and copy it manually.",
+        title: "Could not copy message",
+        tone: "error",
+      });
+    }
   };
 
   const reportHref = `/app/reports/new?targetType=MESSAGE&targetId=${encodeURIComponent(message.id)}&conversationId=${encodeURIComponent(conversationId)}&messageId=${encodeURIComponent(message.id)}`;
 
   return (
-    <div className="relative inline-flex">
-      <button
-        aria-expanded={isOpen}
-        aria-haspopup="menu"
-        aria-label="Message actions"
-        className={`grid h-7 w-7 shrink-0 list-none place-items-center rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 ${
-          mine
-            ? "text-blue-100 hover:bg-white/10 focus-visible:ring-white"
-            : "text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)] focus-visible:ring-[color:var(--px-focus)]"
-        }`}
-        onClick={onToggle}
-        ref={triggerRef}
-        type="button"
-      >
-        <MoreVertical aria-hidden size={15} />
-      </button>
-      {isOpen ? (
-        <div
-          className="absolute right-0 z-30 mt-1 grid min-w-36 gap-1 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-1 text-[color:var(--px-text)] shadow-lg"
-          ref={menuRef}
-          role="menu"
+    <DropdownMenu.Root
+      onOpenChange={(open) => {
+        if (open && !isOpen) onToggle();
+        if (!open && isOpen) onClose();
+      }}
+      open={isOpen}
+    >
+      <DropdownMenu.Trigger asChild>
+        <button
+          aria-label="Message actions"
+          className={`grid h-11 w-11 shrink-0 place-items-center rounded-full focus:outline-none focus-visible:ring-2 ${
+            mine
+              ? "text-blue-100 hover:bg-white/10 focus-visible:ring-white"
+              : "text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)] focus-visible:ring-[color:var(--px-focus)]"
+          }`}
+          type="button"
         >
-          <button
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
-            onClick={() => {
-              action(onReply);
-            }}
-            role="menuitem"
-            type="button"
-          >
-            <Reply aria-hidden size={14} />
-            Reply
-          </button>
-          <button
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
-            onClick={() => {
-              action(() => {
-                void navigator.clipboard?.writeText(message.body);
-              });
-            }}
-            role="menuitem"
-            type="button"
-          >
-            <Copy aria-hidden size={14} />
-            Copy
-          </button>
-          {canEdit ? (
+          <MoreVertical aria-hidden size={15} />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="end"
+          className="z-[95] grid min-w-40 gap-1 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-1 text-[color:var(--px-text)] shadow-lg"
+          sideOffset={4}
+        >
+          <DropdownMenu.Item asChild>
             <button
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
-              onClick={() => {
-                action(onStartEdit);
-              }}
-              role="menuitem"
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+              onClick={onReply}
               type="button"
             >
-              <Pencil aria-hidden size={14} />
-              Edit
+              <Reply aria-hidden size={14} />
+              Reply
             </button>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item asChild>
+            <button
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+              onClick={() => void copyMessage()}
+              type="button"
+            >
+              <Copy aria-hidden size={14} />
+              Copy
+            </button>
+          </DropdownMenu.Item>
+          {canEdit ? (
+            <DropdownMenu.Item asChild>
+              <button
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+                onClick={onStartEdit}
+                type="button"
+              >
+                <Pencil aria-hidden size={14} />
+                Edit
+              </button>
+            </DropdownMenu.Item>
           ) : null}
           {canEdit ? (
-            <button
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-[color:var(--px-error)] hover:bg-red-50 dark:hover:bg-red-950/30"
-              onClick={() => {
-                action(onDelete);
-              }}
-              role="menuitem"
-              type="button"
-            >
-              <Trash2 aria-hidden size={14} />
-              Remove message
-            </button>
+            <DropdownMenu.Item asChild>
+              <button
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-[color:var(--px-error)] outline-none hover:bg-red-50 focus:bg-red-50 dark:hover:bg-red-950/30 dark:focus:bg-red-950/30"
+                onClick={onDelete}
+                type="button"
+              >
+                <Trash2 aria-hidden size={14} />
+                Remove message
+              </button>
+            </DropdownMenu.Item>
           ) : null}
           {!mine && !message.id.startsWith("local-") ? (
-            <Link
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold hover:bg-[color:var(--px-muted)]"
-              href={reportHref}
-              onClick={onClose}
-              role="menuitem"
-            >
-              <Flag aria-hidden size={14} />
-              Report
-            </Link>
+            <DropdownMenu.Item asChild>
+              <Link
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+                href={reportHref}
+              >
+                <Flag aria-hidden size={14} />
+                Report
+              </Link>
+            </DropdownMenu.Item>
           ) : null}
-        </div>
-      ) : null}
-    </div>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
   );
 }
 
@@ -2306,142 +2848,197 @@ function ConversationDetails({
 }) {
   if (!conversation) return null;
 
+  return (
+    <>
+      <aside className="hidden min-h-0 border-l border-[color:var(--px-border)] 2xl:flex">
+        <ConversationDetailsContent
+          conversation={conversation}
+          modal={false}
+          onRemove={onRemove}
+        />
+      </aside>
+      <Dialog.Root
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) onClose();
+        }}
+        open={open}
+      >
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-[80] bg-[color:var(--px-overlay)] backdrop-blur-[2px]" />
+          <Dialog.Content className="fixed inset-0 z-[81] flex h-dvh min-h-0 w-full flex-col bg-[color:var(--px-surface)] shadow-[var(--px-shadow-strong)] focus:outline-none sm:left-auto sm:right-0 sm:w-[min(28rem,100vw)]">
+            <Dialog.Description className="sr-only">
+              Profile and conversation actions for{" "}
+              {conversation.participantName}.
+            </Dialog.Description>
+            <ConversationDetailsContent
+              conversation={conversation}
+              key={conversation.id}
+              modal
+              onRemove={onRemove}
+            />
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </>
+  );
+}
+
+function ConversationDetailsContent({
+  conversation,
+  modal,
+  onRemove,
+}: {
+  conversation: WorkspaceConversation;
+  modal: boolean;
+  onRemove: () => void;
+}) {
   const profileHref = conversation.participantUsername
     ? `/u/${conversation.participantUsername}`
     : null;
 
-  const content = (
-    <div className="flex min-h-0 flex-col gap-4 overflow-y-auto bg-[color:var(--px-surface)] p-4">
-      <div className="flex items-center justify-between gap-3 2xl:hidden">
-        <h3 className="font-black text-[color:var(--px-text)]">Details</h3>
-        <button
-          aria-label="Close conversation details"
-          className="grid h-9 w-9 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-          onClick={onClose}
-          type="button"
-        >
-          <X size={17} />
-        </button>
-      </div>
-
-      <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-5 text-center ring-1 ring-[color:var(--px-border)]">
-        <Avatar
-          imageUrl={conversation.participantImageUrl}
-          name={conversation.participantName}
-          presence={conversation.participantPresence}
-          size="lg"
-        />
-        <h3 className="mt-3 truncate font-black text-[color:var(--px-text)]">
-          {conversation.participantName}
-        </h3>
-        <p className="truncate text-xs text-[color:var(--px-text-muted)]">
-          @{conversation.participantUsername ?? "perx-member"}
-        </p>
-        <p className="mt-2 text-xs text-[color:var(--px-text-muted)]">
-          {presenceLabel(conversation.participantPresence) ??
-            conversation.participantRole ??
-            "PerX member"}
-        </p>
-        {profileHref ? (
-          <Link
-            className="mt-4 inline-flex min-h-10 items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-            href={profileHref}
-          >
-            View full profile
-          </Link>
-        ) : null}
-        {conversation.participantId ? (
-          <div className="mt-2 flex flex-col gap-2">
-            <Link
-              className="inline-flex min-h-10 items-center justify-center rounded-[var(--px-radius-sm)] border border-[color:var(--px-border-strong)] px-4 text-sm font-bold text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-              href={`/app/reports/new?targetType=USER&targetId=${encodeURIComponent(
-                conversation.participantId,
-              )}`}
-            >
-              Report profile
-            </Link>
-            <form
-              action={blockUserAction.bind(null, conversation.participantId)}
-            >
-              <button
-                className="inline-flex min-h-10 w-full items-center justify-center rounded-[var(--px-radius-sm)] border border-red-200 px-4 text-sm font-bold text-red-700 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-                type="submit"
-              >
-                Block
-              </button>
-            </form>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-4 ring-1 ring-[color:var(--px-border)]">
-        <h3 className="font-bold text-[color:var(--px-text)]">Deal</h3>
-        <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
-          Deal workspaces are separate from chat. Real custody, transfers, and
-          protected-funds actions are not active in beta.
-        </p>
-        {conversation.dealHref ? (
-          <Link
-            className="mt-3 inline-flex min-h-10 items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-            href={conversation.dealHref}
-          >
-            Open deal
-          </Link>
+  return (
+    <div className="flex h-full min-h-0 w-full flex-col bg-[color:var(--px-surface)]">
+      <div className="flex shrink-0 items-center justify-between gap-3 border-b border-[color:var(--px-border)] px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+        {modal ? (
+          <Dialog.Title className="font-black text-[color:var(--px-text)]">
+            Profile preview
+          </Dialog.Title>
         ) : (
-          <p className="mt-3 rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface)] p-3 text-sm font-semibold text-[color:var(--px-text-muted)]">
-            No deal is linked to this conversation.
-          </p>
+          <h3 className="font-black text-[color:var(--px-text)]">
+            Profile preview
+          </h3>
         )}
+        <div className="flex items-center gap-1">
+          {profileHref ? (
+            <Link
+              className="inline-flex min-h-10 items-center rounded-lg px-3 text-xs font-black text-[color:var(--px-primary)] transition hover:bg-[color:var(--px-primary-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              href={profileHref}
+            >
+              Full profile
+            </Link>
+          ) : null}
+          {modal ? (
+            <Dialog.Close asChild>
+              <button
+                aria-label="Close profile preview"
+                className="grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                type="button"
+              >
+                <X aria-hidden size={18} />
+              </button>
+            </Dialog.Close>
+          ) : null}
+        </div>
       </div>
 
-      <div className="rounded-3xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4">
-        <div className="flex items-start gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[color:var(--px-muted)] text-[color:var(--px-text-muted)]">
-            <UserRoundX aria-hidden size={18} />
-          </span>
-          <div>
-            <h3 className="text-sm font-black text-[color:var(--px-text)]">
-              Your chat list
+      <div
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4"
+        data-profile-preview-scroll="true"
+      >
+        <div className="grid gap-4">
+          <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-5 text-center ring-1 ring-[color:var(--px-border)]">
+            <Avatar
+              imageUrl={conversation.participantImageUrl}
+              name={conversation.participantName}
+              presence={conversation.participantPresence}
+              size="lg"
+            />
+            <h3 className="mt-3 break-words font-black text-[color:var(--px-text)]">
+              {conversation.participantName}
             </h3>
-            <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">
-              Removing this chat only hides it for you. It does not erase
-              messages, Deal records, reports, or another participant&apos;s
-              copy.
+            <p className="break-all text-xs text-[color:var(--px-text-muted)]">
+              @{conversation.participantUsername ?? "perx-member"}
             </p>
+            <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
+              {presenceLabel(conversation.participantPresence) ??
+                conversation.participantRole ??
+                "PerX member"}
+            </p>
+            {profileHref ? (
+              <Link
+                className="mt-4 inline-flex min-h-11 items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                href={profileHref}
+              >
+                Open complete profile
+              </Link>
+            ) : null}
+            {conversation.participantId ? (
+              <div className="mt-3 flex flex-col gap-2">
+                <Link
+                  className="inline-flex min-h-11 items-center justify-center rounded-[var(--px-radius-sm)] border border-[color:var(--px-border-strong)] px-4 text-sm font-bold text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  href={`/app/reports/new?targetType=USER&targetId=${encodeURIComponent(
+                    conversation.participantId,
+                  )}`}
+                >
+                  Report profile
+                </Link>
+                <form
+                  action={blockUserAction.bind(
+                    null,
+                    conversation.participantId,
+                  )}
+                >
+                  <button
+                    className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--px-radius-sm)] border border-red-200 px-4 text-sm font-bold text-red-700 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:hover:bg-red-950/30"
+                    type="submit"
+                  >
+                    Block member
+                  </button>
+                </form>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-4 ring-1 ring-[color:var(--px-border)]">
+            <h3 className="font-bold text-[color:var(--px-text)]">
+              Conversation context
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
+              {conversation.opportunityTitle ??
+                conversation.context ??
+                "Professional conversation"}
+            </p>
+            {conversation.dealHref ? (
+              <Link
+                className="mt-3 inline-flex min-h-11 items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                href={conversation.dealHref}
+              >
+                Open linked deal
+              </Link>
+            ) : (
+              <p className="mt-3 rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface)] p-3 text-sm font-semibold text-[color:var(--px-text-muted)]">
+                No deal is linked to this conversation.
+              </p>
+            )}
+          </div>
+
+          <div className="rounded-3xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4">
+            <div className="flex items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[color:var(--px-muted)] text-[color:var(--px-text-muted)]">
+                <UserRoundX aria-hidden size={18} />
+              </span>
+              <div>
+                <h3 className="text-sm font-black text-[color:var(--px-text)]">
+                  Your chat list
+                </h3>
+                <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">
+                  Removing this chat only hides it for you. Messages, deal
+                  records, reports, and the other participant&apos;s copy
+                  remain.
+                </p>
+              </div>
+            </div>
+            <button
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-[color:var(--px-border-strong)] px-4 text-sm font-bold text-[color:var(--px-text)] transition hover:bg-[color:var(--px-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              onClick={onRemove}
+              type="button"
+            >
+              Remove chat for me
+            </button>
           </div>
         </div>
-        <button
-          className="mt-3 inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-[color:var(--px-border-strong)] px-4 text-sm font-bold text-[color:var(--px-text)] transition hover:bg-[color:var(--px-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-          onClick={onRemove}
-          type="button"
-        >
-          Remove chat for me
-        </button>
       </div>
     </div>
-  );
-
-  return (
-    <>
-      <aside className="hidden min-h-0 border-l border-[color:var(--px-border)] 2xl:flex">
-        {content}
-      </aside>
-      {open ? (
-        <div
-          className="absolute inset-0 z-40 bg-black/30 2xl:hidden"
-          role="presentation"
-          onClick={onClose}
-        >
-          <aside
-            aria-label="Conversation details"
-            className="ml-auto h-full w-full max-w-sm overflow-hidden shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            {content}
-          </aside>
-        </div>
-      ) : null}
-    </>
   );
 }
 
@@ -2555,14 +3152,13 @@ function mergeWorkspaceConversationSnapshots(
       conversation.messages,
       next.messages,
     );
-    const mergedEvents = mergeWorkspaceEvents(
-      conversation.events,
-      next.events,
-    );
+    const mergedEvents = mergeWorkspaceEvents(conversation.events, next.events);
     if (!highlightMessageId && !highlightEventId) {
       return {
         ...next,
         events: mergedEvents,
+        historyLoaded:
+          conversation.historyLoaded === true || next.historyLoaded === true,
         messages: mergedMessages,
         olderMessagesCursor:
           conversation.olderMessagesCursor === undefined
@@ -2576,10 +3172,7 @@ function mergeWorkspaceConversationSnapshots(
     const targetEvent = conversation.events?.find(
       (event) => event.id === highlightEventId,
     );
-    if (
-      target &&
-      !mergedMessages.some((message) => message.id === target.id)
-    ) {
+    if (target && !mergedMessages.some((message) => message.id === target.id)) {
       mergedMessages.push(target);
     }
     if (
@@ -2591,6 +3184,8 @@ function mergeWorkspaceConversationSnapshots(
     return {
       ...next,
       events: mergeWorkspaceEvents(undefined, mergedEvents),
+      historyLoaded:
+        conversation.historyLoaded === true || next.historyLoaded === true,
       messages: mergeWorkspaceMessages([], mergedMessages),
       olderMessagesCursor:
         conversation.olderMessagesCursor === undefined
@@ -2692,7 +3287,10 @@ function mergeWorkspaceEvents(
   incoming: WorkspaceConversationEvent[] | undefined,
 ) {
   const byId = new Map(
-    (current ?? []).map((conversationEvent) => [conversationEvent.id, conversationEvent]),
+    (current ?? []).map((conversationEvent) => [
+      conversationEvent.id,
+      conversationEvent,
+    ]),
   );
   for (const conversationEvent of incoming ?? []) {
     byId.set(conversationEvent.id, conversationEvent);
@@ -2725,7 +3323,10 @@ function parseConversationStreamEnvelope(value: unknown): {
     return null;
   }
   let conversationList: WorkspaceConversationListSnapshot | null = null;
-  if (payload.conversationList !== undefined && payload.conversationList !== null) {
+  if (
+    payload.conversationList !== undefined &&
+    payload.conversationList !== null
+  ) {
     if (
       typeof payload.conversationList !== "object" ||
       Array.isArray(payload.conversationList)
@@ -2767,8 +3368,7 @@ function parseConversationStreamEnvelope(value: unknown): {
         typeof mutation.conversationId !== "string" ||
         typeof mutation.body !== "string" ||
         !(
-          mutation.deletedAt === null ||
-          typeof mutation.deletedAt === "string"
+          mutation.deletedAt === null || typeof mutation.deletedAt === "string"
         ) ||
         !(mutation.editedAt === null || typeof mutation.editedAt === "string")
       ) {
@@ -2798,7 +3398,11 @@ function parseMessagePageEnvelope(value: unknown): {
   if (!Array.isArray(payload.items)) return null;
 
   const items = payload.items.flatMap((candidate) => {
-    if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
+    if (
+      !candidate ||
+      typeof candidate !== "object" ||
+      Array.isArray(candidate)
+    ) {
       return [];
     }
     const message = candidate as Partial<WorkspaceMessage>;
@@ -2816,7 +3420,8 @@ function parseMessagePageEnvelope(value: unknown): {
 
   return {
     items,
-    nextCursor: typeof payload.nextCursor === "string" ? payload.nextCursor : null,
+    nextCursor:
+      typeof payload.nextCursor === "string" ? payload.nextCursor : null,
   };
 }
 
@@ -2880,7 +3485,8 @@ function parseConversationPageEnvelope(value: unknown): {
 
   return {
     items,
-    nextCursor: typeof payload.nextCursor === "string" ? payload.nextCursor : null,
+    nextCursor:
+      typeof payload.nextCursor === "string" ? payload.nextCursor : null,
   };
 }
 
@@ -2923,6 +3529,14 @@ function presenceLabel(presence?: "hidden" | "online" | "recent" | "offline") {
   if (presence === "online") return "Online";
   if (presence === "recent") return "Recently active";
   return null;
+}
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 }
 
 function formatMessageTime(

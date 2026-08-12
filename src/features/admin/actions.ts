@@ -20,6 +20,7 @@ import { getPrisma } from "@/lib/db/prisma";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { normalizeNotificationActionUrl } from "@/lib/notifications/action-url";
 import { lockUserAccount } from "@/lib/network/pair-lock";
+import { isUnavailableInvestmentPublication } from "@/lib/opportunities/publication";
 
 function textValue(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -930,9 +931,23 @@ export async function reviewPropertyListingAction(formData: FormData) {
     throw new Error("Listing not found.");
   }
 
-  const hasCover = listing.images.some((image) => image.isCover);
-  if (decision === "approve" && !hasCover) {
-    throw new Error("Property listing requires a cover image.");
+  const hasPublishingRequirements =
+    listing.images.some((image) => image.isCover) &&
+    Boolean(
+      listing.authorityDeclaration &&
+      listing.contactPreference &&
+      listing.listingRulesAccepted &&
+      listing.propertyListingType &&
+      listing.propertyType,
+    );
+  if (decision === "approve" && !hasPublishingRequirements) {
+    throw new Error("Property listing requirements are incomplete.");
+  }
+  if (
+    decision === "approve" &&
+    isUnavailableInvestmentPublication(listing)
+  ) {
+    throw new Error("Co-investment listings are not available for publication.");
   }
 
   const next =
@@ -965,14 +980,28 @@ export async function reviewPropertyListingAction(formData: FormData) {
                 status: "DRAFT" as const,
               };
 
-  await getPrisma().$transaction(async (tx) => {
-    await tx.opportunity.update({
+  const reviewed = await getPrisma().$transaction(async (tx) => {
+    const result = await tx.opportunity.updateMany({
       data: {
         ...next,
         verificationNotes: reason,
       },
-      where: { id: listing.id },
+      where: {
+        id: listing.id,
+        type: "PROPERTY",
+        ...(decision === "approve"
+          ? {
+              authorityDeclaration: { not: null },
+              contactPreference: { not: null },
+              images: { some: { isCover: true } },
+              listingRulesAccepted: true,
+              propertyListingType: { in: ["SALE", "RENT", "LEASE"] as const },
+              propertyType: { not: null },
+            }
+          : {}),
+      },
     });
+    if (result.count !== 1) return false;
     await tx.moderationAction.create({
       data: {
         action: `property.${decision || "request_info"}`,
@@ -1011,7 +1040,11 @@ export async function reviewPropertyListingAction(formData: FormData) {
         userId: listing.owner.id,
       },
     });
+    return true;
   });
+  if (!reviewed) {
+    throw new Error("Listing changed during review. Review it again.");
+  }
 
   revalidatePath("/admin/real-estate");
   revalidatePath("/admin/opportunities");

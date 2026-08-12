@@ -11,7 +11,7 @@ test("primary public journey loads homepage and discover", async ({ page }) => {
   await expect(
     page.getByRole("link", { name: "Explore discovery" }).first(),
   ).toHaveAttribute("href", "/discover");
-  
+
   await page.goto("/discover");
   await expect(
     page.getByRole("heading", {
@@ -20,7 +20,9 @@ test("primary public journey loads homepage and discover", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("primary public journey can view an opportunity detail page", async ({ page }) => {
+test("primary public journey can view an opportunity detail page", async ({
+  page,
+}) => {
   await page.goto("/discover");
   const detailsLink = page.getByRole("link", { name: /View details/ }).first();
   test.skip(
@@ -28,8 +30,10 @@ test("primary public journey can view an opportunity detail page", async ({ page
     "Configured database has no public opportunity available for this smoke test.",
   );
   await expect(detailsLink).toBeVisible();
-  await detailsLink.click();
-  await expect(page).toHaveURL(/\/opportunities\//);
+  await Promise.all([
+    page.waitForURL(/\/opportunities\//),
+    detailsLink.click(),
+  ]);
   await expect(page.getByRole("heading").first()).toBeVisible();
 });
 

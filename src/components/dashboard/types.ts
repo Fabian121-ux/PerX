@@ -38,6 +38,8 @@ export interface DashboardRecommendedProfile {
 }
 
 export interface DashboardOpportunity {
+  authorAvatarUrl?: string;
+  authorUsername?: string;
   id: string;
   slug: string;
   title: string;
@@ -51,6 +53,9 @@ export interface DashboardOpportunity {
   postedTimeAgo: string;
   imageAlt?: string;
   imageUrl?: string;
+  summary: string;
+  trust: PublicTrustSummary;
+  viewerHasSaved: boolean;
 }
 
 export interface HomeDashboardData {

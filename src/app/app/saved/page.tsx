@@ -1,13 +1,19 @@
 import { AppSection } from "@/components/app-section";
-import { getCurrentUser } from "@/lib/auth/session";
-import { getPrisma } from "@/lib/db/prisma";
-import Link from "next/link";
-import { Card, EmptyState } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { OpportunityCard } from "@/components/opportunity-card";
-import { removeOpportunityBookmarkAction, removeProfileBookmarkAction } from "@/features/saved/actions";
-import { BookmarkMinus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, EmptyState } from "@/components/ui/card";
+import {
+  removeOpportunityBookmarkAction,
+  removeProfileBookmarkAction,
+} from "@/features/saved/actions";
+import { getDiscoverableNetworkTargetWhere } from "@/features/network/eligibility";
+import { getCurrentUser } from "@/lib/auth/session";
+import { buildPublicOpportunityWhere } from "@/lib/data/public-opportunities";
+import { getPrisma } from "@/lib/db/prisma";
 import { calculateTrustSummary, trustBadgeClassName } from "@/lib/trust/engine";
+import { getTrustRecordEvidenceByUserIds } from "@/lib/trust/records";
+import { BookmarkMinus } from "lucide-react";
+import Link from "next/link";
 
 export default async function SavedItemsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const user = await getCurrentUser();
@@ -16,61 +22,72 @@ export default async function SavedItemsPage({ searchParams }: { searchParams: P
   const resolvedSearchParams = await searchParams;
   const currentTab = resolvedSearchParams.tab || "listings";
 
-  const savedListings = await getPrisma().opportunityBookmark.findMany({
-    where: { userId: user.id },
-    include: {
-      opportunity: {
-        include: {
-          category: true,
-          images: {
-            orderBy: [{ isCover: "desc" }, { createdAt: "asc" }],
-            take: 4,
-          },
-          owner: {
-            select: {
-              emailVerifiedAt: true,
-              imageUrl: true,
-              name: true,
-              profile: {
-                select: {
-                  averageRating: true,
-                  completedDeals: true,
-                  profileCompleteness: true,
-                  profileImageUrl: true,
+  const [savedListings, savedProfiles] = await Promise.all([
+    getPrisma().opportunityBookmark.findMany({
+      include: {
+        opportunity: {
+          include: {
+            category: true,
+            images: {
+              orderBy: [{ isCover: "desc" }, { createdAt: "asc" }],
+              take: 4,
+            },
+            owner: {
+              select: {
+                emailVerifiedAt: true,
+                id: true,
+                imageUrl: true,
+                name: true,
+                profile: {
+                  select: {
+                    profileCompleteness: true,
+                    profileImageUrl: true,
+                  },
                 },
+                username: true,
+                verificationStatus: true,
               },
-              username: true,
-              verificationStatus: true,
             },
           },
-        }
-      }
-    },
-    orderBy: { createdAt: "desc" }
-  });
-
-  const savedProfiles = await getPrisma().profileBookmark.findMany({
-    where: { userId: user.id },
-    include: {
-      profile: {
-        select: {
-          averageRating: true,
-          completedDeals: true,
-          headline: true,
-          profileCompleteness: true,
-          user: {
-            select: {
-              emailVerifiedAt: true,
-              name: true,
-              username: true,
-              verificationStatus: true,
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      where: {
+        opportunity: buildPublicOpportunityWhere({ viewerId: user.id }),
+        userId: user.id,
+      },
+    }),
+    getPrisma().profileBookmark.findMany({
+      include: {
+        profile: {
+          select: {
+            headline: true,
+            profileCompleteness: true,
+            user: {
+              select: {
+                emailVerifiedAt: true,
+                id: true,
+                name: true,
+                username: true,
+                verificationStatus: true,
+              },
             },
           },
-        }
-      }
-    },
-    orderBy: { createdAt: "desc" }
-  });
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      where: {
+        profile: {
+          user: getDiscoverableNetworkTargetWhere(user.id),
+        },
+        userId: user.id,
+      },
+    }),
+  ]);
+  const trustEvidence = await getTrustRecordEvidenceByUserIds([
+    ...savedListings.map((bookmark) => bookmark.opportunity.owner.id),
+    ...savedProfiles.map((bookmark) => bookmark.profile.user.id),
+  ]);
 
   return (
     <AppSection
@@ -95,9 +112,19 @@ export default async function SavedItemsPage({ searchParams }: { searchParams: P
       <div className="grid gap-4 xl:grid-cols-2">
         {currentTab === "listings" && (
           savedListings.length > 0 ? (
-            savedListings.map(bookmark => (
+            savedListings.map((bookmark) => (
               <div key={bookmark.id} className="relative group">
-                <OpportunityCard opportunity={bookmark.opportunity as unknown as Parameters<typeof OpportunityCard>[0]["opportunity"]} />
+                <OpportunityCard
+                  opportunity={{
+                    ...bookmark.opportunity,
+                    owner: {
+                      ...bookmark.opportunity.owner,
+                      trustRecordEvidence: trustEvidence.get(
+                        bookmark.opportunity.owner.id,
+                      ),
+                    },
+                  }}
+                />
                 <div className="absolute top-4 right-4 z-10 opacity-0 transition-opacity group-hover:opacity-100">
                   <form action={async () => { "use server"; await removeOpportunityBookmarkAction(bookmark.opportunityId); }}>
                     <Button type="submit" variant="secondary" size="sm" className="h-8 gap-2 bg-white hover:bg-rose-50 hover:text-rose-600 shadow-sm border-[color:var(--px-border)]">
@@ -116,10 +143,11 @@ export default async function SavedItemsPage({ searchParams }: { searchParams: P
 
         {currentTab === "profiles" && (
           savedProfiles.length > 0 ? (
-            savedProfiles.map(bookmark => {
+            savedProfiles.map((bookmark) => {
+              const recordEvidence = trustEvidence.get(bookmark.profile.user.id);
               const trust = calculateTrustSummary({
-                averageRating: String(bookmark.profile.averageRating),
-                completedDeals: bookmark.profile.completedDeals,
+                averageRating: recordEvidence?.averageRating ?? 0,
+                completedDeals: recordEvidence?.completedAgreements ?? 0,
                 emailVerifiedAt: bookmark.profile.user.emailVerifiedAt,
                 profileCompleteness: bookmark.profile.profileCompleteness,
                 verificationStatus: bookmark.profile.user.verificationStatus,

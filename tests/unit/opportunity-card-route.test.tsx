@@ -44,4 +44,35 @@ describe("opportunity card destination", () => {
     expect(markup).toContain('href="/opportunities/canonical-service"');
     expect(markup).not.toContain("?opportunity=");
   });
+
+  it("uses record-backed Trust evidence instead of legacy profile counters", () => {
+    const markup = renderToStaticMarkup(
+      <OpportunityCard
+        opportunity={{
+          owner: {
+            emailVerifiedAt: new Date("2026-08-01T00:00:00.000Z"),
+            name: "Record Owner",
+            profile: {
+              averageRating: 5,
+              completedDeals: 99,
+              profileCompleteness: 100,
+            },
+            trustRecordEvidence: {
+              averageRating: 0,
+              completedAgreements: 0,
+              publicReviewCount: 0,
+            },
+            verificationStatus: "VERIFIED",
+          },
+          slug: "record-backed-service",
+          summary: "A service with record-backed Trust evidence.",
+          title: "Record-backed service",
+          type: "SERVICE",
+        }}
+      />,
+    );
+
+    expect(markup).toContain("Building");
+    expect(markup).not.toContain("Strong");
+  });
 });

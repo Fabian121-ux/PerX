@@ -1,10 +1,16 @@
-import { UserRound, MapPin, Calendar, CheckCircle2, ShieldCheck } from "lucide-react";
+import { UserRound, MapPin, Calendar, CheckCircle2 } from "lucide-react";
 import { AppSection } from "@/components/app-section";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/session";
 import { Badge } from "@/components/ui/badge";
-import { calculateTrustSummary, trustBadgeClassName } from "@/lib/trust/engine";
+import { calculateTrustSummary } from "@/lib/trust/engine";
+import {
+  TrustLevelBadge,
+  TrustPresentationCard,
+} from "@/components/trust/trust-presentation-card";
+import { createTrustPresentation } from "@/lib/trust/presentation";
+import { getTrustRecordEvidence } from "@/lib/trust/records";
 
 export default async function ProfilePage() {
   const user = await requireUser();
@@ -29,12 +35,23 @@ export default async function ProfilePage() {
     );
   }
 
+  const recordEvidence = await getTrustRecordEvidence(user.id);
+
   const joinDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'Unknown';
   const trust = calculateTrustSummary({
-    averageRating: user.profile.averageRating ?? 0,
-    completedDeals: user.profile.completedDeals ?? 0,
+    averageRating: recordEvidence.averageRating,
+    completedDeals: recordEvidence.completedAgreements,
     emailVerifiedAt: user.emailVerifiedAt ?? null,
     profileCompleteness: user.profile.profileCompleteness,
+    verificationStatus: user.verificationStatus,
+  });
+  const trustPresentation = createTrustPresentation({
+    averageRating: recordEvidence.averageRating,
+    completedAgreements: recordEvidence.completedAgreements,
+    emailVerified: Boolean(user.emailVerifiedAt),
+    profileCompleteness: user.profile.profileCompleteness,
+    publicReviewCount: recordEvidence.publicReviewCount,
+    summary: trust,
     verificationStatus: user.verificationStatus,
   });
 
@@ -58,8 +75,10 @@ export default async function ProfilePage() {
                   )}
                 </div>
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                  {user.profile.isDiscoverable ? (
+                    <ButtonLink className="w-full sm:w-auto" variant="ghost" href={`/u/${user.username}`}>View public profile</ButtonLink>
+                  ) : null}
                   <ButtonLink className="w-full sm:w-auto" variant="outline" href="/app/profile/edit">Edit profile</ButtonLink>
-                  <ButtonLink className="w-full sm:w-auto" href="/app/settings">Account settings</ButtonLink>
                 </div>
               </div>
               
@@ -89,10 +108,7 @@ export default async function ProfilePage() {
                   <Calendar size={16} />
                   <span>Joined {joinDate}</span>
                 </div>
-                <div className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 ${trustBadgeClassName(trust.level)}`}>
-                  <ShieldCheck size={16} className="text-[color:var(--px-gold)]" />
-                  <span>{trust.label}</span>
-                </div>
+                <TrustLevelBadge presentation={trustPresentation} />
               </div>
             </div>
           </Card>
@@ -106,6 +122,7 @@ export default async function ProfilePage() {
         </div>
         
         <div className="flex flex-col gap-6">
+          <TrustPresentationCard presentation={trustPresentation} />
           <Card>
             <h2 className="mb-4 text-lg font-bold">Details</h2>
             <div className="grid gap-4 text-sm">
@@ -127,7 +144,14 @@ export default async function ProfilePage() {
               </div>
               <div>
                 <span className="block text-[color:var(--px-text-muted)]">Profile Completeness</span>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--px-surface-soft)]">
+                <div
+                  aria-label="Profile completeness"
+                  aria-valuemax={100}
+                  aria-valuemin={0}
+                  aria-valuenow={user.profile.profileCompleteness}
+                  className="mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--px-surface-soft)]"
+                  role="progressbar"
+                >
                   <div 
                     className="h-full bg-[color:var(--px-primary)]" 
                     style={{ width: `${user.profile.profileCompleteness}%` }}

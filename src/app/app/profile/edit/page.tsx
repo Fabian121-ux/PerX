@@ -138,11 +138,6 @@ export default async function ProfileEditPage({
               name="allowMessagesFromConnections"
             />
             <CheckboxRow
-              defaultChecked={profile?.allowMessagesFromMembers ?? false}
-              label="Allow message requests from approved PerX members"
-              name="allowMessagesFromMembers"
-            />
-            <CheckboxRow
               defaultChecked={profile?.showPresence ?? true}
               label="Show when I am active"
               name="showPresence"

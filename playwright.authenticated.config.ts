@@ -32,7 +32,7 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     command:
-      "npx cross-env PERX_DATA_MODE=database PERX_SIGNUP_MODE=open_beta PERX_BETA_MAX_USERS=100 npm run dev -- -p 3100 -H 127.0.0.1",
+      "npx cross-env PERX_DATA_MODE=database PERX_SIGNUP_MODE=open_beta PERX_BETA_MAX_USERS=10 npm run dev -- -p 3100 -H 127.0.0.1",
     env: {
       ...inheritedEnvironment,
       DATABASE_URL: testDatabaseUrl,

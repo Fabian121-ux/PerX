@@ -7,7 +7,6 @@ import {
   CalendarDays,
   Mail,
   MapPin,
-  ShieldCheck,
   Star,
 } from "lucide-react";
 
@@ -17,6 +16,10 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import {
+  TrustLevelBadge,
+  TrustPresentationCard,
+} from "@/components/trust/trust-presentation-card";
+import {
   acceptConnectionAction,
   rejectConnectionAction,
   requestConnectionAction,
@@ -25,7 +28,8 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { getPublicProfileResult } from "@/lib/data/profiles";
 import { getPrisma } from "@/lib/db/prisma";
-import { calculateTrustSummary, trustBadgeClassName } from "@/lib/trust/engine";
+import { calculateTrustSummary } from "@/lib/trust/engine";
+import { createTrustPresentation } from "@/lib/trust/presentation";
 
 export default async function PublicProfilePage({
   params,
@@ -50,6 +54,16 @@ export default async function PublicProfilePage({
   if (!profile) notFound();
 
   const normalized = normalizeProfile(profile);
+  const trustPresentation = createTrustPresentation({
+    averageRating: normalized.averageRating,
+    completedAgreements: normalized.completedDeals,
+    emailVerified: normalized.emailVerified,
+    profileCompleteness: normalized.profileCompleteness,
+    publicReviewCount: normalized.publicReviewCount,
+    summary: normalized.trust,
+    verificationStatus: normalized.isVerified ? "VERIFIED" : null,
+    viewer: "public",
+  });
   const viewer = await getCurrentUser();
   const relationship =
     viewer && viewer.id !== normalized.id
@@ -122,14 +136,7 @@ export default async function PublicProfilePage({
                     ? `${normalized.averageRating.toFixed(1)} rating`
                     : "Reviews building"}
                 </span>
-                <span
-                  className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 ${trustBadgeClassName(
-                    normalized.trust.level,
-                  )}`}
-                >
-                  <ShieldCheck aria-hidden size={14} />
-                  {normalized.trust.label}
-                </span>
+                <TrustLevelBadge presentation={trustPresentation} />
               </div>
 
               <nav className="dashboard-scroll -mx-5 mt-6 flex gap-2 overflow-x-auto px-5 pb-1 sm:-mx-6 sm:px-6">
@@ -265,6 +272,28 @@ export default async function PublicProfilePage({
                       <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
                         {review.body}
                       </p>
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-[color:var(--px-text-muted)]">
+                        <span>
+                          {review.author?.name ?? "PerX participant"}
+                        </span>
+                        {review.createdAt ? (
+                          <>
+                            <span aria-hidden>·</span>
+                            <time
+                              dateTime={new Date(review.createdAt).toISOString()}
+                            >
+                              {new Date(review.createdAt).toLocaleDateString(
+                                "en",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )}
+                            </time>
+                          </>
+                        ) : null}
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -291,14 +320,18 @@ export default async function PublicProfilePage({
                 />
                 <div>
                   <p className="text-sm font-bold text-[color:var(--px-text)]">
-                    Open to enquiries
+                    {normalized.allowConnectionRequests
+                      ? "Connection requests open"
+                      : "Connection requests closed"}
                   </p>
                   <p className="text-xs text-[color:var(--px-text-muted)]">
-                    Availability is confirmed in conversation.
+                    {normalized.allowConnectionRequests
+                      ? "Use the profile action to send a request."
+                      : "This member is not accepting new requests."}
                   </p>
                 </div>
               </div>
-              {!viewer ? (
+              {!viewer && normalized.allowConnectionRequests ? (
                 <ButtonLink
                   className="w-full"
                   href={`/sign-in?next=/u/${username}`}
@@ -330,38 +363,13 @@ export default async function PublicProfilePage({
             </Card>
           ) : null}
 
+          <TrustPresentationCard
+            presentation={trustPresentation}
+            variant="compact"
+          />
           <Card>
-            <h2 className="font-black text-[color:var(--px-text)]">Trust</h2>
-            <div
-              className={`mt-4 rounded-[18px] border p-5 text-center ${trustBadgeClassName(
-                normalized.trust.level,
-              )}`}
-            >
-              <ShieldCheck className="mx-auto" size={24} />
-              <p className="mt-2 text-sm font-bold">
-                {normalized.trust.label}
-              </p>
-              <p className="mt-2 text-xs leading-5">
-                {normalized.trust.description}
-              </p>
-            </div>
-            <div className="mt-4 grid gap-2">
-              {normalized.trust.evidence.length ? (
-                normalized.trust.evidence.slice(0, 4).map((item) => (
-                  <span
-                    className="rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--px-text-muted)]"
-                    key={item}
-                  >
-                    {item}
-                  </span>
-                ))
-              ) : (
-                <p className="text-sm text-[color:var(--px-text-muted)]">
-                  Trust information is still building.
-                </p>
-              )}
-            </div>
-            <div className="mt-4 grid gap-2">
+            <h2 className="font-black text-[color:var(--px-text)]">Roles</h2>
+            <div className="mt-4 flex flex-wrap gap-2">
               {normalized.roles.map((role) => (
                 <Badge key={role}>{role}</Badge>
               ))}
@@ -400,7 +408,13 @@ function normalizeProfile(profile: any) {
     .filter(Boolean);
 
   const averageRating = Number(
-    details.averageRating ?? profile.averageRating ?? 0,
+    profile.trustRecordEvidence?.averageRating ?? 0,
+  );
+  const completedDeals = Number(
+    profile.trustRecordEvidence?.completedAgreements ?? 0,
+  );
+  const publicReviewCount = Number(
+    profile.trustRecordEvidence?.publicReviewCount ?? 0,
   );
 
   return {
@@ -413,9 +427,8 @@ function normalizeProfile(profile: any) {
       details.biography ??
       profile.biography ??
       "This member has not completed a biography.",
-    completedDeals: Number(
-      details.completedDeals ?? profile.completedDeals ?? 0,
-    ),
+    completedDeals,
+    emailVerified: Boolean(profile.emailVerifiedAt),
     headline: details.headline ?? profile.headline ?? "perX member",
     id: profile.id,
     isVerified: profile.verificationStatus === "VERIFIED",
@@ -436,12 +449,14 @@ function normalizeProfile(profile: any) {
       ? profile.reviewsReceived
       : [],
     roles,
+    profileCompleteness: Number(
+      details.profileCompleteness ?? profile.profileCompleteness ?? 0,
+    ),
+    publicReviewCount,
     skills: details.showSkills === false ? [] : skills,
     trust: calculateTrustSummary({
       averageRating,
-      completedDeals: Number(
-        details.completedDeals ?? profile.completedDeals ?? 0,
-      ),
+      completedDeals,
       emailVerifiedAt: profile.emailVerifiedAt ?? null,
       profileCompleteness: Number(
         details.profileCompleteness ?? profile.profileCompleteness ?? 0,
@@ -500,6 +515,13 @@ function ProfilePrimaryAction({
   viewerSignedIn: boolean;
 }) {
   if (!viewerSignedIn) {
+    if (!allowConnectionRequests) {
+      return (
+        <Button className="w-full sm:w-auto" disabled variant="secondary">
+          Requests closed
+        </Button>
+      );
+    }
     return (
       <ButtonLink className="w-full sm:w-auto" href={`/sign-in?next=/u/${username}`}>
         <Mail aria-hidden className="mr-2" size={16} />

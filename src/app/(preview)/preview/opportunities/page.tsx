@@ -112,7 +112,7 @@ export default function PreviewOpportunitiesPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge className="border-green-200 bg-green-50 text-green-800">
                         <ShieldCheck className="mr-1 h-3.5 w-3.5" />
-                        Trust {opportunity.owner.trustScore}
+                        Preview profile evidence
                       </Badge>
                       <Badge>
                         <MapPin className="mr-1 h-3.5 w-3.5" />

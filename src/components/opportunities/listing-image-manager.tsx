@@ -5,6 +5,10 @@ import { useMemo, useRef, useState } from "react";
 import { ImagePlus, Loader2, Star, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  useConfirm,
+  useToast,
+} from "@/components/ui/feedback-provider";
 
 type ListingImage = {
   id: string;
@@ -24,6 +28,8 @@ export function ListingImageManager({
   storageEnabled: boolean;
 }) {
   const router = useRouter();
+  const confirm = useConfirm();
+  const toast = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -56,6 +62,7 @@ export function ListingImageManager({
       }
       setPreview("");
       if (inputRef.current) inputRef.current.value = "";
+      toast({ title: "Image uploaded", tone: "success" });
       router.refresh();
     } finally {
       setBusy(false);
@@ -77,6 +84,7 @@ export function ListingImageManager({
         setError(payload?.error ?? "Could not select cover image.");
         return;
       }
+      toast({ title: "Cover image updated", tone: "success" });
       router.refresh();
     } finally {
       setBusy(false);
@@ -84,7 +92,15 @@ export function ListingImageManager({
   };
 
   const remove = async (imageId: string) => {
-    if (busy || !window.confirm("Remove this listing image?")) return;
+    if (busy) return;
+    const approved = await confirm({
+      confirmLabel: "Remove image",
+      description:
+        "The image will be removed from this listing. This cannot be undone.",
+      title: "Remove listing image?",
+      tone: "danger",
+    });
+    if (!approved) return;
     setBusy(true);
     setError("");
     try {
@@ -97,6 +113,7 @@ export function ListingImageManager({
         setError(payload?.error ?? "Could not remove image.");
         return;
       }
+      toast({ title: "Image removed", tone: "success" });
       router.refresh();
     } finally {
       setBusy(false);

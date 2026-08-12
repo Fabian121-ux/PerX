@@ -22,6 +22,21 @@ export const opportunityTypeOptions = [
   { label: "Investment", value: "INVESTMENT" },
 ] as const;
 
+export const creatableOpportunityTypeOptions = opportunityTypeOptions.filter(
+  (option) => option.value !== "INVESTMENT",
+);
+
+export const defaultOpportunityCategoryByType = {
+  COFOUNDER: "startups",
+  FREELANCE_PROJECT: "software",
+  JOB: "operations",
+  PARTNERSHIP: "startups",
+  PRODUCT: "market",
+  PROPERTY: "real-estate",
+  SERVICE: "services",
+  STARTUP: "startups",
+} as const;
+
 export const opportunityCategoryValues = [
   "software",
   "design",

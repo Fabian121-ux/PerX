@@ -3,6 +3,8 @@ import {
   buildPublicOpportunityWhere,
   getPublicOpportunityPage,
 } from "@/lib/data/public-opportunities";
+import { getEligibleNetworkUserWhere } from "@/features/network/eligibility";
+import { getTrustRecordEvidence } from "@/lib/trust/records";
 import {
   createCursorPage,
   MAX_CURSOR_PAGE_SIZE,
@@ -21,6 +23,7 @@ type OpportunityTypeValue =
   | "STARTUP"
   | "COFOUNDER"
   | "INVESTMENT"
+  | "PRODUCT"
   | "PROPERTY"
   | "SERVICE"
   | "PARTNERSHIP";
@@ -31,6 +34,7 @@ const opportunityTypes = new Set<OpportunityTypeValue>([
   "STARTUP",
   "COFOUNDER",
   "INVESTMENT",
+  "PRODUCT",
   "PROPERTY",
   "SERVICE",
   "PARTNERSHIP",
@@ -551,7 +555,7 @@ export const prismaProvider: PerXDataProvider = {
       return page.items;
     },
     getOpportunityBySlug: async (slug: string) => {
-      return getPrisma().opportunity.findFirst({
+      const opportunity = await getPrisma().opportunity.findFirst({
         include: {
           category: true,
           images: {
@@ -580,6 +584,17 @@ export const prismaProvider: PerXDataProvider = {
         },
         where: { ...buildPublicOpportunityWhere(), slug },
       });
+      if (!opportunity) return null;
+
+      return {
+        ...opportunity,
+        owner: {
+          ...opportunity.owner,
+          trustRecordEvidence: await getTrustRecordEvidence(
+            opportunity.owner.id,
+          ),
+        },
+      };
     },
     getCategories: async () => {
       return getPrisma().opportunityCategory.findMany({ orderBy: { name: "asc" } });
@@ -592,8 +607,25 @@ export const prismaProvider: PerXDataProvider = {
     getDashboardMetrics: async (userId: string) => {
       const [opportunities, proposals, deals, notifications] = await Promise.all([
         getPrisma().opportunity.count({ where: { ownerId: userId } }),
-        getPrisma().proposal.count({ where: { senderId: userId } }),
-        getPrisma().dealParticipant.count({ where: { userId } }),
+        getPrisma().proposal.count({
+          where: { senderId: userId, status: { in: ["SENT", "COUNTERED"] } },
+        }),
+        getPrisma().dealParticipant.count({
+          where: {
+            deal: {
+              status: {
+                in: [
+                  "AWAITING_FUNDING",
+                  "FUNDED",
+                  "IN_PROGRESS",
+                  "SUBMITTED",
+                  "UNDER_REVIEW",
+                ],
+              },
+            },
+            userId,
+          },
+        }),
         getPrisma().notification.count({ where: { readAt: null, userId } }),
       ]);
       return { deals, notifications, opportunities, proposals };
@@ -637,7 +669,7 @@ export const prismaProvider: PerXDataProvider = {
   },
   profiles: {
     getPublicProfile: async (username: string) => {
-      return getPrisma().user.findFirst({
+      const profile = await getPrisma().user.findFirst({
         select: {
           createdAt: true,
           emailVerifiedAt: true,
@@ -664,6 +696,9 @@ export const prismaProvider: PerXDataProvider = {
             },
           },
           reviewsReceived: {
+            include: {
+              author: { select: { name: true, username: true } },
+            },
             orderBy: { createdAt: "desc" },
             take: 5,
             where: { visibility: "PUBLIC" },
@@ -677,12 +712,16 @@ export const prismaProvider: PerXDataProvider = {
           verificationStatus: true,
         },
         where: {
-          accountClassification: "PUBLIC_BETA_USER",
-          isActive: true,
+          ...getEligibleNetworkUserWhere(),
           profile: { is: { isDiscoverable: true } },
           username,
         },
       });
+      if (!profile) return null;
+      return {
+        ...profile,
+        trustRecordEvidence: await getTrustRecordEvidence(profile.id),
+      };
     },
   },
   admin: {

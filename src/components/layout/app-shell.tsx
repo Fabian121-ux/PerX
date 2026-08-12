@@ -28,26 +28,46 @@ export function AppShell({
   unreadCounts: UnreadCounts;
   user: CurrentUser;
 }) {
-  const [liveUnreadCounts, setLiveUnreadCounts] = useState(unreadCounts);
+  const serverUnreadKey = JSON.stringify(unreadCounts);
+  const [liveUnreadState, setLiveUnreadState] = useState({
+    counts: unreadCounts,
+    serverKey: serverUnreadKey,
+  });
+  const liveUnreadCounts =
+    liveUnreadState.serverKey === serverUnreadKey
+      ? liveUnreadState.counts
+      : unreadCounts;
   const pathname = usePathname();
   const directMessageConversation = /^\/app\/messages\/[^/]+$/.test(pathname);
+  const distractionFreeCreate = pathname === "/app/opportunities/new";
+
+  useEffect(() => {
+    document.documentElement.classList.toggle(
+      "perx-distraction-free-active",
+      distractionFreeCreate,
+    );
+    return () =>
+      document.documentElement.classList.remove("perx-distraction-free-active");
+  }, [distractionFreeCreate]);
 
   useEffect(() => {
     let stopped = false;
+    let refreshSequence = 0;
     const channel =
       typeof BroadcastChannel !== "undefined"
         ? new BroadcastChannel("perx-unread-counts")
         : null;
 
     const refresh = async () => {
+      const sequence = ++refreshSequence;
       try {
         const response = await fetch("/api/unread-counts", {
           cache: "no-store",
         });
         if (!response.ok) return;
         const nextCounts = (await response.json()) as UnreadCounts;
-        if (stopped) return;
-        setLiveUnreadCounts(nextCounts);
+        if (stopped || sequence !== refreshSequence) return;
+        setLiveUnreadState({ counts: nextCounts, serverKey: serverUnreadKey });
         channel?.postMessage(nextCounts);
       } catch {
         // Existing server-rendered counts remain visible until the next successful refresh.
@@ -57,7 +77,13 @@ export function AppShell({
     channel?.addEventListener(
       "message",
       (event: MessageEvent<UnreadCounts>) => {
-        if (event.data) setLiveUnreadCounts(event.data);
+        if (event.data) {
+          refreshSequence += 1;
+          setLiveUnreadState({
+            counts: event.data,
+            serverKey: serverUnreadKey,
+          });
+        }
       },
     );
     window.addEventListener("focus", refresh);
@@ -66,17 +92,24 @@ export function AppShell({
 
     return () => {
       stopped = true;
+      refreshSequence += 1;
       channel?.close();
       window.removeEventListener("focus", refresh);
       window.removeEventListener("perx-unread-refresh", refresh);
       window.clearInterval(interval);
     };
-  }, []);
+  }, [serverUnreadKey]);
 
   return (
     <div
-      className={`perx-shell relative flex h-dvh overflow-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200 ${directMessageConversation ? "perx-mobile-conversation-active" : ""}`}
+      className={`perx-shell relative flex h-dvh overflow-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200 ${directMessageConversation ? "perx-mobile-conversation-active" : ""} ${distractionFreeCreate ? "perx-distraction-free" : ""}`}
     >
+      <a
+        className="perx-skip-link rounded-lg bg-[color:var(--px-primary)] px-4 py-2 text-sm font-bold text-white shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        href="#main-content"
+      >
+        Skip to main content
+      </a>
       <AnimatedBackground />
       <PresenceHeartbeat />
       <DashboardSidebar
@@ -93,14 +126,21 @@ export function AppShell({
           user={user}
         />
 
-        <main className="dashboard-main min-h-0 flex-1 overflow-y-auto px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
+        <main
+          className="dashboard-main min-h-0 flex-1 overflow-y-auto px-4 pt-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--px-focus)] sm:px-6 sm:pt-6 lg:px-8 lg:pt-8"
+          id="main-content"
+          tabIndex={-1}
+        >
           <AppScrollRestoration />
           <div className="dashboard-content mx-auto max-w-[1480px]">
             {children}
           </div>
         </main>
       </div>
-      <AuthenticatedMobileNav unreadCounts={liveUnreadCounts} />
+      <AuthenticatedMobileNav
+        unreadCounts={liveUnreadCounts}
+        userRoles={user.roles}
+      />
     </div>
   );
 }

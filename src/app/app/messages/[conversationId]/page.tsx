@@ -363,7 +363,10 @@ export default async function ConversationPage({
     }
   }
   const workspaceConversations: WorkspaceConversation[] = conversations.map(
-    (conversation) => toWorkspaceConversation(conversation, user),
+    (conversation) => ({
+      ...toWorkspaceConversation(conversation, user),
+      historyLoaded: conversation.id === conversationId,
+    }),
   );
   const selectedWorkspace = workspaceConversations.find(
     (conversation) => conversation.id === conversationId,

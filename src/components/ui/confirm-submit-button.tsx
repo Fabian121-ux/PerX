@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/feedback-provider";
 
 export function ConfirmSubmitButton({
   children,
@@ -11,12 +12,20 @@ export function ConfirmSubmitButton({
   children: ReactNode;
   message: string;
 }) {
+  const confirm = useConfirm();
+
   return (
     <Button
-      onClick={(event) => {
-        if (!window.confirm(message)) {
-          event.preventDefault();
-        }
+      onClick={async (event) => {
+        event.preventDefault();
+        const submitter = event.currentTarget;
+        const approved = await confirm({
+          confirmLabel: "Delete",
+          description: message,
+          title: "Delete this item?",
+          tone: "danger",
+        });
+        if (approved) submitter.form?.requestSubmit(submitter);
       }}
       size="sm"
       type="submit"

@@ -148,6 +148,7 @@ export function toWorkspaceConversation(
       snapshot: toEventSnapshot(event.snapshot),
       type: event.type,
     })),
+    historyLoaded: false,
     id: dbConversation.id,
     lastMessage: latestEventIsNewer
       ? eventSummary(latestEvent.type)

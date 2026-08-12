@@ -4,10 +4,11 @@ import {
   act,
   cleanup,
   fireEvent,
-  render,
+  render as testingLibraryRender,
   waitFor,
   within,
 } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -34,6 +35,11 @@ vi.mock("next/navigation", () => ({
 }));
 
 import { MessageWorkspace } from "@/components/messages/message-workspace";
+import { FeedbackProvider } from "@/components/ui/feedback-provider";
+
+function render(ui: ReactElement) {
+  return testingLibraryRender(<FeedbackProvider>{ui}</FeedbackProvider>);
+}
 
 class EventSourceMock {
   static current: EventSourceMock | null = null;
@@ -76,7 +82,22 @@ describe("message workspace exact targets", () => {
     mocks.sendMessageAction.mockResolvedValue({ success: true });
     vi.stubGlobal("EventSource", EventSourceMock);
     Element.prototype.scrollIntoView = scrollIntoView;
-    HTMLDivElement.prototype.scrollTo = vi.fn();
+    HTMLDivElement.prototype.scrollTo = vi.fn(function (
+      this: HTMLDivElement,
+      options?: ScrollToOptions | number,
+      y?: number,
+    ) {
+      this.scrollTop =
+        typeof options === "number" ? (y ?? 0) : (options?.top ?? this.scrollTop);
+    });
+    Object.defineProperties(HTMLDivElement.prototype, {
+      clientHeight: { configurable: true, get: () => 200 },
+      scrollHeight: { configurable: true, get: () => 1000 },
+    });
+    Object.defineProperty(document, "visibilityState", {
+      configurable: true,
+      value: "visible",
+    });
   });
 
   afterEach(() => {
@@ -507,6 +528,197 @@ describe("message workspace exact targets", () => {
 
     expect(view.queryByText("Revoked User")).toBeNull();
     expect(view.queryByText("Private summary")).toBeNull();
+  });
+
+  it("keeps an exact authorized active conversation outside a partial list", async () => {
+    render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Current User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+    expect(EventSourceMock.current?.url).toContain(
+      "conversationId=conversation-1",
+    );
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversationList: {
+          ids: ["conversation-newer"],
+          nextCursor: "older-cursor",
+        },
+        conversations: [
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Current User",
+          },
+          {
+            id: "conversation-newer",
+            messages: [],
+            participantName: "Newer User",
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+
+    expect(EventSourceMock.current?.url).toContain(
+      "conversationId=conversation-1",
+    );
+  });
+
+  it("reauthorizes loaded older conversations omitted from a bounded list", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: async () => ({ ids: ["conversation-older"] }),
+      ok: true,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Current User",
+          },
+          {
+            id: "conversation-older",
+            messages: [],
+            participantName: "Authorized Older User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversationList: {
+          ids: ["conversation-1"],
+          nextCursor: "older-cursor",
+        },
+        conversations: [
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Current User",
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/messages/authorization",
+        expect.objectContaining({
+          body: JSON.stringify({ conversationIds: ["conversation-older"] }),
+          method: "POST",
+        }),
+      ),
+    );
+    expect(view.getByText("Authorized Older User")).toBeTruthy();
+  });
+
+  it("purges a loaded older conversation when exact reauthorization fails", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: async () => ({ ids: [] }),
+      ok: true,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Current User",
+          },
+          {
+            id: "conversation-revoked-older",
+            lastMessage: "Revoked older summary",
+            messages: [],
+            participantName: "Revoked Older User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversationList: {
+          ids: ["conversation-1"],
+          nextCursor: "older-cursor",
+        },
+        conversations: [
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Current User",
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(view.queryByText("Revoked Older User")).toBeNull());
+    expect(view.queryByText("Revoked older summary")).toBeNull();
+  });
+
+  it("retains authorized older state for retry after a transient authorization error", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: async () => ({ error: "Retry later." }),
+      ok: false,
+      status: 503,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Current User",
+          },
+          {
+            id: "conversation-older",
+            lastMessage: "Retained during retry",
+            messages: [],
+            participantName: "Older User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversationList: {
+          ids: ["conversation-1"],
+          nextCursor: "older-cursor",
+        },
+        conversations: [
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Current User",
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(view.getByText("Older User")).toBeTruthy();
+    expect(view.getByText("Retained during retry")).toBeTruthy();
   });
 
   it("loads and deduplicates older conversations through the cursor endpoint", async () => {
@@ -982,6 +1194,7 @@ describe("message workspace exact targets", () => {
             participantName: "Current User",
           },
           {
+            historyLoaded: false,
             id: "conversation-private",
             messages: [
               {
@@ -1064,6 +1277,179 @@ describe("message workspace exact targets", () => {
     expect(view.getAllByText("Current User").length).toBeGreaterThan(0);
   });
 
+  it("keeps the latest rapid conversation selection when responses arrive out of order", async () => {
+    let resolveSecond:
+      | ((response: { json: () => Promise<unknown>; ok: boolean; status: number }) => void)
+      | undefined;
+    let resolveThird:
+      | ((response: { json: () => Promise<unknown>; ok: boolean; status: number }) => void)
+      | undefined;
+    const fetchMock = vi.fn((url: string) => {
+      return new Promise<{ json: () => Promise<unknown>; ok: boolean; status: number }>(
+        (resolve) => {
+          if (url.includes("conversation-2")) resolveSecond = resolve;
+          if (url.includes("conversation-3")) resolveThird = resolve;
+        },
+      );
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          { id: "conversation-1", messages: [], participantName: "First User" },
+          {
+            historyLoaded: false,
+            id: "conversation-2",
+            messages: [],
+            participantName: "Second User",
+          },
+          {
+            historyLoaded: false,
+            id: "conversation-3",
+            messages: [],
+            participantName: "Third User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+    const list = within(view.getByLabelText("Conversation list"));
+    const secondButton = list.getByRole("button", { name: /Second User/ });
+    const thirdButton = list.getByRole("button", { name: /Third User/ });
+
+    fireEvent.click(secondButton);
+    fireEvent.click(thirdButton);
+    await act(async () => {
+      resolveThird?.({
+        json: async () => ({
+          conversations: [
+            {
+              id: "conversation-3",
+              messages: [
+                {
+                  body: "Latest selection",
+                  createdAt: "2026-08-10T12:00:00.000Z",
+                  id: "message-third",
+                  senderId: "user-3",
+                  senderName: "Third User",
+                },
+              ],
+              participantName: "Third User",
+            },
+          ],
+        }),
+        ok: true,
+        status: 200,
+      });
+      await Promise.resolve();
+    });
+    expect(
+      within(view.getByLabelText("Active conversation")).getByText(
+        "Latest selection",
+      ),
+    ).toBeTruthy();
+
+    await act(async () => {
+      resolveSecond?.({
+        json: async () => ({
+          conversations: [
+            {
+              id: "conversation-2",
+              messages: [
+                {
+                  body: "Stale selection",
+                  createdAt: "2026-08-10T12:01:00.000Z",
+                  id: "message-second",
+                  senderId: "user-2",
+                  senderName: "Second User",
+                },
+              ],
+              participantName: "Second User",
+            },
+          ],
+        }),
+        ok: true,
+        status: 200,
+      });
+      await Promise.resolve();
+    });
+    expect(
+      within(view.getByLabelText("Active conversation")).queryByText(
+        "Stale selection",
+      ),
+    ).toBeNull();
+    expect(
+      within(view.getByLabelText("Active conversation")).getByText(
+        "Latest selection",
+      ),
+    ).toBeTruthy();
+  });
+
+  it("counts all new inbound messages received while scrolled up", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [
+              {
+                body: "Existing message",
+                createdAt: "2026-08-10T10:00:00.000Z",
+                id: "message-existing",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+        defaultConversationId="conversation-1"
+      />,
+    );
+    const history = view.getByLabelText("Message history");
+    Object.defineProperties(history, {
+      clientHeight: { configurable: true, value: 200 },
+      scrollHeight: { configurable: true, value: 1000 },
+      scrollTop: { configurable: true, value: 100, writable: true },
+    });
+    fireEvent.scroll(history);
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversations: [
+          {
+            id: "conversation-1",
+            messages: [
+              {
+                body: "First new message",
+                createdAt: "2026-08-10T11:00:00.000Z",
+                id: "message-new-1",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+              {
+                body: "Second new message",
+                createdAt: "2026-08-10T11:01:00.000Z",
+                id: "message-new-2",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+
+    expect(
+      await view.findByRole("button", {
+        name: "2 new messages. Jump to latest",
+      }),
+    ).toBeTruthy();
+  });
+
   it("preserves chat state while app navigation opens and closes", async () => {
     const view = render(
       <MessageWorkspace
@@ -1140,6 +1526,7 @@ describe("message workspace exact targets", () => {
     const showNavigation = view.getByRole("button", {
       name: "Show app navigation",
     });
+    showNavigation.focus();
     fireEvent.click(showNavigation);
     expect(view.getByRole("dialog", { name: "App navigation" })).toBeTruthy();
     expect(view.getByText("Go to Home")).toBeTruthy();

@@ -117,6 +117,11 @@ describe("message send authorization", () => {
         }),
       ],
     });
+    expect(tx.conversationParticipant.updateMany).toHaveBeenCalledTimes(1);
+    expect(tx.conversationParticipant.updateMany).toHaveBeenCalledWith({
+      data: { removedAt: null },
+      where: { conversationId },
+    });
   });
 
   it("rejects enforcement that commits before the locked recheck", async () => {

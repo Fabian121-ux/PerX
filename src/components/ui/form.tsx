@@ -4,11 +4,13 @@ import { cn } from "@/lib/utils";
 
 export function Field({ children, hint, label }: { children: ReactNode; hint?: string; label: string }) {
   return (
-    <label className="grid gap-2 text-sm font-medium text-[color:var(--px-text)]">
-      <span>{label}</span>
-      {children}
+    <div className="grid gap-2 text-sm font-medium text-[color:var(--px-text)]">
+      <label className="contents">
+        <span>{label}</span>
+        {children}
+      </label>
       {hint ? <span className="text-xs font-normal leading-5 text-[color:var(--px-text-muted)]">{hint}</span> : null}
-    </label>
+    </div>
   );
 }
 
@@ -18,7 +20,7 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
       <input
         ref={ref}
         className={cn(
-          "min-h-11 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)] shadow-sm outline-none transition placeholder:text-[color:var(--px-text-muted)] focus:border-[color:var(--px-focus)] focus:ring-2 focus:ring-[color:var(--px-focus)]/25",
+          "min-h-11 w-full min-w-0 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)] shadow-sm outline-none transition placeholder:text-[color:var(--px-text-muted)] focus:border-[color:var(--px-focus)] focus:ring-2 focus:ring-[color:var(--px-focus)]/25 disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-[color:var(--px-error)] aria-invalid:ring-2 aria-invalid:ring-red-500/20",
           props.className,
         )}
         {...props}
@@ -32,7 +34,7 @@ export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       className={cn(
-        "min-h-28 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)] shadow-sm outline-none transition placeholder:text-[color:var(--px-text-muted)] focus:border-[color:var(--px-focus)] focus:ring-2 focus:ring-[color:var(--px-focus)]/25",
+        "min-h-28 w-full min-w-0 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)] shadow-sm outline-none transition placeholder:text-[color:var(--px-text-muted)] focus:border-[color:var(--px-focus)] focus:ring-2 focus:ring-[color:var(--px-focus)]/25 disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-[color:var(--px-error)] aria-invalid:ring-2 aria-invalid:ring-red-500/20",
         props.className,
       )}
       {...props}
@@ -44,7 +46,7 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       className={cn(
-        "min-h-11 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)] shadow-sm outline-none transition focus:border-[color:var(--px-focus)] focus:ring-2 focus:ring-[color:var(--px-focus)]/25",
+        "min-h-11 w-full min-w-0 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)] shadow-sm outline-none transition focus:border-[color:var(--px-focus)] focus:ring-2 focus:ring-[color:var(--px-focus)]/25 disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-[color:var(--px-error)] aria-invalid:ring-2 aria-invalid:ring-red-500/20",
         props.className,
       )}
       {...props}

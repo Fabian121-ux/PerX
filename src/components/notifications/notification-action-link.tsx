@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { useTransition, type ReactNode } from "react";
 
-import { markNotificationAsReadAction } from "@/features/notifications/actions";
+import { useToast } from "@/components/ui/feedback-provider";
+import { openNotificationAction } from "@/features/notifications/actions";
 
 export function NotificationActionLink({
   ariaLabel,
@@ -18,7 +20,9 @@ export function NotificationActionLink({
   href: string;
   notificationId: string;
 }) {
-  const [pending, setPending] = useState(false);
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const toast = useToast();
 
   const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     if (
@@ -34,10 +38,22 @@ export function NotificationActionLink({
       event.preventDefault();
       return;
     }
-    setPending(true);
-    void markNotificationAsReadAction(notificationId)
-      .then(() => window.dispatchEvent(new Event("perx-unread-refresh")))
-      .catch(() => setPending(false));
+    event.preventDefault();
+    startTransition(async () => {
+      try {
+        await openNotificationAction(notificationId);
+      } catch (error) {
+        if ((error as { digest?: string })?.digest?.startsWith("NEXT_REDIRECT")) {
+          return;
+        }
+        toast({
+          description: "Your notification remains unread. Please try again.",
+          title: "Could not open this update",
+          tone: "error",
+        });
+        router.push(href);
+      }
+    });
   };
 
   return (

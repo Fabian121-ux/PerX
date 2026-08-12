@@ -16,6 +16,10 @@ import {
   reportReasonOptions,
 } from "@/lib/options";
 import { hasCapability } from "@/lib/permissions/capabilities";
+import {
+  isUnavailableInvestmentPublication,
+  wouldPersistUnavailableInvestmentPublication,
+} from "@/lib/opportunities/publication";
 import { assertCanPublish } from "@/lib/account/enforcement";
 import { requireUser } from "@/lib/auth/session";
 import {
@@ -23,6 +27,7 @@ import {
   opportunityReportSchema,
 } from "@/lib/validation/opportunity";
 import { evaluatePolicy, isPolicyBlocking } from "@/lib/policy/enforcement";
+import { buildPublicOpportunityWhere } from "@/lib/data/public-opportunities";
 
 function slugify(value: string) {
   return value
@@ -124,6 +129,9 @@ export async function createOpportunityAction(formData: FormData) {
   });
 
   if (!parsed.success) redirect("/app/opportunities/new?error=check-fields");
+  if (parsed.data.type === "INVESTMENT") {
+    redirect("/app/opportunities/new?error=type-unavailable");
+  }
   if (parsed.data.intent === "publish") {
     const restriction = await assertCanPublish(user.id);
     if (restriction) redirect("/app/manage?error=publishing-restricted");
@@ -195,18 +203,33 @@ export async function createOpportunityAction(formData: FormData) {
       location: parsed.data.location,
       moderationStatus,
       ownerId: user.id,
-      authorityDeclaration: parsed.data.authorityDeclaration || null,
-      contactPreference: parsed.data.contactPreference || null,
+      authorityDeclaration:
+        parsed.data.type === "PROPERTY"
+          ? parsed.data.authorityDeclaration || null
+          : null,
+      contactPreference:
+        parsed.data.type === "PROPERTY"
+          ? parsed.data.contactPreference || null
+          : null,
       publishedAt: status === "PUBLISHED" ? new Date() : null,
-      propertyListingType: parsed.data.propertyListingType || null,
-      propertyType: parsed.data.propertyType || null,
+      propertyListingType:
+        parsed.data.type === "PROPERTY"
+          ? parsed.data.propertyListingType || null
+          : null,
+      propertyType:
+        parsed.data.type === "PROPERTY"
+          ? parsed.data.propertyType || null
+          : null,
       propertyVerificationState:
         parsed.data.type === "PROPERTY"
           ? status === "PUBLISHED"
             ? "PENDING_VERIFICATION"
             : "DRAFT"
           : null,
-      listingRulesAccepted: parsed.data.listingRulesAccepted,
+      listingRulesAccepted:
+        parsed.data.type === "PROPERTY"
+          ? parsed.data.listingRulesAccepted
+          : false,
       remote: parsed.data.remote,
       skills:
         parsed.data.skills
@@ -277,6 +300,16 @@ export async function updateOpportunityAction(
   });
 
   if (!parsed.success) redirect(`/app/opportunities/${opportunityId}/edit?error=check-fields`);
+  if (
+    wouldPersistUnavailableInvestmentPublication({
+      currentStatus: opportunity.status,
+      intent: parsed.data.intent,
+      propertyListingType: parsed.data.propertyListingType,
+      type: parsed.data.type,
+    })
+  ) {
+    redirect(`/app/opportunities/${opportunityId}/edit?error=type-unavailable`);
+  }
   if (parsed.data.intent === "publish") {
     const restriction = await assertCanPublish(user.id);
     if (restriction) redirect("/app/manage?error=publishing-restricted");
@@ -345,21 +378,36 @@ export async function updateOpportunityAction(
             : parsed.data.type === "PROPERTY" && publishing
               ? "PENDING"
               : opportunity.moderationStatus,
-        authorityDeclaration: parsed.data.authorityDeclaration || null,
-        contactPreference: parsed.data.contactPreference || null,
+        authorityDeclaration:
+          parsed.data.type === "PROPERTY"
+            ? parsed.data.authorityDeclaration || null
+            : null,
+        contactPreference:
+          parsed.data.type === "PROPERTY"
+            ? parsed.data.contactPreference || null
+            : null,
         publishedAt:
           nextStatus === "PUBLISHED" && parsed.data.type !== "PROPERTY"
             ? opportunity.publishedAt ?? new Date()
             : opportunity.publishedAt,
-        propertyListingType: parsed.data.propertyListingType || null,
-        propertyType: parsed.data.propertyType || null,
+        propertyListingType:
+          parsed.data.type === "PROPERTY"
+            ? parsed.data.propertyListingType || null
+            : null,
+        propertyType:
+          parsed.data.type === "PROPERTY"
+            ? parsed.data.propertyType || null
+            : null,
         propertyVerificationState:
           parsed.data.type === "PROPERTY"
             ? publishing
               ? "PENDING_VERIFICATION"
               : opportunity.propertyVerificationState ?? "DRAFT"
             : null,
-        listingRulesAccepted: parsed.data.listingRulesAccepted,
+        listingRulesAccepted:
+          parsed.data.type === "PROPERTY"
+            ? parsed.data.listingRulesAccepted
+            : false,
         remote: parsed.data.remote,
         skills:
           parsed.data.skills
@@ -432,11 +480,20 @@ async function transitionOpportunity(
   action: string,
 ) {
   const user = await requireUser();
+  if (!hasCapability(user.roles, "opportunity:update:own")) {
+    redirect("/app?error=forbidden");
+  }
   const opportunity = await getPrisma().opportunity.findFirst({
     where: { id: opportunityId, ownerId: user.id },
     include: { category: true, images: true },
   });
   if (!opportunity) redirect("/app/manage?error=not-found");
+  if (
+    toStatus === "PUBLISHED" &&
+    isUnavailableInvestmentPublication(opportunity)
+  ) {
+    redirect("/app/manage?error=type-unavailable");
+  }
   if (toStatus === "PUBLISHED") {
     const restriction = await assertCanPublish(user.id);
     if (restriction) redirect("/app/manage?error=publishing-restricted");
@@ -493,8 +550,8 @@ async function transitionOpportunity(
     }
   }
 
-  await getPrisma().$transaction(async (tx) => {
-    await tx.opportunity.update({
+  const transitioned = await getPrisma().$transaction(async (tx) => {
+    const result = await tx.opportunity.updateMany({
       data: {
         archivedAt: toStatus === "ARCHIVED" ? new Date() : null,
         closedAt: null,
@@ -521,8 +578,40 @@ async function transitionOpportunity(
             : opportunity.publishedAt,
         status: toStatus,
       },
-      where: { id: opportunityId },
+      where: {
+        id: opportunityId,
+        ownerId: user.id,
+        ...(toStatus === "PUBLISHED"
+          ? {
+              AND: [
+                {
+                  OR: [
+                    { propertyListingType: null },
+                    { propertyListingType: { not: "CO_INVESTMENT" } },
+                  ],
+                },
+                {
+                  OR: [
+                    { type: { not: "PROPERTY" } },
+                    {
+                      authorityDeclaration: { not: null },
+                      contactPreference: { not: null },
+                      images: { some: { isCover: true } },
+                      listingRulesAccepted: true,
+                      propertyListingType: { not: null },
+                      propertyType: { not: null },
+                      propertyVerificationState: "VERIFIED",
+                      type: "PROPERTY",
+                    },
+                  ],
+                },
+              ],
+              type: { not: "INVESTMENT" as const },
+            }
+          : {}),
+      },
     });
+    if (result.count !== 1) return false;
     await tx.opportunityStatusHistory.create({
       data: {
         actorId: user.id,
@@ -540,7 +629,9 @@ async function transitionOpportunity(
         metadata: { fromStatus: opportunity.status, toStatus },
       },
     });
+    return true;
   });
+  if (!transitioned) redirect("/app/manage?error=state-changed");
 
   revalidateOpportunityViews(opportunity.slug);
   revalidatePath(`/u/${user.username}`);
@@ -552,6 +643,9 @@ async function transitionOpportunity(
 
 export async function deleteOpportunityAction(opportunityId: string) {
   const user = await requireUser();
+  if (!hasCapability(user.roles, "opportunity:update:own")) {
+    redirect("/app?error=forbidden");
+  }
   const opportunity = await getPrisma().opportunity.findFirst({
     where: { id: opportunityId, ownerId: user.id },
   });
@@ -580,10 +674,19 @@ export async function deleteOpportunityAction(opportunityId: string) {
 
 export async function duplicateOpportunityAction(opportunityId: string) {
   const user = await requireUser();
+  if (
+    !hasCapability(user.roles, "opportunity:create") ||
+    !hasCapability(user.roles, "opportunity:update:own")
+  ) {
+    redirect("/app?error=forbidden");
+  }
   const opportunity = await getPrisma().opportunity.findFirst({
     where: { id: opportunityId, ownerId: user.id },
   });
   if (!opportunity) redirect("/app/manage?error=not-found");
+  if (opportunity.type === "INVESTMENT") {
+    redirect("/app/manage?error=type-unavailable");
+  }
 
   const duplicate = await getPrisma().opportunity.create({
     data: {
@@ -637,6 +740,14 @@ export async function bookmarkOpportunityAction(formData: FormData) {
   if (!hasDatabaseUrl()) redirect("/app/saved?error=database-not-configured");
 
   const opportunityId = String(formData.get("opportunityId") ?? "");
+  const opportunity = await getPrisma().opportunity.findFirst({
+    select: { id: true },
+    where: {
+      id: opportunityId,
+      ...buildPublicOpportunityWhere({ viewerId: user.id }),
+    },
+  });
+  if (!opportunity) redirect("/app/saved?error=not-found");
   await getPrisma().opportunityBookmark.upsert({
     create: { opportunityId, userId: user.id },
     update: {},
@@ -644,6 +755,46 @@ export async function bookmarkOpportunityAction(formData: FormData) {
   });
 
   redirect("/app/saved");
+}
+
+export async function setOpportunityBookmarkAction(
+  opportunityId: string,
+  saved: boolean,
+) {
+  const user = await requireUser();
+  if (getResolvedDataMode() === "mock" || !hasDatabaseUrl()) {
+    return { error: "Saving is temporarily unavailable." };
+  }
+
+  try {
+    if (saved) {
+      const opportunity = await getPrisma().opportunity.findFirst({
+        select: { id: true },
+        where: {
+          id: opportunityId,
+          ...buildPublicOpportunityWhere({ viewerId: user.id }),
+        },
+      });
+      if (!opportunity) {
+        return { error: "This opportunity is no longer available." };
+      }
+      await getPrisma().opportunityBookmark.upsert({
+        create: { opportunityId, userId: user.id },
+        update: {},
+        where: { userId_opportunityId: { opportunityId, userId: user.id } },
+      });
+    } else {
+      await getPrisma().opportunityBookmark.deleteMany({
+        where: { opportunityId, userId: user.id },
+      });
+    }
+  } catch {
+    return { error: "Saving is temporarily unavailable." };
+  }
+
+  revalidatePath("/app");
+  revalidatePath("/app/saved");
+  return { success: true };
 }
 
 export async function reportOpportunityAction(formData: FormData) {

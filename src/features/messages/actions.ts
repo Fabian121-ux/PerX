@@ -166,6 +166,7 @@ export async function sendMessageAction(
             body: parsed.data.body.trim(),
             conversationId: parsed.data.conversationId,
             createdAt: { gte: new Date(Date.now() - 5_000) },
+            replyToMessageId: parsed.data.replyToMessageId ?? null,
             senderId: user.id,
           },
         }),
@@ -234,11 +235,6 @@ export async function sendMessageAction(
         where: { conversationId: parsed.data.conversationId },
       });
 
-      await tx.conversationParticipant.updateMany({
-        data: { lastReadAt: message.createdAt },
-        where: { conversationId: parsed.data.conversationId, userId: user.id },
-      });
-
       await tx.notification.createMany({
         data: otherParticipantIds.map((participantId) => ({
           actionUrl: `/app/messages/${parsed.data.conversationId}?message=${message.id}`,
@@ -255,7 +251,7 @@ export async function sendMessageAction(
         })),
       });
       return { messageId: message.id };
-    });
+    }, { timeout: 10_000 });
 
     if ("error" in result) return { error: result.error };
     if ("duplicate" in result) return { success: true };

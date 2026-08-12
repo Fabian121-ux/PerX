@@ -4,6 +4,10 @@ import {
   calculateTrustSummary,
   type PublicTrustSummary,
 } from "@/lib/trust/engine";
+import {
+  getTrustRecordEvidenceByUserIds,
+  type TrustRecordEvidence,
+} from "@/lib/trust/records";
 
 export type PeopleSearchParams = {
   cursor?: string;
@@ -79,6 +83,7 @@ function mapDiscoveryUser(
   person: DiscoveryUser,
   viewerId?: string,
   connectionByUser = new Map<string, { requesterId: string; status: PeopleDirectoryEntry["connectionState"]; id: string }>(),
+  trustEvidence = new Map<string, TrustRecordEvidence>(),
 ): PeopleDirectoryEntry {
   const connection = viewerId ? connectionByUser.get(person.id) : undefined;
   const accepted = connection?.status === "ACCEPTED";
@@ -123,8 +128,8 @@ function mapDiscoveryUser(
         ? person.profile.skills.map((entry) => entry.name)
         : [],
     trust: calculateTrustSummary({
-      averageRating: String(person.profile?.averageRating ?? 0),
-      completedDeals: person.profile?.completedDeals ?? 0,
+      averageRating: trustEvidence.get(person.id)?.averageRating ?? 0,
+      completedDeals: trustEvidence.get(person.id)?.completedAgreements ?? 0,
       emailVerifiedAt: person.emailVerifiedAt,
       profileCompleteness: person.profile?.profileCompleteness ?? 0,
       verificationStatus: person.verificationStatus,
@@ -225,16 +230,19 @@ export async function getPeopleDirectory(
 
   const page = users.slice(0, pageSize);
   const userIds = page.map((user) => user.id);
-  const connections = userIds.length
-    ? await prisma.connection.findMany({
-        where: {
-          OR: [
-            { requesterId: viewerId, receiverId: { in: userIds } },
-            { requesterId: { in: userIds }, receiverId: viewerId },
-          ],
-        },
-      })
-    : [];
+  const [connections, trustEvidence] = await Promise.all([
+    userIds.length
+      ? prisma.connection.findMany({
+          where: {
+            OR: [
+              { requesterId: viewerId, receiverId: { in: userIds } },
+              { requesterId: { in: userIds }, receiverId: viewerId },
+            ],
+          },
+        })
+      : [],
+    getTrustRecordEvidenceByUserIds(userIds),
+  ]);
 
   const connectionByUser = new Map(
     connections.map((connection) => {
@@ -249,7 +257,7 @@ export async function getPeopleDirectory(
   return {
     nextCursor: users.length > pageSize ? page.at(-1)?.id ?? null : null,
     people: page.map<PeopleDirectoryEntry>((person) =>
-      mapDiscoveryUser(person, viewerId, connectionByUser),
+      mapDiscoveryUser(person, viewerId, connectionByUser, trustEvidence),
     ),
   };
 }
@@ -335,9 +343,14 @@ export async function getPublicPeopleDirectory(
   });
 
   const page = users.slice(0, take);
+  const trustEvidence = await getTrustRecordEvidenceByUserIds(
+    page.map((person) => person.id),
+  );
 
   return {
     nextCursor: users.length > take ? page.at(-1)?.id ?? null : null,
-    people: page.map<PeopleDirectoryEntry>((person) => mapDiscoveryUser(person)),
+    people: page.map<PeopleDirectoryEntry>((person) =>
+      mapDiscoveryUser(person, undefined, undefined, trustEvidence),
+    ),
   };
 }

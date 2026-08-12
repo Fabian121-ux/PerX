@@ -135,6 +135,31 @@ body {
   overflow-x: hidden;
 }
 
+.perx-skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 120;
+  transform: translateY(-160%);
+}
+
+.perx-skip-link:focus {
+  transform: translateY(0);
+}
+
+.perx-toast-viewport {
+  bottom: calc(
+    var(--mobile-nav-height) + env(safe-area-inset-bottom) + 0.75rem
+  );
+}
+
+@media (min-width: 64rem) {
+  .perx-toast-viewport {
+    bottom: auto;
+    top: 5rem;
+  }
+}
+
 a {
   text-underline-offset: 3px;
 }
@@ -199,6 +224,26 @@ a {
     --px-border: #e0e7f1;
   }
 
+  .perx-distraction-free .dashboard-topbar,
+  .perx-distraction-free .authenticated-mobile-nav,
+  .perx-distraction-free > .perx-sidebar,
+  .perx-distraction-free-active .dashboard-topbar,
+  .perx-distraction-free-active .authenticated-mobile-nav,
+  .perx-distraction-free-active .perx-shell > .perx-sidebar {
+    display: none;
+  }
+
+  .perx-distraction-free .dashboard-main,
+  .perx-distraction-free-active .dashboard-main {
+    padding: 0;
+    scroll-padding-bottom: 0;
+  }
+
+  .perx-distraction-free .dashboard-content,
+  .perx-distraction-free-active .dashboard-content {
+    max-width: none;
+  }
+
   @media (max-width: 1023px) {
     .dashboard-topbar {
       background: linear-gradient(180deg, var(--px-sidebar) 0%, #08204a 100%);
@@ -234,7 +279,9 @@ a {
     }
 
     .perx-mobile-conversation-active .dashboard-topbar,
-    .perx-mobile-conversation-active .authenticated-mobile-nav {
+    .perx-mobile-conversation-active .authenticated-mobile-nav,
+    .perx-distraction-free .dashboard-topbar,
+    .perx-distraction-free .authenticated-mobile-nav {
       display: none;
     }
 
@@ -242,6 +289,20 @@ a {
       overflow: hidden;
       padding: 0;
       scroll-padding-bottom: 0;
+    }
+
+    .perx-distraction-free .dashboard-main {
+      padding: 0;
+      scroll-padding-bottom: 0;
+    }
+
+    .perx-distraction-free .dashboard-content {
+      max-width: none;
+    }
+
+    .perx-mobile-conversation-active .perx-toast-viewport,
+    .perx-distraction-free-active .perx-toast-viewport {
+      bottom: calc(env(safe-area-inset-bottom) + 0.75rem);
     }
 
     .perx-mobile-conversation-active .dashboard-content {
@@ -543,6 +604,19 @@ input[type="password"]::-ms-clear {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .sponsored-enter {
     animation: none;
   }

@@ -18,7 +18,7 @@ export function AppSection({
     <div className="grid gap-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-3xl font-bold text-[color:var(--px-text)]">{title}</h1>
+          <h1 className="text-2xl font-black tracking-tight text-[color:var(--px-text)] sm:text-3xl">{title}</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--px-text-muted)]">{description}</p>
         </div>
         {actions}

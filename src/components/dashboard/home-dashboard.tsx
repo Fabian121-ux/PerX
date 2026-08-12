@@ -29,6 +29,7 @@ import { RecommendedOpportunities } from "./recommended-opportunities";
 import { ActivityFeed } from "./activity-feed";
 import { Card } from "@/components/ui/card";
 import { dismissOnboardingChecklistAction } from "@/features/onboarding/actions";
+import { hasCapability } from "@/lib/permissions/capabilities";
 
 export function HomeDashboard({
   data,
@@ -45,6 +46,7 @@ export function HomeDashboard({
   const env = getEnvironment(pathname);
   const getHref = (key: Parameters<typeof getAppRoute>[0]) =>
     getAppRoute(key, env);
+  const canCreate = hasCapability(data.user.roles, "opportunity:create");
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -165,7 +167,7 @@ export function HomeDashboard({
             value={data.trust.shortLabel}
             detail={data.trust.description}
             actionLabel="View breakdown"
-            href={getHref("reviews")}
+            href="/app/trust"
             icon={
               <ShieldCheck size={20} className="text-[color:var(--px-gold)]" />
             }
@@ -195,16 +197,16 @@ export function HomeDashboard({
             icon={<FileText size={20} />}
           />
           <DashboardMetricCard
-            title="Published"
+            title="Published records"
             value={data.publishedItemsCount}
-            detail="Live posts"
+            detail="Owned content in published state"
             actionLabel="Manage posts"
             href={getHref("manage")}
             icon={<BriefcaseBusiness size={20} />}
           />
         </div>
 
-        <QuickActions />
+        <QuickActions canCreate={canCreate} />
 
         <RecommendedOpportunities
           firstPageHref={opportunityFeed?.firstPageHref}
@@ -233,12 +235,14 @@ export function HomeDashboard({
           icon={<MessageSquare aria-hidden size={18} />}
           title="Recent messages"
         />
-        <WorkspaceQueueCard
-          body="Create opportunities, services, property listings, and other implemented PerX posts."
-          href="/app/opportunities/new"
-          icon={<PlusCircle aria-hidden size={18} />}
-          title="Create content"
-        />
+        {canCreate ? (
+          <WorkspaceQueueCard
+            body="Create opportunities, services, property listings, and other implemented PerX posts."
+            href="/app/opportunities/new"
+            icon={<PlusCircle aria-hidden size={18} />}
+            title="Create content"
+          />
+        ) : null}
         <WorkspaceQueueCard
           body="Saved people, opportunities and listings will appear here after you save them."
           href={getHref("saved")}
@@ -270,7 +274,14 @@ function ProfileCompletionCard({ value }: { value: number }) {
           </p>
         </div>
       </div>
-      <div className="mt-4 h-2 overflow-hidden rounded-full bg-[color:var(--px-muted)]">
+      <div
+        aria-label="Profile completeness"
+        aria-valuemax={100}
+        aria-valuemin={0}
+        aria-valuenow={Math.max(0, Math.min(value, 100))}
+        className="mt-4 h-2 overflow-hidden rounded-full bg-[color:var(--px-muted)]"
+        role="progressbar"
+      >
         <div
           className="h-full rounded-full bg-[color:var(--px-primary)]"
           style={{ width }}

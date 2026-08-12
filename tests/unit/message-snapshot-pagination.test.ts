@@ -150,4 +150,49 @@ describe("message snapshot history bounds", () => {
       expect.objectContaining({ take: 1 }),
     );
   });
+
+  it("keeps both authorization IDs and conversation payloads bounded", async () => {
+    const conversations = Array.from({ length: 51 }, (_, index) => ({
+      events: [],
+      id: `conversation-${String(index).padStart(2, "0")}`,
+      messages: [],
+      opportunity: null,
+      participants: [
+        {
+          lastReadAt: null,
+          user: {
+            id: "user-1",
+            imageUrl: null,
+            name: "Current User",
+            profile: { showPresence: false },
+            sessions: [],
+            username: "current-user",
+          },
+          userId: "user-1",
+        },
+        {
+          lastReadAt: null,
+          user: {
+            id: `other-${index}`,
+            imageUrl: null,
+            name: `Other User ${index}`,
+            profile: { showPresence: false },
+            sessions: [],
+            username: `other-${index}`,
+          },
+          userId: `other-${index}`,
+        },
+      ],
+      proposals: [],
+      updatedAt: new Date(`2026-08-01T12:${String(index).padStart(2, "0")}:00.000Z`),
+    }));
+    prismaMocks.conversationFindMany.mockResolvedValue(conversations);
+
+    const snapshot = await getMessageSnapshot({ userId: "user-1" });
+
+    expect(snapshot.conversations).toHaveLength(50);
+    expect(snapshot.conversationList?.ids).toHaveLength(50);
+    expect(snapshot.conversationList?.ids).not.toContain("conversation-50");
+    expect(snapshot.conversationList?.nextCursor).toEqual(expect.any(String));
+  });
 });

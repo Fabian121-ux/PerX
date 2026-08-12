@@ -9,6 +9,8 @@ import type { HomeDashboardData } from "@/components/dashboard/types";
 import { calculateTrustSummary } from "@/lib/trust/engine";
 import { getPrisma } from "@/lib/db/prisma";
 import { getUnreadCounts } from "@/lib/data/unread-counts";
+import { hasCapability } from "@/lib/permissions/capabilities";
+import { getTrustRecordEvidence } from "@/lib/trust/records";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +40,7 @@ export default async function HomePage({
   const [
     opportunityPage,
     unreadCounts,
-    connectionActivityCount,
+    activeOutgoingConnectionCount,
     draftsCount,
     publishedItemsCount,
   ] = await Promise.all([
@@ -50,7 +52,8 @@ export default async function HomePage({
     getUnreadCounts(user.id),
     getPrisma().connection.count({
       where: {
-        OR: [{ requesterId: user.id }, { receiverId: user.id }],
+        requesterId: user.id,
+        status: { in: ["PENDING", "ACCEPTED"] },
       },
     }),
     getPrisma().opportunity.count({
@@ -60,22 +63,38 @@ export default async function HomePage({
       where: { ownerId: user.id, status: "PUBLISHED" },
     }),
   ]);
+  const [savedBookmarks, currentUserTrustEvidence] = await Promise.all([
+    getPrisma().opportunityBookmark.findMany({
+      select: { opportunityId: true },
+      where: {
+        opportunityId: { in: opportunityPage.items.map((item: any) => item.id) },
+        userId: user.id,
+      },
+    }),
+    getTrustRecordEvidence(user.id),
+  ]);
+  const savedOpportunityIds = new Set(
+    savedBookmarks.map((bookmark) => bookmark.opportunityId),
+  );
+  const canCreate = hasCapability(user.roles, "opportunity:create");
 
   const dashboardData: HomeDashboardData = {
     user,
     connections: [],
     trust: calculateTrustSummary({
+      averageRating: currentUserTrustEvidence.averageRating,
+      completedDeals: currentUserTrustEvidence.completedAgreements,
       emailVerifiedAt: user.emailVerifiedAt ?? null,
       profileCompleteness: user.profile?.profileCompleteness ?? 0,
       verificationStatus: user.verificationStatus,
     }),
     activeDealsCount: metrics.deals,
-    activeDealsDetail: "In progress",
+    activeDealsDetail: "Active workflows",
     connectionRequestsCount: unreadCounts.pendingConnectionRequests,
     draftsCount,
     activityCount: unreadCounts.generalActivity,
     openProposalsCount: metrics.proposals,
-    openProposalsDetail: "Awaiting response",
+    openProposalsDetail: "Sent or countered",
     publishedItemsCount,
     unreadConversationsCount: unreadCounts.unreadConversations,
     onboarding: {
@@ -97,17 +116,21 @@ export default async function HomePage({
           label: "Select skills or interests",
         },
         {
-          complete: connectionActivityCount > 0,
+          complete: activeOutgoingConnectionCount > 0,
           href: "/app/people",
           label: "Find people",
         },
+        ...(canCreate
+          ? [
+              {
+                complete: publishedItemsCount > 0,
+                href: "/app/opportunities/new",
+                label: "Publish your first item",
+              },
+            ]
+          : []),
         {
-          complete: publishedItemsCount > 0,
-          href: "/app/opportunities/new",
-          label: "Publish your first item",
-        },
-        {
-          complete: connectionActivityCount > 0,
+          complete: activeOutgoingConnectionCount > 0,
           href: "/app/people",
           label: "Send a connection request",
         },
@@ -115,21 +138,39 @@ export default async function HomePage({
     },
     recommendedProfiles: [],
     recommendedOpportunities: opportunityPage.items.map((opp: any) => {
-      const image = getTemporaryOpportunityImage(opp.slug);
+      const fallbackImage = getTemporaryOpportunityImage(opp.slug);
+      const storedImage = opp.images?.find((image: any) => image.isCover) ??
+        opp.images?.[0];
+      const recordEvidence = opp.owner.trustRecordEvidence;
       return {
+        authorAvatarUrl:
+          opp.owner?.profile?.profileImageUrl ?? opp.owner?.imageUrl ?? undefined,
+        authorUsername: opp.owner?.username ?? undefined,
         id: opp.id,
         slug: opp.slug,
         title: opp.title,
         organisation: opp.owner?.name ?? "Independent",
-        location: opp.location ?? "Remote",
+        location: opp.location ?? "Location not specified",
         remote: opp.remote,
         budgetMinMinor: opp.budgetMinMinor?.toString() ?? null,
         budgetMaxMinor: opp.budgetMaxMinor?.toString() ?? null,
         currency: opp.currency,
         type: opp.type,
         postedTimeAgo: getTimeAgo(opp.publishedAt || undefined),
-        imageAlt: image.alt,
-        imageUrl: image.src,
+        imageAlt:
+          storedImage?.altText ??
+          fallbackImage.alt ??
+          `${opp.title} opportunity preview`,
+        imageUrl: storedImage?.url ?? fallbackImage.src,
+        summary: opp.summary,
+        trust: calculateTrustSummary({
+          averageRating: recordEvidence?.averageRating ?? 0,
+          completedDeals: recordEvidence?.completedAgreements ?? 0,
+          emailVerifiedAt: opp.owner?.emailVerifiedAt ?? null,
+          profileCompleteness: opp.owner?.profile?.profileCompleteness ?? 0,
+          verificationStatus: opp.owner?.verificationStatus,
+        }),
+        viewerHasSaved: savedOpportunityIds.has(opp.id),
       };
     }),
     activityFeed: [],

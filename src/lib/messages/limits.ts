@@ -1,0 +1,1 @@
+export const MAX_LOADED_CONVERSATIONS = 200;

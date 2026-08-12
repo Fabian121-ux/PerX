@@ -85,6 +85,82 @@ describeOrSkip(
       }
     }
 
+    function testCuid() {
+      return `c${crypto.randomBytes(12).toString("hex")}`;
+    }
+
+    async function createIsolatedConversation(messageCount = 1) {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      const conversationId = testCuid();
+      const messageIdPrefix = `c${crypto.randomBytes(8).toString("hex")}`;
+      try {
+        const users = await pool.query(
+          `SELECT id, email FROM "User" WHERE email = ANY($1::text[])`,
+          [["alice-test@perx.test", "bob-test@perx.test"]],
+        );
+        const aliceId = users.rows.find(
+          (row) => row.email === "alice-test@perx.test",
+        )?.id as string | undefined;
+        const bobId = users.rows.find(
+          (row) => row.email === "bob-test@perx.test",
+        )?.id as string | undefined;
+        if (!aliceId || !bobId) throw new Error("Test participants not found");
+
+        await pool.query("BEGIN");
+        await pool.query(
+          `INSERT INTO "Conversation" (id, status, "createdAt", "updatedAt")
+           VALUES ($1, 'ACTIVE', NOW(), NOW())`,
+          [conversationId],
+        );
+        await pool.query(
+          `INSERT INTO "ConversationParticipant" (id, "conversationId", "userId", "createdAt")
+           VALUES ($1, $2, $3, NOW()), ($4, $2, $5, NOW())`,
+          [testCuid(), conversationId, aliceId, testCuid(), bobId],
+        );
+        await pool.query(
+          `INSERT INTO "Message" (id, "conversationId", "senderId", body, "createdAt")
+           SELECT $1 || LPAD(value::text, 4, '0'),
+                  $2,
+                  $3,
+                  'Isolated acceptance message ' || value::text || ' with enough text to create a scrollable mobile timeline.',
+                  NOW() - (($4 - value) * INTERVAL '1 second')
+           FROM generate_series(1, $4) AS value`,
+          [messageIdPrefix, conversationId, bobId, messageCount],
+        );
+        await pool.query("COMMIT");
+        return conversationId;
+      } catch (error) {
+        await pool.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        await pool.end();
+      }
+    }
+
+    async function deleteIsolatedConversation(conversationId: string) {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      try {
+        await pool.query(
+          `DELETE FROM "Notification"
+           WHERE metadata->>'conversationId' = $1
+              OR "actionUrl" = $2
+              OR "actionUrl" LIKE $3`,
+          [
+            conversationId,
+            `/app/messages/${conversationId}`,
+            `/app/messages/${conversationId}?%`,
+          ],
+        );
+        await pool.query(`DELETE FROM "Conversation" WHERE id = $1`, [
+          conversationId,
+        ]);
+      } finally {
+        await pool.end();
+      }
+    }
+
     async function insertLegacyConversationEvent(conversationId: string) {
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: TEST_DB, ssl: false });
@@ -166,6 +242,87 @@ describeOrSkip(
       await page.close();
     });
 
+    test("members without creation capability do not receive create entry points", async ({
+      browser,
+    }) => {
+      const page = await browser.newPage({
+        viewport: { width: 390, height: 844 },
+      });
+      await createSession(page, "carol-test@perx.test");
+      await page.goto(`${BASE}/app`);
+
+      const bottomNav = page.getByRole("navigation", {
+        name: "Primary navigation",
+      });
+      await expect(bottomNav.getByRole("link")).toHaveCount(4);
+      await expect(
+        bottomNav.getByRole("link", { name: "Create Post" }),
+      ).toHaveCount(0);
+      await page
+        .getByRole("button", { name: "Open PerX feature directory" })
+        .click();
+      await expect(
+        page
+          .getByRole("dialog", { name: "Explore PerX" })
+          .getByText("Create Post", { exact: true }),
+      ).toHaveCount(0);
+
+      await page.goto(`${BASE}/app/opportunities/new`);
+      await expect(page.getByLabel("Loading workspace")).toBeHidden({
+        timeout: 15_000,
+      });
+      await expect(
+        page.getByRole("heading", { name: "What would you like to share?" }),
+      ).toHaveCount(0);
+      await page.close();
+    });
+
+    test("create post is distraction-free, guarded, and responsive", async ({
+      browser,
+    }) => {
+      const page = await browser.newPage({
+        viewport: { width: 390, height: 844 },
+      });
+      await createSession(page, "alice-test@perx.test");
+      await page.goto(
+        `${BASE}/app/opportunities/new?type=SERVICE&category=services`,
+      );
+
+      await expect(
+        page.getByRole("heading", { name: "What would you like to share?" }),
+      ).toBeVisible();
+      await expect(page.locator("header.dashboard-topbar")).toBeHidden();
+      await expect(
+        page.getByRole("navigation", { name: "Primary navigation" }),
+      ).toBeHidden();
+      await expect(page.getByLabel("Post type")).toHaveValue("SERVICE");
+      await expect(
+        page.getByLabel("Post type").getByRole("option", {
+          name: "Investment",
+        }),
+      ).toHaveCount(0);
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+        ),
+      ).toBe(true);
+
+      await page.getByLabel("Post title").fill("Responsive service draft");
+      await page.getByRole("button", { name: "Back from Create Post" }).click();
+      const confirmation = page.getByRole("dialog", {
+        name: "Discard this draft?",
+      });
+      await expect(confirmation).toBeVisible();
+      await expect(
+        confirmation.getByRole("button", { name: "Cancel" }),
+      ).toBeFocused();
+      await confirmation.getByRole("button", { name: "Cancel" }).click();
+      await expect(page.getByLabel("Post title")).toHaveValue(
+        "Responsive service draft",
+      );
+      await page.close();
+    });
+
     test("feature directory keeps search visible without forcing focus", async ({
       browser,
     }) => {
@@ -205,6 +362,32 @@ describeOrSkip(
         () => document.documentElement.clientWidth,
       );
       expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1);
+      await page.close();
+    });
+
+    test("profile Trust presentation is evidence-based and notifications are filterable", async ({
+      browser,
+    }) => {
+      const page = await browser.newPage({
+        viewport: { width: 390, height: 844 },
+      });
+      await createSession(page, "alice-test@perx.test");
+
+      await page.goto(`${BASE}/u/bob_test`);
+      await expect(page.getByText("Numeric score not published")).toBeVisible();
+      await expect(page.getByText("Evidence overview")).toBeVisible();
+      await expect(page.getByText(/Authoritative score/)).toHaveCount(0);
+
+      await page.goto(`${BASE}/app/notifications`);
+      await expect(
+        page.getByRole("navigation", { name: "Notification filters" }),
+      ).toBeVisible();
+      await expect(page.getByRole("link", { name: "Reviews" })).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+        ),
+      ).toBe(true);
       await page.close();
     });
 
@@ -316,244 +499,373 @@ describeOrSkip(
 
     test("mobile active chat is immersive and app navigation preserves state", async ({
       browser,
-    }) => {
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== "chromium",
+        "This isolated scenario creates its own explicit mobile viewport.",
+      );
       const mobileWidth = Number(process.env.PERX_MESSAGES_TEST_WIDTH ?? 320);
       const mobileHeight =
         mobileWidth === 430 ? 932 : mobileWidth === 375 ? 812 : 568;
+      const conversationId = await createIsolatedConversation(32);
       const page = await browser.newPage({
         viewport: { width: mobileWidth, height: mobileHeight },
       });
       const pageErrors: string[] = [];
       page.on("pageerror", (error) => pageErrors.push(error.message));
-      await createSession(page, "alice-test@perx.test");
-      await page.goto(`${BASE}/app/messages`);
-
-      const primaryNavigation = page.getByRole("navigation", {
-        name: "Primary navigation",
-      });
-      await expect(primaryNavigation).toBeVisible();
-      const messagesDestination = primaryNavigation.getByRole("link", {
-        name: /Messages/,
-      });
-      await expect(messagesDestination).toHaveAttribute("aria-current", "page");
-
-      const list = page.getByLabel("Conversation list");
-      const conversationSearch = page.getByPlaceholder(
-        "Search people or conversations",
-      );
-      await conversationSearch.fill("Bob");
-      const listScroller = list.locator(
-        '[data-conversation-list-scroll="true"]',
-      );
-      const listScrollBefore = await listScroller.evaluate(
-        (element) => element.scrollTop,
-      );
-      const conversationButton = list
-        .getByText("Bob Test", { exact: true })
-        .first()
-        .locator("xpath=ancestor::button[1]");
-      const historyBeforeOpen = await page.evaluate(() => window.history.length);
-      await conversationButton.click();
-
-      const workspace = page.getByLabel("Message workspace");
-      await expect(workspace).toHaveAttribute(
-        "data-mobile-view",
-        "conversation",
-      );
-      await expect(primaryNavigation).toBeHidden();
-      await expect(page.locator("header.dashboard-topbar")).toBeHidden();
-      await expect(
-        page.getByRole("button", { name: "Back to conversations" }),
-      ).toBeVisible();
-      expect(await page.evaluate(() => window.history.length)).toBe(
-        historyBeforeOpen + 1,
-      );
-      await expect(page.locator(".message-conversation-header")).toBeFocused();
-
-      for (const control of [
-        page.getByRole("button", { name: "Back to conversations" }),
-        page.getByRole("button", { name: "Show app navigation" }),
-        page.getByRole("button", { name: "Open conversation details" }),
-      ]) {
-        const controlBox = await control.boundingBox();
-        expect(controlBox).not.toBeNull();
-        expect(controlBox!.width).toBeGreaterThanOrEqual(44);
-        expect(controlBox!.height).toBeGreaterThanOrEqual(44);
-      }
-
-      const workspaceBox = await workspace.boundingBox();
-      expect(workspaceBox).not.toBeNull();
-      expect(Math.abs(workspaceBox!.y)).toBeLessThanOrEqual(1);
-      expect(workspaceBox!.height).toBeGreaterThanOrEqual(mobileHeight - 1);
-      expect(workspaceBox!.height).toBeLessThanOrEqual(mobileHeight + 1);
-
-      const composer = page.locator("#message-draft");
-      const history = page.getByLabel("Message history");
-      const historyScrollBefore = await history.evaluate((element) => {
-        element.scrollTop = Math.min(
-          40,
-          element.scrollHeight - element.clientHeight,
-        );
-        return element.scrollTop;
-      });
-      await composer.fill("Draft remains while app navigation is open");
-      const historyBeforeOverlay = await page.evaluate(
-        () => window.history.length,
-      );
-      await page.getByRole("button", { name: "Show app navigation" }).click();
-
-      const appNavigation = page.getByRole("dialog", {
-        name: "App navigation",
-      });
-      await expect(appNavigation).toBeVisible();
-      await expect(
-        appNavigation.getByRole("link", { name: /Go to Home/ }),
-      ).toBeVisible();
-      await expect(
-        appNavigation.getByRole("link", { name: /Messages/ }),
-      ).toHaveAttribute("aria-current", "page");
-      await expect(appNavigation).not.toContainText("Hello from Alice!");
-      await expect(composer).toHaveValue(
-        "Draft remains while app navigation is open",
-      );
-      expect(await page.evaluate(() => window.history.length)).toBe(
-        historyBeforeOverlay,
-      );
-
-      await appNavigation
-        .getByRole("button", { name: "Hide app navigation" })
-        .click();
-      await expect(
-        page.getByRole("button", { name: "Show app navigation" }),
-      ).toBeFocused();
-      await expect(composer).toHaveValue(
-        "Draft remains while app navigation is open",
-      );
-      expect(await history.evaluate((element) => element.scrollTop)).toBe(
-        historyScrollBefore,
-      );
-
-      const sentBody = `Immersive mobile message ${Date.now()}`;
-      await composer.fill(sentBody);
-      await page.getByRole("button", { name: "Send message" }).click();
-      await expect(
-        page
-          .locator("[data-message-id]")
-          .getByText(sentBody, { exact: true })
-          .last(),
-      ).toBeVisible();
-
-      const composerBox = await page
-        .getByRole("form", { name: "Message composer" })
-        .boundingBox();
-      expect(composerBox).not.toBeNull();
-      expect(composerBox!.y + composerBox!.height).toBeLessThanOrEqual(
-        mobileHeight,
-      );
-      expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= window.innerWidth + 1,
-        ),
-      ).toBe(true);
-
-      await page.getByRole("button", { name: "Back to conversations" }).click();
-      await expect(workspace).toHaveAttribute("data-mobile-view", "list");
-      await expect(primaryNavigation).toBeVisible();
-      await expect(conversationButton).toBeFocused();
-      await expect(conversationSearch).toHaveValue("Bob");
-      expect(await listScroller.evaluate((element) => element.scrollTop)).toBe(
-        listScrollBefore,
-      );
-      await conversationButton.click();
-      await expect(workspace).toHaveAttribute(
-        "data-mobile-view",
-        "conversation",
-      );
-      await page.evaluate(() => window.history.back());
-      await expect(workspace).toHaveAttribute("data-mobile-view", "list");
-      await expect(conversationSearch).toHaveValue("Bob");
-      await page.evaluate(() => window.history.forward());
-      await expect(workspace).toHaveAttribute(
-        "data-mobile-view",
-        "conversation",
-      );
-      await page.evaluate(() => window.history.back());
-      await expect(workspace).toHaveAttribute("data-mobile-view", "list");
-      expect(pageErrors).toEqual([]);
-      await page.close();
-    });
-
-    test("direct conversations stay immersive across mobile and tablet widths", async ({
-      browser,
-    }) => {
-      const conversationId = await getSeedConversationId();
-      for (const viewport of [
-        { width: 375, height: 812 },
-        { width: 430, height: 932 },
-        { width: 768, height: 1024 },
-        { width: 1023, height: 900 },
-      ]) {
-        const page = await browser.newPage({ viewport });
+      try {
         await createSession(page, "alice-test@perx.test");
-        const response = await page.goto(
-          `${BASE}/app/messages/${conversationId}`,
+        await page.goto(`${BASE}/app/messages`);
+
+        const primaryNavigation = page.getByRole("navigation", {
+          name: "Primary navigation",
+        });
+        await expect(primaryNavigation).toBeVisible();
+        const messagesDestination = primaryNavigation.getByRole("link", {
+          name: /Messages/,
+        });
+        await expect(messagesDestination).toHaveAttribute(
+          "aria-current",
+          "page",
         );
-        expect(response?.status()).toBe(200);
+
+        const list = page.getByLabel("Conversation list");
+        const conversationSearch = page.getByPlaceholder(
+          "Search people or conversations",
+        );
+        await conversationSearch.fill("Bob");
+        const listScroller = list.locator(
+          '[data-conversation-list-scroll="true"]',
+        );
+        const listScrollBefore = await listScroller.evaluate(
+          (element) => element.scrollTop,
+        );
+        const conversationButton = list.locator(
+          `[data-conversation-id="${conversationId}"]`,
+        );
+        const historyBeforeOpen = await page.evaluate(
+          () => window.history.length,
+        );
+        const syncResponsePromise = page.waitForResponse(
+          (response) =>
+            response.url().includes("/api/messages/sync?") &&
+            response
+              .url()
+              .includes(`conversationId=${encodeURIComponent(conversationId)}`),
+        );
+        await conversationButton.click();
+        expect((await syncResponsePromise).ok()).toBe(true);
 
         const workspace = page.getByLabel("Message workspace");
         await expect(workspace).toHaveAttribute(
           "data-mobile-view",
           "conversation",
         );
+        await expect(primaryNavigation).toBeHidden();
+        await expect(page.locator("header.dashboard-topbar")).toBeHidden();
         await expect(
-          page.getByRole("navigation", { name: "Primary navigation" }),
-        ).toBeHidden();
-        await expect(
-          page.getByRole("link", { name: "Back to conversations" }),
+          page.getByRole("button", { name: "Back to conversations" }),
         ).toBeVisible();
+        expect(await page.evaluate(() => window.history.length)).toBe(
+          historyBeforeOpen + 1,
+        );
+        await expect(
+          page.locator(".message-conversation-header"),
+        ).toBeFocused();
+
+        for (const control of [
+          page.getByRole("button", { name: "Back to conversations" }),
+          page.getByRole("button", { name: "Show app navigation" }),
+          page.getByRole("button", { name: "Open conversation details" }),
+        ]) {
+          const controlBox = await control.boundingBox();
+          expect(controlBox).not.toBeNull();
+          expect(controlBox!.width).toBeGreaterThanOrEqual(44);
+          expect(controlBox!.height).toBeGreaterThanOrEqual(44);
+        }
+
+        const workspaceBox = await workspace.boundingBox();
+        expect(workspaceBox).not.toBeNull();
+        expect(Math.abs(workspaceBox!.y)).toBeLessThanOrEqual(1);
+        expect(workspaceBox!.height).toBeGreaterThanOrEqual(mobileHeight - 1);
+        expect(workspaceBox!.height).toBeLessThanOrEqual(mobileHeight + 1);
+
+        const composer = page.locator("#message-draft");
+        const history = page.getByLabel("Message history");
+        await expect
+          .poll(() =>
+            history.evaluate(
+              (element) => element.scrollHeight - element.clientHeight,
+            ),
+          )
+          .toBeGreaterThan(400);
+        await history.evaluate((element) => {
+          element.scrollTop = Math.max(
+            0,
+            element.scrollHeight - element.clientHeight - 320,
+          );
+          element.dispatchEvent(new Event("scroll"));
+        });
+        await composer.fill("Draft remains while app navigation is open");
+        const historyDistanceBefore = await history.evaluate(
+          (element) =>
+            element.scrollHeight - element.scrollTop - element.clientHeight,
+        );
+        const historyBeforeOverlay = await page.evaluate(
+          () => window.history.length,
+        );
+        await page.getByRole("button", { name: "Show app navigation" }).click();
+
+        const appNavigation = page.getByRole("dialog", {
+          name: "App navigation",
+        });
+        await expect(appNavigation).toBeVisible();
+        await expect(
+          appNavigation.getByRole("link", { name: /Go to Home/ }),
+        ).toBeVisible();
+        await expect(
+          appNavigation.getByRole("link", { name: /Messages/ }),
+        ).toHaveAttribute("aria-current", "page");
+        await expect(appNavigation).not.toContainText("Hello from Alice!");
+        await expect(composer).toHaveValue(
+          "Draft remains while app navigation is open",
+        );
+        expect(await page.evaluate(() => window.history.length)).toBe(
+          historyBeforeOverlay,
+        );
+
+        await appNavigation
+          .getByRole("button", { name: "Hide app navigation" })
+          .click();
         await expect(
           page.getByRole("button", { name: "Show app navigation" }),
+        ).toBeFocused();
+        await expect(composer).toHaveValue(
+          "Draft remains while app navigation is open",
+        );
+        await expect
+          .poll(() =>
+            history.evaluate(
+              (element) =>
+                element.scrollHeight - element.scrollTop - element.clientHeight,
+            ),
+          )
+          .toBe(historyDistanceBefore);
+
+        const sentBody = `Immersive mobile message ${crypto.randomUUID()}`;
+        await composer.fill(sentBody);
+        await page.getByRole("button", { name: "Send message" }).click();
+        await expect(
+          page
+            .locator("[data-message-id]")
+            .getByText(sentBody, { exact: true })
+            .last(),
         ).toBeVisible();
-        const box = await workspace.boundingBox();
-        expect(box).not.toBeNull();
-        expect(Math.abs(box!.y)).toBeLessThanOrEqual(1);
-        expect(box!.height).toBeGreaterThanOrEqual(viewport.height - 1);
-        expect(box!.height).toBeLessThanOrEqual(viewport.height + 1);
+
+        const composerBox = await page
+          .getByRole("form", { name: "Message composer" })
+          .boundingBox();
+        expect(composerBox).not.toBeNull();
+        expect(composerBox!.y + composerBox!.height).toBeLessThanOrEqual(
+          mobileHeight,
+        );
         expect(
           await page.evaluate(
             () => document.documentElement.scrollWidth <= window.innerWidth + 1,
           ),
         ).toBe(true);
 
-        if (viewport.width === 430) {
-          await page.setViewportSize({ width: 430, height: 700 });
-          const resizedBox = await workspace.boundingBox();
-          expect(resizedBox).not.toBeNull();
-          expect(resizedBox!.height).toBeGreaterThanOrEqual(699);
-          const composerBox = await page
-            .getByRole("textbox", { name: "Message", exact: true })
-            .boundingBox();
-          expect(composerBox).not.toBeNull();
-          expect(composerBox!.y + composerBox!.height).toBeLessThanOrEqual(700);
-        }
-
-        if (viewport.width === 375) {
-          await page.locator("#message-draft").fill("Direct-route draft");
-        }
-
-        await page.getByRole("link", { name: "Back to conversations" }).click();
-        await expect(page).toHaveURL(/\/app\/messages$/, {
-          timeout: 15_000,
-        });
-        await expect(
-          page.getByRole("navigation", { name: "Primary navigation" }),
-        ).toBeVisible();
-        if (viewport.width === 375) {
-          await expect(page.getByLabel("Conversation list")).toContainText(
-            "Direct-route draft",
-          );
-        }
+        await page
+          .getByRole("button", { name: "Back to conversations" })
+          .click();
+        await expect(workspace).toHaveAttribute("data-mobile-view", "list");
+        await expect(primaryNavigation).toBeVisible();
+        await expect(conversationButton).toBeFocused();
+        await expect(conversationSearch).toHaveValue("Bob");
+        expect(
+          await listScroller.evaluate((element) => element.scrollTop),
+        ).toBe(listScrollBefore);
+        await conversationButton.click();
+        await expect(workspace).toHaveAttribute(
+          "data-mobile-view",
+          "conversation",
+        );
+        await page.evaluate(() => window.history.back());
+        await expect(workspace).toHaveAttribute("data-mobile-view", "list");
+        await expect(conversationSearch).toHaveValue("Bob");
+        await page.evaluate(() => window.history.forward());
+        await expect(workspace).toHaveAttribute(
+          "data-mobile-view",
+          "conversation",
+          { timeout: 15_000 },
+        );
+        await page.evaluate(() => window.history.back());
+        await expect(workspace).toHaveAttribute("data-mobile-view", "list");
+        expect(pageErrors).toEqual([]);
+      } finally {
         await page.close();
+        await deleteIsolatedConversation(conversationId);
+      }
+    });
+
+    test("mobile chat opens at latest and exposes jump recovery", async ({
+      browser,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== "chromium",
+        "This isolated scenario creates its own explicit mobile viewport.",
+      );
+      test.setTimeout(120_000);
+      const conversationId = await createIsolatedConversation(40);
+      const alicePage = await browser.newPage({
+        viewport: { width: 390, height: 844 },
+      });
+      await createSession(alicePage, "alice-test@perx.test");
+
+      try {
+        await alicePage.goto(`${BASE}/app/messages/${conversationId}`);
+        const history = alicePage.getByLabel("Message history");
+        await expect(history).toBeVisible();
+        await expect
+          .poll(async () =>
+            history.evaluate(
+              (element) =>
+                element.scrollHeight - element.scrollTop - element.clientHeight,
+            ),
+          )
+          .toBeLessThanOrEqual(72);
+
+        await alicePage
+          .getByRole("button", { name: "Open conversation details" })
+          .click();
+        const profileDialog = alicePage.getByRole("dialog", {
+          name: "Profile preview",
+        });
+        await expect(profileDialog).toBeVisible();
+        await expect(
+          profileDialog.locator('[data-profile-preview-scroll="true"]'),
+        ).toHaveCSS("overflow-y", "auto");
+        await profileDialog
+          .getByRole("button", { name: "Close profile preview" })
+          .click();
+
+        await history.hover();
+        await alicePage.mouse.wheel(0, -10_000);
+        await expect(
+          alicePage.getByRole("button", {
+            name: "Jump to latest",
+            exact: true,
+          }),
+        ).toBeVisible();
+
+        await alicePage
+          .getByRole("button", {
+            name: "Jump to latest",
+            exact: true,
+          })
+          .click();
+        await expect
+          .poll(async () =>
+            history.evaluate(
+              (element) =>
+                element.scrollHeight - element.scrollTop - element.clientHeight,
+            ),
+          )
+          .toBeLessThanOrEqual(72);
+      } finally {
+        await alicePage.close();
+        await deleteIsolatedConversation(conversationId);
+      }
+    });
+
+    test("direct conversations stay immersive across mobile and tablet widths", async ({
+      browser,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== "chromium",
+        "This isolated scenario exercises every required viewport directly.",
+      );
+      const conversationId = await createIsolatedConversation(4);
+      try {
+        for (const viewport of [
+          { width: 375, height: 812 },
+          { width: 430, height: 932 },
+          { width: 768, height: 1024 },
+          { width: 1023, height: 900 },
+        ]) {
+          const page = await browser.newPage({ viewport });
+          try {
+            await createSession(page, "alice-test@perx.test");
+            const response = await page.goto(
+              `${BASE}/app/messages/${conversationId}`,
+            );
+            expect(response?.status()).toBe(200);
+
+            const workspace = page.getByLabel("Message workspace");
+            await expect(workspace).toHaveAttribute(
+              "data-mobile-view",
+              "conversation",
+            );
+            await expect(
+              page.getByRole("navigation", { name: "Primary navigation" }),
+            ).toBeHidden();
+            await expect(
+              page.getByRole("link", { name: "Back to conversations" }),
+            ).toBeVisible();
+            await expect(
+              page.getByRole("button", { name: "Show app navigation" }),
+            ).toBeVisible();
+            const box = await workspace.boundingBox();
+            expect(box).not.toBeNull();
+            expect(Math.abs(box!.y)).toBeLessThanOrEqual(1);
+            expect(box!.height).toBeGreaterThanOrEqual(viewport.height - 1);
+            expect(box!.height).toBeLessThanOrEqual(viewport.height + 1);
+            expect(
+              await page.evaluate(
+                () =>
+                  document.documentElement.scrollWidth <= window.innerWidth + 1,
+              ),
+            ).toBe(true);
+
+            if (viewport.width === 430) {
+              await page.setViewportSize({ width: 430, height: 700 });
+              const resizedBox = await workspace.boundingBox();
+              expect(resizedBox).not.toBeNull();
+              expect(resizedBox!.height).toBeGreaterThanOrEqual(699);
+              const composerBox = await page
+                .getByRole("textbox", { name: "Message", exact: true })
+                .boundingBox();
+              expect(composerBox).not.toBeNull();
+              expect(composerBox!.y + composerBox!.height).toBeLessThanOrEqual(
+                700,
+              );
+            }
+
+            if (viewport.width === 375) {
+              await page.locator("#message-draft").fill("Direct-route draft");
+            }
+
+            await page
+              .getByRole("link", { name: "Back to conversations" })
+              .click();
+            await expect(page).toHaveURL(/\/app\/messages$/, {
+              timeout: 15_000,
+            });
+            await expect(
+              page.getByRole("navigation", { name: "Primary navigation" }),
+            ).toBeVisible();
+            await page.getByLabel("Conversation list").waitFor();
+            if (viewport.width === 375) {
+              await expect(page.getByLabel("Conversation list")).toContainText(
+                "Direct-route draft",
+              );
+            }
+          } finally {
+            await page.close();
+          }
+        }
+      } finally {
+        await deleteIsolatedConversation(conversationId);
       }
     });
 
@@ -586,9 +898,13 @@ describeOrSkip(
 
     test("draft proposal becomes a locked version and an exact-version Deal", async ({
       browser,
-    }) => {
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== "chromium",
+        "This viewport-independent lifecycle scenario mutates isolated Deal data.",
+      );
       test.setTimeout(180_000);
-      const scope = `Acceptance flow ${Date.now()} with locked scope, delivery criteria, and a numbered revision history.`;
+      const scope = `Acceptance flow ${testInfo.project.name} ${crypto.randomUUID()} with locked scope, delivery criteria, and a numbered revision history.`;
       const alicePage = await browser.newPage();
       await createSession(alicePage, "alice-test@perx.test");
       await alicePage.goto(`${BASE}/opportunities/bob-mech-keyboard`);
@@ -610,13 +926,17 @@ describeOrSkip(
           response.request().method() === "POST" &&
           response.url().includes("/opportunities/bob-mech-keyboard"),
       );
+      const draftDestinationPromise = alicePage.waitForURL(
+        /\/app\/proposals\/sent/,
+      );
       await saveDraftButton.click();
       const draftResponse = await draftResponsePromise;
       expect(draftResponse.status()).toBeLessThan(400);
-      await expect(alicePage).toHaveURL(/\/app\/proposals\/sent/);
+      await draftDestinationPromise;
       await alicePage.waitForLoadState("networkidle");
       const draftEditor = alicePage
-        .getByRole("textbox", { name: "Scope and acceptance details" })
+        .locator('textarea[name="description"]')
+        .filter({ hasText: scope })
         .first();
       await expect(draftEditor).toHaveValue(scope);
       const sentProposalCard = draftEditor.locator(
@@ -658,7 +978,8 @@ describeOrSkip(
         (await (await revisionRequestPromise).response())?.status(),
       ).toBeLessThan(400);
       const revisionEditor = alicePage
-        .getByRole("textbox", { name: "Scope and acceptance details" })
+        .locator('textarea[name="description"]')
+        .filter({ hasText: scope })
         .first();
       await expect(revisionEditor).toHaveValue(scope, { timeout: 30_000 });
       await expect(

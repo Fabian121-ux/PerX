@@ -17,12 +17,14 @@ export function FeatureDirectory({
   children,
   closeLabel = "Close feature directory",
   description = "Search all available app destinations from one place.",
+  onOpenChange,
   title = "Explore PerX",
   userRoles,
 }: {
   children: ReactElement;
   closeLabel?: string;
   description?: string;
+  onOpenChange?: (open: boolean) => void;
   title?: string;
   userRoles?: readonly string[];
 }) {
@@ -40,6 +42,7 @@ export function FeatureDirectory({
     <Dialog.Root
       open={open}
       onOpenChange={(nextOpen) => {
+        onOpenChange?.(nextOpen);
         setOpen(nextOpen);
         if (!nextOpen) setQuery("");
       }}

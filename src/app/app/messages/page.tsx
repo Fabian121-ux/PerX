@@ -253,8 +253,11 @@ export default async function MessagesPage() {
     });
     throw error;
   }
-  const workspaceConversations = conversationPage.items.map((conversation: any) =>
-    toWorkspaceConversation(conversation, user),
+  const workspaceConversations = conversationPage.items.map(
+    (conversation: any) => ({
+      ...toWorkspaceConversation(conversation, user),
+      historyLoaded: false,
+    }),
   );
 
   return (

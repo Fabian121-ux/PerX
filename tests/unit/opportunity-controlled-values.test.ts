@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { opportunityFormSchema } from "@/lib/validation/opportunity";
+import {
+  creatableOpportunityTypeOptions,
+  defaultOpportunityCategoryByType,
+} from "@/lib/options";
+import {
+  isUnavailableInvestmentPublication,
+  wouldPersistUnavailableInvestmentPublication,
+} from "@/lib/opportunities/publication";
 
 const validOpportunity = {
   title: "Verified property listing",
@@ -39,5 +47,40 @@ describe("opportunity controlled values", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("keeps investment publishing unavailable and maps active type defaults", () => {
+    expect(
+      creatableOpportunityTypeOptions.some(
+        (option) => option.value === ("INVESTMENT" as string),
+      ),
+    ).toBe(false);
+    expect(defaultOpportunityCategoryByType.SERVICE).toBe("services");
+    expect(defaultOpportunityCategoryByType.PRODUCT).toBe("market");
+    expect(defaultOpportunityCategoryByType.PROPERTY).toBe("real-estate");
+  });
+
+  it("embargoes investment and co-investment publication from persisted state", () => {
+    expect(
+      isUnavailableInvestmentPublication({
+        propertyListingType: "CO_INVESTMENT",
+        type: "PROPERTY",
+      }),
+    ).toBe(true);
+    expect(
+      wouldPersistUnavailableInvestmentPublication({
+        currentStatus: "PUBLISHED",
+        intent: "draft",
+        type: "INVESTMENT",
+      }),
+    ).toBe(true);
+    expect(
+      wouldPersistUnavailableInvestmentPublication({
+        currentStatus: "DRAFT",
+        intent: "draft",
+        propertyListingType: "CO_INVESTMENT",
+        type: "PROPERTY",
+      }),
+    ).toBe(false);
   });
 });

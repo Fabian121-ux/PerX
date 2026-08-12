@@ -112,10 +112,12 @@ export async function GET(request: Request) {
             close();
             return;
           }
-          const includeConversationList =
-            !conversationId ||
+          const conversationListRefreshDue =
+            lastConversationListRefreshAt === 0 ||
             Date.now() - lastConversationListRefreshAt >=
               conversationListRefreshIntervalMs;
+          const includeConversationList =
+            !conversationId || conversationListRefreshDue;
           const snapshot = pendingInitialSnapshot
             ? pendingInitialSnapshot
             : await getMessageSnapshot({
@@ -124,7 +126,7 @@ export async function GET(request: Request) {
                 userId: user.id,
               });
           if (pendingInitialSnapshot) pendingInitialSnapshot = null;
-          if (includeConversationList || lastConversationListRefreshAt === 0) {
+          if (conversationListRefreshDue) {
             lastConversationListRefreshAt = Date.now();
           }
           if (snapshot.notFound) {
@@ -161,6 +163,7 @@ export async function GET(request: Request) {
           );
 
           if (
+            conversationListRefreshDue ||
             signature !== lastSignature ||
             Boolean(mutationPage?.items.length)
           ) {

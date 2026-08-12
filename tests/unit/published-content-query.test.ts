@@ -13,6 +13,16 @@ vi.mock("@/lib/db/prisma", () => ({
     },
   }),
 }));
+vi.mock("@/lib/trust/records", () => ({
+  getTrustRecordEvidenceByUserIds: vi.fn(async (ids: string[]) =>
+    new Map(
+      ids.map((id) => [
+        id,
+        { averageRating: 0, completedAgreements: 0, publicReviewCount: 0 },
+      ]),
+    ),
+  ),
+}));
 
 import { getPublishedSectionOpportunityPage } from "@/lib/data/section-opportunities";
 import {
@@ -52,6 +62,13 @@ describe("published content discovery query", () => {
     );
     expect(where.AND).toEqual(
       expect.arrayContaining([
+        { type: { not: "INVESTMENT" } },
+        {
+          OR: [
+            { propertyListingType: null },
+            { propertyListingType: { not: "CO_INVESTMENT" } },
+          ],
+        },
         {
           OR: [
             { type: { not: "PROPERTY" } },
@@ -59,6 +76,17 @@ describe("published content discovery query", () => {
           ],
         },
       ]),
+    );
+  });
+
+  it("excludes bilateral blocks for viewer-aware opportunity feeds", () => {
+    const where = buildPublicOpportunityWhere({ viewerId: "viewer-1" });
+
+    expect(where.owner).toEqual(
+      expect.objectContaining({
+        blocksMade: { none: { blockedUserId: "viewer-1" } },
+        blocksReceived: { none: { blockerUserId: "viewer-1" } },
+      }),
     );
   });
 
@@ -98,9 +126,9 @@ describe("published content discovery query", () => {
 
   it("uses a bounded look-ahead cursor page and returns the next cursor", async () => {
     prismaMocks.opportunityFindMany.mockResolvedValueOnce([
-      { id: "item-1" },
-      { id: "item-2" },
-      { id: "item-3" },
+      { id: "item-1", owner: { id: "owner-1" } },
+      { id: "item-2", owner: { id: "owner-2" } },
+      { id: "item-3", owner: { id: "owner-3" } },
     ]);
 
     const result = await getPublicOpportunityPage({

@@ -1,51 +1,49 @@
 import { test, expect } from "@playwright/test";
-import { getIsolatedTestDatabaseUrl } from "./utils/db-guard";
+import type { Pool } from "pg";
 
-type TestPrisma = {
-  $disconnect: () => Promise<void>;
-  user: {
-    count: (args: unknown) => Promise<number>;
-    deleteMany: (args: unknown) => Promise<unknown>;
-    findMany: (args: unknown) => Promise<
-      Array<{
-        accountClassification: string;
-        roles: Array<{ role: { name: string } }>;
-      }>
-    >;
-  };
-};
+import { getIsolatedTestDatabaseUrl } from "./utils/db-guard";
 
 const testDatabaseUrl = getIsolatedTestDatabaseUrl();
 if (testDatabaseUrl) {
   process.env.DATABASE_URL = testDatabaseUrl;
   process.env.DIRECT_URL = process.env.TEST_DIRECT_URL || testDatabaseUrl;
 }
-const describeWithDatabase = testDatabaseUrl ? test.describe : test.describe.skip;
+const describeWithDatabase = testDatabaseUrl
+  ? test.describe
+  : test.describe.skip;
 
 describeWithDatabase("10-User Beta constraints and Core Workflow", () => {
   const runId = Date.now();
-  let prisma: TestPrisma;
+  let pool: Pool;
 
   test.beforeAll(async () => {
-    const { getPrisma } = await import("../../src/lib/db/prisma");
-    prisma = getPrisma() as unknown as TestPrisma;
-  });
-  
-  test.afterAll(async () => {
-    // strict cleanup of test accounts
-    await prisma.user.deleteMany({
-      where: {
-        email: { startsWith: `audit-${runId}-` }
-      }
-    });
-    await prisma.$disconnect();
+    const { Pool: PgPool } = await import("pg");
+    pool = new PgPool({ connectionString: testDatabaseUrl!, ssl: false });
   });
 
-  test("Beta registration capacity restricts to 10 users max using real registration path", async ({ page }) => {
+  test.afterAll(async () => {
+    if (!pool) return;
+    await pool.query(`DELETE FROM "User" WHERE email LIKE $1`, [
+      `audit-${runId}-%`,
+    ]);
+    await pool.end();
+  });
+
+  test("Beta registration capacity restricts to 10 users max using real registration path", async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "chromium",
+      "Registration capacity is viewport-independent and mutates shared state.",
+    );
     // Check initial count
-    const initialCount = await prisma.user.count({
-      where: { accountClassification: { notIn: ["INTERNAL_ADMIN", "INTERNAL_TEST_USER", "SYSTEM_ACCOUNT"] }, isActive: true }
-    });
+    const initialCountResult = await pool.query(
+      `SELECT COUNT(*)::int AS count
+       FROM "User"
+       WHERE "accountClassification" NOT IN ('INTERNAL_ADMIN', 'INTERNAL_TEST_USER', 'SYSTEM_ACCOUNT')
+         AND "isActive" = true`,
+    );
+    const initialCount = initialCountResult.rows[0].count as number;
 
     let successfulRegistrations = 0;
 
@@ -56,7 +54,9 @@ describeWithDatabase("10-User Beta constraints and Core Workflow", () => {
       await page.goto("/sign-up");
 
       // Wait for load
-      await expect(page.getByRole("heading", { name: "Create your PerX account" })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Create your PerX account" }),
+      ).toBeVisible();
 
       // Ensure form is available or unavailable
       const isAvailable = await page.locator('input[name="email"]').isVisible();
@@ -71,8 +71,10 @@ describeWithDatabase("10-User Beta constraints and Core Workflow", () => {
         await page.click('button[type="submit"]');
 
         // Check if successfully redirected
-        await page.waitForURL("**/app/profile/setup", { timeout: 10000 }).catch(() => {});
-        
+        await page
+          .waitForURL("**/app/profile/setup", { timeout: 10000 })
+          .catch(() => {});
+
         if (page.url().includes("/app/profile/setup")) {
           successfulRegistrations++;
           // Sign out for next user
@@ -85,16 +87,22 @@ describeWithDatabase("10-User Beta constraints and Core Workflow", () => {
     expect(successfulRegistrations + initialCount).toBeLessThanOrEqual(10);
 
     // Verify in database
-    const createdUsers = await prisma.user.findMany({
-      where: { email: { startsWith: `audit-${runId}-` } },
-      include: { roles: { include: { role: true } } }
-    });
+    const createdUsers = await pool.query(
+      `SELECT u."accountClassification",
+              COALESCE(ARRAY_AGG(r.name::text) FILTER (WHERE r.name IS NOT NULL), '{}') AS roles
+       FROM "User" u
+       LEFT JOIN "UserRole" ur ON ur."userId" = u.id
+       LEFT JOIN "Role" r ON r.id = ur."roleId"
+       WHERE u.email LIKE $1
+       GROUP BY u.id`,
+      [`audit-${runId}-%`],
+    );
 
-    expect(createdUsers.length).toBeLessThanOrEqual(10);
+    expect(createdUsers.rows.length).toBeLessThanOrEqual(10);
 
-    for (const u of createdUsers) {
+    for (const u of createdUsers.rows) {
       expect(u.accountClassification).toBe("PUBLIC_BETA_USER");
-      const roles = u.roles.map((r) => r.role.name);
+      const roles = u.roles as string[];
       expect(roles).toContain("MEMBER");
       expect(roles).not.toContain("ADMIN");
       expect(roles).not.toContain("INTERNAL_TESTER");

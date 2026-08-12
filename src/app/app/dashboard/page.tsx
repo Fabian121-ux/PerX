@@ -14,6 +14,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { calculateTrustSummary } from "@/lib/trust/engine";
+import { getTrustRecordEvidence } from "@/lib/trust/records";
 
 export default async function ActivityDashboardPage() {
   const user = await getCurrentUser();
@@ -34,7 +35,7 @@ export default async function ActivityDashboardPage() {
       where: { userId: user.id, deal: { status: { in: ["IN_PROGRESS", "FUNDED", "AWAITING_FUNDING"] } } },
     }),
     getPrisma().dealParticipant.count({
-      where: { userId: user.id, deal: { status: "RELEASED" } },
+      where: { userId: user.id, deal: { status: { in: ["APPROVED", "RELEASED"] } } },
     }),
     getPrisma().opportunityBookmark.count({ where: { userId: user.id } }),
   ]);
@@ -47,9 +48,10 @@ export default async function ActivityDashboardPage() {
     }
   });
 
+  const trustRecordEvidence = await getTrustRecordEvidence(user.id);
   const trust = calculateTrustSummary({
-    averageRating: user.profile?.averageRating ?? 0,
-    completedDeals: user.profile?.completedDeals ?? 0,
+    averageRating: trustRecordEvidence.averageRating,
+    completedDeals: trustRecordEvidence.completedAgreements,
     emailVerifiedAt: user.emailVerifiedAt ?? null,
     profileCompleteness: user.profile?.profileCompleteness ?? 0,
     verificationStatus: user.verificationStatus,

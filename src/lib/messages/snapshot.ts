@@ -32,7 +32,6 @@ export async function getMessageSnapshot({
       take: exactId ? 1 : 51,
       where: { ...accessWhere, ...(exactId ? { id: exactId } : {}) },
     });
-
   let conversations;
   if (conversationId) {
     if (!includeConversationList) {
@@ -55,7 +54,10 @@ export async function getMessageSnapshot({
     }
     const visibleListConversations = listConversations.slice(0, 50);
     const conversationsById = new Map(
-      visibleListConversations.map((conversation) => [conversation.id, conversation]),
+      visibleListConversations.map((conversation) => [
+        conversation.id,
+        conversation,
+      ]),
     );
     conversationsById.set(conversationId, exactConversations[0]!);
     conversations = [...conversationsById.values()];
@@ -115,12 +117,15 @@ function formatMessageSnapshot(
       const unreadMessageCount = visibleMessages.filter(
         (message) =>
           message.senderId !== userId &&
-          !message.readReceipts.some((receipt) => receipt.userId === userId),
+          !message.readReceipts.some((receipt) => receipt.userId === userId) &&
+          (!participant?.lastReadAt ||
+            message.createdAt > participant.lastReadAt),
       ).length;
       const unreadEventCount = conversation.events.filter(
         (event) =>
           event.actorId !== userId &&
-          (!participant?.lastReadAt || event.createdAt > participant.lastReadAt),
+          (!participant?.lastReadAt ||
+            event.createdAt > participant.lastReadAt),
       ).length;
       const latestMessage = conversation.messages[0];
       const latestEvent = conversation.events[0];
@@ -156,21 +161,25 @@ function formatMessageSnapshot(
           snapshot: toEventSnapshot(event.snapshot),
           type: event.type,
         })),
+        historyLoaded: fullHistory,
         id: conversation.id,
         lastMessage: latestEventIsNewer
           ? eventSummary(latestEvent.type)
           : latestMessage?.deletedAt
             ? "Message removed"
-            : latestMessage?.body ?? "No messages yet.",
+            : (latestMessage?.body ?? "No messages yet."),
         messages: messages.map((message) => ({
           body: message.deletedAt ? "" : message.body,
           createdAt: message.createdAt.toISOString(),
           deletedAt: message.deletedAt?.toISOString() ?? null,
           editedAt: message.editedAt?.toISOString() ?? null,
           id: message.id,
-          readByCurrentUser: message.readReceipts.some(
-            (receipt) => receipt.userId === userId,
-          ),
+          readByCurrentUser:
+            message.readReceipts.some((receipt) => receipt.userId === userId) ||
+            Boolean(
+              participant?.lastReadAt &&
+              message.createdAt <= participant.lastReadAt,
+            ),
           readByOtherParticipants:
             otherParticipantIds.length > 0 &&
             otherParticipantIds.every((participantId) =>
@@ -205,10 +214,9 @@ function formatMessageSnapshot(
           other?.sessions[0]?.lastSeenAt ?? null,
         ),
         participantUsername: other?.username ?? null,
-        timestamp: (
-          latestEventIsNewer
-            ? latestEvent.createdAt
-            : latestMessage?.createdAt ?? conversation.updatedAt
+        timestamp: (latestEventIsNewer
+          ? latestEvent.createdAt
+          : (latestMessage?.createdAt ?? conversation.updatedAt)
         ).toISOString(),
         unreadCount: unreadMessageCount + unreadEventCount,
       };
@@ -238,72 +246,72 @@ function conversationListSnapshot(
 
 function conversationSnapshotInclude(fullHistory: boolean) {
   return {
-      events: {
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: fullHistory ? 50 : 1,
-      },
-      messages: {
-        include: {
-          readReceipts: { select: { userId: true } },
-          replyTo: {
-            select: {
-              body: true,
-              deletedAt: true,
-              id: true,
-              sender: { select: { id: true, name: true, username: true } },
-              senderId: true,
-            },
-          },
-          sender: {
-            select: { id: true, imageUrl: true, name: true, username: true },
+    events: {
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: fullHistory ? 50 : 1,
+    },
+    messages: {
+      include: {
+        readReceipts: { select: { userId: true } },
+        replyTo: {
+          select: {
+            body: true,
+            deletedAt: true,
+            id: true,
+            sender: { select: { id: true, name: true, username: true } },
+            senderId: true,
           },
         },
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        take: fullHistory ? 51 : 1,
+        sender: {
+          select: { id: true, imageUrl: true, name: true, username: true },
+        },
       },
-      opportunity: { select: { title: true } },
-      participants: {
-        include: {
-          user: {
-            select: {
-              id: true,
-              imageUrl: true,
-              name: true,
-              profile: {
-                select: {
-                  profileImageUrl: true,
-                  showLastActiveTime: true,
-                  showPresence: true,
-                },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      take: fullHistory ? 51 : 1,
+    },
+    opportunity: { select: { title: true } },
+    participants: {
+      include: {
+        user: {
+          select: {
+            id: true,
+            imageUrl: true,
+            name: true,
+            profile: {
+              select: {
+                profileImageUrl: true,
+                showLastActiveTime: true,
+                showPresence: true,
               },
-              sessions: {
-                orderBy: { lastSeenAt: "desc" },
-                select: { lastSeenAt: true },
-                take: 1,
-              },
-              username: true,
             },
+            sessions: {
+              orderBy: { lastSeenAt: "desc" },
+              select: { lastSeenAt: true },
+              take: 1,
+            },
+            username: true,
           },
         },
       },
-      proposals: {
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        select: {
-          deal: {
-            select: {
-              currency: true,
-              id: true,
-              proposalVersion: { select: { versionNumber: true } },
-              settlementMode: true,
-              status: true,
-              valueMinor: true,
-            },
+    },
+    proposals: {
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      select: {
+        deal: {
+          select: {
+            currency: true,
+            id: true,
+            proposalVersion: { select: { versionNumber: true } },
+            settlementMode: true,
+            status: true,
+            valueMinor: true,
           },
         },
-        take: 1,
-        where: { deal: { isNot: null } },
       },
-    } satisfies Prisma.ConversationInclude;
+      take: 1,
+      where: { deal: { isNot: null } },
+    },
+  } satisfies Prisma.ConversationInclude;
 }
 
 function toEventSnapshot(value: unknown): Record<string, unknown> {
@@ -313,13 +321,15 @@ function toEventSnapshot(value: unknown): Record<string, unknown> {
 }
 
 function eventSummary(type: string) {
-  if (type === "PROPOSAL_OBJECTION_RAISED") return "Proposal revision requested";
+  if (type === "PROPOSAL_OBJECTION_RAISED")
+    return "Proposal revision requested";
   if (type === "PROPOSAL_ACCEPTED") return "Proposal accepted";
   if (type === "PROPOSAL_REJECTED") return "Proposal rejected";
   if (type === "DEAL_CREATED") return "Deal record created";
   if (type === "MILESTONE_SUBMITTED") return "Milestone delivery submitted";
   if (type === "MILESTONE_APPROVED") return "Milestone approved";
-  if (type === "SIMULATED_RELEASE_RECORDED") return "Simulated release recorded";
+  if (type === "SIMULATED_RELEASE_RECORDED")
+    return "Simulated release recorded";
   return "Proposal version submitted";
 }
 

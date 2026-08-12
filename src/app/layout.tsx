@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { MockModeIndicator } from "@/components/dev/mock-mode-indicator";
+import { FeedbackProvider } from "@/components/ui/feedback-provider";
 
 import "./globals.css";
 
@@ -64,9 +65,11 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-background text-foreground transition-colors duration-200">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <ServiceWorkerRegister />
-          {children}
-          <MockModeIndicator />
+          <FeedbackProvider>
+            <ServiceWorkerRegister />
+            {children}
+            <MockModeIndicator />
+          </FeedbackProvider>
         </ThemeProvider>
       </body>
     </html>
