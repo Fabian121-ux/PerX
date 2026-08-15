@@ -3,12 +3,14 @@ export const connectionTabs = [
   "requests",
   "sent",
   "connections",
+  "blocked",
 ] as const;
 
 export type ConnectionTab = (typeof connectionTabs)[number];
 export type ConnectionSearchParam = string | string[] | undefined;
 
 const tabAliases: Record<string, ConnectionTab> = {
+  blocked: "blocked",
   connections: "connections",
   discover: "discover",
   incoming: "requests",
@@ -45,7 +47,9 @@ export function getLegacyNetworkDestination(params: {
   tab?: ConnectionSearchParam;
 }) {
   const legacyTab = firstValue(params.tab)?.trim().toLowerCase();
-  const tab = legacyTab ? tabAliases[legacyTab] ?? "connections" : "connections";
+  const tab = legacyTab
+    ? (tabAliases[legacyTab] ?? "connections")
+    : "connections";
   return buildConnectionsPath(tab, params.q);
 }
 
@@ -53,4 +57,10 @@ export function getLegacyRequestsDestination(params: {
   q?: ConnectionSearchParam;
 }) {
   return buildConnectionsPath("requests", params.q);
+}
+
+export function getLegacyPeopleDestination(params: {
+  q?: ConnectionSearchParam;
+}) {
+  return buildConnectionsPath("discover", params.q);
 }

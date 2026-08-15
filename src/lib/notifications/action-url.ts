@@ -54,7 +54,6 @@ const approvedExactPaths = new Set([
   "/app/news",
   "/app/notifications",
   "/app/opportunities",
-  "/app/people",
   "/app/proposals",
   "/app/reports",
   "/app/search",

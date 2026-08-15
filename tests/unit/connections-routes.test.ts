@@ -9,6 +9,7 @@ import LegacyNetworkPage from "@/app/app/network/page";
 import {
   buildConnectionsPath,
   getLegacyNetworkDestination,
+  getLegacyPeopleDestination,
   normalizeConnectionsTab,
 } from "@/features/network/routes";
 
@@ -22,6 +23,7 @@ describe("connection tab normalization", () => {
     ["incoming", "requests"],
     ["sent-requests", "sent"],
     ["connections", "connections"],
+    ["blocked", "blocked"],
     [["SENT", "discover"], "sent"],
     ["unknown", "discover"],
   ])("normalizes %j to %s", (value, expected) => {
@@ -50,9 +52,7 @@ describe("legacy connection route redirects", () => {
 
     await LegacyNetworkPage({ searchParams: Promise.resolve({}) });
 
-    expect(redirect).toHaveBeenCalledWith(
-      "/app/connections?tab=connections",
-    );
+    expect(redirect).toHaveBeenCalledWith("/app/connections?tab=connections");
   });
 
   it("maps old suggestions to Discover People and retains q intent", async () => {
@@ -72,6 +72,12 @@ describe("legacy connection route redirects", () => {
 
     expect(redirect).toHaveBeenCalledWith(
       "/app/connections?tab=requests&q=Mina",
+    );
+  });
+
+  it("maps the legacy People destination to Discover People", () => {
+    expect(getLegacyPeopleDestination({ q: "Paul" })).toBe(
+      "/app/connections?tab=discover&q=Paul",
     );
   });
 });

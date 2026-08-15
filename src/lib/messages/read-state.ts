@@ -82,7 +82,7 @@ export async function markConversationReadForUser(
 
           return { readThroughEntry };
         },
-        { isolationLevel: "ReadCommitted" },
+        { isolationLevel: "ReadCommitted", timeout: 30_000 },
       );
       break;
     } catch (error) {

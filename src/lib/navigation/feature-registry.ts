@@ -83,16 +83,6 @@ export const featureRegistry = [
     showInSidebar: true,
   },
   {
-    description: "Find people and view professional profiles.",
-    group: "work",
-    href: getAppRoute("people"),
-    icon: UsersRound,
-    id: "people",
-    keywords: ["members", "profiles", "network"],
-    label: "People",
-    showInSidebar: true,
-  },
-  {
     activePaths: [getAppRoute("network")],
     description: "Manage connections, requests, and suggestions.",
     group: "work",

@@ -13,6 +13,9 @@ import { enforceTestDatabaseIsolation } from "../e2e/utils/db-guard";
 
 const testDbUrl = process.env.TEST_DATABASE_URL || "";
 if (testDbUrl) {
+  process.env.NEXT_PUBLIC_SUPABASE_URL ??= "http://127.0.0.1:54321";
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??=
+    "local-test-publishable-key";
   enforceTestDatabaseIsolation();
   process.env.DATABASE_URL = testDbUrl;
   process.env.DIRECT_URL = process.env.TEST_DIRECT_URL || testDbUrl;

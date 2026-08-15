@@ -32,8 +32,7 @@ vi.mock("@/features/network/actions", () => ({
   blockUserAction: mocks.blockUserAction,
 }));
 vi.mock("@/features/proposals/actions", () => ({
-  submitConversationProposalAction:
-    mocks.submitConversationProposalAction,
+  submitConversationProposalAction: mocks.submitConversationProposalAction,
 }));
 vi.mock("next/navigation", () => ({
   usePathname: () => "/app/messages/conversation-1",
@@ -112,7 +111,9 @@ describe("message workspace exact targets", () => {
       y?: number,
     ) {
       this.scrollTop =
-        typeof options === "number" ? (y ?? 0) : (options?.top ?? this.scrollTop);
+        typeof options === "number"
+          ? (y ?? 0)
+          : (options?.top ?? this.scrollTop);
     });
     Object.defineProperties(HTMLDivElement.prototype, {
       clientHeight: { configurable: true, get: () => 200 },
@@ -310,22 +311,22 @@ describe("message workspace exact targets", () => {
     );
 
     fireEvent.click(view.getByRole("button", { name: "Make a Deal" }));
-    expect(
-      view.getByRole("dialog", { name: "Make a Deal" }),
-    ).toBeTruthy();
+    expect(view.getByRole("dialog", { name: "Make a Deal" })).toBeTruthy();
     expect(
       view.getByText(/A Deal is created only if the other participant accepts/),
     ).toBeTruthy();
     expect(view.getByText(/Send locked terms to Other User/)).toBeTruthy();
-    expect(view.getByText(/Online payment is not active/)).toBeTruthy();
+    expect(
+      view.getByText(
+        /Payments are currently unavailable\. This Deal records agreed terms but does not hold funds\./,
+      ),
+    ).toBeTruthy();
     fireEvent.click(view.getByRole("button", { name: "Cancel" }));
 
     const composer = view.getByLabelText("Message");
     fireEvent.change(composer, { target: { value: " @DEAL " } });
     fireEvent.keyDown(composer, { ctrlKey: true, key: "Enter" });
-    expect(
-      view.getByRole("dialog", { name: "Make a Deal" }),
-    ).toBeTruthy();
+    expect(view.getByRole("dialog", { name: "Make a Deal" })).toBeTruthy();
     expect(mocks.sendMessageAction).not.toHaveBeenCalled();
 
     fireEvent.change(view.getByLabelText("Agreement amount (NGN)"), {
@@ -349,13 +350,13 @@ describe("message workspace exact targets", () => {
         }),
       ),
     );
-    expect(view.getByText("Proposal version 1 submitted")).toBeTruthy();
-    expect(view.getByRole("link", { name: "Review proposal" }).getAttribute("href")).toBe(
-      "/app/proposals/sent",
+    await waitFor(() =>
+      expect(view.getByText("Proposal version 1 submitted")).toBeTruthy(),
     );
     expect(
-      view.queryByRole("button", { name: "Make a Deal" }),
-    ).toBeNull();
+      view.getByRole("link", { name: "Review proposal" }).getAttribute("href"),
+    ).toBe("/app/proposals/sent");
+    expect(view.queryByRole("button", { name: "Make a Deal" })).toBeNull();
     expect((composer as HTMLTextAreaElement).value).toBe("");
   }, 15_000);
 
@@ -390,7 +391,9 @@ describe("message workspace exact targets", () => {
     });
     fireEvent.click(view.getByRole("button", { name: "Submit proposal" }));
 
-    await waitFor(() => expect(view.getByText("Proposal submitted")).toBeTruthy());
+    await waitFor(() =>
+      expect(view.getByText("Proposal submitted")).toBeTruthy(),
+    );
     expect(composer.value).toBe("A separate chat draft");
   }, 15_000);
 
@@ -423,9 +426,7 @@ describe("message workspace exact targets", () => {
         null,
       ),
     );
-    expect(
-      view.queryByRole("dialog", { name: "Make a Deal" }),
-    ).toBeNull();
+    expect(view.queryByRole("dialog", { name: "Make a Deal" })).toBeNull();
   });
 
   it("loads older history through the bounded cursor path", async () => {
@@ -470,7 +471,9 @@ describe("message workspace exact targets", () => {
 
     fireEvent.click(view.getByRole("button", { name: "Load older messages" }));
 
-    await waitFor(() => expect(view.getByText("Older loaded message")).toBeTruthy());
+    await waitFor(() =>
+      expect(view.getByText("Older loaded message")).toBeTruthy(),
+    );
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/messages/history?conversationId=conversation-1&cursor=opaque-cursor",
       { cache: "no-store" },
@@ -574,32 +577,36 @@ describe("message workspace exact targets", () => {
     );
 
     await act(async () => {
-      EventSourceMock.current?.emit("conversations", {
-        conversations: [
-          {
-            id: "conversation-1",
-            messages: [
-              {
-                body: "Newest live message",
-                createdAt: "2026-07-31T11:00:00.000Z",
-                id: "message-new",
-                senderId: "user-2",
-                senderName: "Other User",
-              },
-            ],
-            participantName: "Other User",
-          },
-        ],
-        messageMutations: [
-          {
-            body: "",
-            conversationId: "conversation-1",
-            deletedAt: "2026-07-31T11:00:00.000Z",
-            editedAt: null,
-            id: "message-1",
-          },
-        ],
-      }, "mutation-cursor-1");
+      EventSourceMock.current?.emit(
+        "conversations",
+        {
+          conversations: [
+            {
+              id: "conversation-1",
+              messages: [
+                {
+                  body: "Newest live message",
+                  createdAt: "2026-07-31T11:00:00.000Z",
+                  id: "message-new",
+                  senderId: "user-2",
+                  senderName: "Other User",
+                },
+              ],
+              participantName: "Other User",
+            },
+          ],
+          messageMutations: [
+            {
+              body: "",
+              conversationId: "conversation-1",
+              deletedAt: "2026-07-31T11:00:00.000Z",
+              editedAt: null,
+              id: "message-1",
+            },
+          ],
+        },
+        "mutation-cursor-1",
+      );
       await Promise.resolve();
     });
 
@@ -830,7 +837,9 @@ describe("message workspace exact targets", () => {
       await Promise.resolve();
     });
 
-    await waitFor(() => expect(view.queryByText("Revoked Older User")).toBeNull());
+    await waitFor(() =>
+      expect(view.queryByText("Revoked Older User")).toBeNull(),
+    );
     expect(view.queryByText("Revoked older summary")).toBeNull();
   });
 
@@ -1125,9 +1134,9 @@ describe("message workspace exact targets", () => {
       />,
     );
     await act(async () => Promise.resolve());
-    expect((secondUser.getByLabelText("Message") as HTMLTextAreaElement).value).toBe(
-      "",
-    );
+    expect(
+      (secondUser.getByLabelText("Message") as HTMLTextAreaElement).value,
+    ).toBe("");
   });
 
   it("ignores malformed streamed envelopes without replacing persisted messages", async () => {
@@ -1337,7 +1346,9 @@ describe("message workspace exact targets", () => {
       await Promise.resolve();
     });
 
-    await waitFor(() => expect(EventSourceMock.current).not.toBe(initialEventSource));
+    await waitFor(() =>
+      expect(EventSourceMock.current).not.toBe(initialEventSource),
+    );
     expect(EventSourceMock.current?.url).toBe(
       "/api/messages/events?conversationId=conversation-1",
     );
@@ -1440,18 +1451,28 @@ describe("message workspace exact targets", () => {
 
   it("keeps the latest rapid conversation selection when responses arrive out of order", async () => {
     let resolveSecond:
-      | ((response: { json: () => Promise<unknown>; ok: boolean; status: number }) => void)
+      | ((response: {
+          json: () => Promise<unknown>;
+          ok: boolean;
+          status: number;
+        }) => void)
       | undefined;
     let resolveThird:
-      | ((response: { json: () => Promise<unknown>; ok: boolean; status: number }) => void)
+      | ((response: {
+          json: () => Promise<unknown>;
+          ok: boolean;
+          status: number;
+        }) => void)
       | undefined;
     const fetchMock = vi.fn((url: string) => {
-      return new Promise<{ json: () => Promise<unknown>; ok: boolean; status: number }>(
-        (resolve) => {
-          if (url.includes("conversation-2")) resolveSecond = resolve;
-          if (url.includes("conversation-3")) resolveThird = resolve;
-        },
-      );
+      return new Promise<{
+        json: () => Promise<unknown>;
+        ok: boolean;
+        status: number;
+      }>((resolve) => {
+        if (url.includes("conversation-2")) resolveSecond = resolve;
+        if (url.includes("conversation-3")) resolveThird = resolve;
+      });
     });
     vi.stubGlobal("fetch", fetchMock);
     const view = render(
@@ -1606,7 +1627,7 @@ describe("message workspace exact targets", () => {
 
     expect(
       await view.findByRole("button", {
-        name: "2 new messages. Jump to latest",
+        name: "2 new messages. Jump to latest messages",
       }),
     ).toBeTruthy();
   });

@@ -24,6 +24,7 @@ import {
   rejectConnectionAction,
   requestConnectionAction,
   startConversationAction,
+  unblockUserAction,
 } from "@/features/network/actions";
 import {
   CONNECTION_COPY,
@@ -52,6 +53,7 @@ const tabs: {
   { icon: Inbox, key: "requests", label: "Connection Requests" },
   { icon: Send, key: "sent", label: "Sent Requests" },
   { icon: UsersRound, key: "connections", label: "My Connections" },
+  { icon: ShieldBan, key: "blocked", label: "Blocked Users" },
 ];
 
 const emptyStates: Record<ConnectionTab, { body: string; title: string }> = {
@@ -70,6 +72,10 @@ const emptyStates: Record<ConnectionTab, { body: string; title: string }> = {
   sent: {
     body: "Connection requests you send will appear here while they are pending.",
     title: "No sent requests",
+  },
+  blocked: {
+    body: "Members you block will appear here until you choose to unblock them.",
+    title: "No blocked users",
   },
 };
 
@@ -102,6 +108,7 @@ export default async function ConnectionsPage({
       <nav
         aria-label="Connection sections"
         className="flex gap-2 overflow-x-auto border-b border-[color:var(--px-border)] pb-2"
+        role="tablist"
       >
         {tabs.map((item) => {
           const Icon = item.icon;
@@ -109,13 +116,18 @@ export default async function ConnectionsPage({
           return (
             <Link
               aria-current={active ? "page" : undefined}
+              aria-selected={active}
               className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-t-[var(--px-radius-sm)] border-b-2 px-3 text-sm font-bold transition-colors ${
                 active
                   ? "border-[color:var(--px-primary)] text-[color:var(--px-primary)]"
                   : "border-transparent text-[color:var(--px-text-muted)] hover:text-[color:var(--px-text)]"
               }`}
-              href={buildConnectionsPath(item.key, item.key === "discover" ? q : undefined)}
+              href={buildConnectionsPath(
+                item.key,
+                item.key === "discover" ? q : undefined,
+              )}
               key={item.key}
+              role="tab"
             >
               <Icon aria-hidden size={17} />
               {item.label}
@@ -151,13 +163,17 @@ export default async function ConnectionsPage({
               Search
             </Button>
             {q ? (
-              <ButtonLink href={buildConnectionsPath("discover")} variant="ghost">
+              <ButtonLink
+                href={buildConnectionsPath("discover")}
+                variant="ghost"
+              >
                 Clear
               </ButtonLink>
             ) : null}
           </form>
           <p className="mt-3 text-xs text-[color:var(--px-text-muted)]">
-            Showing up to {CONNECTION_DISCOVER_LIMIT} eligible results. Refine your search to find a specific person.
+            Showing up to {CONNECTION_DISCOVER_LIMIT} eligible results. Refine
+            your search to find a specific person.
           </p>
         </Card>
       ) : null}
@@ -165,7 +181,10 @@ export default async function ConnectionsPage({
       {entries.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {entries.map((entry) => (
-            <ConnectionCard entry={entry} key={`${entry.relationship}-${entry.id}`} />
+            <ConnectionCard
+              entry={entry}
+              key={`${entry.relationship}-${entry.id}`}
+            />
           ))}
         </div>
       ) : (
@@ -197,37 +216,67 @@ function ConnectionCard({ entry }: { entry: NetworkEntry }) {
       </div>
 
       <div className="mt-auto flex flex-wrap items-center gap-2">
+        {entry.relationship === "BLOCKED" ? (
+          <>
+            <p className="text-xs font-semibold text-[color:var(--px-text-muted)]">
+              Blocked {entry.blockedAt?.toLocaleDateString() ?? ""}
+            </p>
+            <ButtonLink href={`/u/${entry.username}`} size="sm" variant="ghost">
+              View profile
+            </ButtonLink>
+          </>
+        ) : null}
         <RelationshipActions entry={entry} />
-        <form
-          action={async () => {
-            "use server";
-            await blockUserAction(entry.id);
-          }}
-        >
-          <PendingSubmitButton
-            pendingLabel="Blocking..."
-            size="sm"
-            type="submit"
-            variant="outline"
+        {entry.relationship === "BLOCKED" ? (
+          <form
+            action={async () => {
+              "use server";
+              await unblockUserAction(entry.id);
+            }}
           >
-            <ShieldBan aria-hidden className="mr-1.5" size={14} />
-            {CONNECTION_COPY.block}
-          </PendingSubmitButton>
-        </form>
-        <ButtonLink
-          href={`/app/reports/new?targetType=USER&targetId=${encodeURIComponent(entry.id)}`}
-          size="sm"
-          variant="ghost"
-        >
-          <Flag aria-hidden className="mr-1.5" size={14} />
-          {CONNECTION_COPY.report}
-        </ButtonLink>
+            <PendingSubmitButton
+              pendingLabel="Unblocking..."
+              size="sm"
+              type="submit"
+            >
+              Unblock
+            </PendingSubmitButton>
+          </form>
+        ) : (
+          <>
+            <form
+              action={async () => {
+                "use server";
+                await blockUserAction(entry.id);
+              }}
+            >
+              <PendingSubmitButton
+                pendingLabel="Blocking..."
+                size="sm"
+                type="submit"
+                variant="outline"
+              >
+                <ShieldBan aria-hidden className="mr-1.5" size={14} />
+                {CONNECTION_COPY.block}
+              </PendingSubmitButton>
+            </form>
+            <ButtonLink
+              href={`/app/reports/new?targetType=USER&targetId=${encodeURIComponent(entry.id)}`}
+              size="sm"
+              variant="ghost"
+            >
+              <Flag aria-hidden className="mr-1.5" size={14} />
+              {CONNECTION_COPY.report}
+            </ButtonLink>
+          </>
+        )}
       </div>
     </Card>
   );
 }
 
 function RelationshipActions({ entry }: { entry: NetworkEntry }) {
+  if (entry.relationship === "BLOCKED") return null;
   if (entry.relationship === "CONNECTED" && entry.connectionId) {
     return (
       <>

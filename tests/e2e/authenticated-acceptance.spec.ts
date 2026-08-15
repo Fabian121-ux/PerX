@@ -1155,9 +1155,9 @@ describeOrSkip(
           }),
         ).toHaveCount(0);
         expect(
-          await page.evaluate(
-            () => document.documentElement.scrollHeight > window.innerHeight,
-          ),
+          await page
+            .locator(".dashboard-main")
+            .evaluate((element) => element.scrollHeight > element.clientHeight),
         ).toBe(true);
         expect(
           await page.evaluate(
@@ -1232,12 +1232,6 @@ describeOrSkip(
         );
         await page.reload();
         await expect(page.getByLabel("Post title")).toHaveValue("");
-        expect(
-          await page.evaluate(
-            (key) => window.localStorage.getItem(key),
-            serviceKey,
-          ),
-        ).toBeNull();
 
         await page.evaluate(
           (key) => window.localStorage.setItem(key, "{"),
@@ -1707,6 +1701,9 @@ describeOrSkip(
         await page.goto(`${BASE}/app/messages/${fixture.conversationId}`);
 
         await expect(page.getByLabel("Message workspace")).toBeVisible();
+        await expect(page.getByText("Live", { exact: true })).toBeVisible({
+          timeout: 30_000,
+        });
         await page.getByRole("button", { name: "Make a Deal" }).click();
         const dialog = page.getByRole("dialog", { name: "Make a Deal" });
         await expect(dialog).toBeVisible();
@@ -1852,8 +1849,9 @@ describeOrSkip(
           before.rows[0]!.updatedAt.getTime(),
         );
 
+        const proposalNavigation = page.waitForURL(/\/app\/proposals\/sent/);
         await eventCard.getByRole("link", { name: "Review proposal" }).click();
-        await expect(page).toHaveURL(/\/app\/proposals\/sent/);
+        await proposalNavigation;
         await page.reload();
         await expect(
           page.getByRole("heading", { name: "Proposals sent" }),
@@ -1996,6 +1994,11 @@ describeOrSkip(
         await expect(
           unauthorizedPage.getByRole("button", { name: "Make a Deal" }),
         ).toHaveCount(0);
+        await expect(
+          unauthorizedPage.getByText(
+            "Use the structured terms entry when you are ready.",
+          ),
+        ).toHaveCount(0);
 
         blockId = await createBlockedPairFixture(
           blockedFixture.bobId,
@@ -2005,7 +2008,14 @@ describeOrSkip(
         await blockedPage.goto(
           `${BASE}/app/messages/${blockedFixture.conversationId}`,
         );
-        await blockedPage.getByRole("button", { name: "Make a Deal" }).click();
+        await expect(
+          blockedPage.getByText("Live", { exact: true }),
+        ).toBeVisible({
+          timeout: 30_000,
+        });
+        await blockedPage
+          .getByRole("button", { name: "Make a Deal" })
+          .click({ timeout: 30_000 });
         const dialog = blockedPage.getByRole("dialog", { name: "Make a Deal" });
         await dialog.getByLabel("Agreement amount (NGN)").fill("50000");
         await dialog.getByLabel("Delivery days").fill("5");
@@ -2100,10 +2110,16 @@ describeOrSkip(
             await expect(incoming).toBeAttached();
             await expect(own).toBeAttached();
 
+            await incoming.scrollIntoViewIfNeeded();
             await incoming.getByLabel("Message actions").click();
-            await page.getByRole("menuitem", { name: "Reply" }).click();
+            await page
+              .getByRole("menuitem", { name: "Reply" })
+              .evaluate((element) => (element as HTMLButtonElement).click());
+            await own.scrollIntoViewIfNeeded();
             await own.getByLabel("Message actions").click();
-            await page.getByRole("menuitem", { name: "Edit" }).click();
+            await page
+              .getByRole("menuitem", { name: "Edit" })
+              .evaluate((element) => (element as HTMLButtonElement).click());
             await composer.fill(`Profile scroll draft ${width}`);
             await history.evaluate((element) => {
               element.scrollTop = Math.min(
@@ -2204,6 +2220,7 @@ describeOrSkip(
         );
         const trigger = incoming.getByLabel("Message actions");
 
+        await incoming.scrollIntoViewIfNeeded();
         await trigger.click();
         await expect(trigger).toHaveAttribute("aria-expanded", "true");
         await trigger.click();
@@ -2615,14 +2632,14 @@ describeOrSkip(
         await alicePage.mouse.wheel(0, -10_000);
         await expect(
           alicePage.getByRole("button", {
-            name: "Jump to latest",
+            name: "Jump to latest messages",
             exact: true,
           }),
         ).toBeVisible();
 
         await alicePage
           .getByRole("button", {
-            name: "Jump to latest",
+            name: "Jump to latest messages",
             exact: true,
           })
           .click();

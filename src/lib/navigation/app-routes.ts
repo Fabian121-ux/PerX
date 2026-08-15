@@ -36,7 +36,7 @@ export type RouteKey =
 
 const routeMap: Record<RouteKey, string> = {
   home: "/app",
-  people: "/app/people",
+  people: "/app/connections?tab=discover",
   connections: "/app/connections",
   manage: "/app/manage",
   network: "/app/network",

@@ -26,6 +26,7 @@ export const CONNECTION_COPY = {
 
 export type NetworkRelationshipState =
   | "AVAILABLE"
+  | "BLOCKED"
   | "CONNECTED"
   | "PENDING_INCOMING"
   | "PENDING_OUTGOING";
@@ -41,6 +42,7 @@ export type NetworkEntry = {
   name: string;
   relationship: NetworkRelationshipState;
   username: string;
+  blockedAt?: Date | null;
 };
 
 const publicNetworkUserSelect = {
@@ -94,7 +96,9 @@ export function derivePartnerUserIds(
 }
 
 export function getConnectedLabel(isPartner: boolean) {
-  return isPartner ? `${CONNECTION_COPY.connected} · Partner` : CONNECTION_COPY.connected;
+  return isPartner
+    ? `${CONNECTION_COPY.connected} · Partner`
+    : CONNECTION_COPY.connected;
 }
 
 function toNetworkEntry(
@@ -102,6 +106,7 @@ function toNetworkEntry(
   relationship: NetworkRelationshipState,
   connectionId: string | null,
   partnerUserIds: ReadonlySet<string>,
+  blockedAt: Date | null = null,
 ): NetworkEntry {
   return {
     canMessage:
@@ -118,6 +123,7 @@ function toNetworkEntry(
     name: person.name,
     relationship,
     username: person.username,
+    blockedAt,
   };
 }
 
@@ -146,10 +152,7 @@ function indexActiveConnections(
   return byUserId;
 }
 
-async function getPartnerUserIds(
-  viewerId: string,
-  connectedUserIds: string[],
-) {
+async function getPartnerUserIds(viewerId: string, connectedUserIds: string[]) {
   if (!connectedUserIds.length) return new Set<string>();
 
   const rows = await getPrisma().dealParticipant.findMany({
@@ -185,7 +188,12 @@ async function getDiscoverEntries(viewerId: string, q?: string | string[]) {
           ? [
               {
                 OR: [
-                  { name: { contains: normalizedQ, mode: "insensitive" as const } },
+                  {
+                    name: {
+                      contains: normalizedQ,
+                      mode: "insensitive" as const,
+                    },
+                  },
                   {
                     username: {
                       contains: normalizedQ,
@@ -232,7 +240,9 @@ async function getDiscoverEntries(viewerId: string, q?: string | string[]) {
     : [];
   const connectionByUserId = indexActiveConnections(connections, viewerId);
   const connectedUserIds = people
-    .filter((person) => connectionByUserId.get(person.id)?.status === "ACCEPTED")
+    .filter(
+      (person) => connectionByUserId.get(person.id)?.status === "ACCEPTED",
+    )
     .map((person) => person.id);
   const partnerUserIds = await getPartnerUserIds(viewerId, connectedUserIds);
 
@@ -274,12 +284,7 @@ async function getIncomingEntries(viewerId: string) {
   });
 
   return rows.map((row) =>
-    toNetworkEntry(
-      row.requester,
-      "PENDING_INCOMING",
-      row.id,
-      new Set(),
-    ),
+    toNetworkEntry(row.requester, "PENDING_INCOMING", row.id, new Set()),
   );
 }
 
@@ -303,12 +308,23 @@ async function getSentEntries(viewerId: string) {
   });
 
   return rows.map((row) =>
-    toNetworkEntry(
-      row.receiver,
-      "PENDING_OUTGOING",
-      row.id,
-      new Set(),
-    ),
+    toNetworkEntry(row.receiver, "PENDING_OUTGOING", row.id, new Set()),
+  );
+}
+
+async function getBlockedEntries(viewerId: string) {
+  const rows = await getPrisma().blockedUser.findMany({
+    orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+    select: {
+      blockedUser: { select: publicNetworkUserSelect },
+      createdAt: true,
+    },
+    take: CONNECTION_RELATION_LIMIT,
+    where: { blockerUserId: viewerId },
+  });
+
+  return rows.map((row) =>
+    toNetworkEntry(row.blockedUser, "BLOCKED", null, new Set(), row.createdAt),
   );
 }
 
@@ -356,5 +372,6 @@ export async function getConnectionsTabData(
   if (tab === "requests") return getIncomingEntries(viewerId);
   if (tab === "sent") return getSentEntries(viewerId);
   if (tab === "connections") return getAcceptedEntries(viewerId);
+  if (tab === "blocked") return getBlockedEntries(viewerId);
   return getDiscoverEntries(viewerId, params.q);
 }

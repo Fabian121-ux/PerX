@@ -68,11 +68,13 @@ function assertEligibleAccountPair(accounts: {
   }
 }
 
-function revalidateConnectionPaths(options: {
-  blocked?: boolean;
-  messages?: boolean;
-  notifications?: boolean;
-} = {}) {
+function revalidateConnectionPaths(
+  options: {
+    blocked?: boolean;
+    messages?: boolean;
+    notifications?: boolean;
+  } = {},
+) {
   revalidatePath("/app/connections");
   revalidatePath("/app/network");
   revalidatePath("/app/people");
@@ -93,7 +95,10 @@ type DirectMessageAccount = {
   suspendedUntil: Date | null;
 };
 
-function isEligibleForDirectMessaging(account: DirectMessageAccount, now: Date) {
+function isEligibleForDirectMessaging(
+  account: DirectMessageAccount,
+  now: Date,
+) {
   const suspended =
     account.suspendedAt &&
     (!account.suspendedUntil || account.suspendedUntil > now);
@@ -104,7 +109,8 @@ function isEligibleForDirectMessaging(account: DirectMessageAccount, now: Date) 
     !account.bannedAt &&
     !account.deactivatedAt &&
     !suspended &&
-    (!account.messagingRestrictedUntil || account.messagingRestrictedUntil <= now)
+    (!account.messagingRestrictedUntil ||
+      account.messagingRestrictedUntil <= now)
   );
 }
 
@@ -167,20 +173,20 @@ export async function requestConnectionAction(targetUserId: string) {
 
     const connection = existing
       ? await tx.connection.update({
-        data: {
-          requesterId: user.id,
-          receiverId: targetUserId,
-          status: "PENDING",
-        },
-        where: { id: existing.id },
-      })
+          data: {
+            requesterId: user.id,
+            receiverId: targetUserId,
+            status: "PENDING",
+          },
+          where: { id: existing.id },
+        })
       : await tx.connection.create({
-        data: {
-          requesterId: user.id,
-          receiverId: targetUserId,
-          status: "PENDING",
-        },
-      });
+          data: {
+            requesterId: user.id,
+            receiverId: targetUserId,
+            status: "PENDING",
+          },
+        });
 
     await tx.notification.create({
       data: {
@@ -317,7 +323,7 @@ export async function acceptConnectionAction(connectionId: string) {
     if (!existingNotification) {
       await tx.notification.create({
         data: {
-          actionUrl: `/u/${user.username}`,
+          actionUrl: "/app/connections?tab=connections",
           body: `${user.name} accepted your connection request.`,
           metadata: { actorId: user.id, connectionId },
           title: "Connection accepted",
@@ -449,7 +455,7 @@ export async function rejectConnectionAction(connectionId: string) {
     if (!existingNotification) {
       await tx.notification.create({
         data: {
-          actionUrl: `/u/${user.username}`,
+          actionUrl: "/app/connections?tab=sent",
           body: `${user.name} declined a connection request.`,
           metadata: { actorId: user.id, connectionId },
           title: "Connection request declined",
@@ -584,10 +590,7 @@ export async function disconnectAction(connectionId: string) {
       where: { id: connectionId },
     });
     if (!candidate) throw new Error("Connection not found");
-    if (
-      candidate.receiverId !== user.id &&
-      candidate.requesterId !== user.id
-    ) {
+    if (candidate.receiverId !== user.id && candidate.requesterId !== user.id) {
       throw new Error("Unauthorized");
     }
     if (candidate.requesterId === candidate.receiverId) {

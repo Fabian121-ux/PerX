@@ -26,6 +26,7 @@ import {
   rejectConnectionAction,
   requestConnectionAction,
   startConversationAction,
+  unblockUserAction,
 } from "@/features/network/actions";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getPublicProfileResult } from "@/lib/data/profiles";
@@ -48,7 +49,9 @@ export default async function PublicProfilePage({
       <PublicPageShell>
         <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
           <EmptyState
-            action={<ButtonLink href="/discover?type=PEOPLE">Find people</ButtonLink>}
+            action={
+              <ButtonLink href="/discover?type=PEOPLE">Find people</ButtonLink>
+            }
             body="Please try again shortly."
             title="This section is temporarily unavailable."
           />
@@ -145,15 +148,17 @@ export default async function PublicProfilePage({
               </div>
 
               <nav className="dashboard-scroll -mx-5 mt-6 flex gap-2 overflow-x-auto px-5 pb-1 sm:-mx-6 sm:px-6">
-                {["About", "Portfolio", "Skills", "Experience", "Reviews"].map((item) => (
-                  <a
-                    className="shrink-0 rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-2 text-sm font-bold text-[color:var(--px-text-muted)] hover:border-[color:var(--px-primary)] hover:text-[color:var(--px-primary)]"
-                    href={`#${item.toLowerCase()}`}
-                    key={item}
-                  >
-                    {item}
-                  </a>
-                ))}
+                {["About", "Portfolio", "Skills", "Experience", "Reviews"].map(
+                  (item) => (
+                    <a
+                      className="shrink-0 rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-2 text-sm font-bold text-[color:var(--px-text-muted)] hover:border-[color:var(--px-primary)] hover:text-[color:var(--px-primary)]"
+                      href={`#${item.toLowerCase()}`}
+                      key={item}
+                    >
+                      {item}
+                    </a>
+                  ),
+                )}
               </nav>
             </div>
           </Card>
@@ -204,7 +209,11 @@ export default async function PublicProfilePage({
                       key={opportunity.id}
                       variant="secondary"
                     >
-                      <BriefcaseBusiness aria-hidden className="mr-2" size={16} />
+                      <BriefcaseBusiness
+                        aria-hidden
+                        className="mr-2"
+                        size={16}
+                      />
                       {opportunity.title}
                     </ButtonLink>
                   ))
@@ -297,15 +306,9 @@ export default async function PublicProfilePage({
                       <p className="mt-1 text-sm font-semibold text-[color:var(--px-text-muted)]">
                         {item.company}
                       </p>
-                      {formatProfileDateRange(
-                        item.startedAt,
-                        item.endedAt,
-                      ) ? (
+                      {formatProfileDateRange(item.startedAt, item.endedAt) ? (
                         <p className="mt-1 text-xs font-semibold text-[color:var(--px-text-muted)]">
-                          {formatProfileDateRange(
-                            item.startedAt,
-                            item.endedAt,
-                          )}
+                          {formatProfileDateRange(item.startedAt, item.endedAt)}
                         </p>
                       ) : null}
                       {item.summary ? (
@@ -350,14 +353,14 @@ export default async function PublicProfilePage({
                         {review.body}
                       </p>
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-[color:var(--px-text-muted)]">
-                        <span>
-                          {review.author?.name ?? "PerX participant"}
-                        </span>
+                        <span>{review.author?.name ?? "PerX participant"}</span>
                         {review.createdAt ? (
                           <>
                             <span aria-hidden>·</span>
                             <time
-                              dateTime={new Date(review.createdAt).toISOString()}
+                              dateTime={new Date(
+                                review.createdAt,
+                              ).toISOString()}
                             >
                               {new Date(review.createdAt).toLocaleDateString(
                                 "en",
@@ -422,9 +425,7 @@ export default async function PublicProfilePage({
 
           {viewer && viewer.id !== normalized.id ? (
             <Card>
-              <h2 className="font-black text-[color:var(--px-text)]">
-                Safety
-              </h2>
+              <h2 className="font-black text-[color:var(--px-text)]">Safety</h2>
               <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
                 Report this profile if it appears abusive, misleading, or
                 unsafe.
@@ -522,7 +523,10 @@ function ProfilePrimaryAction({
       );
     }
     return (
-      <ButtonLink className="w-full sm:w-auto" href={`/sign-in?next=/u/${username}`}>
+      <ButtonLink
+        className="w-full sm:w-auto"
+        href={`/sign-in?next=/u/${username}`}
+      >
         <Mail aria-hidden className="mr-2" size={16} />
         Connect With
       </ButtonLink>
@@ -530,20 +534,50 @@ function ProfilePrimaryAction({
   }
 
   if (!relationship) {
-    return <ButtonLink className="w-full sm:w-auto" href="/app/profile">View private profile</ButtonLink>;
+    return (
+      <ButtonLink className="w-full sm:w-auto" href="/app/profile">
+        View private profile
+      </ButtonLink>
+    );
   }
 
   if (relationship.blocked || relationship.status === "BLOCKED") {
-    return <Button className="w-full sm:w-auto" disabled>Unavailable</Button>;
+    return (
+      <form
+        action={async () => {
+          "use server";
+          await unblockUserAction(targetUserId);
+        }}
+      >
+        <PendingSubmitButton
+          className="w-full sm:w-auto"
+          pendingLabel="Unblocking..."
+          type="submit"
+        >
+          Unblock
+        </PendingSubmitButton>
+      </form>
+    );
   }
 
   if (relationship.status === "ACCEPTED") {
     return (
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-        <Button className="w-full sm:w-auto" disabled variant="secondary">Connected</Button>
+        <Button className="w-full sm:w-auto" disabled variant="secondary">
+          Connected
+        </Button>
         {allowMessagesFromConnections ? (
-          <form action={async () => { "use server"; await startConversationAction(targetUserId); }}>
-            <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Opening conversation..." type="submit">
+          <form
+            action={async () => {
+              "use server";
+              await startConversationAction(targetUserId);
+            }}
+          >
+            <PendingSubmitButton
+              className="w-full sm:w-auto"
+              pendingLabel="Opening conversation..."
+              type="submit"
+            >
               <Mail aria-hidden className="mr-2" size={16} />
               Message
             </PendingSubmitButton>
@@ -553,8 +587,15 @@ function ProfilePrimaryAction({
     );
   }
 
-  if (relationship.status === "PENDING" && relationship.connectionDirection === "outgoing") {
-    return <Button className="w-full sm:w-auto" disabled variant="secondary">Request sent</Button>;
+  if (
+    relationship.status === "PENDING" &&
+    relationship.connectionDirection === "outgoing"
+  ) {
+    return (
+      <Button className="w-full sm:w-auto" disabled variant="secondary">
+        Request sent
+      </Button>
+    );
   }
 
   if (
@@ -564,11 +605,34 @@ function ProfilePrimaryAction({
   ) {
     return (
       <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-        <form action={async () => { "use server"; await acceptConnectionAction(relationship.connectionId!); }}>
-          <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Accepting..." type="submit">Accept Connection</PendingSubmitButton>
+        <form
+          action={async () => {
+            "use server";
+            await acceptConnectionAction(relationship.connectionId!);
+          }}
+        >
+          <PendingSubmitButton
+            className="w-full sm:w-auto"
+            pendingLabel="Accepting..."
+            type="submit"
+          >
+            Accept Connection
+          </PendingSubmitButton>
         </form>
-        <form action={async () => { "use server"; await rejectConnectionAction(relationship.connectionId!); }}>
-          <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Declining..." type="submit" variant="secondary">Decline</PendingSubmitButton>
+        <form
+          action={async () => {
+            "use server";
+            await rejectConnectionAction(relationship.connectionId!);
+          }}
+        >
+          <PendingSubmitButton
+            className="w-full sm:w-auto"
+            pendingLabel="Declining..."
+            type="submit"
+            variant="secondary"
+          >
+            Decline
+          </PendingSubmitButton>
         </form>
       </div>
     );
@@ -576,13 +640,28 @@ function ProfilePrimaryAction({
 
   if (allowConnectionRequests) {
     return (
-      <form action={async () => { "use server"; await requestConnectionAction(targetUserId); }}>
-        <PendingSubmitButton className="w-full sm:w-auto" pendingLabel="Sending request..." type="submit">Connect With</PendingSubmitButton>
+      <form
+        action={async () => {
+          "use server";
+          await requestConnectionAction(targetUserId);
+        }}
+      >
+        <PendingSubmitButton
+          className="w-full sm:w-auto"
+          pendingLabel="Sending request..."
+          type="submit"
+        >
+          Connect With
+        </PendingSubmitButton>
       </form>
     );
   }
 
-  return <Button className="w-full sm:w-auto" disabled variant="secondary">Connect With</Button>;
+  return (
+    <Button className="w-full sm:w-auto" disabled variant="secondary">
+      Connect With
+    </Button>
+  );
 }
 
 function getInitials(name: string) {

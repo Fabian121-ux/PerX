@@ -1488,7 +1488,6 @@ export function MessageWorkspace({
             (m) => m.id !== messageId,
           ),
         }));
-        toast({ title: "Message sent", tone: "success" });
         window.dispatchEvent(new Event("perx-unread-refresh"));
       }
     });
@@ -2078,17 +2077,14 @@ export function MessageWorkspace({
                 <button
                   aria-label={
                     newMessageCount
-                      ? `${newMessageCount} new ${newMessageCount === 1 ? "message" : "messages"}. Jump to latest`
-                      : "Jump to latest"
+                      ? `${newMessageCount} new ${newMessageCount === 1 ? "message" : "messages"}. Jump to latest messages`
+                      : "Jump to latest messages"
                   }
                   className="pointer-events-auto inline-flex min-h-11 items-center gap-2 rounded-full bg-[color:var(--px-navy)] px-4 text-sm font-black text-white shadow-[var(--px-shadow-strong)] transition hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] focus-visible:ring-offset-2 motion-reduce:transform-none"
                   onClick={jumpToLatest}
                   type="button"
                 >
                   <ArrowDown aria-hidden size={17} />
-                  {newMessageCount
-                    ? `${newMessageCount} new · Jump to latest`
-                    : "Jump to latest"}
                 </button>
               </div>
             ) : null}
@@ -2348,11 +2344,7 @@ function MessageBubble({
           longPressTimerRef.current = null;
         }
       }
-      if (
-        swipeStartRef.current &&
-        !longPressConsumedRef.current &&
-        !mine
-      ) {
+      if (swipeStartRef.current && !longPressConsumedRef.current && !mine) {
         const dx = touch.clientX - swipeStartRef.current.x;
         const dy = Math.abs(touch.clientY - swipeStartRef.current.y);
         if (dx > 10 && dx > dy * 1.5) {
