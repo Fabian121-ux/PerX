@@ -48,9 +48,9 @@ describe("notification action URLs", () => {
   });
 
   it("accepts safe relative app paths", () => {
-    expect(normalizeNotificationActionUrl("/app/messages/clx123?from=notifications")).toBe(
-      "/app/messages/clx123?from=notifications",
-    );
+    expect(
+      normalizeNotificationActionUrl("/app/messages/clx123?from=notifications"),
+    ).toBe("/app/messages/clx123?from=notifications");
     expect(normalizeNotificationActionUrl("/u/goodnews")).toBe("/u/goodnews");
     expect(normalizeNotificationActionUrl("/app/news")).toBe("/app/news");
   });
@@ -222,9 +222,7 @@ describe("notification action URLs", () => {
 
   it("parses only the canonical exact target shape", () => {
     expect(
-      parseExactMessageTarget(
-        "/app/messages/conversation-1?message=message-1",
-      ),
+      parseExactMessageTarget("/app/messages/conversation-1?message=message-1"),
     ).toEqual({
       conversationId: "conversation-1",
       href: "/app/messages/conversation-1?message=message-1",
@@ -249,12 +247,21 @@ describe("notification action URLs", () => {
     });
     prismaMocks.conversationEventFindFirst.mockResolvedValue({
       conversationId: "conversation-1",
+      dealId: "deal-1",
       id: "event-1",
+      proposalVersionId: "version-1",
     });
 
     await expect(
       resolveNotificationAction("user-1", {
         actionUrl: "/app/messages/conversation-1?event=event-1",
+        metadata: {
+          conversationEventId: "event-1",
+          conversationId: "conversation-1",
+          dealId: "deal-1",
+          proposalVersionId: "version-1",
+          recipientId: "user-1",
+        },
         type: "PROPOSAL_UPDATE",
       }),
     ).resolves.toEqual({
@@ -262,12 +269,48 @@ describe("notification action URLs", () => {
       href: "/app/messages/conversation-1?event=event-1",
       label: "Review proposal",
     });
-    expect(parseExactConversationEventTarget(
-      "/app/messages/conversation-1?event=event-1",
-    )).toEqual({
+    expect(
+      parseExactConversationEventTarget(
+        "/app/messages/conversation-1?event=event-1",
+      ),
+    ).toEqual({
       conversationId: "conversation-1",
       eventId: "event-1",
       href: "/app/messages/conversation-1?event=event-1",
+    });
+  });
+
+  it("rejects malformed dynamic suffixes instead of navigating to a 404", async () => {
+    prismaMocks.dealFindFirst.mockResolvedValue({ id: "deal-1" });
+
+    await expect(
+      resolveNotificationAction("user-1", {
+        actionUrl: "/app/deals/deal-1/not-a-route",
+        type: "DEAL",
+      }),
+    ).resolves.toMatchObject({ available: false, reason: "unavailable" });
+    expect(prismaMocks.dealFindFirst).not.toHaveBeenCalled();
+  });
+
+  it("allows a direct Deal destination only for a participant", async () => {
+    prismaMocks.dealFindFirst.mockResolvedValue({ id: "deal-1" });
+
+    await expect(
+      resolveNotificationAction("user-1", {
+        actionUrl: "/app/deals/deal-1",
+        type: "DEAL",
+      }),
+    ).resolves.toEqual({
+      available: true,
+      href: "/app/deals/deal-1",
+      label: "View deal",
+    });
+    expect(prismaMocks.dealFindFirst).toHaveBeenCalledWith({
+      select: { id: true },
+      where: {
+        id: "deal-1",
+        participants: { some: { userId: "user-1" } },
+      },
     });
   });
 

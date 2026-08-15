@@ -13,6 +13,12 @@ import {
   getRequestCorrelationId,
   logServerDataError,
 } from "@/lib/logging/runtime";
+import { getServerEnv } from "@/lib/env";
+import {
+  getConversationDealOffer,
+  getConversationProposalHref,
+  toParticipantProfilePreview,
+} from "@/lib/messages/workspace-conversation";
 
 type PreviewConversationLike = {
   id: string;
@@ -30,6 +36,7 @@ type PreviewConversationLike = {
 };
 
 type DbConversationLike = {
+  _count?: { proposals: number };
   events?: {
     actorId?: string | null;
     createdAt: Date;
@@ -49,14 +56,26 @@ type DbConversationLike = {
     readReceipts?: { userId: string }[];
     senderId: string;
   }[];
-  opportunity?: { title: string } | null;
+  opportunity?: {
+    currency?: string;
+    moderationStatus?: string;
+    ownerId?: string;
+    status?: string;
+    title: string;
+  } | null;
   participants: {
     user?: {
       imageUrl?: string | null;
       name: string | null;
       profile?: {
+        biography?: string | null;
+        headline?: string | null;
+        location?: string | null;
         profileImageUrl?: string | null;
+        showLocation?: boolean | null;
         showPresence?: boolean | null;
+        showSkills?: boolean | null;
+        skills?: { name: string }[];
       } | null;
       sessions?: { lastSeenAt: Date }[];
       username: string | null;
@@ -125,6 +144,9 @@ function toWorkspaceConversation(
     .map((participant) => participant.userId)
     .filter((participantId) => participantId !== user.id);
   const latestMessage = dbConversation.messages[0];
+  const mutationCutoff = new Date(
+    Date.now() - getServerEnv().MESSAGE_EDIT_WINDOW_MINUTES * 60_000,
+  );
   const latestEvent = [...(dbConversation.events ?? [])].sort(
     (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
   )[0];
@@ -164,6 +186,7 @@ function toWorkspaceConversation(
         }
       : undefined,
     dealHref: linkedDeal ? `/app/deals/${linkedDeal.id}` : undefined,
+    dealOffer: getConversationDealOffer(dbConversation, user),
     events: (dbConversation.events ?? []).map((event) => ({
       actorName:
         dbConversation.participants.find(
@@ -173,6 +196,7 @@ function toWorkspaceConversation(
       dealHref: event.dealId ? `/app/deals/${event.dealId}` : null,
       id: event.id,
       proposalVersionId: event.proposalVersionId ?? null,
+      proposalHref: getConversationProposalHref(event.type, event.actorId, user.id),
       snapshot: toEventSnapshot(event.snapshot),
       type: event.type,
     })),
@@ -186,6 +210,8 @@ function toWorkspaceConversation(
       ? [
           {
             body: latestMessage.deletedAt ? "" : latestMessage.body,
+            canMutate:
+              !latestMessage.deletedAt && latestMessage.createdAt >= mutationCutoff,
             createdAt: latestMessage.createdAt.toISOString(),
             deletedAt: latestMessage.deletedAt?.toISOString() ?? null,
             editedAt: latestMessage.editedAt?.toISOString() ?? null,
@@ -223,6 +249,7 @@ function toWorkspaceConversation(
       Boolean(otherParticipant?.profile?.showPresence),
       otherParticipant?.sessions?.[0]?.lastSeenAt ?? null,
     ),
+    participantProfile: toParticipantProfilePreview(otherParticipant?.profile),
     participantRole: "Opportunity participant",
     participantUsername: otherParticipant?.username ?? undefined,
     timestamp:

@@ -12,8 +12,9 @@ describe("payment provider readiness", () => {
 
     expect(readiness.available).toBe(false);
     expect(readiness.providerId).toBe("disabled");
-    expect(readiness.message).toContain("not active");
-    expect(readiness.message).toContain("does not collect or hold funds");
+    expect(readiness.message).toBe(
+      "Payments are currently unavailable. This Deal records agreed terms but does not hold funds.",
+    );
   });
 
   it("cannot create checkout or accept an unverified webhook", async () => {

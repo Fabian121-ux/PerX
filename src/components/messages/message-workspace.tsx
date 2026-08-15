@@ -39,6 +39,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import { ConversationDealOfferDialog } from "@/components/messages/conversation-deal-offer-dialog";
 import { FeatureDirectory } from "@/components/navigation/feature-directory";
 import { useConfirm, useToast } from "@/components/ui/feedback-provider";
 import {
@@ -50,6 +51,7 @@ import {
 } from "@/features/messages/actions";
 import { blockUserAction } from "@/features/network/actions";
 import { shouldSubmitMessage } from "@/lib/messages/composer-keyboard";
+import { isDealComposerTrigger } from "@/lib/messages/deal-trigger";
 import { MAX_LOADED_CONVERSATIONS } from "@/lib/messages/limits";
 
 type ReplyPreview = {
@@ -62,6 +64,7 @@ type ReplyPreview = {
 
 export type WorkspaceMessage = {
   body: string;
+  canMutate?: boolean;
   createdAt: string;
   deletedAt?: string | null;
   editedAt?: string | null;
@@ -80,6 +83,7 @@ export type WorkspaceConversationEvent = {
   dealHref?: string | null;
   id: string;
   proposalVersionId?: string | null;
+  proposalHref?: string | null;
   snapshot: Record<string, unknown>;
   type:
     | "PROPOSAL_SUBMITTED"
@@ -107,6 +111,10 @@ export type WorkspaceConversation = {
     versionLabel?: string;
   };
   dealHref?: string;
+  dealOffer?: {
+    currency: string;
+    opportunityTitle: string;
+  };
   events?: WorkspaceConversationEvent[];
   historyLoaded?: boolean;
   id: string;
@@ -118,6 +126,12 @@ export type WorkspaceConversation = {
   participantImageUrl?: string | null;
   participantName: string;
   participantPresence?: "hidden" | "online" | "recent" | "offline";
+  participantProfile?: {
+    biography: string;
+    headline: string;
+    location?: string | null;
+    skills: string[];
+  };
   participantRole?: string;
   participantUsername?: string;
   timestamp?: string;
@@ -201,6 +215,7 @@ export function MessageWorkspace({
     useTransition();
   const [isEditPending, startEditTransition] = useTransition();
   const [openActionMenuMessageId, setOpenActionMenuMessageId] = useState("");
+  const [dealOfferOpen, setDealOfferOpen] = useState(false);
   const draftStorageKey = `perx:messages:${currentUserId}:drafts`;
   const filterStorageKey = `perx:messages:${currentUserId}:filter`;
   const listScrollStorageKey = `perx:messages:${currentUserId}:list-scroll`;
@@ -335,7 +350,7 @@ export function MessageWorkspace({
     let active = true;
     window.queueMicrotask(() => {
       if (!active) return;
-      setDrafts(restoredDrafts);
+      setDrafts((current) => ({ ...restoredDrafts, ...current }));
       setConversationQuery(restoredQuery);
       if (
         restoredFilter === "all" ||
@@ -383,6 +398,7 @@ export function MessageWorkspace({
 
   const closeActionMenu = useCallback(() => {
     setOpenActionMenuMessageId("");
+    setDealOfferOpen(false);
   }, []);
 
   const updateConversations = useEffectEvent(
@@ -1335,6 +1351,7 @@ export function MessageWorkspace({
       ),
     );
     setOpenActionMenuMessageId("");
+    setDealOfferOpen(false);
     pendingLatestPositionRef.current = conversationId;
     historyPositionedRef.current = false;
     historyAtBottomRef.current = false;
@@ -1389,6 +1406,14 @@ export function MessageWorkspace({
   const sendMessage = (event?: FormEvent) => {
     event?.preventDefault();
     if (!draft.trim() || !activeConversation || isPending) return;
+    if (
+      activeConversation.dealOffer &&
+      isDealComposerTrigger(draft) &&
+      !isComposingRef.current
+    ) {
+      setDealOfferOpen(true);
+      return;
+    }
 
     const body = draft.trim();
     const conversationId = activeConversation.id;
@@ -1480,6 +1505,36 @@ export function MessageWorkspace({
     composerRef.current?.focus();
   };
 
+  const addSubmittedProposalEvent = (
+    conversationEvent: WorkspaceConversationEvent,
+  ) => {
+    const conversationId = activeConversation?.id;
+    if (!conversationId) return;
+    setSyncedConversations((current) =>
+      current.map((conversation) =>
+        conversation.id === conversationId
+          ? {
+              ...conversation,
+              dealOffer: undefined,
+              events: mergeWorkspaceEvents(conversation.events, [
+                conversationEvent,
+              ]),
+              lastMessage: "Proposal version submitted",
+              timestamp: conversationEvent.createdAt,
+            }
+          : conversation,
+      ),
+    );
+    if (isDealComposerTrigger(draft)) {
+      setDrafts((current) => ({ ...current, [conversationId]: "" }));
+      persistDraft(draftStorageKey, conversationId, "");
+    }
+    pendingLatestPositionRef.current = conversationId;
+    setHistoryPositioned(false);
+    setHistoryAtBottom(false);
+    toast({ title: "Proposal submitted", tone: "success" });
+  };
+
   const cancelEditing = () => {
     setEditingMessageId("");
     setEditDraft("");
@@ -1500,6 +1555,17 @@ export function MessageWorkspace({
         setEditError(result.error);
         return;
       }
+      const editedAt = new Date().toISOString();
+      setSyncedConversations((current) =>
+        current.map((conversation) => ({
+          ...conversation,
+          messages: conversation.messages.map((candidate) =>
+            candidate.id === message.id
+              ? { ...candidate, body: editDraft.trim(), editedAt }
+              : candidate,
+          ),
+        })),
+      );
       cancelEditing();
       toast({ title: "Message updated", tone: "success" });
     });
@@ -1538,7 +1604,12 @@ export function MessageWorkspace({
       tone: "danger",
     });
     if (!approved) return;
-    const result = await deleteMessageAction(message.id);
+    let result: Awaited<ReturnType<typeof deleteMessageAction>>;
+    try {
+      result = await deleteMessageAction(message.id);
+    } catch {
+      result = { error: "Unable to remove this message. Please try again." };
+    }
     if (result.error) {
       setSendError(result.error);
       return;
@@ -1566,7 +1637,12 @@ export function MessageWorkspace({
       tone: "danger",
     });
     if (!approved) return;
-    const result = await removeConversationForMeAction(conversationId);
+    let result: Awaited<ReturnType<typeof removeConversationForMeAction>>;
+    try {
+      result = await removeConversationForMeAction(conversationId);
+    } catch {
+      result = { error: "Unable to remove this chat. Please try again." };
+    }
     if (result.error) {
       toast({
         description: result.error,
@@ -2053,6 +2129,17 @@ export function MessageWorkspace({
                 </div>
               ) : null}
               <div className="flex items-end gap-2 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-2">
+                {activeConversation.dealOffer ? (
+                  <button
+                    aria-label="Make a Deal"
+                    className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 text-xs font-black text-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    onClick={() => setDealOfferOpen(true)}
+                    type="button"
+                  >
+                    <Handshake aria-hidden size={17} />
+                    <span className="hidden sm:inline">Make a Deal</span>
+                  </button>
+                ) : null}
                 <label className="sr-only" htmlFor="message-draft">
                   Message
                 </label>
@@ -2112,6 +2199,9 @@ export function MessageWorkspace({
               </div>
               <p className="px-1 text-[10px] font-semibold text-[color:var(--px-text-muted)]">
                 Enter adds a new line. Ctrl+Enter or Command+Enter sends.
+                {activeConversation.dealOffer
+                  ? " Type @deal to open structured terms."
+                  : ""}
               </p>
             </div>
             {sendError ? (
@@ -2132,6 +2222,17 @@ export function MessageWorkspace({
         onRemove={() => void removeConversation()}
         open={detailsOpen}
       />
+      {activeConversation?.dealOffer && dealOfferOpen ? (
+        <ConversationDealOfferDialog
+          conversationId={activeConversation.id}
+          currency={activeConversation.dealOffer.currency}
+          onOpenChange={setDealOfferOpen}
+          onSubmitted={addSubmittedProposalEvent}
+          open={dealOfferOpen}
+          opportunityTitle={activeConversation.dealOffer.opportunityTitle}
+          participantName={activeConversation.participantName}
+        />
+      ) : null}
     </section>
   );
 }
@@ -2182,37 +2283,57 @@ function MessageBubble({
   const mine = message.senderId === currentUserId;
   const editing = editingMessageId === message.id;
   const isLocal = message.id.startsWith("local-");
-  const canEdit = mine && !isLocal && !message.deletedAt;
+  const canEdit =
+    mine && !isLocal && !message.deletedAt && message.canMutate !== false;
+  const canUseActions = !isLocal && !message.deletedAt;
   const editIsComposingRef = useRef(false);
   const longPressTimerRef = useRef<number | null>(null);
   const longPressStartRef = useRef<{ x: number; y: number } | null>(null);
-  const swipeStartRef = useRef<{ x: number; y: number; time: number } | null>(
-    null,
-  );
+  const longPressConsumedRef = useRef(false);
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const toast = useToast();
+
+  const copyMessage = useCallback(async () => {
+    try {
+      if (!navigator.clipboard) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(message.body);
+      toast({ title: "Message copied", tone: "success" });
+    } catch {
+      toast({
+        description: "Select the message text and copy it manually.",
+        title: "Could not copy message",
+        tone: "error",
+      });
+    }
+  }, [message.body, toast]);
 
   const handleTouchStart = useCallback(
     (event: React.TouchEvent) => {
       const touch = event.touches[0];
-      if (!touch) return;
+      if (!touch || !canUseActions) return;
       if (
         (event.target as HTMLElement).closest(
           "a, button, [role=button], input, textarea, select, summary",
         )
       )
         return;
+      longPressConsumedRef.current = false;
+      setSwipeOffset(0);
       longPressStartRef.current = { x: touch.clientX, y: touch.clientY };
       longPressTimerRef.current = window.setTimeout(() => {
         longPressTimerRef.current = null;
-        onToggleActionMenu(message.id);
+        longPressConsumedRef.current = true;
+        swipeStartRef.current = null;
+        setSwipeOffset(0);
+        if (!openActionMenu) onToggleActionMenu(message.id);
       }, 500);
       swipeStartRef.current = {
         x: touch.clientX,
         y: touch.clientY,
-        time: Date.now(),
       };
     },
-    [message.id, onToggleActionMenu],
+    [canUseActions, message.id, onToggleActionMenu, openActionMenu],
   );
 
   const handleTouchMove = useCallback(
@@ -2227,7 +2348,11 @@ function MessageBubble({
           longPressTimerRef.current = null;
         }
       }
-      if (swipeStartRef.current && !mine) {
+      if (
+        swipeStartRef.current &&
+        !longPressConsumedRef.current &&
+        !mine
+      ) {
         const dx = touch.clientX - swipeStartRef.current.x;
         const dy = Math.abs(touch.clientY - swipeStartRef.current.y);
         if (dx > 10 && dx > dy * 1.5) {
@@ -2245,9 +2370,10 @@ function MessageBubble({
       longPressTimerRef.current = null;
     }
     longPressStartRef.current = null;
-    if (swipeOffset >= 70 && !mine) {
+    if (!longPressConsumedRef.current && swipeOffset >= 70 && !mine) {
       onReply();
     }
+    longPressConsumedRef.current = false;
     setSwipeOffset(0);
     swipeStartRef.current = null;
   }, [swipeOffset, mine, onReply]);
@@ -2258,6 +2384,7 @@ function MessageBubble({
       longPressTimerRef.current = null;
     }
     longPressStartRef.current = null;
+    longPressConsumedRef.current = false;
     swipeStartRef.current = null;
     setSwipeOffset(0);
   }, []);
@@ -2273,13 +2400,16 @@ function MessageBubble({
 
   const handleContextMenu = useCallback(
     (event: React.MouseEvent) => {
-      if (openActionMenu) return;
+      event.preventDefault();
       if (longPressTimerRef.current) {
         window.clearTimeout(longPressTimerRef.current);
         longPressTimerRef.current = null;
       }
-      event.preventDefault();
-      onToggleActionMenu(message.id);
+      longPressStartRef.current = null;
+      longPressConsumedRef.current = true;
+      swipeStartRef.current = null;
+      setSwipeOffset(0);
+      if (!openActionMenu) onToggleActionMenu(message.id);
     },
     [message.id, onToggleActionMenu, openActionMenu],
   );
@@ -2316,7 +2446,7 @@ function MessageBubble({
           >
             {message.senderName}
           </p>
-          {!message.deletedAt ? (
+          {canUseActions ? (
             <div className="relative flex items-center gap-1">
               <div
                 className={`hidden items-center gap-0.5 rounded-xl bg-[color:var(--px-surface-soft)] p-0.5 opacity-0 transition group-focus-within:opacity-100 group-hover:opacity-100 sm:flex ${
@@ -2335,9 +2465,7 @@ function MessageBubble({
                   aria-label="Copy"
                   className="grid h-8 w-8 place-items-center rounded-lg text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-hover)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                   type="button"
-                  onClick={() =>
-                    void navigator.clipboard?.writeText(message.body)
-                  }
+                  onClick={() => void copyMessage()}
                 >
                   <Copy aria-hidden size={14} />
                 </button>
@@ -2368,6 +2496,7 @@ function MessageBubble({
                 isOpen={openActionMenu}
                 message={message}
                 mine={mine}
+                onCopy={copyMessage}
                 onClose={onCloseActionMenu}
                 onDelete={onDelete}
                 onReply={onReply}
@@ -2616,12 +2745,12 @@ function ConversationEventCard({
               >
                 Open Deal
               </Link>
-            ) : termsEvent || objection ? (
+            ) : event.proposalHref ? (
               <Link
                 className="text-xs font-black text-[color:var(--px-primary)] hover:underline"
-                href="/app/proposals"
+                href={event.proposalHref}
               >
-                Review proposals
+                Review proposal
               </Link>
             ) : null}
           </div>
@@ -2712,6 +2841,7 @@ function MessageActionMenu({
   isOpen,
   message,
   mine,
+  onCopy,
   onClose,
   onDelete,
   onReply,
@@ -2723,28 +2853,13 @@ function MessageActionMenu({
   isOpen: boolean;
   message: WorkspaceMessage;
   mine: boolean;
+  onCopy: () => Promise<void>;
   onClose: () => void;
   onDelete: () => void;
   onReply: () => void;
   onStartEdit: () => void;
   onToggle: () => void;
 }) {
-  const toast = useToast();
-
-  const copyMessage = async () => {
-    try {
-      if (!navigator.clipboard) throw new Error("Clipboard unavailable");
-      await navigator.clipboard.writeText(message.body);
-      toast({ title: "Message copied", tone: "success" });
-    } catch {
-      toast({
-        description: "Select the message text and copy it manually.",
-        title: "Could not copy message",
-        tone: "error",
-      });
-    }
-  };
-
   const reportHref = `/app/reports/new?targetType=MESSAGE&targetId=${encodeURIComponent(message.id)}&conversationId=${encodeURIComponent(conversationId)}&messageId=${encodeURIComponent(message.id)}`;
 
   return (
@@ -2787,7 +2902,7 @@ function MessageActionMenu({
           <DropdownMenu.Item asChild>
             <button
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
-              onClick={() => void copyMessage()}
+              onClick={() => void onCopy()}
               type="button"
             >
               <Copy aria-hidden size={14} />
@@ -2962,6 +3077,33 @@ function ConversationDetailsContent({
                 Open complete profile
               </Link>
             ) : null}
+            {conversation.participantProfile ? (
+              <div className="mt-4 border-t border-[color:var(--px-border)] pt-4 text-left">
+                <p className="text-sm font-black text-[color:var(--px-text)]">
+                  {conversation.participantProfile.headline}
+                </p>
+                {conversation.participantProfile.location ? (
+                  <p className="mt-1 text-xs font-semibold text-[color:var(--px-text-muted)]">
+                    {conversation.participantProfile.location}
+                  </p>
+                ) : null}
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[color:var(--px-text-muted)]">
+                  {conversation.participantProfile.biography}
+                </p>
+                {conversation.participantProfile.skills.length ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {conversation.participantProfile.skills.map((skill) => (
+                      <span
+                        className="rounded-full bg-[color:var(--px-surface)] px-2.5 py-1 text-xs font-bold text-[color:var(--px-text-muted)]"
+                        key={skill}
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             {conversation.participantId ? (
               <div className="mt-3 flex flex-col gap-2">
                 <Link
@@ -3012,7 +3154,10 @@ function ConversationDetailsContent({
             )}
           </div>
 
-          <div className="rounded-3xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4">
+          <div
+            className="rounded-3xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4"
+            data-profile-preview-end="true"
+          >
             <div className="flex items-start gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[color:var(--px-muted)] text-[color:var(--px-text-muted)]">
                 <UserRoundX aria-hidden size={18} />

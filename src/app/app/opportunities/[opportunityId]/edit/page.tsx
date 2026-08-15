@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { AppSection } from "@/components/app-section";
 import { ListingImageManager } from "@/components/opportunities/listing-image-manager";
+import { OpportunityDraftCleanup } from "@/components/opportunities/opportunity-draft-cleanup";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
@@ -38,7 +39,7 @@ export default async function EditOpportunityPage({
   searchParams,
 }: {
   params: Promise<{ opportunityId: string }>;
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ created?: string; createdType?: string; error?: string }>;
 }) {
   const user = await requireUser();
   const { opportunityId } = await params;
@@ -63,6 +64,9 @@ export default async function EditOpportunityPage({
       description="Edit this item without creating a duplicate record."
       title="Edit content"
     >
+      {query.created === opportunity.id && query.createdType === opportunity.type ? (
+        <OpportunityDraftCleanup type={opportunity.type} userId={user.id} />
+      ) : null}
       <Card>
         <form action={action} className="grid gap-4">
           {query.error ? (

@@ -14,6 +14,7 @@ import {
   propertyListingTypeOptions,
   propertyTypeOptions,
   reportReasonOptions,
+  creatableOpportunityTypeOptions,
 } from "@/lib/options";
 import { hasCapability } from "@/lib/permissions/capabilities";
 import {
@@ -54,6 +55,23 @@ function revalidateOpportunityViews(slug?: string) {
 function propertyPublishRedirect(target: "new" | string, error: string) {
   if (target === "new") redirect(`/app/opportunities/new?error=${error}&type=PROPERTY&category=real-estate`);
   redirect(`/app/opportunities/${target}/edit?error=${error}`);
+}
+
+function newOpportunityErrorHref(
+  error: string,
+  type: FormDataEntryValue | null,
+  category: FormDataEntryValue | null,
+) {
+  const params = new URLSearchParams({ error });
+  const rawType = String(type ?? "");
+  const rawCategory = String(category ?? "");
+  if (findOption(creatableOpportunityTypeOptions, rawType)) {
+    params.set("type", rawType);
+  }
+  if (findOption(opportunityCategoryOptions, rawCategory)) {
+    params.set("category", rawCategory);
+  }
+  return `/app/opportunities/new?${params}`;
 }
 
 function propertyFieldsFromFormData(formData: FormData) {
@@ -110,7 +128,13 @@ export async function createOpportunityAction(formData: FormData) {
 
   if (getResolvedDataMode() === "mock") redirect("/app/market?mock=true");
   if (!hasDatabaseUrl())
-    redirect("/app/opportunities/new?error=database-not-configured");
+    redirect(
+      newOpportunityErrorHref(
+        "database-not-configured",
+        formData.get("type"),
+        formData.get("category"),
+      ),
+    );
 
   const parsed = opportunityFormSchema.safeParse({
     budgetMax: formData.get("budgetMax"),
@@ -128,7 +152,15 @@ export async function createOpportunityAction(formData: FormData) {
     type: formData.get("type"),
   });
 
-  if (!parsed.success) redirect("/app/opportunities/new?error=check-fields");
+  if (!parsed.success) {
+    redirect(
+      newOpportunityErrorHref(
+        "check-fields",
+        formData.get("type"),
+        formData.get("category"),
+      ),
+    );
+  }
   if (parsed.data.type === "INVESTMENT") {
     redirect("/app/opportunities/new?error=type-unavailable");
   }
@@ -138,7 +170,15 @@ export async function createOpportunityAction(formData: FormData) {
   }
 
   const categoryOption = findOption(opportunityCategoryOptions, parsed.data.category);
-  if (!categoryOption) redirect("/app/opportunities/new?error=check-fields");
+  if (!categoryOption) {
+    redirect(
+      newOpportunityErrorHref(
+        "check-fields",
+        parsed.data.type,
+        parsed.data.category,
+      ),
+    );
+  }
 
   const policy = evaluatePolicy({
     actorId: user.id,
@@ -156,7 +196,13 @@ export async function createOpportunityAction(formData: FormData) {
   }
 
   if (isPolicyBlocking(policy)) {
-    redirect("/app/opportunities/new?error=check-fields");
+    redirect(
+      newOpportunityErrorHref(
+        "check-fields",
+        parsed.data.type,
+        parsed.data.category,
+      ),
+    );
   }
 
   const categorySlug = categoryOption.value;
@@ -263,8 +309,8 @@ export async function createOpportunityAction(formData: FormData) {
 
   redirect(
     parsed.data.type === "PROPERTY"
-      ? `/app/opportunities/${opportunity.id}/edit?created=1`
-      : "/app/manage?created=1",
+      ? `/app/opportunities/${opportunity.id}/edit?created=${opportunity.id}&createdType=${parsed.data.type}`
+      : `/app/manage?created=${opportunity.id}&createdType=${parsed.data.type}`,
   );
 }
 

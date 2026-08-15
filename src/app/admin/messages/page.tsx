@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminSection } from "@/components/admin-section";
+import { CursorPagination } from "@/components/cursor-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { requireCapabilityOrNotFound } from "@/lib/auth/session";
@@ -12,15 +13,24 @@ import {
 } from "@/features/admin/actions";
 import {
   formatAdminValue,
-  getAdminMessageCases,
+  getAdminMessageCasesPage,
   messageReviewScopeOptions,
   moderationCaseStatuses,
   safeUserLabel,
 } from "@/lib/admin/moderation-records";
 
-export default async function AdminMessagesPage() {
+export default async function AdminMessagesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cursor?: string }>;
+}) {
   await requireCapabilityOrNotFound("messages:moderate");
-  const cases = await getAdminMessageCases();
+  const params = await searchParams;
+  const page = await getAdminMessageCasesPage({
+    cursor: params.cursor,
+    pageSize: 20,
+  });
+  const cases = page.items;
 
   return (
     <AdminSection
@@ -190,6 +200,12 @@ export default async function AdminMessagesPage() {
           title="No message cases"
         />
       )}
+      <CursorPagination
+        basePath="/admin/messages"
+        cursor={page.cursor}
+        label="Message moderation cases pagination"
+        nextCursor={page.nextCursor}
+      />
     </AdminSection>
   );
 }

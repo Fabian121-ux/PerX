@@ -25,9 +25,15 @@ import {
 import { requireUser } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import {
-  resolveNotificationAction,
+  resolveNotificationActions,
   type NotificationActionResolution,
 } from "@/lib/notifications/action-url";
+import {
+  createCursorPage,
+  normalizeCursorPageParams,
+  withCursor,
+} from "@/lib/data/cursor";
+import type { Prisma } from "@/generated/prisma/client";
 
 const filters = [
   { label: "All", value: "" },
@@ -59,46 +65,83 @@ const filterTypes: Record<string, string[]> = {
 export default async function NotificationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; type?: string; unavailable?: string }>;
+  searchParams: Promise<{
+    cursor?: string;
+    type?: string;
+    unavailable?: string;
+  }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
   const activeFilter = filters.some((filter) => filter.value === params.type)
-    ? params.type ?? ""
+    ? (params.type ?? "")
     : "";
-  const typeFilter = activeFilter && activeFilter !== "unread" ? filterTypes[activeFilter] : undefined;
-  const requestedPage = Number(params.page ?? 0);
-  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0
-    ? Math.min(requestedPage, 100)
-    : 0;
-  const viewWhere = {
+  const typeFilter =
+    activeFilter && activeFilter !== "unread"
+      ? filterTypes[activeFilter]
+      : undefined;
+  const cursorScope = `notifications:${user.id}:${activeFilter || "all"}`;
+  const { cursor, pageSize, requestedCursor } = normalizeCursorPageParams(
+    { cursor: params.cursor, pageSize: 50 },
+    cursorScope,
+  );
+  const viewWhere: Prisma.NotificationWhereInput = {
     userId: user.id,
     ...(activeFilter === "unread" ? { readAt: null } : {}),
     ...(typeFilter ? { type: { in: typeFilter as never[] } } : {}),
   };
-  const [notifications, totalUnreadCount, viewUnreadCount, viewCount] =
+  const [notificationRows, totalUnreadCount, viewUnreadCount] =
     await Promise.all([
       getPrisma().notification.findMany({
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        skip: page * 50,
-        take: 50,
-        where: viewWhere,
+        take: pageSize + 1,
+        where: withCursor<Prisma.NotificationWhereInput>(viewWhere, cursor, {
+          direction: "desc",
+          field: "createdAt",
+        }),
       }),
-      getPrisma().notification.count({ where: { readAt: null, userId: user.id } }),
       getPrisma().notification.count({
-        where: { ...viewWhere, readAt: null },
+        where: { readAt: null, userId: user.id },
       }),
-      getPrisma().notification.count({ where: viewWhere }),
+      activeFilter === "" || activeFilter === "unread"
+        ? Promise.resolve(0)
+        : getPrisma().notification.count({
+            where: { ...viewWhere, readAt: null },
+          }),
     ]);
+  const hasNextPage = notificationRows.length > pageSize;
+  const notifications = hasNextPage
+    ? notificationRows.slice(0, pageSize)
+    : notificationRows;
+  const notificationPage = createCursorPage(notifications, {
+    cursor: requestedCursor,
+    getTimestamp: (notification) => notification.createdAt,
+    hasNextPage,
+    pageSize,
+    scope: cursorScope,
+  });
+  const visibleUnreadCount =
+    activeFilter === ""
+      ? totalUnreadCount
+      : activeFilter === "unread"
+        ? notifications.length
+        : viewUnreadCount;
   const activeFilterLabel =
     filters.find((filter) => filter.value === activeFilter)?.label ?? "All";
-  const cards = await Promise.all(
-    notifications.map(async (notification) => ({
-      action: await resolveNotificationAction(user.id, notification),
-      connectionRequest: await getConnectionRequestState(user.id, notification),
-      notification,
-    })),
-  );
+  const [actions, connectionRequests] = await Promise.all([
+    resolveNotificationActions(user.id, notifications),
+    getConnectionRequestStates(user.id, notifications),
+  ]);
+  const cards = notifications.map((notification) => ({
+    action: actions.get(notification.id) ?? {
+      available: false as const,
+      href: null,
+      label: "No action available",
+      reason: "missing" as const,
+    },
+    connectionRequest: connectionRequests.get(notification.id) ?? null,
+    notification,
+  }));
 
   return (
     <AppSection
@@ -131,8 +174,8 @@ export default async function NotificationsPage({
                 {activeFilterLabel} activity
               </p>
               <p className="text-sm text-[color:var(--px-text-muted)]">
-                 {viewUnreadCount
-                   ? `${viewUnreadCount} unread in this filter`
+                {visibleUnreadCount
+                  ? `${visibleUnreadCount} unread in this filter`
                   : "You are caught up in this view"}
               </p>
             </div>
@@ -149,7 +192,11 @@ export default async function NotificationsPage({
           {filters.map((filter) => (
             <ButtonLink
               aria-current={activeFilter === filter.value ? "page" : undefined}
-              href={filter.value ? `/app/notifications?type=${filter.value}` : "/app/notifications"}
+              href={
+                filter.value
+                  ? `/app/notifications?type=${filter.value}`
+                  : "/app/notifications"
+              }
               key={filter.value || "all"}
               size="sm"
               variant={activeFilter === filter.value ? "primary" : "secondary"}
@@ -201,14 +248,14 @@ export default async function NotificationsPage({
             }
           />
         )}
-        {viewCount > 50 ? (
+        {notificationPage.cursor || notificationPage.nextCursor ? (
           <nav
             aria-label="Notification pagination"
             className="flex items-center justify-between gap-3"
           >
-            {page > 0 ? (
+            {notificationPage.cursor ? (
               <ButtonLink
-                href={notificationPageHref(activeFilter, page - 1)}
+                href={notificationPageHref(activeFilter)}
                 variant="secondary"
               >
                 Newer notifications
@@ -216,9 +263,12 @@ export default async function NotificationsPage({
             ) : (
               <span />
             )}
-            {(page + 1) * 50 < viewCount ? (
+            {notificationPage.nextCursor ? (
               <ButtonLink
-                href={notificationPageHref(activeFilter, page + 1)}
+                href={notificationPageHref(
+                  activeFilter,
+                  notificationPage.nextCursor,
+                )}
                 variant="secondary"
               >
                 Older notifications
@@ -237,7 +287,13 @@ function NotificationCard({
   notification,
 }: {
   action: NotificationActionResolution;
-  connectionRequest: Awaited<ReturnType<typeof getConnectionRequestState>>;
+  connectionRequest:
+    | {
+        id: string;
+        profileHref: string | null;
+        status: string;
+      }
+    | null;
   notification: {
     actionUrl: string | null;
     actionState: string | null;
@@ -252,8 +308,14 @@ function NotificationCard({
 }) {
   const isUnread = !notification.readAt;
   const canOpen = action.available;
-  const markReadAction = markNotificationAsReadAction.bind(null, notification.id);
-  const markUnreadAction = markNotificationAsUnreadAction.bind(null, notification.id);
+  const markReadAction = markNotificationAsReadAction.bind(
+    null,
+    notification.id,
+  );
+  const markUnreadAction = markNotificationAsUnreadAction.bind(
+    null,
+    notification.id,
+  );
 
   return (
     <Card
@@ -273,7 +335,10 @@ function NotificationCard({
         >
           {getIcon(notification.type)}
           {isUnread ? (
-            <span aria-hidden className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-[color:var(--px-warning)] ring-2 ring-[color:var(--px-surface)]" />
+            <span
+              aria-hidden
+              className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-[color:var(--px-warning)] ring-2 ring-[color:var(--px-surface)]"
+            />
           ) : null}
         </div>
         <div className="min-w-0 flex-1">
@@ -284,7 +349,9 @@ function NotificationCard({
                 : "text-[color:var(--px-text-muted)]"
             }`}
           >
-            <span className="sr-only">{isUnread ? "Unread" : "Read"} notification. </span>
+            <span className="sr-only">
+              {isUnread ? "Unread" : "Read"} notification.{" "}
+            </span>
             {notification.title}
           </h3>
           <p
@@ -313,18 +380,26 @@ function NotificationCard({
 
       <div className="relative z-20 flex flex-wrap gap-2 sm:justify-end">
         {connectionRequest?.profileHref ? (
-          <ButtonLink href={connectionRequest.profileHref} size="sm" variant="secondary">
+          <ButtonLink
+            href={connectionRequest.profileHref}
+            size="sm"
+            variant="secondary"
+          >
             View profile
           </ButtonLink>
         ) : null}
         {connectionRequest?.status === "PENDING" ? (
           <>
-            <form action={acceptConnectionAction.bind(null, connectionRequest.id)}>
+            <form
+              action={acceptConnectionAction.bind(null, connectionRequest.id)}
+            >
               <Button size="sm" type="submit">
                 Accept Connection
               </Button>
             </form>
-            <form action={rejectConnectionAction.bind(null, connectionRequest.id)}>
+            <form
+              action={rejectConnectionAction.bind(null, connectionRequest.id)}
+            >
               <Button size="sm" type="submit" variant="secondary">
                 Decline
               </Button>
@@ -372,7 +447,14 @@ function getIcon(type: string) {
   if (["MESSAGE", "MESSAGE_REQUEST_RECEIVED", "NEW_MESSAGE"].includes(type)) {
     return <MessageSquare aria-hidden size={20} />;
   }
-  if (["CONNECTION", "CONNECTION_REQUEST_ACCEPTED", "CONNECTION_REQUEST_DECLINED", "CONNECTION_REQUEST_RECEIVED"].includes(type)) {
+  if (
+    [
+      "CONNECTION",
+      "CONNECTION_REQUEST_ACCEPTED",
+      "CONNECTION_REQUEST_DECLINED",
+      "CONNECTION_REQUEST_RECEIVED",
+    ].includes(type)
+  ) {
     return <Users aria-hidden size={20} />;
   }
   if (["PROPOSAL", "PROPOSAL_UPDATE", "OPPORTUNITY_RESPONSE"].includes(type)) {
@@ -409,44 +491,80 @@ function notificationTypeLabel(type: string) {
   return "Account";
 }
 
-async function getConnectionRequestState(userId: string, notification: {
+type NotificationConnectionCandidate = {
+  id: string;
   actionState: string | null;
   metadata: unknown;
   type: string;
-}) {
-  if (notification.type !== "CONNECTION_REQUEST_RECEIVED") return null;
-  const connectionId = getConnectionId(notification.metadata);
-  const actorId = getActorId(notification.metadata);
+};
 
-  const connection = await getPrisma().connection.findFirst({
+async function getConnectionRequestStates(
+  userId: string,
+  notifications: readonly NotificationConnectionCandidate[],
+) {
+  const candidates = notifications.filter(
+    (notification) => notification.type === "CONNECTION_REQUEST_RECEIVED",
+  );
+  if (!candidates.length) return new Map();
+  const connectionIds = candidates
+    .map((notification) => getConnectionId(notification.metadata))
+    .filter(Boolean);
+  const actorIds = candidates
+    .map((notification) => getActorId(notification.metadata))
+    .filter(Boolean);
+
+  const connections = await getPrisma().connection.findMany({
     select: {
       id: true,
+      requesterId: true,
       requester: { select: { username: true } },
       status: true,
     },
     where: {
       receiverId: userId,
-      ...(connectionId
-        ? { id: connectionId }
-        : actorId
-          ? { requesterId: actorId }
-          : { id: "__missing__" }),
+      OR: [
+        ...(connectionIds.length ? [{ id: { in: connectionIds } }] : []),
+        ...(actorIds.length ? [{ requesterId: { in: actorIds } }] : []),
+      ],
     },
   });
-
-  if (!connection) return null;
-
-  return {
-    id: connection.id,
-    profileHref: connection.requester.username ? `/u/${connection.requester.username}` : null,
-    status: connection.status,
-  };
+  const byId = new Map(
+    connections.map((connection) => [connection.id, connection]),
+  );
+  const byRequester = new Map(
+    connections.map((connection) => [connection.requesterId, connection]),
+  );
+  return new Map(
+    candidates.flatMap((notification) => {
+      const connectionId = getConnectionId(notification.metadata);
+      const actorId = getActorId(notification.metadata);
+      const connection = connectionId
+        ? byId.get(connectionId)
+        : actorId
+          ? byRequester.get(actorId)
+          : null;
+      return connection
+        ? [
+            [
+              notification.id,
+              {
+                id: connection.id,
+                profileHref: connection.requester.username
+                  ? `/u/${connection.requester.username}`
+                  : null,
+                status: connection.status,
+              },
+            ] as const,
+          ]
+        : [];
+    }),
+  );
 }
 
-function notificationPageHref(type: string, page: number) {
+function notificationPageHref(type: string, cursor?: string | null) {
   const query = new URLSearchParams();
   if (type) query.set("type", type);
-  if (page > 0) query.set("page", String(page));
+  if (cursor) query.set("cursor", cursor);
   const value = query.toString();
   return value ? `/app/notifications?${value}` : "/app/notifications";
 }

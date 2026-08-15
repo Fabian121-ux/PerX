@@ -8,7 +8,7 @@ export class DisabledPaymentProvider implements PaymentProvider {
     return {
       available: false,
       message:
-        "Online payment is being prepared and is not active. PerX does not collect or hold funds.",
+        "Payments are currently unavailable. This Deal records agreed terms but does not hold funds.",
       providerId: "disabled",
     } as const;
   }

@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTransition, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { useToast } from "@/components/ui/feedback-provider";
-import { openNotificationAction } from "@/features/notifications/actions";
+import { markNotificationAsReadAction } from "@/features/notifications/actions";
 
 export function NotificationActionLink({
   ariaLabel,
@@ -21,7 +22,7 @@ export function NotificationActionLink({
   notificationId: string;
 }) {
   const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [pending, setPending] = useState(false);
   const toast = useToast();
 
   const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -39,21 +40,20 @@ export function NotificationActionLink({
       return;
     }
     event.preventDefault();
-    startTransition(async () => {
-      try {
-        await openNotificationAction(notificationId);
-      } catch (error) {
-        if ((error as { digest?: string })?.digest?.startsWith("NEXT_REDIRECT")) {
-          return;
-        }
+    setPending(true);
+    router.push(href);
+    void markNotificationAsReadAction(notificationId)
+      .then(() => {
+        window.dispatchEvent(new Event("perx-unread-refresh"));
+      })
+      .catch(() => {
         toast({
-          description: "Your notification remains unread. Please try again.",
-          title: "Could not open this update",
+          description:
+            "The destination is opening, but this update remains unread.",
+          title: "Could not mark this update read",
           tone: "error",
         });
-        router.push(href);
-      }
-    });
+      });
   };
 
   return (
@@ -65,7 +65,18 @@ export function NotificationActionLink({
       onClick={handleClick}
       prefetch={false}
     >
-      {children}
+      {pending ? (
+        <>
+          <Loader2
+            aria-hidden
+            className="animate-spin motion-reduce:animate-none"
+            size={15}
+          />
+          Opening...
+        </>
+      ) : (
+        children
+      )}
     </Link>
   );
 }

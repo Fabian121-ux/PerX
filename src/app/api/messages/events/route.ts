@@ -57,6 +57,7 @@ export async function GET(request: Request) {
   const initialSnapshot = await getMessageSnapshot({
     conversationId,
     userId: user.id,
+    userRoles: user.roles,
   });
 
   if (initialSnapshot.notFound) {
@@ -122,9 +123,10 @@ export async function GET(request: Request) {
             ? pendingInitialSnapshot
             : await getMessageSnapshot({
                 conversationId,
-                includeConversationList,
-                userId: user.id,
-              });
+                 includeConversationList,
+                 userId: user.id,
+                 userRoles: user.roles,
+               });
           if (pendingInitialSnapshot) pendingInitialSnapshot = null;
           if (conversationListRefreshDue) {
             lastConversationListRefreshAt = Date.now();

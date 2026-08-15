@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 import crypto from "node:crypto";
 
 import { hasIsolatedTestDatabase } from "./utils/db-guard";
@@ -15,11 +15,29 @@ const describeOrSkip = isIsolatedDb ? test.describe : test.describe.skip;
 describeOrSkip(
   "Authenticated multi-user acceptance (requires isolated test DB)",
   () => {
+    const createdSessionIds = new Set<string>();
+
+    test.afterEach(async () => {
+      const sessionIds = [...createdSessionIds];
+      createdSessionIds.clear();
+      if (!sessionIds.length) return;
+
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      try {
+        await pool.query(`DELETE FROM "Session" WHERE id = ANY($1::text[])`, [
+          sessionIds,
+        ]);
+      } finally {
+        await pool.end();
+      }
+    });
+
     async function createSession(page: Page, email: string) {
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: TEST_DB, ssl: false });
       try {
-        const user = await pool.query(
+        const user = await pool.query<{ id: string }>(
           `SELECT id FROM "User" WHERE email = $1`,
           [email],
         );
@@ -31,28 +49,31 @@ describeOrSkip(
           .update(token)
           .digest("hex");
         const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+        const sessionId = `sess_${crypto.randomUUID()}`;
 
         await pool.query(
           `INSERT INTO "Session" (id, "tokenHash", "userId", "expiresAt", "createdAt", "lastSeenAt")
          VALUES ($1, $2, $3, $4, NOW(), NOW())`,
-          [
-            `sess_${crypto.randomUUID()}`,
-            tokenHash,
-            user.rows[0].id,
-            expiresAt,
-          ],
+          [sessionId, tokenHash, user.rows[0].id, expiresAt],
         );
+        createdSessionIds.add(sessionId);
 
-        await page.context().addCookies([
-          {
-            name: SESSION_COOKIE,
-            value: token,
-            domain: new URL(BASE).hostname,
-            path: "/",
-            httpOnly: true,
-            sameSite: "Lax",
-          },
-        ]);
+        try {
+          await page.context().addCookies([
+            {
+              name: SESSION_COOKIE,
+              value: token,
+              domain: new URL(BASE).hostname,
+              path: "/",
+              httpOnly: true,
+              sameSite: "Lax",
+            },
+          ]);
+        } catch (error) {
+          createdSessionIds.delete(sessionId);
+          await pool.query(`DELETE FROM "Session" WHERE id = $1`, [sessionId]);
+          throw error;
+        }
 
         return user.rows[0].id;
       } finally {
@@ -64,7 +85,7 @@ describeOrSkip(
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: TEST_DB, ssl: false });
       try {
-        const result = await pool.query(
+        const result = await pool.query<{ id: string }>(
           `SELECT c.id
          FROM "Conversation" c
          JOIN "ConversationParticipant" alice_participant
@@ -73,13 +94,17 @@ describeOrSkip(
          JOIN "ConversationParticipant" bob_participant
            ON bob_participant."conversationId" = c.id
          JOIN "User" bob ON bob.id = bob_participant."userId"
-         WHERE alice.email = $1 AND bob.email = $2
-         ORDER BY c."createdAt"
+          JOIN "Message" seed_message ON seed_message."conversationId" = c.id
+          WHERE alice.email = $1
+            AND bob.email = $2
+            AND c."opportunityId" IS NULL
+            AND seed_message.body = 'Hello from Alice!'
+          ORDER BY c."createdAt", c.id
          LIMIT 1`,
           ["alice-test@perx.test", "bob-test@perx.test"],
         );
         if (!result.rows[0]?.id) throw new Error("Seed conversation not found");
-        return result.rows[0].id as string;
+        return result.rows[0].id;
       } finally {
         await pool.end();
       }
@@ -138,10 +163,92 @@ describeOrSkip(
       }
     }
 
+    async function createMessageInteractionFixture() {
+      const conversationId = await createIsolatedConversation(28);
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      const incomingId = testCuid();
+      const ownEditId = testCuid();
+      const ownDeleteId = testCuid();
+      const expiredOwnId = testCuid();
+      const replyId = testCuid();
+      try {
+        const users = await pool.query<{
+          email: string;
+          id: string;
+          name: string;
+        }>(
+          `SELECT email, id, name
+           FROM "User"
+           WHERE email = ANY($1::text[])`,
+          [["alice-test@perx.test", "bob-test@perx.test"]],
+        );
+        const alice = users.rows.find(
+          (user) => user.email === "alice-test@perx.test",
+        );
+        const bob = users.rows.find(
+          (user) => user.email === "bob-test@perx.test",
+        );
+        if (!alice || !bob) throw new Error("Message fixture users not found");
+
+        await pool.query("BEGIN");
+        await pool.query(
+          `INSERT INTO "Message" (
+             id, "conversationId", "senderId", "replyToMessageId", body, "createdAt"
+           ) VALUES
+             ($1, $6, $7, NULL, 'Gesture incoming target', NOW() - INTERVAL '5 seconds'),
+             ($2, $6, $8, NULL, 'Gesture own edit target', NOW() - INTERVAL '4 seconds'),
+             ($3, $6, $8, NULL, 'Gesture own delete target', NOW() - INTERVAL '3 seconds'),
+             ($4, $6, $8, NULL, 'Gesture expired own target', NOW() - INTERVAL '2 days'),
+             ($5, $6, $7, $1, 'Gesture interactive reply target', NOW() - INTERVAL '1 second')`,
+          [
+            incomingId,
+            ownEditId,
+            ownDeleteId,
+            expiredOwnId,
+            replyId,
+            conversationId,
+            bob.id,
+            alice.id,
+          ],
+        );
+        await pool.query(
+          `UPDATE "Conversation" SET "updatedAt" = NOW() WHERE id = $1`,
+          [conversationId],
+        );
+        await pool.query("COMMIT");
+        return {
+          aliceId: alice.id,
+          bobId: bob.id,
+          bobName: bob.name,
+          conversationId,
+          expiredOwnId,
+          incomingId,
+          ownDeleteId,
+          ownEditId,
+          replyId,
+        };
+      } catch (error) {
+        await pool.query("ROLLBACK").catch(() => undefined);
+        await deleteIsolatedConversation(conversationId).catch(() => undefined);
+        throw error;
+      } finally {
+        await pool.end();
+      }
+    }
+
     async function deleteIsolatedConversation(conversationId: string) {
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: TEST_DB, ssl: false });
       try {
+        await pool.query(
+          `DELETE FROM "AuditLog"
+           WHERE metadata->>'conversationId' = $1
+              OR "entityId" IN (
+                SELECT id FROM "Message" WHERE "conversationId" = $1
+              )`,
+          [conversationId],
+        );
         await pool.query(
           `DELETE FROM "Notification"
            WHERE metadata->>'conversationId' = $1
@@ -153,9 +260,684 @@ describeOrSkip(
             `/app/messages/${conversationId}?%`,
           ],
         );
+        await pool.query(
+          `DELETE FROM "ConversationEvent" WHERE "conversationId" = $1`,
+          [conversationId],
+        );
         await pool.query(`DELETE FROM "Conversation" WHERE id = $1`, [
           conversationId,
         ]);
+      } finally {
+        await pool.end();
+      }
+    }
+
+    async function createConversationDealEntryFixture() {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      const conversationId = testCuid();
+      try {
+        const result = await pool.query<{
+          aliceId: string;
+          bobId: string;
+          bobName: string;
+          opportunityId: string;
+          opportunityTitle: string;
+        }>(
+          `SELECT alice.id AS "aliceId",
+                  bob.id AS "bobId",
+                  bob.name AS "bobName",
+                  opportunity.id AS "opportunityId",
+                  opportunity.title AS "opportunityTitle"
+           FROM "User" alice
+           CROSS JOIN "User" bob
+           JOIN "Opportunity" opportunity ON opportunity."ownerId" = bob.id
+           WHERE alice.email = $1
+             AND bob.email = $2
+             AND opportunity.slug = $3
+             AND opportunity.status = 'PUBLISHED'
+             AND opportunity."moderationStatus" = 'APPROVED'`,
+          ["alice-test@perx.test", "bob-test@perx.test", "bob-mech-keyboard"],
+        );
+        const fixture = result.rows[0];
+        if (!fixture) throw new Error("Deal-entry fixture context not found");
+
+        await pool.query("BEGIN");
+        await pool.query(
+          `INSERT INTO "Conversation" (
+             id, "opportunityId", status, "createdAt", "updatedAt"
+           ) VALUES ($1, $2, 'ACTIVE', NOW(), NOW())`,
+          [conversationId, fixture.opportunityId],
+        );
+        await pool.query(
+          `INSERT INTO "ConversationParticipant" (
+             id, "conversationId", "userId", "createdAt"
+           ) VALUES ($1, $2, $3, NOW()), ($4, $2, $5, NOW())`,
+          [
+            testCuid(),
+            conversationId,
+            fixture.aliceId,
+            testCuid(),
+            fixture.bobId,
+          ],
+        );
+        await pool.query(
+          `INSERT INTO "Message" (
+             id, "conversationId", "senderId", body, "createdAt"
+           ) VALUES ($1, $2, $3, $4, NOW())`,
+          [
+            testCuid(),
+            conversationId,
+            fixture.bobId,
+            "Use the structured terms entry when you are ready.",
+          ],
+        );
+        await pool.query("COMMIT");
+        return {
+          aliceId: fixture.aliceId,
+          bobId: fixture.bobId,
+          bobName: fixture.bobName,
+          conversationId,
+          opportunityId: fixture.opportunityId,
+          opportunityTitle: fixture.opportunityTitle,
+        };
+      } catch (error) {
+        await pool.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        await pool.end();
+      }
+    }
+
+    async function deleteConversationDealEntryFixture(conversationId: string) {
+      await deleteProposalLifecycleFixture({ conversationId });
+    }
+
+    async function createBlockedPairFixture(
+      blockerId: string,
+      blockedId: string,
+    ) {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      const blockId = `block_${crypto.randomUUID()}`;
+      try {
+        const result = await pool.query<{ id: string }>(
+          `INSERT INTO "BlockedUser" (id, "blockerUserId", "blockedUserId", "createdAt")
+           VALUES ($1, $2, $3, NOW())
+           ON CONFLICT ("blockerUserId", "blockedUserId") DO NOTHING
+           RETURNING id`,
+          [blockId, blockerId, blockedId],
+        );
+        return result.rows[0]?.id ?? null;
+      } finally {
+        await pool.end();
+      }
+    }
+
+    async function deleteBlockedPairFixture(blockId: string | null) {
+      if (!blockId) return;
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      try {
+        await pool.query(`DELETE FROM "BlockedUser" WHERE id = $1`, [blockId]);
+      } finally {
+        await pool.end();
+      }
+    }
+
+    async function deleteProposalLifecycleFixture({
+      conversationId,
+      descriptions = [],
+      proposalId,
+    }: {
+      conversationId?: string;
+      descriptions?: string[];
+      proposalId?: string;
+    }) {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      try {
+        await pool.query("BEGIN");
+        const proposals = await pool.query<{
+          conversationId: string | null;
+          id: string;
+        }>(
+          `SELECT id, "conversationId"
+           FROM "Proposal"
+           WHERE ($1::text IS NOT NULL AND id = $1)
+              OR ($2::text IS NOT NULL AND "conversationId" = $2)
+              OR (cardinality($3::text[]) > 0 AND description = ANY($3::text[]))`,
+          [proposalId ?? null, conversationId ?? null, descriptions],
+        );
+        const proposalIds = proposals.rows.map((proposal) => proposal.id);
+        const conversationIds = [
+          ...new Set(
+            [
+              conversationId,
+              ...proposals.rows.map((proposal) => proposal.conversationId),
+            ].filter((value): value is string => Boolean(value)),
+          ),
+        ];
+        const versions = await pool.query<{ id: string }>(
+          `SELECT id FROM "ProposalVersion"
+           WHERE "proposalId" = ANY($1::text[])`,
+          [proposalIds],
+        );
+        const versionIds = versions.rows.map((version) => version.id);
+        const deals = await pool.query<{ id: string }>(
+          `SELECT id FROM "Deal" WHERE "proposalId" = ANY($1::text[])`,
+          [proposalIds],
+        );
+        const dealIds = deals.rows.map((deal) => deal.id);
+        const entityIds = [...proposalIds, ...versionIds, ...dealIds];
+        const actionPatterns = conversationIds.map(
+          (id) => `/app/messages/${id}%`,
+        );
+
+        await pool.query(
+          `DELETE FROM "Notification"
+           WHERE metadata->>'conversationId' = ANY($1::text[])
+              OR metadata->>'proposalId' = ANY($2::text[])
+              OR metadata->>'proposalVersionId' = ANY($3::text[])
+              OR metadata->>'dealId' = ANY($4::text[])
+              OR "actionUrl" LIKE ANY($5::text[])`,
+          [conversationIds, proposalIds, versionIds, dealIds, actionPatterns],
+        );
+        await pool.query(
+          `DELETE FROM "AuditLog"
+           WHERE "entityId" = ANY($1::text[])
+              OR metadata->>'conversationId' = ANY($2::text[])
+              OR metadata->>'proposalId' = ANY($3::text[])
+              OR metadata->>'proposalVersionId' = ANY($4::text[])
+              OR metadata->>'dealId' = ANY($5::text[])`,
+          [entityIds, conversationIds, proposalIds, versionIds, dealIds],
+        );
+        await pool.query(
+          `DELETE FROM "ConversationEvent"
+           WHERE "conversationId" = ANY($1::text[])
+              OR "proposalVersionId" = ANY($2::text[])
+              OR "dealId" = ANY($3::text[])`,
+          [conversationIds, versionIds, dealIds],
+        );
+        await pool.query(
+          `DELETE FROM "Approval" WHERE "dealId" = ANY($1::text[])`,
+          [dealIds],
+        );
+        await pool.query(
+          `DELETE FROM "Release" WHERE "dealId" = ANY($1::text[])`,
+          [dealIds],
+        );
+        await pool.query(`DELETE FROM "Deal" WHERE id = ANY($1::text[])`, [
+          dealIds,
+        ]);
+        if (proposalIds.length) {
+          await pool.query(
+            `ALTER TABLE "ProposalVersionMilestone"
+             DISABLE TRIGGER "ProposalVersionMilestone_immutable_terms"`,
+          );
+          await pool.query(
+            `ALTER TABLE "ProposalVersion"
+             DISABLE TRIGGER "ProposalVersion_immutable_terms"`,
+          );
+          await pool.query(
+            `UPDATE "ProposalVersion"
+             SET "supersedesVersionId" = NULL
+             WHERE "proposalId" = ANY($1::text[])`,
+            [proposalIds],
+          );
+          await pool.query(
+            `DELETE FROM "Proposal" WHERE id = ANY($1::text[])`,
+            [proposalIds],
+          );
+          await pool.query(
+            `ALTER TABLE "ProposalVersion"
+             ENABLE TRIGGER "ProposalVersion_immutable_terms"`,
+          );
+          await pool.query(
+            `ALTER TABLE "ProposalVersionMilestone"
+             ENABLE TRIGGER "ProposalVersionMilestone_immutable_terms"`,
+          );
+        }
+        await pool.query(
+          `DELETE FROM "Conversation" WHERE id = ANY($1::text[])`,
+          [conversationIds],
+        );
+        await pool.query("COMMIT");
+      } catch (error) {
+        await pool.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        await pool.end();
+      }
+    }
+
+    async function deleteOpportunityByTitle(title: string) {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      try {
+        await pool.query("BEGIN");
+        const opportunities = await pool.query<{ id: string }>(
+          `SELECT id FROM "Opportunity" WHERE title = $1`,
+          [title],
+        );
+        const ids = opportunities.rows.map((opportunity) => opportunity.id);
+        await pool.query(
+          `DELETE FROM "AuditLog"
+           WHERE "entityType" = 'opportunity'
+             AND "entityId" = ANY($1::text[])`,
+          [ids],
+        );
+        await pool.query(
+          `DELETE FROM "Opportunity" WHERE id = ANY($1::text[])`,
+          [ids],
+        );
+        await pool.query("COMMIT");
+      } catch (error) {
+        await pool.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        await pool.end();
+      }
+    }
+
+    function opportunityDraftKey(userId: string, type: "PRODUCT" | "SERVICE") {
+      return `perx:opportunity-composer:v1:${encodeURIComponent(userId)}:${type}`;
+    }
+
+    function browserDraftFields(type: "PRODUCT" | "SERVICE", title: string) {
+      return {
+        budgetMax: "",
+        budgetMin: "",
+        category: type === "PRODUCT" ? "market" : "services",
+        contactPreference: "",
+        currency: "NGN",
+        description:
+          "A complete browser recovery description with enough detail for a user to understand the scope and expected outcome.",
+        listingRulesAccepted: false,
+        location: "",
+        propertyListingType: "",
+        propertyType: "",
+        remote: true,
+        skills: "",
+        summary: "A complete browser recovery summary for this opportunity.",
+        title,
+      };
+    }
+
+    async function fillRequiredPost(page: Page, title: string) {
+      await page.getByLabel("Post title").fill(title);
+      await page
+        .getByLabel("Short summary")
+        .fill("A valid summary that is long enough for server validation.");
+      await page
+        .getByLabel("Details")
+        .fill(
+          "A complete opportunity description with enough scope, outcomes, timing, and expectations to pass the server validation contract.",
+        );
+    }
+
+    async function dispatchTouch(
+      target: Locator,
+      type: "touchcancel" | "touchend" | "touchmove" | "touchstart",
+      x: number,
+      y: number,
+    ) {
+      const touch = { clientX: x, clientY: y, identifier: 1 };
+      await target.dispatchEvent(type, {
+        changedTouches: [touch],
+        touches: type === "touchend" || type === "touchcancel" ? [] : [touch],
+      });
+    }
+
+    async function createAdminUsersBrowserFixture() {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      const prefix = crypto.randomUUID();
+      const ids = Array.from({ length: 22 }, () => testCuid());
+      const passwordHash = `browser-password-hash-${prefix}`;
+      const sessionHash = `browser-session-hash-${prefix}`;
+      const storageKey = `private/storage/${prefix}`;
+      const privateMessageBody = `private-admin-payload-${prefix}`;
+      const privateMessageId = testCuid();
+      const restrictedName = `Admin Fixture User 22 ${prefix}`;
+      try {
+        const context = await pool.query<{
+          aliceId: string;
+          conversationId: string;
+          memberRoleId: string;
+        }>(
+          `SELECT alice.id AS "aliceId",
+                  conversation.id AS "conversationId",
+                  role.id AS "memberRoleId"
+           FROM "User" alice
+           CROSS JOIN "Role" role
+           JOIN "ConversationParticipant" participant
+             ON participant."userId" = alice.id
+           JOIN "Conversation" conversation
+             ON conversation.id = participant."conversationId"
+           JOIN "Message" message
+             ON message."conversationId" = conversation.id
+           WHERE alice.email = $1
+             AND role.name = 'MEMBER'
+             AND message.body = 'Hello from Alice!'
+           ORDER BY conversation."createdAt", conversation.id
+           LIMIT 1`,
+          ["alice-test@perx.test"],
+        );
+        const row = context.rows[0];
+        if (!row) throw new Error("Admin browser fixture context not found");
+
+        await pool.query("BEGIN");
+        for (const [index, id] of ids.entries()) {
+          const suffix = String(index + 1).padStart(2, "0");
+          const restricted = index === ids.length - 1;
+          await pool.query(
+            `INSERT INTO "User" (
+               id, email, "passwordHash", name, username,
+               "accountClassification", "verificationStatus", "isActive",
+               "messagingRestrictedUntil", "connectionRequestsRestrictedUntil",
+               "publishingRestrictedUntil", "imageStorageKey", "createdAt", "updatedAt"
+             ) VALUES (
+               $1, $2, $3, $4, $5,
+               'PUBLIC_BETA_USER', 'UNVERIFIED', TRUE,
+               $6, $6, $6, $7, $8, $8
+             )`,
+            [
+              id,
+              `admin-fixture-${suffix}-${prefix}@perx.test`,
+              passwordHash,
+              restricted
+                ? restrictedName
+                : `Admin Fixture User ${suffix} ${prefix}`,
+              `admin_fixture_${suffix}_${prefix.replaceAll("-", "")}`,
+              restricted ? new Date("2099-12-31T23:59:59.000Z") : null,
+              storageKey,
+              new Date(`2099-01-${suffix}T12:00:00.000Z`),
+            ],
+          );
+        }
+        await pool.query(
+          `INSERT INTO "UserRole" (id, "userId", "roleId", "createdAt")
+           VALUES ($1, $2, $3, NOW())`,
+          [testCuid(), ids.at(-1), row.memberRoleId],
+        );
+        await pool.query(
+          `INSERT INTO "Session" (
+             id, "tokenHash", "userId", "expiresAt", "createdAt", "lastSeenAt"
+           ) VALUES ($1, $2, $3, NOW() + INTERVAL '1 hour', NOW(), NOW())`,
+          [`fixture_session_${prefix}`, sessionHash, ids[0]],
+        );
+        await pool.query(
+          `INSERT INTO "Message" (
+             id, "conversationId", "senderId", body, "createdAt"
+           ) VALUES ($1, $2, $3, $4, NOW())`,
+          [
+            privateMessageId,
+            row.conversationId,
+            row.aliceId,
+            privateMessageBody,
+          ],
+        );
+        await pool.query("COMMIT");
+        return {
+          ids,
+          passwordHash,
+          privateMessageBody,
+          privateMessageId,
+          restrictedName,
+          sessionHash,
+          storageKey,
+        };
+      } catch (error) {
+        await pool.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        await pool.end();
+      }
+    }
+
+    async function deleteAdminUsersBrowserFixture(
+      fixture: Awaited<ReturnType<typeof createAdminUsersBrowserFixture>>,
+    ) {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      try {
+        await pool.query("BEGIN");
+        await pool.query(`DELETE FROM "Message" WHERE id = $1`, [
+          fixture.privateMessageId,
+        ]);
+        await pool.query(`DELETE FROM "User" WHERE id = ANY($1::text[])`, [
+          fixture.ids,
+        ]);
+        await pool.query("COMMIT");
+      } catch (error) {
+        await pool.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        await pool.end();
+      }
+    }
+
+    async function createNotificationPaginationFixture() {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      const notificationPrefix = `pagination_${crypto.randomUUID()}_`;
+      const createdAt = new Date("2099-08-01T12:00:00.000Z");
+      const titlePrefix = `Pagination ${crypto.randomUUID()}`;
+      const ids = Array.from(
+        { length: 52 },
+        (_, index) =>
+          `${notificationPrefix}${String(index + 1).padStart(3, "0")}`,
+      );
+      ids.push(`${notificationPrefix}system`);
+      try {
+        const user = await pool.query<{ id: string }>(
+          `SELECT id FROM "User" WHERE email = $1`,
+          ["alice-test@perx.test"],
+        );
+        const userId = user.rows[0]?.id as string | undefined;
+        if (!userId) throw new Error("Notification fixture user not found");
+
+        await pool.query("BEGIN");
+        await pool.query(
+          `INSERT INTO "Notification" (
+             id, "userId", type, title, body, "createdAt"
+           )
+           SELECT $1 || LPAD(value::text, 3, '0'),
+                  $2,
+                  'MESSAGE',
+                   $4 || ' message ' || LPAD(value::text, 3, '0'),
+                  'Equal-timestamp notification pagination fixture',
+                  $3
+           FROM generate_series(1, 52) AS value`,
+          [notificationPrefix, userId, createdAt, titlePrefix],
+        );
+        await pool.query(
+          `INSERT INTO "Notification" (
+             id, "userId", type, title, body, "createdAt"
+           ) VALUES ($1, $2, 'SYSTEM', $3, $4, $5)`,
+          [
+            `${notificationPrefix}system`,
+            userId,
+            `${titlePrefix} system sentinel`,
+            "This record must stay outside the Messages filter.",
+            createdAt,
+          ],
+        );
+        await pool.query("COMMIT");
+        return { ids, titlePrefix };
+      } catch (error) {
+        await pool.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        await pool.end();
+      }
+    }
+
+    async function deleteNotificationPaginationFixture(ids: string[]) {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      try {
+        await pool.query(
+          `DELETE FROM "Notification" WHERE id = ANY($1::text[])`,
+          [ids],
+        );
+      } finally {
+        await pool.end();
+      }
+    }
+
+    async function createLongProfileFixture() {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      const fixturePrefix = `profile_${crypto.randomUUID()}`;
+      try {
+        const result = await pool.query(
+          `SELECT u.id AS "userId",
+                  p.id AS "profileId",
+                  p.biography,
+                   p."websiteUrl",
+                   p."updatedAt"
+           FROM "User" u
+           JOIN "Profile" p ON p."userId" = u.id
+           WHERE u.email = $1`,
+          ["bob-test@perx.test"],
+        );
+        const original = result.rows[0] as
+          | {
+              biography: string;
+              profileId: string;
+              userId: string;
+              updatedAt: Date;
+              websiteUrl: string | null;
+            }
+          | undefined;
+        if (!original) throw new Error("Long-profile fixture user not found");
+
+        const skillIds = [
+          `${fixturePrefix}_skill_1`,
+          `${fixturePrefix}_skill_2`,
+          `${fixturePrefix}_skill_3`,
+        ];
+        const workIds = [`${fixturePrefix}_work_1`, `${fixturePrefix}_work_2`];
+        const portfolioIds = [
+          `${fixturePrefix}_portfolio_1`,
+          `${fixturePrefix}_portfolio_2`,
+        ];
+        await pool.query("BEGIN");
+        await pool.query(
+          `UPDATE "Profile"
+           SET biography = $1,
+               "websiteUrl" = $2,
+               "updatedAt" = NOW()
+           WHERE id = $3`,
+          [
+            Array.from(
+              { length: 8 },
+              (_, index) =>
+                `Profile evidence paragraph ${index + 1}. Bob documents durable product delivery, accessible interfaces, secure collaboration, and measurable outcomes for clients and partners.`,
+            ).join("\n\n"),
+            "https://example.com/bob-profile",
+            original.profileId,
+          ],
+        );
+        await pool.query(
+          `INSERT INTO "ProfileSkill" (id, "profileId", name)
+           VALUES ($1, $2, $3), ($4, $2, $5), ($6, $2, $7)
+           ON CONFLICT ("profileId", name) DO NOTHING`,
+          [
+            skillIds[0],
+            original.profileId,
+            "Profile fixture strategy",
+            skillIds[1],
+            "Accessible systems",
+            skillIds[2],
+            "Secure delivery",
+          ],
+        );
+        await pool.query(
+          `INSERT INTO "WorkHistory" (
+             id, "profileId", title, company, summary, "startedAt", "endedAt"
+           ) VALUES
+             ($1, $2, 'Lead product engineer', 'Example Studio', $3, $4, NULL),
+             ($5, $2, 'Platform engineer', 'Example Labs', $6, $7, $8)`,
+          [
+            workIds[0],
+            original.profileId,
+            "Led a multi-year marketplace programme with secure workflows and accessible delivery practices.",
+            new Date("2024-01-15T12:00:00.000Z"),
+            workIds[1],
+            "Built dependable product systems and documented measurable operational improvements.",
+            new Date("2021-02-01T00:00:00.000Z"),
+            new Date("2023-12-01T00:00:00.000Z"),
+          ],
+        );
+        await pool.query(
+          `INSERT INTO "PortfolioItem" (
+             id, "profileId", title, description, url, "createdAt"
+           ) VALUES
+             ($1, $2, 'Trust workflow platform', $3, $4, NOW()),
+             ($5, $2, 'Accessible operations dashboard', $6, $7, NOW() - INTERVAL '1 day')`,
+          [
+            portfolioIds[0],
+            original.profileId,
+            "A persisted portfolio project with structured milestones, reviews, and clear evidence.",
+            "https://example.com/trust-workflow",
+            portfolioIds[1],
+            "A responsive operations surface tested from small mobile screens through desktop.",
+            "https://example.com/operations-dashboard",
+          ],
+        );
+
+        await pool.query("COMMIT");
+        return { original, portfolioIds, skillIds, workIds };
+      } catch (error) {
+        await pool.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        await pool.end();
+      }
+    }
+
+    async function deleteLongProfileFixture({
+      original,
+      portfolioIds,
+      skillIds,
+      workIds,
+    }: Awaited<ReturnType<typeof createLongProfileFixture>>) {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      try {
+        await pool.query("BEGIN");
+        await pool.query(
+          `DELETE FROM "ProfileSkill" WHERE id = ANY($1::text[])`,
+          [skillIds],
+        );
+        await pool.query(
+          `DELETE FROM "WorkHistory" WHERE id = ANY($1::text[])`,
+          [workIds],
+        );
+        await pool.query(
+          `DELETE FROM "PortfolioItem" WHERE id = ANY($1::text[])`,
+          [portfolioIds],
+        );
+        await pool.query(
+          `UPDATE "Profile"
+           SET biography = $1,
+               "websiteUrl" = $2,
+                "updatedAt" = $3
+            WHERE id = $4`,
+          [
+            original.biography,
+            original.websiteUrl,
+            original.updatedAt,
+            original.profileId,
+          ],
+        );
+        await pool.query("COMMIT");
+      } catch (error) {
+        await pool.query("ROLLBACK").catch(() => undefined);
+        throw error;
       } finally {
         await pool.end();
       }
@@ -296,6 +1078,15 @@ describeOrSkip(
         page.getByRole("navigation", { name: "Primary navigation" }),
       ).toBeHidden();
       await expect(page.getByLabel("Post type")).toHaveValue("SERVICE");
+      const optionalDisclosure = page.getByRole("button", {
+        name: "Budget, location and participation",
+      });
+      await expect(optionalDisclosure).toHaveAttribute(
+        "aria-expanded",
+        "false",
+      );
+      await optionalDisclosure.click();
+      await expect(page.getByLabel("Budget minimum (NGN)")).toBeVisible();
       await expect(
         page.getByLabel("Post type").getByRole("option", {
           name: "Investment",
@@ -310,7 +1101,7 @@ describeOrSkip(
       await page.getByLabel("Post title").fill("Responsive service draft");
       await page.getByRole("button", { name: "Back from Create Post" }).click();
       const confirmation = page.getByRole("dialog", {
-        name: "Discard this draft?",
+        name: "Leave Create Post?",
       });
       await expect(confirmation).toBeVisible();
       await expect(
@@ -321,6 +1112,342 @@ describeOrSkip(
         "Responsive service draft",
       );
       await page.close();
+    });
+
+    test("create post progressively discloses relevant fields on mobile", async ({
+      browser,
+    }) => {
+      const page = await browser.newPage({
+        viewport: { width: 375, height: 812 },
+      });
+      await createSession(page, "alice-test@perx.test");
+      try {
+        await page.goto(
+          `${BASE}/app/opportunities/new?type=SERVICE&category=services`,
+        );
+        await expect(page.getByLabel("Property type")).toHaveCount(0);
+        await expect(page.getByLabel("Budget minimum (NGN)")).toBeHidden();
+        await expect(page.getByLabel("Location")).toBeHidden();
+        await expect(page.getByLabel("Skills or expertise")).toBeHidden();
+        await page
+          .getByRole("button", { name: "Budget, location and participation" })
+          .click();
+        await expect(page.getByLabel("Budget minimum (NGN)")).toBeVisible();
+        await expect(page.getByLabel("Location")).toBeVisible();
+        await expect(page.getByLabel("Skills or expertise")).toBeVisible();
+        await expect(
+          page.getByLabel("Remote participation is supported"),
+        ).toBeVisible();
+
+        await page.goto(
+          `${BASE}/app/opportunities/new?type=PROPERTY&category=real-estate`,
+        );
+        await expect(page.getByLabel("Property type")).toBeVisible();
+        await expect(page.getByLabel("Listing type")).toBeVisible();
+        await expect(page.getByLabel("Contact preference")).toBeVisible();
+        await expect(
+          page.getByLabel("Ownership or authority declaration"),
+        ).toBeVisible();
+        await expect(page.getByLabel("Budget minimum (NGN)")).toBeHidden();
+        await expect(
+          page.getByLabel("Post type").getByRole("option", {
+            name: "Investment",
+          }),
+        ).toHaveCount(0);
+        expect(
+          await page.evaluate(
+            () => document.documentElement.scrollHeight > window.innerHeight,
+          ),
+        ).toBe(true);
+        expect(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= window.innerWidth + 1,
+          ),
+        ).toBe(true);
+      } finally {
+        await page.close();
+      }
+    });
+
+    test("create post draft recovery is bounded, isolated, and resilient", async ({
+      browser,
+    }) => {
+      const page = await browser.newPage({
+        viewport: { width: 390, height: 844 },
+      });
+      const aliceId = await createSession(page, "alice-test@perx.test");
+      const serviceKey = opportunityDraftKey(aliceId, "SERVICE");
+      const productKey = opportunityDraftKey(aliceId, "PRODUCT");
+      const serviceTitle = `Restored service ${crypto.randomUUID()}`;
+      const productTitle = `Restored product ${crypto.randomUUID()}`;
+      const serviceDraft = {
+        fields: browserDraftFields("SERVICE", serviceTitle),
+        savedAt: Date.now(),
+        type: "SERVICE",
+        version: 1,
+      };
+      try {
+        await page.goto(
+          `${BASE}/app/opportunities/new?type=SERVICE&category=services`,
+        );
+        await page.evaluate(
+          ({ key, value }) =>
+            window.localStorage.setItem(key, JSON.stringify(value)),
+          { key: serviceKey, value: serviceDraft },
+        );
+        await page.reload();
+        await expect(page.getByLabel("Post title")).toHaveValue(serviceTitle);
+        await expect(page.getByRole("status")).toHaveText(
+          "Restored local draft",
+        );
+
+        await page.goto(
+          `${BASE}/app/opportunities/new?type=PRODUCT&category=market`,
+        );
+        await expect(page.getByLabel("Post title")).toHaveValue("");
+        await page.getByLabel("Post title").fill(productTitle);
+        await expect
+          .poll(() =>
+            page.evaluate(
+              (key) => window.localStorage.getItem(key),
+              productKey,
+            ),
+          )
+          .toContain(productTitle);
+        await page.goto(
+          `${BASE}/app/opportunities/new?type=SERVICE&category=services`,
+        );
+        await expect(page.getByLabel("Post title")).toHaveValue(serviceTitle);
+
+        await page.evaluate(
+          ({ key, value }) =>
+            window.localStorage.setItem(key, JSON.stringify(value)),
+          {
+            key: serviceKey,
+            value: {
+              ...serviceDraft,
+              savedAt: Date.now() - 31 * 24 * 60 * 60 * 1000,
+            },
+          },
+        );
+        await page.reload();
+        await expect(page.getByLabel("Post title")).toHaveValue("");
+        expect(
+          await page.evaluate(
+            (key) => window.localStorage.getItem(key),
+            serviceKey,
+          ),
+        ).toBeNull();
+
+        await page.evaluate(
+          (key) => window.localStorage.setItem(key, "{"),
+          serviceKey,
+        );
+        await page.reload();
+        await expect(
+          page.getByRole("heading", { name: "What would you like to share?" }),
+        ).toBeVisible();
+        expect(
+          await page.evaluate(
+            (key) => window.localStorage.getItem(key),
+            serviceKey,
+          ),
+        ).toBeNull();
+
+        await page.evaluate(
+          (key) => window.localStorage.setItem(key, "x".repeat(16_001)),
+          serviceKey,
+        );
+        await page.reload();
+        await expect(page.getByLabel("Post title")).toHaveValue("");
+        expect(
+          await page.evaluate(
+            (key) => window.localStorage.getItem(key),
+            serviceKey,
+          ),
+        ).toBeNull();
+
+        await page.evaluate(() => {
+          Storage.prototype.setItem = () => {
+            throw new DOMException("Quota exceeded", "QuotaExceededError");
+          };
+        });
+        await page.getByLabel("Post title").fill("Quota-safe draft");
+        await expect(page.getByRole("status")).toHaveText(
+          "Local autosave is unavailable",
+        );
+
+        await page.reload();
+        await page.evaluate(
+          ({ key, value }) =>
+            window.localStorage.setItem(key, JSON.stringify(value)),
+          { key: serviceKey, value: serviceDraft },
+        );
+        await page.context().clearCookies();
+        await createSession(page, "bob-test@perx.test");
+        await page.goto(
+          `${BASE}/app/opportunities/new?type=SERVICE&category=services`,
+        );
+        await expect(page.getByLabel("Post title")).toHaveValue("");
+      } finally {
+        await page.close();
+      }
+    });
+
+    test("MoneyInput keeps canonical values and server rejects invalid budgets", async ({
+      browser,
+    }) => {
+      const page = await browser.newPage({
+        viewport: { width: 390, height: 844 },
+      });
+      const userId = await createSession(page, "alice-test@perx.test");
+      const storageKey = opportunityDraftKey(userId, "SERVICE");
+      try {
+        await page.goto(
+          `${BASE}/app/opportunities/new?type=SERVICE&category=services`,
+        );
+        await page
+          .getByRole("button", { name: "Budget, location and participation" })
+          .click();
+        const input = page.getByLabel("Budget minimum (NGN)");
+        await input.fill("250000.50");
+        await expect(input).toHaveValue("250000.50");
+        await expect(input.locator("xpath=preceding-sibling::span")).toHaveText(
+          "NGN",
+        );
+
+        for (const value of ["1,234", "-1", "92233720368547758.08"]) {
+          const invalidTitle = `Invalid budget ${crypto.randomUUID()}`;
+          await page.evaluate(
+            (key) => window.localStorage.removeItem(key),
+            storageKey,
+          );
+          await page.goto(
+            `${BASE}/app/opportunities/new?type=SERVICE&category=services`,
+          );
+          await page
+            .getByRole("button", { name: "Budget, location and participation" })
+            .click();
+          await fillRequiredPost(page, invalidTitle);
+          await page.getByLabel("Budget minimum (NGN)").fill(value);
+          await page.getByRole("button", { name: "Save draft" }).click();
+          await expect(page).toHaveURL(
+            /\/app\/opportunities\/new\?error=check-fields&type=SERVICE&category=services/,
+          );
+          await expect(page.getByLabel("Post type")).toHaveValue("SERVICE");
+          await expect(page.getByLabel("Category")).toHaveValue("services");
+          await expect(page.getByLabel("Post title")).toHaveValue(invalidTitle);
+          await expect(page.getByLabel("Budget minimum (NGN)")).toHaveValue(
+            value,
+          );
+          expect(
+            await page.evaluate(
+              (key) => window.localStorage.getItem(key),
+              storageKey,
+            ),
+          ).not.toBeNull();
+        }
+      } finally {
+        await page.close();
+      }
+    });
+
+    test("create post clears only its scoped browser draft after confirmed persistence", async ({
+      browser,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== "chromium",
+        "This persistence scenario mutates isolated Opportunity data once.",
+      );
+      test.setTimeout(120_000);
+      const title = `Scoped browser draft ${crypto.randomUUID()}`;
+      const page = await browser.newPage();
+      try {
+        const userId = await createSession(page, "alice-test@perx.test");
+        const storageKey = opportunityDraftKey(userId, "SERVICE");
+        const unrelatedKey = opportunityDraftKey(userId, "PRODUCT");
+        await page.goto(
+          `${BASE}/app/opportunities/new?type=SERVICE&category=services`,
+        );
+        await page.evaluate(
+          ({ key, value }) => window.localStorage.setItem(key, value),
+          { key: unrelatedKey, value: "unrelated-product-draft" },
+        );
+        await page.getByLabel("Post title").fill(title);
+        await page
+          .getByLabel("Short summary")
+          .fill("A complete scoped browser draft for persistence proof.");
+        await page
+          .getByLabel("Details")
+          .fill(
+            "This complete service description proves that browser recovery remains available until the server confirms a persisted Opportunity and redirects to the authenticated success destination.",
+          );
+        await page
+          .getByLabel("Budget minimum (NGN)")
+          .fill("92233720368547758.07");
+        await expect
+          .poll(() =>
+            page.evaluate(
+              (key) => window.localStorage.getItem(key),
+              storageKey,
+            ),
+          )
+          .toContain(title);
+
+        await page.getByRole("button", { name: "Save draft" }).click();
+        await expect(page).toHaveURL(
+          /\/app\/manage\?created=[^&]+&createdType=SERVICE/,
+          { timeout: 30_000 },
+        );
+        await expect(page.getByText("Post created")).toBeVisible();
+        const createdId = new URL(page.url()).searchParams.get("created");
+        expect(createdId).toBeTruthy();
+        const { Pool } = await import("pg");
+        const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+        try {
+          const persisted = await pool.query<{
+            budgetMinMinor: string;
+            ownerId: string;
+            status: string;
+            type: string;
+          }>(
+            `SELECT "budgetMinMinor"::text AS "budgetMinMinor", "ownerId", status, type
+             FROM "Opportunity"
+             WHERE id = $1 AND title = $2`,
+            [createdId, title],
+          );
+          expect(persisted.rows).toEqual([
+            {
+              budgetMinMinor: "9223372036854775807",
+              ownerId: userId,
+              status: "DRAFT",
+              type: "SERVICE",
+            },
+          ]);
+        } finally {
+          await pool.end();
+        }
+        await expect
+          .poll(() =>
+            page.evaluate(
+              (key) => window.localStorage.getItem(key),
+              storageKey,
+            ),
+          )
+          .toBeNull();
+        expect(
+          await page.evaluate(
+            (key) => window.localStorage.getItem(key),
+            unrelatedKey,
+          ),
+        ).toBe("unrelated-product-draft");
+      } finally {
+        try {
+          await deleteOpportunityByTitle(title);
+        } finally {
+          if (!page.isClosed()) await page.close();
+        }
+      }
     });
 
     test("feature directory keeps search visible without forcing focus", async ({
@@ -365,6 +1492,49 @@ describeOrSkip(
       await page.close();
     });
 
+    test("long public profile exposes complete persisted content on mobile", async ({
+      browser,
+    }) => {
+      const fixture = await createLongProfileFixture();
+      const page = await browser.newPage({
+        viewport: { width: 320, height: 568 },
+      });
+      try {
+        await page.goto(`${BASE}/u/bob_test`);
+        await expect(
+          page.getByRole("heading", { name: "Portfolio" }),
+        ).toBeVisible();
+        await expect(page.getByText("Trust workflow platform")).toBeVisible();
+        await expect(page.getByText("Jan 2024 - Present")).toBeVisible();
+        await expect(
+          page.getByRole("link", { name: "Website" }),
+        ).toHaveAttribute("href", "https://example.com/bob-profile");
+        const dimensions = await page.evaluate(() => ({
+          clientHeight: document.documentElement.clientHeight,
+          clientWidth: document.documentElement.clientWidth,
+          scrollHeight: document.documentElement.scrollHeight,
+          scrollWidth: document.documentElement.scrollWidth,
+        }));
+        expect(dimensions.scrollHeight).toBeGreaterThan(
+          dimensions.clientHeight,
+        );
+        expect(dimensions.scrollWidth).toBeLessThanOrEqual(
+          dimensions.clientWidth + 1,
+        );
+
+        await page
+          .locator('[data-profile-end="true"]')
+          .scrollIntoViewIfNeeded();
+        await expect(
+          page.locator('[data-profile-end="true"]'),
+        ).toBeInViewport();
+        expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+      } finally {
+        await page.close();
+        await deleteLongProfileFixture(fixture);
+      }
+    });
+
     test("profile Trust presentation is evidence-based and notifications are filterable", async ({
       browser,
     }) => {
@@ -389,6 +1559,53 @@ describeOrSkip(
         ),
       ).toBe(true);
       await page.close();
+    });
+
+    test("notification pagination preserves equal timestamps, filters, and browser history", async ({
+      browser,
+    }) => {
+      const notificationPrefix = await createNotificationPaginationFixture();
+      const page = await browser.newPage();
+      try {
+        await createSession(page, "alice-test@perx.test");
+        await page.goto(`${BASE}/app/notifications?type=messages`);
+
+        await expect(page.getByText("Pagination message 052")).toBeVisible();
+        await expect(page.getByText("Pagination message 003")).toBeVisible();
+        await expect(page.getByText("Pagination message 002")).toHaveCount(0);
+        await expect(page.getByText("Pagination system sentinel")).toHaveCount(
+          0,
+        );
+        const firstPageUrl = page.url();
+
+        const olderLink = page.getByRole("link", {
+          name: "Older notifications",
+        });
+        await expect(olderLink).toHaveAttribute(
+          "href",
+          /type=messages&cursor=/,
+        );
+        const olderHref = await olderLink.getAttribute("href");
+        expect(olderHref).toBeTruthy();
+        await page.goto(new URL(olderHref!, BASE).href);
+        expect(new URL(page.url()).searchParams.get("type")).toBe("messages");
+        expect(new URL(page.url()).searchParams.get("cursor")).toBeTruthy();
+        await expect(page.getByText("Pagination message 002")).toBeVisible();
+        await expect(page.getByText("Pagination message 001")).toBeVisible();
+        await expect(page.getByText("Pagination message 003")).toHaveCount(0);
+        const olderPageUrl = page.url();
+
+        await page.goBack();
+        await expect(page).toHaveURL(firstPageUrl, { timeout: 30_000 });
+        await expect(page.getByText("Pagination message 052")).toBeVisible();
+
+        await page.goForward();
+        await expect(page).toHaveURL(olderPageUrl, { timeout: 30_000 });
+        await expect(page.getByText("Pagination message 001")).toBeVisible();
+      } finally {
+        await page.close();
+        await deleteNotificationPaginationFixture(notificationPrefix.ids);
+      }
     });
 
     test("search page loads and shows results", async ({ browser }) => {
@@ -467,6 +1684,360 @@ describeOrSkip(
       await page.close();
     });
 
+    test("in-chat Make a Deal creates one submitted locked Proposal", async ({
+      browser,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== "chromium",
+        "This structured Proposal scenario mutates its own isolated fixture once.",
+      );
+      test.setTimeout(120_000);
+      const fixture = await createConversationDealEntryFixture();
+      const page = await browser.newPage();
+      const terms = `In-chat Deal terms ${crypto.randomUUID()} covering the exact keyboard condition, delivery handoff, and acceptance criteria.`;
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+
+      try {
+        const before = await pool.query<{ updatedAt: Date }>(
+          `SELECT "updatedAt" FROM "Conversation" WHERE id = $1`,
+          [fixture.conversationId],
+        );
+        await createSession(page, "alice-test@perx.test");
+        await page.goto(`${BASE}/app/messages/${fixture.conversationId}`);
+
+        await expect(page.getByLabel("Message workspace")).toBeVisible();
+        await page.getByRole("button", { name: "Make a Deal" }).click();
+        const dialog = page.getByRole("dialog", { name: "Make a Deal" });
+        await expect(dialog).toBeVisible();
+        await expect(dialog).toContainText(
+          `Send locked terms to ${fixture.bobName} for ${fixture.opportunityTitle}`,
+        );
+        await expect(dialog).toContainText(
+          "A Deal is created only if the other participant accepts this exact version.",
+        );
+        await expect(dialog).toContainText(
+          "Payments are currently unavailable. This Deal records agreed terms but does not hold funds.",
+        );
+        const submittedFields = await dialog
+          .locator("form")
+          .evaluate((form) =>
+            [...new FormData(form as HTMLFormElement).keys()].sort(),
+          );
+        expect(submittedFields).toEqual([
+          "amount",
+          "deliveryDays",
+          "description",
+          "revisions",
+        ]);
+        expect(submittedFields).not.toContain("participantId");
+        expect(submittedFields).not.toContain("userId");
+
+        await dialog.getByLabel("Agreement amount (NGN)").fill("275000.00");
+        await dialog.getByLabel("Delivery days").fill("10");
+        await dialog.getByLabel("Included revisions").fill("2");
+        await dialog.getByLabel("Proposal terms").fill(terms);
+        await dialog.getByRole("button", { name: "Submit proposal" }).click();
+
+        await expect(dialog).toBeHidden({ timeout: 30_000 });
+        await expect(
+          page.getByText("Proposal submitted", { exact: true }),
+        ).toBeVisible();
+        const eventCard = page
+          .getByRole("heading", {
+            level: 3,
+            name: "Proposal version 1 submitted",
+          })
+          .locator("xpath=ancestor::article[1]");
+        await expect(eventCard).toContainText(terms);
+        await expect(eventCard).toContainText("NGN");
+        await expect(eventCard).toContainText(
+          "This submitted version is locked. Any term change requires a new numbered revision.",
+        );
+        await expect(
+          page.getByRole("button", { name: "Make a Deal" }),
+        ).toHaveCount(0);
+        await expect(page).toHaveURL(
+          `${BASE}/app/messages/${fixture.conversationId}`,
+        );
+
+        const result = await pool.query<{
+          amountMinor: string;
+          auditCount: number;
+          conversationUpdatedAt: Date;
+          dealCount: number;
+          deliveryDays: number;
+          eventCount: number;
+          eventSnapshot: Record<string, unknown>;
+          eventType: string;
+          notificationCount: number;
+          notificationRecipientId: string;
+          participantIds: string[];
+          proposalId: string;
+          proposalStatus: string;
+          revisions: number;
+          versionId: string;
+          versionStatus: string;
+        }>(
+          `SELECT proposal.id AS "proposalId",
+                  proposal.status AS "proposalStatus",
+                  proposal."amountMinor"::text AS "amountMinor",
+                  proposal."deliveryDays",
+                  proposal.revisions,
+                  version.id AS "versionId",
+                  version.status AS "versionStatus",
+                  event.type AS "eventType",
+                  event.snapshot AS "eventSnapshot",
+                  conversation."updatedAt" AS "conversationUpdatedAt",
+                  ARRAY(
+                    SELECT participant."userId"
+                    FROM "ConversationParticipant" participant
+                    WHERE participant."conversationId" = conversation.id
+                    ORDER BY participant."userId"
+                  ) AS "participantIds",
+                  (SELECT COUNT(*)::int FROM "Deal" deal
+                    WHERE deal."proposalId" = proposal.id) AS "dealCount",
+                  (SELECT COUNT(*)::int FROM "ConversationEvent" candidate
+                    WHERE candidate."conversationId" = conversation.id
+                      AND candidate."proposalVersionId" = version.id) AS "eventCount",
+                  (SELECT COUNT(*)::int FROM "Notification" notification
+                    WHERE notification.metadata->>'proposalVersionId' = version.id
+                      AND notification."userId" = $3) AS "notificationCount",
+                  (SELECT notification."userId" FROM "Notification" notification
+                    WHERE notification.metadata->>'proposalVersionId' = version.id
+                    ORDER BY notification."createdAt", notification.id LIMIT 1)
+                    AS "notificationRecipientId",
+                  (SELECT COUNT(*)::int FROM "AuditLog" audit
+                    WHERE audit."entityId" = version.id
+                      AND audit.action = 'proposal.version_submitted'
+                      AND audit.metadata->>'source' = 'conversation_make_deal')
+                    AS "auditCount"
+           FROM "Proposal" proposal
+           JOIN "ProposalVersion" version ON version."proposalId" = proposal.id
+           JOIN "ConversationEvent" event
+             ON event."proposalVersionId" = version.id
+            AND event.type = 'PROPOSAL_SUBMITTED'
+           JOIN "Conversation" conversation
+             ON conversation.id = proposal."conversationId"
+           WHERE proposal."conversationId" = $1
+             AND proposal.description = $2`,
+          [fixture.conversationId, terms, fixture.bobId],
+        );
+        expect(result.rows).toHaveLength(1);
+        expect(result.rows[0]).toMatchObject({
+          amountMinor: "27500000",
+          auditCount: 1,
+          dealCount: 0,
+          deliveryDays: 10,
+          eventCount: 1,
+          eventType: "PROPOSAL_SUBMITTED",
+          notificationCount: 1,
+          notificationRecipientId: fixture.bobId,
+          proposalStatus: "SENT",
+          revisions: 2,
+          versionStatus: "SUBMITTED",
+        });
+        expect(result.rows[0]!.participantIds).toEqual(
+          [fixture.aliceId, fixture.bobId].sort(),
+        );
+        expect(result.rows[0]!.eventSnapshot).toMatchObject({
+          amountMinor: "27500000",
+          deliveryDays: 10,
+          description: terms,
+          includedRevisions: 2,
+          opportunityTitle: fixture.opportunityTitle,
+          versionNumber: 1,
+        });
+        expect(result.rows[0]!.conversationUpdatedAt.getTime()).toBeGreaterThan(
+          before.rows[0]!.updatedAt.getTime(),
+        );
+
+        await eventCard.getByRole("link", { name: "Review proposal" }).click();
+        await expect(page).toHaveURL(/\/app\/proposals\/sent/);
+        await page.reload();
+        await expect(
+          page.getByRole("heading", { name: "Proposals sent" }),
+        ).toBeVisible();
+        const lockedVersion = page
+          .getByText(terms, { exact: true })
+          .locator("xpath=ancestor::article[1]");
+        await expect(lockedVersion).toContainText("Locked version 1", {
+          timeout: 30_000,
+        });
+        await expect(
+          lockedVersion.locator("input, textarea, select, button"),
+        ).toHaveCount(0);
+      } finally {
+        await pool.end();
+        if (!page.isClosed()) await page.close();
+        await deleteConversationDealEntryFixture(fixture.conversationId);
+      }
+    });
+
+    test("exact @deal requires explicit submission and remains idempotent", async ({
+      browser,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== "chromium",
+        "This command scenario mutates its own isolated Proposal fixture once.",
+      );
+      test.setTimeout(120_000);
+      const fixture = await createConversationDealEntryFixture();
+      const page = await browser.newPage();
+      const terms = `Command Deal terms ${crypto.randomUUID()} with explicit delivery, scope, and acceptance conditions.`;
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      try {
+        await createSession(page, "alice-test@perx.test");
+        await page.goto(`${BASE}/app/messages/${fixture.conversationId}`);
+        const composer = page.locator("#message-draft");
+
+        await composer.fill("hello @deal");
+        await page.getByRole("button", { name: "Send message" }).click();
+        await expect(
+          page.getByText("hello @deal", { exact: true }).last(),
+        ).toBeVisible();
+        await expect(
+          page.getByRole("dialog", { name: "Make a Deal" }),
+        ).toHaveCount(0);
+
+        await composer.fill("  @DeAl  ");
+        await page.getByRole("button", { name: "Send message" }).click();
+        const dialog = page.getByRole("dialog", { name: "Make a Deal" });
+        await expect(dialog).toBeVisible();
+        await expect(composer).toHaveValue("  @DeAl  ");
+        const beforeSubmit = await pool.query<{ proposals: number }>(
+          `SELECT COUNT(*)::int AS proposals
+           FROM "Proposal" WHERE "conversationId" = $1`,
+          [fixture.conversationId],
+        );
+        expect(beforeSubmit.rows[0]!.proposals).toBe(0);
+
+        await dialog.getByLabel("Agreement amount (NGN)").fill("125000.25");
+        await dialog.getByLabel("Delivery days").fill("8");
+        await dialog.getByLabel("Included revisions").fill("1");
+        await dialog.getByLabel("Proposal terms").fill(terms);
+        await dialog
+          .getByRole("button", { name: "Submit proposal" })
+          .evaluate((button: HTMLButtonElement) => {
+            button.form?.requestSubmit(button);
+            button.form?.requestSubmit(button);
+          });
+        await expect(dialog).toBeHidden({ timeout: 30_000 });
+        await expect(composer).toHaveValue("");
+
+        const persisted = await pool.query<{
+          audits: number;
+          commandMessages: number;
+          events: number;
+          notifications: number;
+          proposals: number;
+          versions: number;
+        }>(
+          `SELECT
+             (SELECT COUNT(*)::int FROM "Proposal"
+               WHERE "conversationId" = $1 AND description = $2) AS proposals,
+             (SELECT COUNT(*)::int FROM "ProposalVersion" version
+               JOIN "Proposal" proposal ON proposal.id = version."proposalId"
+               WHERE proposal."conversationId" = $1) AS versions,
+             (SELECT COUNT(*)::int FROM "ConversationEvent"
+               WHERE "conversationId" = $1 AND type = 'PROPOSAL_SUBMITTED') AS events,
+             (SELECT COUNT(*)::int FROM "Notification"
+               WHERE metadata->>'conversationId' = $1
+                 AND metadata->>'proposalId' IS NOT NULL) AS notifications,
+             (SELECT COUNT(*)::int FROM "AuditLog"
+               WHERE metadata->>'conversationId' = $1
+                 AND action = 'proposal.version_submitted') AS audits,
+             (SELECT COUNT(*)::int FROM "Message"
+               WHERE "conversationId" = $1
+                 AND LOWER(BTRIM(body)) = '@deal') AS "commandMessages"`,
+          [fixture.conversationId, terms],
+        );
+        expect(persisted.rows).toEqual([
+          {
+            audits: 1,
+            commandMessages: 0,
+            events: 1,
+            notifications: 1,
+            proposals: 1,
+            versions: 1,
+          },
+        ]);
+        await expect(
+          page.getByRole("button", { name: "Make a Deal" }),
+        ).toHaveCount(0);
+      } finally {
+        await pool.end();
+        if (!page.isClosed()) await page.close();
+        await deleteConversationDealEntryFixture(fixture.conversationId);
+      }
+    });
+
+    test("conversation authorization and blocks prevent Proposal creation", async ({
+      browser,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== "chromium",
+        "This policy scenario uses isolated direct-conversation fixtures.",
+      );
+      const unauthorizedFixture = await createConversationDealEntryFixture();
+      const blockedFixture = await createConversationDealEntryFixture();
+      const unauthorizedPage = await browser.newPage();
+      const blockedPage = await browser.newPage();
+      let blockId: string | null = null;
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      try {
+        await createSession(unauthorizedPage, "carol-test@perx.test");
+        const unauthorizedResponse = await unauthorizedPage.goto(
+          `${BASE}/app/messages/${unauthorizedFixture.conversationId}`,
+        );
+        expect(unauthorizedResponse?.status()).toBe(404);
+        await expect(
+          unauthorizedPage.getByRole("button", { name: "Make a Deal" }),
+        ).toHaveCount(0);
+
+        blockId = await createBlockedPairFixture(
+          blockedFixture.bobId,
+          blockedFixture.aliceId,
+        );
+        await createSession(blockedPage, "alice-test@perx.test");
+        await blockedPage.goto(
+          `${BASE}/app/messages/${blockedFixture.conversationId}`,
+        );
+        await blockedPage.getByRole("button", { name: "Make a Deal" }).click();
+        const dialog = blockedPage.getByRole("dialog", { name: "Make a Deal" });
+        await dialog.getByLabel("Agreement amount (NGN)").fill("50000");
+        await dialog.getByLabel("Delivery days").fill("5");
+        await dialog.getByLabel("Included revisions").fill("0");
+        await dialog
+          .getByLabel("Proposal terms")
+          .fill(
+            "Blocked participants must not create this structured Proposal record.",
+          );
+        await dialog.getByRole("button", { name: "Submit proposal" }).click();
+        await expect(dialog.getByRole("alert")).toHaveText(
+          "This conversation is unavailable.",
+        );
+        await expect(dialog).toBeVisible();
+        const count = await pool.query<{ proposals: number }>(
+          `SELECT COUNT(*)::int AS proposals
+           FROM "Proposal" WHERE "conversationId" = ANY($1::text[])`,
+          [[unauthorizedFixture.conversationId, blockedFixture.conversationId]],
+        );
+        expect(count.rows[0]!.proposals).toBe(0);
+      } finally {
+        await pool.end();
+        if (!unauthorizedPage.isClosed()) await unauthorizedPage.close();
+        if (!blockedPage.isClosed()) await blockedPage.close();
+        await deleteBlockedPairFixture(blockId);
+        await deleteConversationDealEntryFixture(
+          unauthorizedFixture.conversationId,
+        );
+        await deleteConversationDealEntryFixture(blockedFixture.conversationId);
+      }
+    });
+
     test("legacy event data renders without a Server Component failure", async ({
       browser,
     }) => {
@@ -494,6 +2065,297 @@ describeOrSkip(
       } finally {
         await page.close();
         await deleteConversationEvent(eventId);
+      }
+    });
+
+    test("chat profile preview scrolls without losing conversation state", async ({
+      browser,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== "chromium",
+        "This test owns the profile fixture and exercises all required widths directly.",
+      );
+      test.setTimeout(180_000);
+      const profileFixture = await createLongProfileFixture();
+      const messageFixture = await createMessageInteractionFixture();
+      try {
+        for (const width of [320, 375, 430, 768, 1023, 1024, 1280]) {
+          const page = await browser.newPage({
+            viewport: { height: width === 320 ? 568 : 700, width },
+          });
+          try {
+            await createSession(page, "alice-test@perx.test");
+            await page.goto(
+              `${BASE}/app/messages/${messageFixture.conversationId}`,
+            );
+            const history = page.getByLabel("Message history");
+            const composer = page.locator("#message-draft");
+            const incoming = page.locator(
+              `[data-message-id="${messageFixture.incomingId}"]`,
+            );
+            const own = page.locator(
+              `[data-message-id="${messageFixture.ownEditId}"]`,
+            );
+            await expect(history).toBeVisible();
+            await expect(incoming).toBeAttached();
+            await expect(own).toBeAttached();
+
+            await incoming.getByLabel("Message actions").click();
+            await page.getByRole("menuitem", { name: "Reply" }).click();
+            await own.getByLabel("Message actions").click();
+            await page.getByRole("menuitem", { name: "Edit" }).click();
+            await composer.fill(`Profile scroll draft ${width}`);
+            await history.evaluate((element) => {
+              element.scrollTop = Math.min(
+                300,
+                Math.max(1, element.scrollHeight - element.clientHeight - 100),
+              );
+              element.dispatchEvent(new Event("scroll"));
+            });
+            const historyScrollBefore = await history.evaluate(
+              (element) => element.scrollTop,
+            );
+            await page
+              .getByRole("button", { name: "Open conversation details" })
+              .click();
+
+            const dialog = page.getByRole("dialog", {
+              name: "Profile preview",
+            });
+            const scroller = dialog.locator(
+              '[data-profile-preview-scroll="true"]',
+            );
+            const end = dialog.locator('[data-profile-preview-end="true"]');
+            const close = dialog.getByRole("button", {
+              name: "Close profile preview",
+            });
+            await expect(dialog).toBeVisible();
+            await expect(close).toBeVisible();
+            const dimensions = await scroller.evaluate((element) => ({
+              clientHeight: element.clientHeight,
+              scrollHeight: element.scrollHeight,
+              scrollTop: element.scrollTop,
+            }));
+            expect(dimensions.scrollHeight).toBeGreaterThan(
+              dimensions.clientHeight,
+            );
+            await scroller.evaluate((element) => {
+              element.scrollTop = element.scrollHeight;
+              element.dispatchEvent(new Event("scroll"));
+            });
+            await expect
+              .poll(() => scroller.evaluate((element) => element.scrollTop))
+              .toBeGreaterThan(dimensions.scrollTop);
+            await expect(end).toBeInViewport();
+            await expect(close).toBeVisible();
+            expect(await history.evaluate((element) => element.scrollTop)).toBe(
+              historyScrollBefore,
+            );
+
+            await close.click();
+            await expect(dialog).toBeHidden();
+            expect(await history.evaluate((element) => element.scrollTop)).toBe(
+              historyScrollBefore,
+            );
+            await expect(composer).toHaveValue(`Profile scroll draft ${width}`);
+            await expect(
+              page.getByText(`Replying to ${messageFixture.bobName}`),
+            ).toBeVisible();
+            await expect(page.getByLabel("Edit message")).toHaveValue(
+              "Gesture own edit target",
+            );
+          } finally {
+            await page.close();
+          }
+        }
+      } finally {
+        await deleteIsolatedConversation(messageFixture.conversationId);
+        await deleteLongProfileFixture(profileFixture);
+      }
+    });
+
+    test("desktop message menus expose eligible actions and feedback", async ({
+      browser,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== "chromium",
+        "This message mutation scenario owns an isolated fixture.",
+      );
+      const fixture = await createMessageInteractionFixture();
+      const context = await browser.newContext({
+        permissions: ["clipboard-read", "clipboard-write"],
+        viewport: { height: 800, width: 1280 },
+      });
+      const page = await context.newPage();
+      try {
+        await createSession(page, "alice-test@perx.test");
+        await page.goto(`${BASE}/app/messages/${fixture.conversationId}`);
+        const incoming = page.locator(
+          `[data-message-id="${fixture.incomingId}"]`,
+        );
+        const ownEdit = page.locator(
+          `[data-message-id="${fixture.ownEditId}"]`,
+        );
+        const ownDelete = page.locator(
+          `[data-message-id="${fixture.ownDeleteId}"]`,
+        );
+        const expiredOwn = page.locator(
+          `[data-message-id="${fixture.expiredOwnId}"]`,
+        );
+        const trigger = incoming.getByLabel("Message actions");
+
+        await trigger.click();
+        await expect(trigger).toHaveAttribute("aria-expanded", "true");
+        await trigger.click();
+        await expect(trigger).toHaveAttribute("aria-expanded", "false");
+        await trigger.click();
+        await page.locator(".message-conversation-header").click();
+        await expect(trigger).toHaveAttribute("aria-expanded", "false");
+        await trigger.click();
+        await page.keyboard.press("Escape");
+        await expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+        await incoming.hover();
+        await expect(incoming.getByLabel("Reply")).toBeVisible();
+        await expect(incoming.getByLabel("Copy")).toBeVisible();
+        await expect(incoming.getByLabel("Edit")).toHaveCount(0);
+        await expect(incoming.getByLabel("Remove message")).toHaveCount(0);
+        await incoming.getByLabel("Copy").click();
+        await expect(
+          page.getByText("Message copied", { exact: true }),
+        ).toBeVisible();
+
+        await ownEdit.hover();
+        await expect(ownEdit.getByLabel("Edit")).toBeVisible();
+        await expect(ownEdit.getByLabel("Remove message")).toBeVisible();
+        await ownEdit.getByLabel("Edit").click();
+        await page.getByLabel("Edit message").fill("Gesture edit persisted");
+        await page.getByRole("button", { name: "Save", exact: true }).click();
+        await expect(
+          page.getByText("Message updated", { exact: true }),
+        ).toBeVisible();
+        await expect(ownEdit).toContainText("Gesture edit persisted");
+
+        await ownDelete.hover();
+        await ownDelete.getByLabel("Remove message").click();
+        const confirmation = page.getByRole("dialog", {
+          name: "Remove this message for everyone?",
+        });
+        await confirmation
+          .getByRole("button", { name: "Remove message" })
+          .click();
+        await expect(
+          page.getByText("Message removed", { exact: true }),
+        ).toBeVisible();
+        await expect(ownDelete).toContainText(
+          "This message was removed from the chat view.",
+        );
+        await expect(expiredOwn.getByLabel("Edit")).toHaveCount(0);
+        await expect(expiredOwn.getByLabel("Remove message")).toHaveCount(0);
+      } finally {
+        await context.close();
+        await deleteIsolatedConversation(fixture.conversationId);
+      }
+    });
+
+    test("mobile long press and swipe reply obey gesture boundaries", async ({
+      browser,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name !== "chromium",
+        "This test creates its own touch context and isolated conversation.",
+      );
+      const fixture = await createMessageInteractionFixture();
+      const context = await browser.newContext({
+        hasTouch: true,
+        isMobile: true,
+        viewport: { height: 844, width: 390 },
+      });
+      const page = await context.newPage();
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      try {
+        await createSession(page, "alice-test@perx.test");
+        await page.goto(`${BASE}/app/messages/${fixture.conversationId}`);
+        const incoming = page.locator(
+          `[data-message-id="${fixture.incomingId}"]`,
+        );
+        const replyBubble = page.locator(
+          `[data-message-id="${fixture.replyId}"]`,
+        );
+        const trigger = incoming.getByLabel("Message actions");
+        await expect(incoming).toBeAttached();
+
+        await dispatchTouch(incoming, "touchstart", 20, 20);
+        await page.waitForTimeout(550);
+        await expect(trigger).toHaveAttribute("aria-expanded", "true");
+        await dispatchTouch(incoming, "touchend", 20, 20);
+        await expect(
+          page.getByText(`Replying to ${fixture.bobName}`),
+        ).toHaveCount(0);
+        await page.keyboard.press("Escape");
+
+        await dispatchTouch(incoming, "touchstart", 20, 20);
+        await dispatchTouch(incoming, "touchmove", 36, 20);
+        await page.waitForTimeout(550);
+        await dispatchTouch(incoming, "touchend", 36, 20);
+        await expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+        await dispatchTouch(incoming, "touchstart", 20, 20);
+        await dispatchTouch(incoming, "touchmove", 22, 55);
+        await page.waitForTimeout(550);
+        await dispatchTouch(incoming, "touchend", 22, 55);
+        await expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+        const nativeContextPrevented = await incoming.evaluate((element) => {
+          const event = new MouseEvent("contextmenu", {
+            bubbles: true,
+            cancelable: true,
+          });
+          element.dispatchEvent(event);
+          return event.defaultPrevented;
+        });
+        expect(nativeContextPrevented).toBe(true);
+        await expect(trigger).toHaveAttribute("aria-expanded", "true");
+        await page.keyboard.press("Escape");
+
+        const before = await pool.query<{ messages: number }>(
+          `SELECT COUNT(*)::int AS messages
+           FROM "Message" WHERE "conversationId" = $1`,
+          [fixture.conversationId],
+        );
+        await dispatchTouch(incoming, "touchstart", 10, 40);
+        await dispatchTouch(incoming, "touchmove", 100, 43);
+        await page.waitForTimeout(50);
+        await dispatchTouch(incoming, "touchend", 100, 43);
+        await expect(
+          page.getByText(`Replying to ${fixture.bobName}`),
+        ).toBeVisible();
+        await expect(page.locator("#message-draft")).toHaveValue("");
+        const after = await pool.query<{ messages: number }>(
+          `SELECT COUNT(*)::int AS messages
+           FROM "Message" WHERE "conversationId" = $1`,
+          [fixture.conversationId],
+        );
+        expect(after.rows[0]!.messages).toBe(before.rows[0]!.messages);
+        await page.getByLabel("Cancel reply").click();
+
+        const interactiveReply = replyBubble.getByRole("button").first();
+        await dispatchTouch(interactiveReply, "touchstart", 20, 20);
+        await page.waitForTimeout(550);
+        await dispatchTouch(interactiveReply, "touchmove", 100, 22);
+        await dispatchTouch(interactiveReply, "touchend", 100, 22);
+        await expect(
+          page.getByText(`Replying to ${fixture.bobName}`),
+        ).toHaveCount(0);
+        await expect(replyBubble.getByLabel("Message actions")).toHaveAttribute(
+          "aria-expanded",
+          "false",
+        );
+      } finally {
+        await pool.end();
+        await context.close();
+        await deleteIsolatedConversation(fixture.conversationId);
       }
     });
 
@@ -1150,6 +3012,182 @@ describeOrSkip(
       const response = await page.goto(`${BASE}/admin`);
       expect(response?.status()).toBe(404);
       await page.close();
+    });
+
+    test("MASTER_ADMIN sees read-only user and Deal summaries", async ({
+      browser,
+    }) => {
+      const fixture = await createAdminUsersBrowserFixture();
+      const page = await browser.newPage();
+      await createSession(page, "admin-test@perx.test");
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+
+      try {
+        let response = await page.goto(`${BASE}/admin/users`);
+        expect(response?.status()).toBe(200);
+        let main = page.locator("main");
+        await expect(
+          main.getByRole("heading", { level: 1, name: "Users" }),
+        ).toBeVisible();
+        await expect(main.locator("article")).toHaveCount(20);
+        const restrictedUser = main
+          .getByRole("heading", { level: 2, name: fixture.restrictedName })
+          .locator("xpath=ancestor::article[1]");
+        await expect(restrictedUser).toContainText("active");
+        await expect(restrictedUser).toContainText("unverified");
+        await expect(restrictedUser).toContainText("Member");
+        await expect(restrictedUser).toContainText(
+          "messaging restricted until",
+        );
+        await expect(restrictedUser).toContainText(
+          "connection requests restricted until",
+        );
+        await expect(restrictedUser).toContainText(
+          "publishing restricted until",
+        );
+        await expect(main.locator('a[href^="/admin/users/"]')).toHaveCount(0);
+        await expect(
+          main.locator(
+            "article a, article form, article input, article select, article textarea, article button",
+          ),
+        ).toHaveCount(0);
+        const firstPayload = await page.content();
+        for (const secret of [
+          fixture.passwordHash,
+          fixture.privateMessageBody,
+          fixture.sessionHash,
+          fixture.storageKey,
+        ]) {
+          expect(firstPayload).not.toContain(secret);
+        }
+        expect(firstPayload).not.toContain("DATABASE_URL");
+        expect(firstPayload).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
+
+        const pagination = main.getByRole("navigation", {
+          name: "Admin users pagination",
+        });
+        await expect(
+          pagination.getByRole("link", { name: "Next" }),
+        ).toBeVisible();
+        await pagination.getByRole("link", { name: "Next" }).click();
+        await expect(page).toHaveURL(/\/admin\/users\?cursor=/);
+        main = page.locator("main");
+        expect(await main.locator("article").count()).toBeLessThanOrEqual(20);
+        const adminUser = main
+          .getByRole("heading", { level: 2, name: "Admin Test" })
+          .locator("xpath=ancestor::article[1]");
+        await expect(adminUser).toContainText(
+          "@admin_test · admin-test@perx.test",
+        );
+        await expect(
+          adminUser.getByText("active", { exact: true }),
+        ).toBeVisible();
+        await expect(
+          adminUser.getByText("verified", { exact: true }),
+        ).toBeVisible();
+        await expect(
+          adminUser.getByText("Master Admin", { exact: true }),
+        ).toBeVisible();
+        await expect(adminUser).toContainText(
+          /\d+ opportunities · \d+ completed agreements · \d+ public reviews/,
+        );
+        await expect(
+          main
+            .getByRole("navigation", { name: "Admin users pagination" })
+            .getByRole("link", { name: "First page" }),
+        ).toBeVisible();
+
+        const dealRecord = await pool.query<{
+          id: string;
+          proposalDescription: string;
+          versionDescription: string;
+        }>(
+          `SELECT deal.id,
+                  proposal.description AS "proposalDescription",
+                  version.description AS "versionDescription"
+           FROM "Deal" deal
+           JOIN "Proposal" proposal ON proposal.id = deal."proposalId"
+           JOIN "ProposalVersion" version ON version.id = deal."proposalVersionId"
+           JOIN "DealParticipant" participant ON participant."dealId" = deal.id
+           JOIN "User" participant_user ON participant_user.id = participant."userId"
+           WHERE deal.status = 'APPROVED'
+             AND deal."valueMinor" = 100000
+             AND participant_user.email = 'bob-test@perx.test'
+           ORDER BY deal."updatedAt", deal.id
+           LIMIT 1`,
+        );
+        expect(dealRecord.rows).toHaveLength(1);
+
+        response = await page.goto(`${BASE}/admin/deals`);
+        expect(response?.status()).toBe(200);
+        main = page.locator("main");
+        await expect(
+          main.getByRole("heading", { level: 1, name: "Deals" }),
+        ).toBeVisible();
+        const approvedDeal = main
+          .locator("article")
+          .filter({ hasText: "Agreement value: ₦1,000" })
+          .filter({ hasText: "@bob_test · provider" })
+          .first();
+        await expect(approvedDeal).toContainText(
+          "Full-stack development service",
+        );
+        await expect(
+          approvedDeal.getByText("approved", { exact: true }),
+        ).toBeVisible();
+        await expect(approvedDeal).toContainText("Simulated tracking");
+        await expect(approvedDeal).toContainText(
+          "2 participants · 0 milestones · 0 unresolved disputes",
+        );
+        await expect(approvedDeal).toContainText("@alice_test · client");
+        await expect(approvedDeal).toContainText(
+          `Deal reference: ${dealRecord.rows[0]!.id}`,
+        );
+        expect(await main.locator("article").count()).toBeLessThanOrEqual(20);
+        await expect(main.locator('a[href^="/admin/deals/"]')).toHaveCount(0);
+        await expect(
+          main.locator(
+            "article a, article form, article input, article select, article textarea, article button",
+          ),
+        ).toHaveCount(0);
+        await expect(
+          main.getByRole("heading", { name: /history|transitions?/i }),
+        ).toHaveCount(0);
+        const dealPayload = await page.content();
+        for (const sensitive of [
+          fixture.passwordHash,
+          fixture.privateMessageBody,
+          fixture.sessionHash,
+          fixture.storageKey,
+          dealRecord.rows[0]!.proposalDescription,
+          dealRecord.rows[0]!.versionDescription,
+        ]) {
+          expect(dealPayload).not.toContain(sensitive);
+        }
+      } finally {
+        await pool.end();
+        if (!page.isClosed()) await page.close();
+        await deleteAdminUsersBrowserFixture(fixture);
+      }
+    });
+
+    test("ordinary users cannot access admin user or Deal summaries", async ({
+      browser,
+    }) => {
+      const page = await browser.newPage();
+      try {
+        await createSession(page, "carol-test@perx.test");
+        for (const path of ["/admin/users", "/admin/deals"]) {
+          const response = await page.goto(`${BASE}${path}`);
+          expect(response?.status()).toBe(404);
+          await expect(
+            page.getByRole("heading", { name: /Users|Deals/ }),
+          ).toHaveCount(0);
+        }
+      } finally {
+        await page.close();
+      }
     });
 
     test("MASTER_ADMIN can load admin messages page without 500", async ({

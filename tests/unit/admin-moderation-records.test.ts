@@ -34,10 +34,13 @@ vi.mock("@/lib/db/prisma", () => ({
 
 import {
   getAdminMessageCases,
+  getAdminMessageCasesPage,
   getAdminReportsOverview,
+  getAdminReportsOverviewPage,
   getRecentBlockRows,
   getScopedMessageContext,
 } from "@/lib/admin/moderation-records";
+import { encodeCursor } from "@/lib/data/cursor";
 
 describe("admin moderation records", () => {
   beforeEach(() => {
@@ -108,6 +111,143 @@ describe("admin moderation records", () => {
       },
     ]);
     expect(blocks[0]).toMatchObject({ blockedUser: null, blocker: null });
+  });
+
+  it("paginates the merged report feed with stable equal-timestamp ordering", async () => {
+    const newestAt = new Date("2026-08-01T12:00:00.000Z");
+    const olderAt = new Date("2026-08-01T11:00:00.000Z");
+    const opportunityReport = (id: string, createdAt: Date) => ({
+      createdAt,
+      id,
+      opportunityId: `opportunity-${id}`,
+      reason: "MISLEADING",
+      reporterId: "reporter-1",
+      status: "OPEN",
+    });
+    const userReport = (id: string, createdAt: Date) => ({
+      category: "HARASSMENT",
+      createdAt,
+      id,
+      reporterId: "reporter-1",
+      status: "SUBMITTED",
+      targetId: `target-${id}`,
+      targetType: "USER",
+    });
+    prismaMocks.opportunityFindMany.mockResolvedValue([]);
+    prismaMocks.caseFindMany.mockResolvedValue([]);
+    prismaMocks.opportunityReportFindMany
+      .mockResolvedValueOnce([
+        opportunityReport("report-z", newestAt),
+        opportunityReport("report-l", newestAt),
+        opportunityReport("report-a", olderAt),
+      ])
+      .mockResolvedValueOnce([
+        opportunityReport("report-l", newestAt),
+        opportunityReport("report-a", olderAt),
+      ])
+      .mockResolvedValueOnce([opportunityReport("report-a", olderAt)]);
+    prismaMocks.userReportFindMany
+      .mockResolvedValueOnce([
+        userReport("report-m", newestAt),
+        userReport("report-k", newestAt),
+        userReport("report-b", olderAt),
+      ])
+      .mockResolvedValueOnce([
+        userReport("report-k", newestAt),
+        userReport("report-b", olderAt),
+      ])
+      .mockResolvedValueOnce([userReport("report-b", olderAt)]);
+
+    const firstPage = await getAdminReportsOverviewPage({ pageSize: 2 });
+    const secondPage = await getAdminReportsOverviewPage({
+      cursor: firstPage.nextCursor ?? undefined,
+      pageSize: 2,
+    });
+    const thirdPage = await getAdminReportsOverviewPage({
+      cursor: secondPage.nextCursor ?? undefined,
+      pageSize: 2,
+    });
+
+    expect(
+      [firstPage, secondPage, thirdPage].flatMap((page) =>
+        page.items.map((report) => report.id),
+      ),
+    ).toEqual([
+      "report-z",
+      "report-m",
+      "report-l",
+      "report-k",
+      "report-b",
+      "report-a",
+    ]);
+    expect(prismaMocks.opportunityReportFindMany).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        where: {
+          AND: [
+            {},
+            {
+              OR: [
+                { createdAt: { lt: newestAt } },
+                { createdAt: newestAt, id: { lt: "report-m" } },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+  });
+
+  it("keeps active message-case filters inside a scoped cursor boundary", async () => {
+    const cursor = encodeCursor({
+      id: "case-m",
+      scope: "admin:message-cases:active",
+      timestamp: new Date("2026-08-01T12:00:00.000Z"),
+    });
+    prismaMocks.caseFindMany.mockResolvedValue([]);
+
+    await getAdminMessageCasesPage({ cursor, pageSize: 2 });
+
+    expect(prismaMocks.caseFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 3,
+        where: {
+          AND: [
+            {
+              conversationId: { not: null },
+              source: {
+                in: expect.arrayContaining(["MESSAGE_REPORT", "POLICY_FLAG"]),
+              },
+              status: { in: expect.arrayContaining(["NEW", "APPEALED"]) },
+            },
+            {
+              OR: [
+                {
+                  createdAt: {
+                    lt: new Date("2026-08-01T12:00:00.000Z"),
+                  },
+                },
+                {
+                  createdAt: new Date("2026-08-01T12:00:00.000Z"),
+                  id: { lt: "case-m" },
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+
+    const wrongScopeCursor = encodeCursor({
+      id: "case-m",
+      scope: "admin:report-overview:all",
+      timestamp: new Date("2026-08-01T12:00:00.000Z"),
+    });
+    await expect(
+      getAdminMessageCasesPage({ cursor: wrongScopeCursor }),
+    ).rejects.toThrow("Invalid cursor scope.");
   });
 
   it("uses only an allowlisted scope tied to the exact case evidence", async () => {

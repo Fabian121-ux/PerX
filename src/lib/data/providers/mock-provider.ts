@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { PerXDataProvider } from "./interfaces";
+import type {
+  AdminDealSummary,
+  AdminUserSummary,
+  PerXDataProvider,
+} from "./interfaces";
 import { 
   previewOpportunities, 
   previewDeals, 
@@ -129,15 +133,22 @@ function getMockAdminRows(kind: AdminListKind): any[] {
     case "users":
       return [
         {
-          accountClassification: "PUBLIC_BETA_USER",
-          createdAt: null,
+        accountClassification: "PUBLIC_BETA_USER",
+        accountState: "ACTIVE",
+        activeRestrictions: [],
+        activity: {
+          completedAgreements: dealsStore.length,
+          ownedOpportunities: opportunitiesStore.length,
+          publicReviewsReceived: previewReviews.length,
+        },
+          createdAt: new Date(0),
           email: previewUser.email,
           id: previewUser.id,
           isActive: true,
           name: previewUser.name,
           roles: previewUser.roles.map((name) => ({ role: { label: name, name } })),
           username: previewUser.username,
-          verificationStatus: "VERIFIED",
+        verificationStatus: "VERIFIED",
         },
       ];
     case "profiles":
@@ -154,6 +165,26 @@ function getMockAdminRows(kind: AdminListKind): any[] {
       return previewReviews;
     case "disputes":
       return [];
+    case "deals":
+      return dealsStore.map((deal: any) => ({
+        currency: deal.currency,
+        id: deal.id,
+        milestoneCount: deal.milestones?.length ?? 0,
+        participantCount: deal.participants.length,
+        participantPreview: deal.participants.slice(0, 6).map((participant: any) => ({
+          role: participant.role,
+          user: {
+            name: participant.name,
+            username: participant.username,
+          },
+        })),
+        settlementMode: "SIMULATED",
+        status: deal.status,
+        title: deal.title ?? "Deal",
+        unresolvedDisputeCount: 0,
+        updatedAt: mockTimestamp(deal),
+        valueMinor: BigInt(deal.valueMinor),
+      }));
     case "verification":
       return [];
     case "audit":
@@ -299,6 +330,12 @@ export const mockProvider: PerXDataProvider = {
     },
   },
   admin: {
+    getAdminDealsPage: async (params?: CursorPageParams) =>
+      paginateMockRows(
+        getMockAdminRows("deals") as AdminDealSummary[],
+        params,
+        { scope: "admin:deals" },
+      ),
     getAdminMetrics: async () => {
       return { auditLogs: 42, disputes: 1, opportunities: opportunitiesStore.length, reports: 0, reviews: previewReviews.length, users: 5, verification: 2 };
     },
@@ -312,6 +349,12 @@ export const mockProvider: PerXDataProvider = {
       paginateMockRows(getMockAdminRows(kind), params, {
         scope: `admin:${kind}`,
       }),
+    getAdminUsersPage: async (params?: CursorPageParams) =>
+      paginateMockRows(
+        getMockAdminRows("users") as AdminUserSummary[],
+        params,
+        { scope: "admin:users" },
+      ),
   },
 };
 

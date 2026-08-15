@@ -1,12 +1,20 @@
 import { getPrisma } from "@/lib/db/prisma";
 import { encodeCursor } from "@/lib/data/cursor";
 import { buildConversationAccessWhere } from "@/lib/messages/access";
+import { getServerEnv } from "@/lib/env";
 import type { Prisma } from "@/generated/prisma/client";
+import type { RoleName } from "@/lib/permissions/capabilities";
+import {
+  getConversationDealOffer,
+  getConversationProposalHref,
+  toParticipantProfilePreview,
+} from "@/lib/messages/workspace-conversation";
 
 type MessageSnapshotOptions = {
   conversationId?: string | null;
   includeConversationList?: boolean;
   userId: string;
+  userRoles?: RoleName[];
 };
 
 type ConversationSnapshotRow = Prisma.ConversationGetPayload<{
@@ -22,6 +30,7 @@ export async function getMessageSnapshot({
   conversationId,
   includeConversationList = true,
   userId,
+  userRoles = [],
 }: MessageSnapshotOptions) {
   const prisma = getPrisma();
   const accessWhere = buildConversationAccessWhere(userId);
@@ -41,6 +50,7 @@ export async function getMessageSnapshot({
             exactConversations,
             conversationId,
             userId,
+            userRoles,
             null,
           )
         : { conversationList: null, conversations: null, notFound: true };
@@ -65,6 +75,7 @@ export async function getMessageSnapshot({
       conversations,
       conversationId,
       userId,
+      userRoles,
       conversationListSnapshot(listConversations, userId),
     );
   } else {
@@ -74,6 +85,7 @@ export async function getMessageSnapshot({
       conversations,
       conversationId,
       userId,
+      userRoles,
       conversationListSnapshot(listConversations, userId),
     );
   }
@@ -83,8 +95,12 @@ function formatMessageSnapshot(
   conversations: ConversationSnapshotRow[],
   conversationId: string | null | undefined,
   userId: string,
+  userRoles: RoleName[],
   conversationList: ConversationListSnapshot | null,
 ) {
+  const mutationCutoff = new Date(
+    Date.now() - getServerEnv().MESSAGE_EDIT_WINDOW_MINUTES * 60_000,
+  );
   return {
     conversationList,
     conversations: conversations.map((conversation) => {
@@ -149,6 +165,10 @@ function formatMessageSnapshot(
             }
           : null,
         dealHref: linkedDeal ? `/app/deals/${linkedDeal.id}` : null,
+        dealOffer: getConversationDealOffer(conversation, {
+          id: userId,
+          roles: userRoles,
+        }),
         events: [...conversation.events].reverse().map((event) => ({
           actorName:
             conversation.participants.find(
@@ -158,6 +178,11 @@ function formatMessageSnapshot(
           dealHref: event.dealId ? `/app/deals/${event.dealId}` : null,
           id: event.id,
           proposalVersionId: event.proposalVersionId,
+          proposalHref: getConversationProposalHref(
+            event.type,
+            event.actorId,
+            userId,
+          ),
           snapshot: toEventSnapshot(event.snapshot),
           type: event.type,
         })),
@@ -170,6 +195,7 @@ function formatMessageSnapshot(
             : (latestMessage?.body ?? "No messages yet."),
         messages: messages.map((message) => ({
           body: message.deletedAt ? "" : message.body,
+          canMutate: !message.deletedAt && message.createdAt >= mutationCutoff,
           createdAt: message.createdAt.toISOString(),
           deletedAt: message.deletedAt?.toISOString() ?? null,
           editedAt: message.editedAt?.toISOString() ?? null,
@@ -213,6 +239,7 @@ function formatMessageSnapshot(
           other?.profile?.showPresence ?? false,
           other?.sessions[0]?.lastSeenAt ?? null,
         ),
+        participantProfile: toParticipantProfilePreview(other?.profile),
         participantUsername: other?.username ?? null,
         timestamp: (latestEventIsNewer
           ? latestEvent.createdAt
@@ -246,6 +273,15 @@ function conversationListSnapshot(
 
 function conversationSnapshotInclude(fullHistory: boolean) {
   return {
+    _count: {
+      select: {
+        proposals: {
+          where: {
+            status: { in: ["DRAFT", "SENT", "COUNTERED", "ACCEPTED"] },
+          },
+        },
+      },
+    },
     events: {
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: fullHistory ? 50 : 1,
@@ -269,7 +305,15 @@ function conversationSnapshotInclude(fullHistory: boolean) {
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: fullHistory ? 51 : 1,
     },
-    opportunity: { select: { title: true } },
+    opportunity: {
+      select: {
+        currency: true,
+        moderationStatus: true,
+        ownerId: true,
+        status: true,
+        title: true,
+      },
+    },
     participants: {
       include: {
         user: {
@@ -279,9 +323,19 @@ function conversationSnapshotInclude(fullHistory: boolean) {
             name: true,
             profile: {
               select: {
+                biography: true,
+                headline: true,
+                location: true,
                 profileImageUrl: true,
                 showLastActiveTime: true,
+                showLocation: true,
                 showPresence: true,
+                showSkills: true,
+                skills: {
+                  orderBy: { name: "asc" },
+                  select: { name: true },
+                  take: 12,
+                },
               },
             },
             sessions: {

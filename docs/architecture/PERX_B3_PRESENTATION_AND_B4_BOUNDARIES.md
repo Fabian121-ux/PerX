@@ -35,3 +35,23 @@ B4 must define scalable event production, deduplication and idempotency, deliver
 B3 enforces the existing role-derived capabilities in presentation and server mutations. These mappings are temporary and are not the B4 server-owned capability-grant model. B4 must define durable grants, administrative provenance, revocation, auditability, and type-sensitive creation permissions.
 
 Investment posts remain unavailable for creation or publication pending formal regulatory and product clearance. Existing records may remain readable or editable as drafts, but B3 does not activate investment publishing.
+
+## In-Chat Deal Entry
+
+B3's in-chat `Make a Deal` entry creates an immutable submitted Proposal version in an existing active, two-party, opportunity-linked conversation. The exact `@deal` composer command opens the same structured form and is not persisted as an ordinary message. It does not infer terms from free text.
+
+A Deal is created only when the opportunity owner explicitly accepts that exact submitted version through the existing Proposal decision flow. Direct-chat Deals, group Deals, multiple concurrent Proposal lifecycles, administrative Deal transitions, real payment custody, and text-based acceptance remain outside B3.
+
+## Admin Operational Summaries
+
+B3 Admin Users and Admin Deals expose read-only, cursor-bounded operational summaries. User rows contain current account availability, verification, authorization roles, active channel restrictions, and record-backed activity counts. Deal rows contain current status, settlement mode, agreement value, bounded participant previews, and aggregate participant, milestone, and unresolved-dispute counts.
+
+These summaries do not add admin detail pages, role assignment, enforcement history, Deal history, administrative Deal transitions, or payment/ledger inspection. Those remain B4 concerns.
+
+## Create Post Browser Recovery
+
+Create Post browser recovery is best-effort local storage, not a persisted PerX Opportunity draft. Keys are scoped to the authenticated user ID and currently creatable opportunity type, are versioned, and expire after 30 days. Storage is read only after hydration, malformed or stale payloads are ignored, and successful server persistence clears only the confirmed user/type key from the authenticated success destination.
+
+Only an explicit allowlist of composer fields is stored. Submission intent, account/session data, object IDs, files, and the Property ownership or authority declaration are excluded. Users are warned not to enter private contact, payment, identity-document, or verification information. Local recovery is not encrypted and is not a confidentiality boundary on a shared browser.
+
+Mobile Create Post keeps core and Property-required fields visible while progressively disclosing optional budget, location, skills, and participation fields. Desktop retains those controls in the normal form flow. Money controls preserve canonical decimal text, declare their currency, and enforce the database's signed 64-bit minor-unit limit. This work introduces no database migration and does not change Investment availability.

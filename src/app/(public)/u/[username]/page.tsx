@@ -5,6 +5,8 @@ import {
   BadgeCheck,
   BriefcaseBusiness,
   CalendarDays,
+  ExternalLink,
+  Globe2,
   Mail,
   MapPin,
   Star,
@@ -28,8 +30,11 @@ import {
 import { getCurrentUser } from "@/lib/auth/session";
 import { getPublicProfileResult } from "@/lib/data/profiles";
 import { getPrisma } from "@/lib/db/prisma";
-import { calculateTrustSummary } from "@/lib/trust/engine";
 import { createTrustPresentation } from "@/lib/trust/presentation";
+import {
+  formatProfileDateRange,
+  normalizePublicProfile,
+} from "@/lib/profiles/view-model";
 
 export default async function PublicProfilePage({
   params,
@@ -53,7 +58,7 @@ export default async function PublicProfilePage({
   }
   if (!profile) notFound();
 
-  const normalized = normalizeProfile(profile);
+  const normalized = normalizePublicProfile(profile);
   const trustPresentation = createTrustPresentation({
     averageRating: normalized.averageRating,
     completedAgreements: normalized.completedDeals,
@@ -140,7 +145,7 @@ export default async function PublicProfilePage({
               </div>
 
               <nav className="dashboard-scroll -mx-5 mt-6 flex gap-2 overflow-x-auto px-5 pb-1 sm:-mx-6 sm:px-6">
-                {["About", "Skills", "Experience", "Reviews"].map((item) => (
+                {["About", "Portfolio", "Skills", "Experience", "Reviews"].map((item) => (
                   <a
                     className="shrink-0 rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-2 text-sm font-bold text-[color:var(--px-text-muted)] hover:border-[color:var(--px-primary)] hover:text-[color:var(--px-primary)]"
                     href={`#${item.toLowerCase()}`}
@@ -164,6 +169,26 @@ export default async function PublicProfilePage({
               <p className="mt-3 text-sm leading-7 text-[color:var(--px-text-muted)]">
                 {normalized.biography}
               </p>
+              <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold text-[color:var(--px-text-muted)]">
+                {normalized.websiteUrl ? (
+                  <a
+                    className="inline-flex min-h-11 items-center gap-2 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] px-3 text-[color:var(--px-primary)] hover:bg-[color:var(--px-surface-soft)]"
+                    href={normalized.websiteUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    <Globe2 aria-hidden size={16} />
+                    Website
+                    <ExternalLink aria-hidden size={14} />
+                  </a>
+                ) : null}
+                {normalized.createdAt ? (
+                  <span className="inline-flex min-h-11 items-center gap-2 rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface-soft)] px-3">
+                    <CalendarDays aria-hidden size={16} />
+                    Joined {formatProfileJoinDate(normalized.createdAt)}
+                  </span>
+                ) : null}
+              </div>
             </Card>
 
             <Card>
@@ -186,6 +211,47 @@ export default async function PublicProfilePage({
                 ) : (
                   <p className="text-sm text-[color:var(--px-text-muted)]">
                     Published opportunities and listings will appear here.
+                  </p>
+                )}
+              </div>
+            </Card>
+
+            <Card>
+              <h2
+                className="text-xl font-black text-[color:var(--px-text)]"
+                id="portfolio"
+              >
+                Portfolio
+              </h2>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {normalized.portfolio.length ? (
+                  normalized.portfolio.map((item: any) => (
+                    <article
+                      className="rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] p-4"
+                      key={item.id}
+                    >
+                      <h3 className="font-bold text-[color:var(--px-text)]">
+                        {item.title}
+                      </h3>
+                      <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
+                        {item.description}
+                      </p>
+                      {item.url ? (
+                        <a
+                          className="mt-3 inline-flex min-h-11 items-center gap-2 text-sm font-bold text-[color:var(--px-primary)]"
+                          href={item.url}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          View project
+                          <ExternalLink aria-hidden size={14} />
+                        </a>
+                      ) : null}
+                    </article>
+                  ))
+                ) : (
+                  <p className="text-sm text-[color:var(--px-text-muted)] sm:col-span-2">
+                    Portfolio projects will appear after this member adds them.
                   </p>
                 )}
               </div>
@@ -231,6 +297,17 @@ export default async function PublicProfilePage({
                       <p className="mt-1 text-sm font-semibold text-[color:var(--px-text-muted)]">
                         {item.company}
                       </p>
+                      {formatProfileDateRange(
+                        item.startedAt,
+                        item.endedAt,
+                      ) ? (
+                        <p className="mt-1 text-xs font-semibold text-[color:var(--px-text-muted)]">
+                          {formatProfileDateRange(
+                            item.startedAt,
+                            item.endedAt,
+                          )}
+                        </p>
+                      ) : null}
                       {item.summary ? (
                         <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
                           {item.summary}
@@ -302,6 +379,7 @@ export default async function PublicProfilePage({
                     agreements.
                   </p>
                 )}
+                <span data-profile-end="true" />
               </div>
             </Card>
           </div>
@@ -381,90 +459,11 @@ export default async function PublicProfilePage({
   );
 }
 
-function normalizeProfile(profile: any) {
-  const details =
-    profile.profile && typeof profile.profile === "object"
-      ? profile.profile
-      : {};
-
-  const roles: string[] = Array.isArray(profile.roles)
-    ? profile.roles
-        .map((entry: any) =>
-          typeof entry === "string"
-            ? entry
-            : (entry.role?.label ?? entry.role?.name ?? null),
-        )
-        .filter(Boolean)
-    : [];
-
-  const skillsSource = Array.isArray(details.skills)
-    ? details.skills
-    : Array.isArray(profile.skills)
-      ? profile.skills
-      : [];
-
-  const skills: string[] = skillsSource
-    .map((entry: any) => (typeof entry === "string" ? entry : entry.name))
-    .filter(Boolean);
-
-  const averageRating = Number(
-    profile.trustRecordEvidence?.averageRating ?? 0,
-  );
-  const completedDeals = Number(
-    profile.trustRecordEvidence?.completedAgreements ?? 0,
-  );
-  const publicReviewCount = Number(
-    profile.trustRecordEvidence?.publicReviewCount ?? 0,
-  );
-
-  return {
-    allowConnectionRequests: details.allowConnectionRequests ?? true,
-    allowMessagesFromConnections:
-      details.allowMessagesFromConnections ?? true,
-    allowMessagesFromMembers: details.allowMessagesFromMembers ?? false,
-    averageRating: Number.isFinite(averageRating) ? averageRating : 0,
-    biography:
-      details.biography ??
-      profile.biography ??
-      "This member has not completed a biography.",
-    completedDeals,
-    emailVerified: Boolean(profile.emailVerifiedAt),
-    headline: details.headline ?? profile.headline ?? "perX member",
-    id: profile.id,
-    isVerified: profile.verificationStatus === "VERIFIED",
-    location:
-      details.showLocation === false
-        ? null
-        : (details.location ?? profile.location ?? null),
-    name: profile.name ?? "perX member",
-    opportunities: Array.isArray(profile.opportunities)
-      ? profile.opportunities
-      : [],
-    profileImageUrl:
-      details.profileImageUrl ??
-      profile.profileImageUrl ??
-      profile.imageUrl ??
-      "",
-    reviews: Array.isArray(profile.reviewsReceived)
-      ? profile.reviewsReceived
-      : [],
-    roles,
-    profileCompleteness: Number(
-      details.profileCompleteness ?? profile.profileCompleteness ?? 0,
-    ),
-    publicReviewCount,
-    skills: details.showSkills === false ? [] : skills,
-    trust: calculateTrustSummary({
-      averageRating,
-      completedDeals,
-      emailVerifiedAt: profile.emailVerifiedAt ?? null,
-      profileCompleteness: Number(
-        details.profileCompleteness ?? profile.profileCompleteness ?? 0,
-      ),
-      verificationStatus: profile.verificationStatus,
-    }),
-    workHistory: Array.isArray(details.workHistory) ? details.workHistory : [],
-  };
+function formatProfileJoinDate(value: Date | string) {
+  return new Date(value).toLocaleDateString("en", {
+    month: "long",
+    year: "numeric",
+  });
 }
 
 async function getProfileRelationship(viewerId: string, targetUserId: string) {

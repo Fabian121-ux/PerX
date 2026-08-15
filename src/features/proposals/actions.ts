@@ -2,17 +2,25 @@
 
 import crypto from "node:crypto";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
-import { requireUser } from "@/lib/auth/session";
-import { assertCanCreateDeal } from "@/lib/account/enforcement";
+import { getCurrentSessionTokenHash, requireUser } from "@/lib/auth/session";
+import {
+  assertAccountAccessWithClient,
+  assertCanCreateDeal,
+} from "@/lib/account/enforcement";
 import { getPrisma } from "@/lib/db/prisma";
 import { getResolvedDataMode, hasDatabaseUrl } from "@/lib/env";
 import { parseMoneyToMinor } from "@/lib/money";
 import { hasCapability } from "@/lib/permissions/capabilities";
 import type { RoleName } from "@/lib/permissions/capabilities";
-import { proposalFormSchema } from "@/lib/validation/opportunity";
+import { lockUserAccount, lockUserPairs } from "@/lib/network/pair-lock";
+import {
+  conversationProposalFormSchema,
+  proposalFormSchema,
+} from "@/lib/validation/opportunity";
 
 const proposalVersionIdSchema = z
   .string()
@@ -47,14 +55,17 @@ function parseProposalForm(formData: FormData) {
   });
 }
 
-function versionSnapshot(version: {
-  amountMinor: bigint;
-  currency: string;
-  deliveryDays: number;
-  description: string;
-  includedRevisions: number;
-  versionNumber: number;
-}, opportunityTitle: string) {
+function versionSnapshot(
+  version: {
+    amountMinor: bigint;
+    currency: string;
+    deliveryDays: number;
+    description: string;
+    includedRevisions: number;
+    versionNumber: number;
+  },
+  opportunityTitle: string,
+) {
   return {
     amountMinor: version.amountMinor.toString(),
     currency: version.currency,
@@ -80,15 +91,322 @@ async function getOpenOpportunity(opportunityId: string, senderId: string) {
   return opportunity;
 }
 
+export type ConversationProposalResult =
+  | {
+      error: string;
+      existingProposalHref?: string;
+    }
+  | {
+      event: {
+        actorName: string;
+        createdAt: string;
+        dealHref: null;
+        id: string;
+        proposalHref: string;
+        proposalVersionId: string;
+        snapshot: Record<string, unknown>;
+        type: "PROPOSAL_SUBMITTED";
+      };
+      success: true;
+    };
+
+export async function submitConversationProposalAction(input: {
+  amount: string;
+  clientRequestId: string;
+  conversationId: string;
+  deliveryDays: number;
+  description: string;
+  revisions: number;
+}): Promise<ConversationProposalResult> {
+  const user = await requireUser();
+  if (
+    !hasCapability(user.roles, "proposal:create") ||
+    !hasCapability(user.roles, "deal:view:participant")
+  ) {
+    return { error: "You cannot create Deals with this account." };
+  }
+  const sessionTokenHash = await getCurrentSessionTokenHash();
+  if (!sessionTokenHash) return { error: "Authentication required." };
+  const parsed = conversationProposalFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      error: parsed.error.issues[0]?.message ?? "Check the proposal terms.",
+    };
+  }
+  const restriction = await assertCanCreateDeal(user.id);
+  if (restriction) return { error: restriction };
+  if (getResolvedDataMode() === "mock") {
+    return {
+      error: "Structured proposals are unavailable in preview mode.",
+    };
+  }
+  if (!hasDatabaseUrl()) return { error: "Database not configured." };
+
+  try {
+    const result = await getPrisma().$transaction(
+      async (tx) => {
+        await tx.$executeRawUnsafe(
+          "SELECT pg_advisory_xact_lock(hashtext($1))",
+          `proposal-offer:${parsed.data.conversationId}`,
+        );
+        const conversation = await tx.conversation.findFirst({
+          include: {
+            opportunity: true,
+            participants: true,
+            proposals: {
+              orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+              select: {
+                deal: { select: { id: true } },
+                id: true,
+                status: true,
+              },
+              take: 2,
+              where: {
+                OR: [
+                  { deal: { isNot: null } },
+                  {
+                    status: { in: ["DRAFT", "SENT", "COUNTERED", "ACCEPTED"] },
+                  },
+                ],
+              },
+            },
+          },
+          where: {
+            id: parsed.data.conversationId,
+            participants: { some: { removedAt: null, userId: user.id } },
+            status: "ACTIVE",
+          },
+        });
+        if (!conversation) {
+          return { error: "This conversation is unavailable." };
+        }
+        const otherParticipantIds = conversation.participants
+          .map((participant) => participant.userId)
+          .filter((participantId) => participantId !== user.id);
+        if (
+          conversation.participants.length !== 2 ||
+          otherParticipantIds.length !== 1
+        ) {
+          return {
+            error: "Structured proposals require a two-person conversation.",
+          };
+        }
+
+        await lockUserAccount(tx, user.id);
+        await lockUserPairs(tx, user.id, otherParticipantIds);
+        const activeSession = await tx.session.findFirst({
+          select: { id: true },
+          where: {
+            expiresAt: { gt: new Date() },
+            tokenHash: sessionTokenHash,
+            userId: user.id,
+          },
+        });
+        if (!activeSession) return { error: "Authentication required." };
+        const lockedRestriction = await assertAccountAccessWithClient(
+          tx,
+          user.id,
+          "deal",
+        );
+        if (lockedRestriction) return { error: lockedRestriction };
+        const blocked = await tx.blockedUser.findFirst({
+          select: { id: true },
+          where: {
+            OR: otherParticipantIds.flatMap((participantId) => [
+              { blockedUserId: participantId, blockerUserId: user.id },
+              { blockedUserId: user.id, blockerUserId: participantId },
+            ]),
+          },
+        });
+        if (blocked) return { error: "This conversation is unavailable." };
+
+        const existingEvent = await tx.conversationEvent.findUnique({
+          select: {
+            createdAt: true,
+            id: true,
+            proposalVersionId: true,
+            snapshot: true,
+          },
+          where: {
+            idempotencyKey: `proposal-offer:${user.id}:${parsed.data.conversationId}:${parsed.data.clientRequestId}`,
+          },
+        });
+        if (existingEvent?.proposalVersionId) {
+          return { event: existingEvent };
+        }
+
+        const opportunity = conversation.opportunityId
+          ? await tx.opportunity.findFirst({
+              where: {
+                id: conversation.opportunityId,
+                moderationStatus: "APPROVED",
+                ownerId: otherParticipantIds[0],
+                status: "PUBLISHED",
+              },
+            })
+          : null;
+        if (!opportunity || opportunity.ownerId === user.id) {
+          return {
+            error:
+              "Make a Deal is available only for an active opportunity conversation.",
+          };
+        }
+        if (conversation.proposals.some((proposal) => proposal.deal)) {
+          return { error: "This conversation already has a Deal." };
+        }
+        const activeProposal = conversation.proposals.find((proposal) =>
+          ["DRAFT", "SENT", "COUNTERED", "ACCEPTED"].includes(proposal.status),
+        );
+        if (activeProposal) {
+          return {
+            error: "This conversation already has an active proposal.",
+            existingProposalHref: "/app/proposals/sent",
+          };
+        }
+
+        let amount;
+        try {
+          amount = parseMoneyToMinor(parsed.data.amount, opportunity.currency);
+        } catch (error) {
+          return {
+            error:
+              error instanceof Error ? error.message : "Enter a valid amount.",
+          };
+        }
+        const proposal = await tx.proposal.create({
+          data: {
+            amountMinor: amount.amountMinor,
+            conversationId: conversation.id,
+            currency: amount.currency,
+            deliveryDays: parsed.data.deliveryDays,
+            description: parsed.data.description,
+            opportunityId: opportunity.id,
+            revisions: parsed.data.revisions,
+            senderId: user.id,
+            status: "SENT",
+            statusHistory: {
+              create: {
+                actorId: user.id,
+                note: "Proposal version 1 submitted from conversation.",
+                toStatus: "SENT",
+              },
+            },
+          },
+        });
+        const version = await tx.proposalVersion.create({
+          data: {
+            amountMinor: amount.amountMinor,
+            createdById: user.id,
+            currency: amount.currency,
+            deliveryDays: parsed.data.deliveryDays,
+            description: parsed.data.description,
+            includedRevisions: parsed.data.revisions,
+            proposalId: proposal.id,
+            status: "SUBMITTED",
+            submittedAt: new Date(),
+            versionNumber: 1,
+          },
+        });
+        const snapshot = versionSnapshot(version, opportunity.title);
+        const event = await tx.conversationEvent.create({
+          data: {
+            actorId: user.id,
+            conversationId: conversation.id,
+            idempotencyKey: `proposal-offer:${user.id}:${conversation.id}:${parsed.data.clientRequestId}`,
+            proposalVersionId: version.id,
+            snapshot,
+            type: "PROPOSAL_SUBMITTED",
+          },
+        });
+        await tx.conversationParticipant.updateMany({
+          data: { removedAt: null },
+          where: { conversationId: conversation.id },
+        });
+        await tx.notification.create({
+          data: {
+            actionUrl: `/app/messages/${conversation.id}?event=${event.id}`,
+            body: `${user.name} submitted version 1 for ${opportunity.title}.`,
+            metadata: {
+              conversationEventId: event.id,
+              conversationId: conversation.id,
+              proposalId: proposal.id,
+              proposalVersionId: version.id,
+              recipientId: opportunity.ownerId,
+            },
+            title: "Proposal received",
+            type: "PROPOSAL",
+            userId: opportunity.ownerId,
+          },
+        });
+        await tx.auditLog.create({
+          data: {
+            action: "proposal.version_submitted",
+            actorId: user.id,
+            entityId: version.id,
+            entityType: "proposal_version",
+            metadata: {
+              conversationId: conversation.id,
+              proposalId: proposal.id,
+              source: "conversation_make_deal",
+              versionNumber: 1,
+            },
+          },
+        });
+        await tx.conversation.update({
+          data: { updatedAt: new Date() },
+          where: { id: conversation.id },
+        });
+        return { event: { ...event, snapshot } };
+      },
+      { timeout: 30_000 },
+    );
+
+    if ("error" in result && typeof result.error === "string") {
+      return {
+        error: result.error,
+        ...(result.existingProposalHref
+          ? { existingProposalHref: result.existingProposalHref }
+          : {}),
+      };
+    }
+    revalidatePath("/app/messages");
+    revalidatePath(`/app/messages/${parsed.data.conversationId}`);
+    revalidatePath("/app/proposals/sent");
+    revalidatePath("/app/proposals/received");
+    revalidatePath("/app/notifications");
+    return {
+      event: {
+        actorName: user.name,
+        createdAt: result.event.createdAt.toISOString(),
+        dealHref: null,
+        id: result.event.id,
+        proposalHref: "/app/proposals/sent",
+        proposalVersionId: result.event.proposalVersionId!,
+        snapshot: result.event.snapshot as Record<string, unknown>,
+        type: "PROPOSAL_SUBMITTED",
+      },
+      success: true,
+    };
+  } catch (error) {
+    console.error("Failed to submit conversation proposal:", error);
+    return { error: "Unable to submit this proposal. Please try again." };
+  }
+}
+
 export async function saveProposalDraftAction(formData: FormData) {
   const user = await requireUser();
   requireProposalCreateCapability(user.roles);
-  if (getResolvedDataMode() === "mock") redirect("/app/proposals/sent?mock=true");
-  if (!hasDatabaseUrl()) redirect("/app/proposals/sent?error=database-not-configured");
+  if (getResolvedDataMode() === "mock")
+    redirect("/app/proposals/sent?mock=true");
+  if (!hasDatabaseUrl())
+    redirect("/app/proposals/sent?error=database-not-configured");
 
   const parsed = parseProposalForm(formData);
   if (!parsed.success) redirect("/app/proposals/sent?error=check-fields");
-  const opportunity = await getOpenOpportunity(parsed.data.opportunityId, user.id);
+  const opportunity = await getOpenOpportunity(
+    parsed.data.opportunityId,
+    user.id,
+  );
   const amount = parseMoneyToMinor(parsed.data.amount, opportunity.currency);
 
   await getPrisma().$transaction(async (tx) => {
@@ -140,12 +458,17 @@ export async function saveProposalDraftAction(formData: FormData) {
 export async function submitProposalAction(formData: FormData) {
   const user = await requireUser();
   requireProposalCreateCapability(user.roles);
-  if (getResolvedDataMode() === "mock") redirect("/app/proposals/sent?mock=true");
-  if (!hasDatabaseUrl()) redirect("/app/proposals/sent?error=database-not-configured");
+  if (getResolvedDataMode() === "mock")
+    redirect("/app/proposals/sent?mock=true");
+  if (!hasDatabaseUrl())
+    redirect("/app/proposals/sent?error=database-not-configured");
 
   const parsed = parseProposalForm(formData);
   if (!parsed.success) redirect("/app/proposals/sent?error=check-fields");
-  const opportunity = await getOpenOpportunity(parsed.data.opportunityId, user.id);
+  const opportunity = await getOpenOpportunity(
+    parsed.data.opportunityId,
+    user.id,
+  );
   const amount = parseMoneyToMinor(parsed.data.amount, opportunity.currency);
 
   const conversationId = await getPrisma().$transaction(async (tx) => {
@@ -239,8 +562,10 @@ export async function submitProposalAction(formData: FormData) {
 export async function updateProposalDraftAction(formData: FormData) {
   const user = await requireUser();
   requireProposalCreateCapability(user.roles);
-  if (getResolvedDataMode() === "mock") redirect("/app/proposals/sent?mock=true");
-  if (!hasDatabaseUrl()) redirect("/app/proposals/sent?error=database-not-configured");
+  if (getResolvedDataMode() === "mock")
+    redirect("/app/proposals/sent?mock=true");
+  if (!hasDatabaseUrl())
+    redirect("/app/proposals/sent?error=database-not-configured");
 
   const versionId = String(formData.get("versionId") ?? "");
   const parsedVersionId = proposalVersionIdSchema.safeParse(versionId);
@@ -324,8 +649,10 @@ export async function updateProposalDraftAction(formData: FormData) {
 export async function deleteProposalDraftAction(formData: FormData) {
   const user = await requireUser();
   requireProposalCreateCapability(user.roles);
-  if (getResolvedDataMode() === "mock") redirect("/app/proposals/sent?mock=true");
-  if (!hasDatabaseUrl()) redirect("/app/proposals/sent?error=database-not-configured");
+  if (getResolvedDataMode() === "mock")
+    redirect("/app/proposals/sent?mock=true");
+  if (!hasDatabaseUrl())
+    redirect("/app/proposals/sent?error=database-not-configured");
 
   const parsed = proposalVersionIdSchema.safeParse(formData.get("versionId"));
   if (!parsed.success) redirect("/app/proposals/sent?error=invalid-draft");
@@ -381,8 +708,10 @@ export async function deleteProposalDraftAction(formData: FormData) {
 export async function submitProposalDraftAction(formData: FormData) {
   const user = await requireUser();
   requireProposalCreateCapability(user.roles);
-  if (getResolvedDataMode() === "mock") redirect("/app/proposals/sent?mock=true");
-  if (!hasDatabaseUrl()) redirect("/app/proposals/sent?error=database-not-configured");
+  if (getResolvedDataMode() === "mock")
+    redirect("/app/proposals/sent?mock=true");
+  if (!hasDatabaseUrl())
+    redirect("/app/proposals/sent?error=database-not-configured");
 
   const parsedVersionId = proposalVersionIdSchema.safeParse(
     formData.get("versionId"),
@@ -407,10 +736,7 @@ export async function submitProposalDraftAction(formData: FormData) {
       status: "DRAFT",
     },
   });
-  if (
-    !draft ||
-    draft.proposal.opportunityId !== parsed.data.opportunityId
-  ) {
+  if (!draft || draft.proposal.opportunityId !== parsed.data.opportunityId) {
     redirect("/app?error=forbidden");
   }
   if (
@@ -528,7 +854,9 @@ export async function submitProposalDraftAction(formData: FormData) {
           proposalVersionId: draft.id,
           recipientId: draft.proposal.opportunity.ownerId,
         },
-        title: draft.supersedesVersionId ? "Proposal revised" : "Proposal received",
+        title: draft.supersedesVersionId
+          ? "Proposal revised"
+          : "Proposal received",
         type: "PROPOSAL_UPDATE",
         userId: draft.proposal.opportunity.ownerId,
       },
@@ -558,14 +886,17 @@ export async function submitProposalDraftAction(formData: FormData) {
 export async function raiseProposalObjectionAction(formData: FormData) {
   const user = await requireUser();
   requireProposalDecisionCapability(user.roles);
-  if (getResolvedDataMode() === "mock") redirect("/app/proposals/received?mock=true");
-  if (!hasDatabaseUrl()) redirect("/app/proposals/received?error=database-not-configured");
+  if (getResolvedDataMode() === "mock")
+    redirect("/app/proposals/received?mock=true");
+  if (!hasDatabaseUrl())
+    redirect("/app/proposals/received?error=database-not-configured");
 
   const parsed = objectionSchema.safeParse({
     reason: formData.get("reason"),
     versionId: formData.get("versionId"),
   });
-  if (!parsed.success) redirect("/app/proposals/received?error=check-objection");
+  if (!parsed.success)
+    redirect("/app/proposals/received?error=check-objection");
   const version = await getPrisma().proposalVersion.findFirst({
     include: { proposal: { include: { opportunity: true } } },
     where: { id: parsed.data.versionId, status: "SUBMITTED" },
@@ -658,8 +989,10 @@ export async function raiseProposalObjectionAction(formData: FormData) {
 export async function createProposalRevisionAction(formData: FormData) {
   const user = await requireUser();
   requireProposalCreateCapability(user.roles);
-  if (getResolvedDataMode() === "mock") redirect("/app/proposals/sent?mock=true");
-  if (!hasDatabaseUrl()) redirect("/app/proposals/sent?error=database-not-configured");
+  if (getResolvedDataMode() === "mock")
+    redirect("/app/proposals/sent?mock=true");
+  if (!hasDatabaseUrl())
+    redirect("/app/proposals/sent?error=database-not-configured");
 
   const parsed = proposalVersionIdSchema.safeParse(formData.get("versionId"));
   if (!parsed.success) redirect("/app/proposals/sent?error=invalid-version");
@@ -671,10 +1004,7 @@ export async function createProposalRevisionAction(formData: FormData) {
       status: "SUBMITTED",
     },
   });
-  if (
-    !source ||
-    !["SENT", "COUNTERED"].includes(source.proposal.status)
-  ) {
+  if (!source || !["SENT", "COUNTERED"].includes(source.proposal.status)) {
     redirect("/app?error=forbidden");
   }
 
@@ -744,11 +1074,14 @@ export async function createProposalRevisionAction(formData: FormData) {
 export async function rejectProposalAction(formData: FormData) {
   const user = await requireUser();
   requireProposalDecisionCapability(user.roles);
-  if (getResolvedDataMode() === "mock") redirect("/app/proposals/received?mock=true");
-  if (!hasDatabaseUrl()) redirect("/app/proposals/received?error=database-not-configured");
+  if (getResolvedDataMode() === "mock")
+    redirect("/app/proposals/received?mock=true");
+  if (!hasDatabaseUrl())
+    redirect("/app/proposals/received?error=database-not-configured");
 
   const parsed = proposalVersionIdSchema.safeParse(formData.get("versionId"));
-  if (!parsed.success) redirect("/app/proposals/received?error=invalid-version");
+  if (!parsed.success)
+    redirect("/app/proposals/received?error=invalid-version");
   const version = await getPrisma().proposalVersion.findFirst({
     include: { proposal: { include: { opportunity: true } } },
     where: { id: parsed.data, status: "SUBMITTED" },
@@ -859,11 +1192,14 @@ export async function acceptProposalAction(formData: FormData) {
   requireProposalDecisionCapability(user.roles);
   const accountRestriction = await assertCanCreateDeal(user.id);
   if (accountRestriction) throw new Error(accountRestriction);
-  if (getResolvedDataMode() === "mock") redirect("/app/deals/mock-deal-1?mock=true");
-  if (!hasDatabaseUrl()) redirect("/app/proposals/received?error=database-not-configured");
+  if (getResolvedDataMode() === "mock")
+    redirect("/app/deals/mock-deal-1?mock=true");
+  if (!hasDatabaseUrl())
+    redirect("/app/proposals/received?error=database-not-configured");
 
   const parsed = proposalVersionIdSchema.safeParse(formData.get("versionId"));
-  if (!parsed.success) redirect("/app/proposals/received?error=invalid-version");
+  if (!parsed.success)
+    redirect("/app/proposals/received?error=invalid-version");
   const version = await getPrisma().proposalVersion.findFirst({
     include: {
       milestones: { orderBy: { position: "asc" } },
@@ -880,166 +1216,180 @@ export async function acceptProposalAction(formData: FormData) {
     redirect("/app?error=forbidden");
   }
 
-  const deal = await getPrisma().$transaction(async (tx) => {
-    const claimedProposal = await tx.proposal.updateMany({
-      data: { status: "ACCEPTED" },
-      where: {
-        deal: null,
-        id: version.proposalId,
-        opportunity: { ownerId: user.id },
-        status: { in: ["SENT", "COUNTERED"] },
-        versions: { some: { id: version.id, status: "SUBMITTED" } },
-      },
-    });
-    const claimedVersion = await tx.proposalVersion.updateMany({
-      data: { acceptedAt: new Date(), status: "ACCEPTED" },
-      where: { id: version.id, status: "SUBMITTED" },
-    });
-    if (!claimedVersion.count || !claimedProposal.count) {
-      throw new Error("Proposal version is no longer available for acceptance.");
-    }
-    await tx.proposalVersion.updateMany({
-      data: { status: "WITHDRAWN" },
-      where: {
-        id: { not: version.id },
-        proposalId: version.proposalId,
-        status: "DRAFT",
-      },
-    });
-    await tx.proposalVersion.updateMany({
-      data: { status: "SUPERSEDED" },
-      where: {
-        id: { not: version.id },
-        proposalId: version.proposalId,
-        status: "SUBMITTED",
-      },
-    });
-    await tx.proposalStatusHistory.create({
-      data: {
-        actorId: user.id,
-        fromStatus: version.proposal.status,
-        note: `Accepted immutable proposal version ${version.versionNumber}.`,
-        proposalId: version.proposalId,
-        toStatus: "ACCEPTED",
-      },
-    });
-    const createdDeal = await tx.deal.create({
-      data: {
-        currency: version.currency,
-        opportunityId: version.proposal.opportunityId,
-        proposalId: version.proposalId,
-        proposalVersionId: version.id,
-        settlementMode: "PROVIDER_DISABLED",
-        status: "IN_PROGRESS",
-        valueMinor: version.amountMinor,
-        participants: {
-          create: [
-            { role: "client", userId: version.proposal.opportunity.ownerId },
-            { role: "freelancer", userId: version.proposal.senderId },
-          ],
+  const deal = await getPrisma().$transaction(
+    async (tx) => {
+      const claimedProposal = await tx.proposal.updateMany({
+        data: { status: "ACCEPTED" },
+        where: {
+          deal: null,
+          id: version.proposalId,
+          opportunity: { ownerId: user.id },
+          status: { in: ["SENT", "COUNTERED"] },
+          versions: { some: { id: version.id, status: "SUBMITTED" } },
         },
-        milestones: {
-          create:
-            version.milestones.length > 0
-              ? version.milestones.map((milestone) => ({
-                  amountMinor: milestone.amountMinor,
-                  currency: version.currency,
-                  description: milestone.description,
-                  dueAt: new Date(Date.now() + milestone.dueInDays * 86_400_000),
-                  status: "IN_PROGRESS",
-                  title: milestone.title,
-                }))
-              : [
-                  {
-                    amountMinor: version.amountMinor,
-                    currency: version.currency,
-                    description: "Complete the accepted proposal scope.",
-                    dueAt: new Date(Date.now() + version.deliveryDays * 86_400_000),
-                    status: "IN_PROGRESS",
-                    title: "Project delivery",
-                  },
-                ],
+      });
+      const claimedVersion = await tx.proposalVersion.updateMany({
+        data: { acceptedAt: new Date(), status: "ACCEPTED" },
+        where: { id: version.id, status: "SUBMITTED" },
+      });
+      if (!claimedVersion.count || !claimedProposal.count) {
+        throw new Error(
+          "Proposal version is no longer available for acceptance.",
+        );
+      }
+      await tx.proposalVersion.updateMany({
+        data: { status: "WITHDRAWN" },
+        where: {
+          id: { not: version.id },
+          proposalId: version.proposalId,
+          status: "DRAFT",
         },
-        statusHistory: {
-          create: {
-            actorId: user.id,
-            reason: "Accepted proposal version activated a non-custodial Deal record. Online payment is not active.",
-            toStatus: "IN_PROGRESS",
-          },
+      });
+      await tx.proposalVersion.updateMany({
+        data: { status: "SUPERSEDED" },
+        where: {
+          id: { not: version.id },
+          proposalId: version.proposalId,
+          status: "SUBMITTED",
         },
-      },
-    });
-    const acceptedEvent = await tx.conversationEvent.create({
-      data: {
-        actorId: user.id,
-        conversationId: version.proposal.conversationId!,
-        idempotencyKey: `proposal:${version.proposalId}:version:${version.versionNumber}:accepted`,
-        proposalVersionId: version.id,
-        snapshot: versionSnapshot(version, version.proposal.opportunity.title),
-        type: "PROPOSAL_ACCEPTED",
-      },
-    });
-    await tx.conversationEvent.create({
-      data: {
-        actorId: user.id,
-        conversationId: version.proposal.conversationId!,
-        dealId: createdDeal.id,
-        idempotencyKey: `deal:${createdDeal.id}:created`,
-        proposalVersionId: version.id,
-        snapshot: {
-          amountMinor: version.amountMinor.toString(),
+      });
+      await tx.proposalStatusHistory.create({
+        data: {
+          actorId: user.id,
+          fromStatus: version.proposal.status,
+          note: `Accepted immutable proposal version ${version.versionNumber}.`,
+          proposalId: version.proposalId,
+          toStatus: "ACCEPTED",
+        },
+      });
+      const createdDeal = await tx.deal.create({
+        data: {
           currency: version.currency,
-          onlinePaymentActive: false,
-          proposalVersionNumber: version.versionNumber,
-          schemaVersion: 1,
-          settlementMode: "PROVIDER_DISABLED",
-          status: "IN_PROGRESS",
-          title: version.proposal.opportunity.title,
-        },
-        type: "DEAL_CREATED",
-      },
-    });
-    await tx.conversationParticipant.updateMany({
-      data: { removedAt: null },
-      where: { conversationId: version.proposal.conversationId! },
-    });
-    await tx.notification.create({
-      data: {
-        actionUrl: `/app/messages/${version.proposal.conversationId}?event=${acceptedEvent.id}`,
-        body: `Version ${version.versionNumber} was accepted. A Deal record is ready; online payment is not active.`,
-        metadata: {
-          conversationEventId: acceptedEvent.id,
-          conversationId: version.proposal.conversationId,
-          dealId: createdDeal.id,
+          opportunityId: version.proposal.opportunityId,
           proposalId: version.proposalId,
           proposalVersionId: version.id,
-          recipientId: version.proposal.senderId,
-        },
-        title: "Proposal accepted",
-        type: "DEAL",
-        userId: version.proposal.senderId,
-      },
-    });
-    await tx.auditLog.create({
-      data: {
-        action: "proposal.version_accepted",
-        actorId: user.id,
-        entityId: version.id,
-        entityType: "proposal_version",
-        metadata: {
-          dealId: createdDeal.id,
-          proposalId: version.proposalId,
           settlementMode: "PROVIDER_DISABLED",
-          versionNumber: version.versionNumber,
+          status: "IN_PROGRESS",
+          valueMinor: version.amountMinor,
+          participants: {
+            create: [
+              { role: "client", userId: version.proposal.opportunity.ownerId },
+              { role: "freelancer", userId: version.proposal.senderId },
+            ],
+          },
+          milestones: {
+            create:
+              version.milestones.length > 0
+                ? version.milestones.map((milestone) => ({
+                    amountMinor: milestone.amountMinor,
+                    currency: version.currency,
+                    description: milestone.description,
+                    dueAt: new Date(
+                      Date.now() + milestone.dueInDays * 86_400_000,
+                    ),
+                    status: "IN_PROGRESS",
+                    title: milestone.title,
+                  }))
+                : [
+                    {
+                      amountMinor: version.amountMinor,
+                      currency: version.currency,
+                      description: "Complete the accepted proposal scope.",
+                      dueAt: new Date(
+                        Date.now() + version.deliveryDays * 86_400_000,
+                      ),
+                      status: "IN_PROGRESS",
+                      title: "Project delivery",
+                    },
+                  ],
+          },
+          statusHistory: {
+            create: {
+              actorId: user.id,
+              reason:
+                "Accepted proposal version activated a non-custodial Deal record. Online payment is not active.",
+              toStatus: "IN_PROGRESS",
+            },
+          },
         },
-      },
-    });
-    await tx.conversation.update({
-      data: { updatedAt: new Date() },
-      where: { id: version.proposal.conversationId! },
-    });
-    return createdDeal;
-  });
+      });
+      const acceptedEvent = await tx.conversationEvent.create({
+        data: {
+          actorId: user.id,
+          conversationId: version.proposal.conversationId!,
+          dealId: createdDeal.id,
+          idempotencyKey: `proposal:${version.proposalId}:version:${version.versionNumber}:accepted`,
+          proposalVersionId: version.id,
+          snapshot: versionSnapshot(
+            version,
+            version.proposal.opportunity.title,
+          ),
+          type: "PROPOSAL_ACCEPTED",
+        },
+      });
+      await tx.conversationEvent.create({
+        data: {
+          actorId: user.id,
+          conversationId: version.proposal.conversationId!,
+          dealId: createdDeal.id,
+          idempotencyKey: `deal:${createdDeal.id}:created`,
+          proposalVersionId: version.id,
+          snapshot: {
+            amountMinor: version.amountMinor.toString(),
+            currency: version.currency,
+            onlinePaymentActive: false,
+            proposalVersionNumber: version.versionNumber,
+            schemaVersion: 1,
+            settlementMode: "PROVIDER_DISABLED",
+            status: "IN_PROGRESS",
+            title: version.proposal.opportunity.title,
+          },
+          type: "DEAL_CREATED",
+        },
+      });
+      await tx.conversationParticipant.updateMany({
+        data: { removedAt: null },
+        where: { conversationId: version.proposal.conversationId! },
+      });
+      await tx.notification.create({
+        data: {
+          actionUrl: `/app/messages/${version.proposal.conversationId}?event=${acceptedEvent.id}`,
+          body: `Version ${version.versionNumber} was accepted. A Deal record is ready; online payment is not active.`,
+          metadata: {
+            conversationEventId: acceptedEvent.id,
+            conversationId: version.proposal.conversationId,
+            dealId: createdDeal.id,
+            proposalId: version.proposalId,
+            proposalVersionId: version.id,
+            recipientId: version.proposal.senderId,
+          },
+          title: "Proposal accepted",
+          type: "DEAL",
+          userId: version.proposal.senderId,
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          action: "proposal.version_accepted",
+          actorId: user.id,
+          entityId: version.id,
+          entityType: "proposal_version",
+          metadata: {
+            dealId: createdDeal.id,
+            proposalId: version.proposalId,
+            settlementMode: "PROVIDER_DISABLED",
+            versionNumber: version.versionNumber,
+          },
+        },
+      });
+      await tx.conversation.update({
+        data: { updatedAt: new Date() },
+        where: { id: version.proposal.conversationId! },
+      });
+      return createdDeal;
+    },
+    { timeout: 30_000 },
+  );
 
   redirect(`/app/deals/${deal.id}`);
 }

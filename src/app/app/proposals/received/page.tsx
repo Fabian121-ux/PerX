@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppSection } from "@/components/app-section";
+import { CursorPagination } from "@/components/cursor-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
@@ -10,12 +11,21 @@ import {
   rejectProposalAction,
 } from "@/features/proposals/actions";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getUserProposals } from "@/lib/data/app";
+import { getUserProposalsPage } from "@/lib/data/app";
 import { formatMoney } from "@/lib/money";
 
-export default async function ProposalsReceivedPage() {
+export default async function ProposalsReceivedPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cursor?: string }>;
+}) {
   const user = await getCurrentUser();
-  const proposals = await getUserProposals(user!.id, "received");
+  const params = await searchParams;
+  const page = await getUserProposalsPage(user!.id, "received", {
+    cursor: params.cursor,
+    pageSize: 20,
+  });
+  const proposals = page.items;
 
   return (
     <AppSection
@@ -118,6 +128,12 @@ export default async function ProposalsReceivedPage() {
           title="No received proposals"
         />
       )}
+      <CursorPagination
+        basePath="/app/proposals/received"
+        cursor={page.cursor}
+        label="Received proposals pagination"
+        nextCursor={page.nextCursor}
+      />
     </AppSection>
   );
 }

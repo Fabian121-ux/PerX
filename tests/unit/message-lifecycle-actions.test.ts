@@ -101,4 +101,18 @@ describe("participant-scoped message lifecycle", () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(tx.message.updateMany).not.toHaveBeenCalled();
   });
+
+  it("does not expose deletion after the server mutation window closes", async () => {
+    mocks.messageFindFirst.mockResolvedValue({
+      conversationId,
+      createdAt: new Date(Date.now() - 16 * 60_000),
+      deletedAt: null,
+      senderId: "user-1",
+    });
+
+    await expect(deleteMessageAction(messageId)).resolves.toEqual({
+      error: "The removal window for this message has closed.",
+    });
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
 });

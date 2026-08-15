@@ -4,6 +4,8 @@ import type {
   WorkspaceConversation,
   WorkspaceConversationEvent,
 } from "@/components/messages/message-workspace";
+import { getServerEnv } from "@/lib/env";
+import { hasCapability } from "@/lib/permissions/capabilities";
 
 type PreviewConversationLike = {
   id: string;
@@ -21,6 +23,7 @@ type PreviewConversationLike = {
 };
 
 type DbConversationLike = {
+  _count?: { proposals: number };
   events?: {
     actorId?: string | null;
     createdAt: Date;
@@ -41,14 +44,26 @@ type DbConversationLike = {
     replyTo?: any;
     senderId: string;
   }[];
-  opportunity?: { title: string } | null;
+  opportunity?: {
+    currency?: string;
+    moderationStatus?: string;
+    ownerId?: string;
+    status?: string;
+    title: string;
+  } | null;
   participants: {
     user?: {
       imageUrl?: string | null;
       name: string | null;
       profile?: {
+        biography?: string | null;
+        headline?: string | null;
+        location?: string | null;
         profileImageUrl?: string | null;
+        showLocation?: boolean | null;
         showPresence?: boolean | null;
+        showSkills?: boolean | null;
+        skills?: { name: string }[];
       } | null;
       sessions?: { lastSeenAt: Date }[];
       username: string | null;
@@ -97,6 +112,9 @@ export function toWorkspaceConversation(
     .map((participant) => participant.userId)
     .filter((participantId) => participantId !== user.id);
   const latestMessage = dbConversation.messages[0];
+  const mutationCutoff = new Date(
+    Date.now() - getServerEnv().MESSAGE_EDIT_WINDOW_MINUTES * 60_000,
+  );
   const latestEvent = [...(dbConversation.events ?? [])].sort(
     (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
   )[0];
@@ -136,6 +154,7 @@ export function toWorkspaceConversation(
         }
       : undefined,
     dealHref: linkedDeal ? `/app/deals/${linkedDeal.id}` : undefined,
+    dealOffer: getConversationDealOffer(dbConversation, user),
     events: (dbConversation.events ?? []).map((event) => ({
       actorName:
         dbConversation.participants.find(
@@ -145,6 +164,7 @@ export function toWorkspaceConversation(
       dealHref: event.dealId ? `/app/deals/${event.dealId}` : null,
       id: event.id,
       proposalVersionId: event.proposalVersionId ?? null,
+      proposalHref: getConversationProposalHref(event.type, event.actorId, user.id),
       snapshot: toEventSnapshot(event.snapshot),
       type: event.type,
     })),
@@ -159,6 +179,8 @@ export function toWorkspaceConversation(
       ? [
           {
             body: latestMessage.deletedAt ? "" : latestMessage.body,
+            canMutate:
+              !latestMessage.deletedAt && latestMessage.createdAt >= mutationCutoff,
             createdAt: latestMessage.createdAt.toISOString(),
             deletedAt: latestMessage.deletedAt?.toISOString() ?? null,
             editedAt: latestMessage.editedAt?.toISOString() ?? null,
@@ -196,6 +218,7 @@ export function toWorkspaceConversation(
       Boolean(otherParticipant?.profile?.showPresence),
       otherParticipant?.sessions?.[0]?.lastSeenAt ?? null,
     ),
+    participantProfile: toParticipantProfilePreview(otherParticipant?.profile),
     participantRole: "Opportunity participant",
     participantUsername: otherParticipant?.username ?? undefined,
     timestamp:
@@ -205,6 +228,81 @@ export function toWorkspaceConversation(
       )?.toISOString() ?? "new",
     unreadCount: unreadMessageCount + unreadEventCount,
   };
+}
+
+export function toParticipantProfilePreview(profile?: {
+  biography?: string | null;
+  headline?: string | null;
+  location?: string | null;
+  showLocation?: boolean | null;
+  showSkills?: boolean | null;
+  skills?: { name: string }[];
+} | null): WorkspaceConversation["participantProfile"] {
+  if (!profile) return undefined;
+  return {
+    biography: profile.biography?.trim() || "This member has not completed a biography.",
+    headline: profile.headline?.trim() || "PerX member",
+    location: profile.showLocation === false ? null : profile.location,
+    skills:
+      profile.showSkills === false
+        ? []
+        : (profile.skills ?? []).map((skill) => skill.name),
+  };
+}
+
+export function getConversationDealOffer(
+  conversation: Pick<
+    DbConversationLike,
+    "_count" | "opportunity" | "participants" | "proposals"
+  >,
+  user: Pick<CurrentUser, "id" | "roles">,
+): WorkspaceConversation["dealOffer"] {
+  const opportunity = conversation.opportunity;
+  const otherParticipantIds = conversation.participants
+    .map((participant) => participant.userId)
+    .filter((participantId) => participantId !== user.id);
+  const linkedDeal = conversation.proposals?.some((proposal) => proposal.deal);
+  if (
+    !hasCapability(user.roles, "proposal:create") ||
+    !hasCapability(user.roles, "deal:view:participant") ||
+    !opportunity ||
+    opportunity.ownerId === user.id ||
+    opportunity.ownerId !== otherParticipantIds[0] ||
+    opportunity.status !== "PUBLISHED" ||
+    opportunity.moderationStatus !== "APPROVED" ||
+    conversation.participants.length !== 2 ||
+    otherParticipantIds.length !== 1 ||
+    linkedDeal ||
+    (conversation._count?.proposals ?? 0) > 0 ||
+    !opportunity.currency
+  ) {
+    return undefined;
+  }
+  return {
+    currency: opportunity.currency,
+    opportunityTitle: opportunity.title,
+  };
+}
+
+export function getConversationProposalHref(
+  type: WorkspaceConversationEvent["type"],
+  actorId: string | null | undefined,
+  userId: string,
+) {
+  if (
+    type === "PROPOSAL_SUBMITTED" ||
+    type === "PROPOSAL_REVISION_SUBMITTED"
+  ) {
+    return actorId === userId
+      ? "/app/proposals/sent"
+      : "/app/proposals/received";
+  }
+  if (type === "PROPOSAL_OBJECTION_RAISED") {
+    return actorId === userId
+      ? "/app/proposals/received"
+      : "/app/proposals/sent";
+  }
+  return null;
 }
 
 function isPreviewConversation(

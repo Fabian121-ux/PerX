@@ -573,8 +573,12 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
       expect(row).not.toHaveProperty("passwordHash");
       expect(row).not.toHaveProperty("imageStorageKey");
       expect(row).not.toHaveProperty("sessions");
+      expect(row).not.toHaveProperty("enforcementReasonPublic");
+      expect(row).not.toHaveProperty("activeEnforcements");
       expect(row).toHaveProperty("id");
-      expect(row).toHaveProperty("isActive");
+      expect(row).toHaveProperty("accountState");
+      expect(row).toHaveProperty("activeRestrictions");
+      expect(row).toHaveProperty("activity");
       expect(row).toHaveProperty("roles");
     }
   });

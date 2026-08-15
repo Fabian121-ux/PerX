@@ -7,6 +7,16 @@ export async function getAdminMetrics() {
   return provider.admin.getAdminMetrics();
 }
 
+export async function getAdminUsersPage(params?: CursorPageParams) {
+  const provider = await getPerXDataProvider();
+  return provider.admin.getAdminUsersPage(params);
+}
+
+export async function getAdminDealsPage(params?: CursorPageParams) {
+  const provider = await getPerXDataProvider();
+  return provider.admin.getAdminDealsPage(params);
+}
+
 export async function getAdminList(kind: AdminListKind) {
   const provider = await getPerXDataProvider();
   return provider.admin.getAdminList(kind);

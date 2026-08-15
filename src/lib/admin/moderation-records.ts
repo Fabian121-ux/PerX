@@ -1,4 +1,11 @@
 import { getPrisma } from "@/lib/db/prisma";
+import {
+  createCursorPage,
+  normalizeCursorPageParams,
+  withCursor,
+  type CursorPageParams,
+} from "@/lib/data/cursor";
+import type { Prisma } from "@/generated/prisma/client";
 
 export const moderationCaseStatuses = [
   "NEW",
@@ -172,11 +179,18 @@ async function getUsersById(ids: Iterable<string>) {
   );
 }
 
-export async function getAdminReportsOverview(): Promise<SafeReportRow[]> {
+export async function getAdminReportsOverviewPage(
+  params?: CursorPageParams,
+) {
+  const scope = "admin:report-overview:all";
+  const { cursor, pageSize, requestedCursor } = normalizeCursorPageParams(
+    params,
+    scope,
+  );
   const prisma = getPrisma();
   const [opportunityReports, userReports] = await Promise.all([
     prisma.opportunityReport.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       select: {
         createdAt: true,
         id: true,
@@ -185,10 +199,14 @@ export async function getAdminReportsOverview(): Promise<SafeReportRow[]> {
         reporterId: true,
         status: true,
       },
-      take: 50,
+      take: pageSize + 1,
+      where: withCursor<Prisma.OpportunityReportWhereInput>({}, cursor, {
+        direction: "desc",
+        field: "createdAt",
+      }),
     }),
     prisma.userReport.findMany({
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       select: {
         category: true,
         createdAt: true,
@@ -198,14 +216,40 @@ export async function getAdminReportsOverview(): Promise<SafeReportRow[]> {
         targetId: true,
         targetType: true,
       },
-      take: 50,
+      take: pageSize + 1,
+      where: withCursor<Prisma.UserReportWhereInput>({}, cursor, {
+        direction: "desc",
+        field: "createdAt",
+      }),
     }),
   ]);
 
+  const mergedReports = [
+    ...opportunityReports.map((report) => ({
+      kind: "opportunity" as const,
+      report,
+    })),
+    ...userReports.map((report) => ({ kind: "user" as const, report })),
+  ].sort((left, right) => {
+    const timeDifference =
+      right.report.createdAt.getTime() - left.report.createdAt.getTime();
+    return timeDifference || right.report.id.localeCompare(left.report.id);
+  });
+  const hasNextPage = mergedReports.length > pageSize;
+  const selectedReports = hasNextPage
+    ? mergedReports.slice(0, pageSize)
+    : mergedReports;
+  const selectedOpportunityReports = selectedReports.flatMap((item) =>
+    item.kind === "opportunity" ? [item.report] : [],
+  );
+  const selectedUserReports = selectedReports.flatMap((item) =>
+    item.kind === "user" ? [item.report] : [],
+  );
+
   const [users, opportunities, cases] = await Promise.all([
     getUsersById([
-      ...opportunityReports.map((report) => report.reporterId),
-      ...userReports.map((report) => report.reporterId),
+      ...selectedOpportunityReports.map((report) => report.reporterId),
+      ...selectedUserReports.map((report) => report.reporterId),
     ]),
     prisma.opportunity.findMany({
       select: { id: true, title: true },
@@ -213,7 +257,7 @@ export async function getAdminReportsOverview(): Promise<SafeReportRow[]> {
         id: {
           in: [
             ...new Set(
-              opportunityReports.map((report) => report.opportunityId),
+              selectedOpportunityReports.map((report) => report.opportunityId),
             ),
           ],
         },
@@ -229,10 +273,14 @@ export async function getAdminReportsOverview(): Promise<SafeReportRow[]> {
       },
       where: {
         OR: [
-          { linkedReportId: { in: userReports.map((report) => report.id) } },
+          {
+            linkedReportId: {
+              in: selectedUserReports.map((report) => report.id),
+            },
+          },
           {
             linkedOpportunityReportId: {
-              in: opportunityReports.map((report) => report.id),
+              in: selectedOpportunityReports.map((report) => report.id),
             },
           },
         ],
@@ -252,8 +300,9 @@ export async function getAdminReportsOverview(): Promise<SafeReportRow[]> {
     }
   }
 
-  return [
-    ...opportunityReports.map((report) => {
+  const items = selectedReports.map((item): SafeReportRow => {
+    if (item.kind === "opportunity") {
+      const report = item.report;
       const moderationCase = caseByReportId.get(report.id);
       return {
         canCreateCase: false,
@@ -270,26 +319,38 @@ export async function getAdminReportsOverview(): Promise<SafeReportRow[]> {
           `Unavailable opportunity (${report.opportunityId})`,
         targetType: "OPPORTUNITY",
       };
-    }),
-    ...userReports.map((report) => {
-      const moderationCase = caseByReportId.get(report.id);
-      return {
-        canCreateCase:
-          !moderationCase &&
-          (report.status === "SUBMITTED" || report.status === "IN_REVIEW"),
-        caseId: moderationCase?.id ?? null,
-        caseStatus: moderationCase?.status ?? null,
-        category: report.category,
-        createdAt: report.createdAt,
-        id: report.id,
-        reporter: users.get(report.reporterId) ?? null,
-        reporterId: report.reporterId,
-        status: report.status,
-        target: report.targetId,
-        targetType: report.targetType,
-      };
-    }),
-  ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    }
+
+    const report = item.report;
+    const moderationCase = caseByReportId.get(report.id);
+    return {
+      canCreateCase:
+        !moderationCase &&
+        (report.status === "SUBMITTED" || report.status === "IN_REVIEW"),
+      caseId: moderationCase?.id ?? null,
+      caseStatus: moderationCase?.status ?? null,
+      category: report.category,
+      createdAt: report.createdAt,
+      id: report.id,
+      reporter: users.get(report.reporterId) ?? null,
+      reporterId: report.reporterId,
+      status: report.status,
+      target: report.targetId,
+      targetType: report.targetType,
+    };
+  });
+
+  return createCursorPage(items, {
+    cursor: requestedCursor,
+    getTimestamp: (item) => item.createdAt,
+    hasNextPage,
+    pageSize,
+    scope,
+  });
+}
+
+export async function getAdminReportsOverview(): Promise<SafeReportRow[]> {
+  return (await getAdminReportsOverviewPage({ pageSize: 50 })).items;
 }
 
 export async function getRecentBlockRows() {
@@ -314,8 +375,13 @@ export async function getRecentBlockRows() {
   }));
 }
 
-export async function getAdminMessageCases() {
-  const cases = await getPrisma().moderationCase.findMany({
+export async function getAdminMessageCasesPage(params?: CursorPageParams) {
+  const scope = "admin:message-cases:active";
+  const { cursor, pageSize, requestedCursor } = normalizeCursorPageParams(
+    params,
+    scope,
+  );
+  const rows = await getPrisma().moderationCase.findMany({
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     select: {
       category: true,
@@ -346,13 +412,19 @@ export async function getAdminMessageCases() {
         take: 10,
       },
     },
-    take: 50,
-    where: {
-      conversationId: { not: null },
-      source: { in: [...messageModerationCaseSources] },
-      status: { in: [...activeMessageModerationCaseStatuses] },
-    },
+    take: pageSize + 1,
+    where: withCursor<Prisma.ModerationCaseWhereInput>(
+      {
+        conversationId: { not: null },
+        source: { in: [...messageModerationCaseSources] },
+        status: { in: [...activeMessageModerationCaseStatuses] },
+      },
+      cursor,
+      { direction: "desc", field: "createdAt" },
+    ),
   });
+  const hasNextPage = rows.length > pageSize;
+  const cases = hasNextPage ? rows.slice(0, pageSize) : rows;
 
   const linkedReportIds = cases
     .map((moderationCase) => moderationCase.linkedReportId)
@@ -377,7 +449,7 @@ export async function getAdminMessageCases() {
     linkedReports.map((report) => [report.id, report]),
   );
 
-  return cases.map((moderationCase) => {
+  const items = cases.map((moderationCase) => {
     const linkedReport = moderationCase.linkedReportId
       ? reportsById.get(moderationCase.linkedReportId)
       : null;
@@ -402,6 +474,18 @@ export async function getAdminMessageCases() {
       reporterId,
     };
   });
+
+  return createCursorPage(items, {
+    cursor: requestedCursor,
+    getTimestamp: (item) => item.createdAt,
+    hasNextPage,
+    pageSize,
+    scope,
+  });
+}
+
+export async function getAdminMessageCases() {
+  return (await getAdminMessageCasesPage({ pageSize: 50 })).items;
 }
 
 export async function getScopedMessageContext({

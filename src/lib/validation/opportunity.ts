@@ -25,9 +25,21 @@ export const opportunityFormSchema = z
     budgetMax: z.string().trim().optional(),
     skills: z.string().trim().max(500).optional(),
     intent: z.enum(["draft", "publish"]).default("draft"),
-    propertyType: z.enum(propertyTypeValues).optional(),
-    propertyListingType: z.enum(propertyListingTypeValues).optional(),
-    contactPreference: z.enum(contactPreferenceValues).optional(),
+    propertyType: z
+      .enum(propertyTypeValues)
+      .or(z.literal(""))
+      .optional()
+      .transform((value) => value || undefined),
+    propertyListingType: z
+      .enum(propertyListingTypeValues)
+      .or(z.literal(""))
+      .optional()
+      .transform((value) => value || undefined),
+    contactPreference: z
+      .enum(contactPreferenceValues)
+      .or(z.literal(""))
+      .optional()
+      .transform((value) => value || undefined),
     authorityDeclaration: z.string().trim().max(1000).optional(),
     listingRulesAccepted: z.boolean().default(false),
   })
@@ -91,3 +103,10 @@ export const proposalFormSchema = z.object({
   deliveryDays: z.coerce.number().int().min(1).max(365),
   revisions: z.coerce.number().int().min(0).max(12),
 });
+
+export const conversationProposalFormSchema = proposalFormSchema
+  .omit({ opportunityId: true })
+  .extend({
+    clientRequestId: z.string().uuid(),
+    conversationId: z.string().cuid(),
+  });

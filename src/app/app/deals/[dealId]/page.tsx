@@ -28,7 +28,7 @@ export default async function DealWorkspacePage({
       description={
         simulated
           ? "This legacy Deal uses simulated state tracking. No real funds are collected, held, transferred, or released by PerX."
-          : "This Deal records accepted terms and progress. Online payment is not active, and no funds are collected or held by PerX."
+          : "Payments are currently unavailable. This Deal records agreed terms but does not hold funds."
       }
       title={deal.proposal.opportunity.title}
     >
@@ -39,6 +39,9 @@ export default async function DealWorkspacePage({
             <Badge>{formatMoney(deal.valueMinor, deal.currency)}</Badge>
             <Badge>{simulated ? "simulated tracking" : "payment unavailable"}</Badge>
           </div>
+          <p className="mt-3 break-all text-xs font-semibold text-[color:var(--px-text-muted)]">
+            Deal reference: {deal.id}
+          </p>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <ButtonLink
               href={`/app/deals/${deal.id}/milestones`}

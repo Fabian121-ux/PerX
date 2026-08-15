@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const prismaMocks = vi.hoisted(() => ({
   conversationFindMany: vi.fn(),
+  dealFindMany: vi.fn(),
   messageFindMany: vi.fn(),
   opportunityFindMany: vi.fn(),
   userFindMany: vi.fn(),
@@ -10,6 +11,7 @@ const prismaMocks = vi.hoisted(() => ({
 vi.mock("@/lib/db/prisma", () => ({
   getPrisma: () => ({
     conversation: { findMany: prismaMocks.conversationFindMany },
+    deal: { findMany: prismaMocks.dealFindMany },
     message: { findMany: prismaMocks.messageFindMany },
     opportunity: { findMany: prismaMocks.opportunityFindMany },
     user: { findMany: prismaMocks.userFindMany },
@@ -30,6 +32,28 @@ import {
 
 const firstTimestamp = new Date("2026-08-01T12:00:00.000Z");
 const secondTimestamp = new Date("2026-08-01T11:00:00.000Z");
+
+function adminUserRow(id: string, createdAt: Date) {
+  return {
+    _count: { deals: 0, opportunities: 0, reviewsReceived: 0 },
+    accountClassification: "PUBLIC_BETA_USER",
+    bannedAt: null,
+    connectionRequestsRestrictedUntil: null,
+    createdAt,
+    deactivatedAt: null,
+    email: `${id}@example.com`,
+    id,
+    isActive: true,
+    messagingRestrictedUntil: null,
+    name: id,
+    publishingRestrictedUntil: null,
+    roles: [],
+    suspendedAt: null,
+    suspendedUntil: null,
+    username: id,
+    verificationStatus: "UNVERIFIED",
+  };
+}
 
 describe("cursor pagination", () => {
   beforeEach(() => {
@@ -261,5 +285,120 @@ describe("cursor pagination", () => {
         take: 51,
       }),
     );
+  });
+
+  it("reaches older admin users across an equal-timestamp boundary", async () => {
+    const newest = adminUserRow("user-z", firstTimestamp);
+    const sameTimestamp = adminUserRow("user-m", firstTimestamp);
+    const older = adminUserRow("user-a", secondTimestamp);
+    prismaMocks.userFindMany
+      .mockResolvedValueOnce([newest, sameTimestamp])
+      .mockResolvedValueOnce([sameTimestamp, older])
+      .mockResolvedValueOnce([older]);
+
+    const firstPage = await prismaProvider.admin.getAdminListPage("users", {
+      pageSize: 1,
+    });
+    const secondPage = await prismaProvider.admin.getAdminListPage("users", {
+      cursor: firstPage.nextCursor ?? undefined,
+      pageSize: 1,
+    });
+    const thirdPage = await prismaProvider.admin.getAdminListPage("users", {
+      cursor: secondPage.nextCursor ?? undefined,
+      pageSize: 1,
+    });
+
+    expect(
+      [firstPage, secondPage, thirdPage].flatMap((page) =>
+        page.items.map((item: { id: string }) => item.id),
+      ),
+    ).toEqual(["user-z", "user-m", "user-a"]);
+    expect(prismaMocks.userFindMany).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        where: {
+          AND: [
+            {},
+            {
+              OR: [
+                { createdAt: { lt: firstTimestamp } },
+                { createdAt: firstTimestamp, id: { lt: "user-z" } },
+              ],
+            },
+          ],
+        },
+      }),
+    );
+  });
+
+  it("keeps admin deal cursors scoped and ordered by update time", async () => {
+    const usersCursor = encodeCursor({
+      id: "user-z",
+      scope: "admin:users",
+      timestamp: firstTimestamp,
+    });
+
+    await expect(
+      prismaProvider.admin.getAdminListPage("deals", {
+        cursor: usersCursor,
+      }),
+    ).rejects.toThrow("Invalid cursor scope.");
+    expect(prismaMocks.dealFindMany).not.toHaveBeenCalled();
+
+    prismaMocks.dealFindMany.mockResolvedValue([]);
+    await prismaProvider.admin.getAdminListPage("deals", { pageSize: 4 });
+
+    expect(prismaMocks.dealFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+        select: expect.objectContaining({
+          _count: {
+            select: {
+              disputes: { where: { status: { not: "RESOLVED" } } },
+              milestones: true,
+              participants: true,
+            },
+          },
+          participants: expect.objectContaining({
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            take: 6,
+          }),
+          settlementMode: true,
+        }),
+        take: 5,
+      }),
+    );
+  });
+
+  it("selects minimized current-state user summaries and public aggregates", async () => {
+    prismaMocks.userFindMany.mockResolvedValue([]);
+
+    await prismaProvider.admin.getAdminUsersPage({ pageSize: 20 });
+
+    const query = prismaMocks.userFindMany.mock.calls[0]?.[0];
+    expect(query).toEqual(
+      expect.objectContaining({
+        select: expect.objectContaining({
+          _count: {
+            select: {
+              deals: {
+                where: {
+                  deal: { status: { in: ["APPROVED", "RELEASED"] } },
+                },
+              },
+              opportunities: true,
+              reviewsReceived: { where: { visibility: "PUBLIC" } },
+            },
+          },
+          bannedAt: true,
+          deactivatedAt: true,
+          suspendedUntil: true,
+        }),
+        take: 21,
+      }),
+    );
+    expect(query.select).not.toHaveProperty("passwordHash");
+    expect(query.select).not.toHaveProperty("sessions");
+    expect(query.select).not.toHaveProperty("enforcementReasonPublic");
   });
 });

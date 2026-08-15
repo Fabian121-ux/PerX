@@ -2,16 +2,26 @@
 import Link from "next/link";
 
 import { AppSection } from "@/components/app-section";
+import { CursorPagination } from "@/components/cursor-pagination";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getUserDeals } from "@/lib/data/app";
+import { getUserDealsPage } from "@/lib/data/app";
 import { formatMoney } from "@/lib/money";
 
-export default async function DealsPage() {
+export default async function DealsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cursor?: string }>;
+}) {
   const user = await getCurrentUser();
-  const deals = await getUserDeals(user!.id);
+  const params = await searchParams;
+  const page = await getUserDealsPage(user!.id, {
+    cursor: params.cursor,
+    pageSize: 20,
+  });
+  const deals = page.items;
 
   return (
     <AppSection
@@ -73,11 +83,17 @@ export default async function DealsPage() {
           title="No agreements yet"
         />
       )}
+      <CursorPagination
+        basePath="/app/deals"
+        cursor={page.cursor}
+        label="Agreements pagination"
+        nextCursor={page.nextCursor}
+      />
     </AppSection>
   );
 }
 
-function getDealTitle(deal: Awaited<ReturnType<typeof getUserDeals>>[number]) {
+function getDealTitle(deal: any) {
   if ("title" in deal && typeof deal.title === "string") {
     return deal.title;
   }

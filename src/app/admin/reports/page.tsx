@@ -1,22 +1,32 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, EmptyState } from "@/components/ui/card";
 import { AdminSection } from "@/components/admin-section";
+import { CursorPagination } from "@/components/cursor-pagination";
 import { ButtonLink } from "@/components/ui/button";
 import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 import { createModerationCaseForReportAction } from "@/features/admin/actions";
 import {
   formatAdminValue,
-  getAdminReportsOverview,
+  getAdminReportsOverviewPage,
   getRecentBlockRows,
   safeUserLabel,
 } from "@/lib/admin/moderation-records";
 
-export default async function AdminReportsPage() {
+export default async function AdminReportsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cursor?: string }>;
+}) {
   await requireCapabilityOrNotFound("reports:review");
-  const [reports, blockRows] = await Promise.all([
-    getAdminReportsOverview(),
+  const params = await searchParams;
+  const [page, blockRows] = await Promise.all([
+    getAdminReportsOverviewPage({
+      cursor: params.cursor,
+      pageSize: 20,
+    }),
     getRecentBlockRows(),
   ]);
+  const reports = page.items;
 
   return (
     <AdminSection
@@ -83,6 +93,12 @@ export default async function AdminReportsPage() {
           title="No reports"
         />
       )}
+      <CursorPagination
+        basePath="/admin/reports"
+        cursor={page.cursor}
+        label="Admin reports pagination"
+        nextCursor={page.nextCursor}
+      />
       <section className="mt-6">
         <h2 className="text-base font-black text-white">
           Recent block metadata

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppSection } from "@/components/app-section";
+import { CursorPagination } from "@/components/cursor-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
@@ -11,12 +12,21 @@ import {
   updateProposalDraftAction,
 } from "@/features/proposals/actions";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getUserProposals } from "@/lib/data/app";
+import { getUserProposalsPage } from "@/lib/data/app";
 import { formatMoney } from "@/lib/money";
 
-export default async function ProposalsSentPage() {
+export default async function ProposalsSentPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cursor?: string }>;
+}) {
   const user = await getCurrentUser();
-  const proposals = await getUserProposals(user!.id, "sent");
+  const params = await searchParams;
+  const page = await getUserProposalsPage(user!.id, "sent", {
+    cursor: params.cursor,
+    pageSize: 20,
+  });
+  const proposals = page.items;
 
   return (
     <AppSection
@@ -202,6 +212,12 @@ export default async function ProposalsSentPage() {
           title="No proposals yet"
         />
       )}
+      <CursorPagination
+        basePath="/app/proposals/sent"
+        cursor={page.cursor}
+        label="Sent proposals pagination"
+        nextCursor={page.nextCursor}
+      />
     </AppSection>
   );
 }

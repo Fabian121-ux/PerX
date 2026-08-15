@@ -7,6 +7,7 @@ import {
   MAX_CURSOR_PAGE_SIZE,
 } from "@/lib/data/cursor";
 import { parseMessageRouteId } from "@/lib/messages/entry";
+import { getServerEnv } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -102,9 +103,14 @@ export async function GET(request: Request) {
 }
 
 function toWorkspaceMessage(message: ProviderMessage) {
+  const createdAt = new Date(message.createdAt);
   return {
     body: message.deletedAt ? "" : message.body,
-    createdAt: toIsoString(message.createdAt),
+    canMutate:
+      !message.deletedAt &&
+      Date.now() - createdAt.getTime() <=
+        getServerEnv().MESSAGE_EDIT_WINDOW_MINUTES * 60_000,
+    createdAt: createdAt.toISOString(),
     deletedAt: message.deletedAt ? toIsoString(message.deletedAt) : null,
     editedAt: message.editedAt ? toIsoString(message.editedAt) : null,
     id: message.id,

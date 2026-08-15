@@ -169,13 +169,19 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
             select: {
               biography: true,
               averageRating: true,
+              allowConnectionRequests: true,
+              allowMessagesFromConnections: true,
+              allowMessagesFromMembers: true,
               completedDeals: true,
               headline: true,
               location: true,
+              isDiscoverable: true,
               profileCompleteness: true,
               profileImageUrl: true,
               showLastActiveTime: true,
+              showLocation: true,
               showPresence: true,
+              showSkills: true,
               skills: true,
               trustScore: true,
             },
@@ -234,15 +240,24 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     profile: session.user.profile
       ? {
             averageRating: Number(session.user.profile.averageRating),
+            allowConnectionRequests:
+              session.user.profile.allowConnectionRequests,
+            allowMessagesFromConnections:
+              session.user.profile.allowMessagesFromConnections,
+            allowMessagesFromMembers:
+              session.user.profile.allowMessagesFromMembers,
             completedDeals: session.user.profile.completedDeals,
-            headline: session.user.profile.headline,
+          headline: session.user.profile.headline,
+          isDiscoverable: session.user.profile.isDiscoverable,
           biography: session.user.profile.biography,
           location: session.user.profile.location,
           profileImageUrl: session.user.profile.profileImageUrl,
           profileCompleteness: session.user.profile.profileCompleteness,
           skills: session.user.profile.skills.map((skill) => skill.name),
           showLastActiveTime: session.user.profile.showLastActiveTime,
+          showLocation: session.user.profile.showLocation,
           showPresence: session.user.profile.showPresence,
+          showSkills: session.user.profile.showSkills,
           trustScore: session.user.profile.trustScore,
         }
       : null,

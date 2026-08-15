@@ -1,6 +1,7 @@
 import { Archive, Copy, Eye, Pause, Pencil, Play, RotateCcw, Search, Trash2 } from "lucide-react";
 
 import { AppSection } from "@/components/app-section";
+import { OpportunityDraftCleanup } from "@/components/opportunities/opportunity-draft-cleanup";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button";
@@ -18,7 +19,10 @@ import {
 } from "@/features/opportunities/actions";
 import { requireUser } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
-import { opportunityTypeOptions } from "@/lib/options";
+import {
+  creatableOpportunityTypeOptions,
+  opportunityTypeOptions,
+} from "@/lib/options";
 import { hasCapability } from "@/lib/permissions/capabilities";
 import type { OpportunityStatus, OpportunityType } from "@/generated/prisma/enums";
 
@@ -38,6 +42,7 @@ export default async function ManageContentPage({
 }: {
   searchParams: Promise<{
     created?: string;
+    createdType?: string;
     error?: string;
     q?: string;
     status?: string;
@@ -57,13 +62,12 @@ export default async function ManageContentPage({
   const type = opportunityTypeOptions.some((option) => option.value === params.type)
     ? (params.type as OpportunityType)
     : "";
-  const feedback = params.created
-    ? {
-        description: "You can edit, pause, duplicate, or archive it from here.",
-        title: "Post created",
-        tone: "success" as const,
-      }
-    : params.updated
+  const createdType = creatableOpportunityTypeOptions.some(
+    (option) => option.value === params.createdType,
+  )
+    ? params.createdType
+    : null;
+  const feedback = params.updated
       ? { title: "Changes saved", tone: "success" as const }
       : params.submitted
         ? {
@@ -120,6 +124,20 @@ export default async function ManageContentPage({
     updatedAt: Date;
     verificationNotes: string | null;
   }>;
+  const createdOpportunity = params.created
+    ? opportunities.find((opportunity) => opportunity.id === params.created)
+    : null;
+  const confirmedCreatedType =
+    createdOpportunity && createdType === createdOpportunity.type
+      ? createdType
+      : null;
+  const routeFeedback = createdOpportunity
+    ? {
+        description: "You can edit, pause, duplicate, or archive it from here.",
+        title: "Post created",
+        tone: "success" as const,
+      }
+    : feedback;
 
   return (
     <AppSection
@@ -132,7 +150,10 @@ export default async function ManageContentPage({
       title="Manage my content"
     >
       <div className="grid gap-5">
-        <RouteFeedback feedback={feedback} />
+        {confirmedCreatedType ? (
+          <OpportunityDraftCleanup type={confirmedCreatedType} userId={user.id} />
+        ) : null}
+        <RouteFeedback feedback={routeFeedback} />
         <Card>
           <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_180px_auto]">
             <label className="relative">

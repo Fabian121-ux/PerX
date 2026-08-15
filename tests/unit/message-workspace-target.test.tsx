@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   markConversationReadAction: vi.fn(),
   removeConversationForMeAction: vi.fn(),
   sendMessageAction: vi.fn(),
+  submitConversationProposalAction: vi.fn(),
 }));
 
 vi.mock("@/features/messages/actions", () => ({
@@ -29,6 +30,10 @@ vi.mock("@/features/messages/actions", () => ({
 }));
 vi.mock("@/features/network/actions", () => ({
   blockUserAction: mocks.blockUserAction,
+}));
+vi.mock("@/features/proposals/actions", () => ({
+  submitConversationProposalAction:
+    mocks.submitConversationProposalAction,
 }));
 vi.mock("next/navigation", () => ({
   usePathname: () => "/app/messages/conversation-1",
@@ -80,6 +85,25 @@ describe("message workspace exact targets", () => {
     EventSourceMock.current = null;
     mocks.markConversationReadAction.mockResolvedValue({ success: true });
     mocks.sendMessageAction.mockResolvedValue({ success: true });
+    mocks.submitConversationProposalAction.mockResolvedValue({
+      event: {
+        actorName: "Current User",
+        createdAt: "2026-08-13T12:00:00.000Z",
+        dealHref: null,
+        id: "event-proposal-1",
+        proposalHref: "/app/proposals/sent",
+        proposalVersionId: "version-1",
+        snapshot: {
+          amountMinor: "25000000",
+          currency: "NGN",
+          description:
+            "Deliver the complete scoped work with documented acceptance criteria.",
+          versionNumber: 1,
+        },
+        type: "PROPOSAL_SUBMITTED",
+      },
+      success: true,
+    });
     vi.stubGlobal("EventSource", EventSourceMock);
     Element.prototype.scrollIntoView = scrollIntoView;
     HTMLDivElement.prototype.scrollTo = vi.fn(function (
@@ -265,6 +289,143 @@ describe("message workspace exact targets", () => {
     expect(view.getByText("Deal record created")).toBeTruthy();
     expect(view.getByText("Open Deal")).toBeTruthy();
     await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
+  });
+
+  it("opens one structured proposal flow from Make a Deal and exact @deal", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            dealOffer: {
+              currency: "NGN",
+              opportunityTitle: "Keyboard delivery",
+            },
+            id: "conversation-1",
+            messages: [],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+
+    fireEvent.click(view.getByRole("button", { name: "Make a Deal" }));
+    expect(
+      view.getByRole("dialog", { name: "Make a Deal" }),
+    ).toBeTruthy();
+    expect(
+      view.getByText(/A Deal is created only if the other participant accepts/),
+    ).toBeTruthy();
+    expect(view.getByText(/Send locked terms to Other User/)).toBeTruthy();
+    expect(view.getByText(/Online payment is not active/)).toBeTruthy();
+    fireEvent.click(view.getByRole("button", { name: "Cancel" }));
+
+    const composer = view.getByLabelText("Message");
+    fireEvent.change(composer, { target: { value: " @DEAL " } });
+    fireEvent.keyDown(composer, { ctrlKey: true, key: "Enter" });
+    expect(
+      view.getByRole("dialog", { name: "Make a Deal" }),
+    ).toBeTruthy();
+    expect(mocks.sendMessageAction).not.toHaveBeenCalled();
+
+    fireEvent.change(view.getByLabelText("Agreement amount (NGN)"), {
+      target: { value: "250000" },
+    });
+    fireEvent.change(view.getByLabelText("Proposal terms"), {
+      target: {
+        value:
+          "Deliver the complete scoped work with documented acceptance criteria.",
+      },
+    });
+    fireEvent.click(view.getByRole("button", { name: "Submit proposal" }));
+
+    await waitFor(() =>
+      expect(mocks.submitConversationProposalAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          amount: "250000",
+          conversationId: "conversation-1",
+          deliveryDays: 14,
+          revisions: 1,
+        }),
+      ),
+    );
+    expect(view.getByText("Proposal version 1 submitted")).toBeTruthy();
+    expect(view.getByRole("link", { name: "Review proposal" }).getAttribute("href")).toBe(
+      "/app/proposals/sent",
+    );
+    expect(
+      view.queryByRole("button", { name: "Make a Deal" }),
+    ).toBeNull();
+    expect((composer as HTMLTextAreaElement).value).toBe("");
+  }, 15_000);
+
+  it("preserves an unrelated draft after a proposal submitted from the visible control", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            dealOffer: {
+              currency: "NGN",
+              opportunityTitle: "Keyboard delivery",
+            },
+            id: "conversation-1",
+            messages: [],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+    const composer = view.getByLabelText("Message") as HTMLTextAreaElement;
+    fireEvent.change(composer, { target: { value: "A separate chat draft" } });
+    fireEvent.click(view.getByRole("button", { name: "Make a Deal" }));
+    fireEvent.change(view.getByLabelText("Agreement amount (NGN)"), {
+      target: { value: "250000" },
+    });
+    fireEvent.change(view.getByLabelText("Proposal terms"), {
+      target: {
+        value:
+          "Deliver the complete scoped work with documented acceptance criteria.",
+      },
+    });
+    fireEvent.click(view.getByRole("button", { name: "Submit proposal" }));
+
+    await waitFor(() => expect(view.getByText("Proposal submitted")).toBeTruthy());
+    expect(composer.value).toBe("A separate chat draft");
+  }, 15_000);
+
+  it("keeps prose containing @deal as an ordinary message", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            dealOffer: {
+              currency: "NGN",
+              opportunityTitle: "Keyboard delivery",
+            },
+            id: "conversation-1",
+            messages: [],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+    const composer = view.getByLabelText("Message");
+    fireEvent.change(composer, {
+      target: { value: "Let's discuss @deal tomorrow" },
+    });
+    fireEvent.keyDown(composer, { ctrlKey: true, key: "Enter" });
+    await waitFor(() =>
+      expect(mocks.sendMessageAction).toHaveBeenCalledWith(
+        "conversation-1",
+        "Let's discuss @deal tomorrow",
+        null,
+      ),
+    );
+    expect(
+      view.queryByRole("dialog", { name: "Make a Deal" }),
+    ).toBeNull();
   });
 
   it("loads older history through the bounded cursor path", async () => {

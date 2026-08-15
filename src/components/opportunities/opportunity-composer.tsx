@@ -1,8 +1,14 @@
 "use client";
 
-import { ArrowLeft, FileText, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  FileText,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -10,25 +16,37 @@ import {
   useToast,
 } from "@/components/ui/feedback-provider";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
+import { MoneyInput } from "@/components/ui/money-input";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { createOpportunityAction } from "@/features/opportunities/actions";
 import {
   contactPreferenceOptions,
   creatableOpportunityTypeOptions,
   currencyOptions,
+  defaultOpportunityCategoryByType,
   opportunityCategoryOptions,
   propertyListingTypeOptions,
   propertyTypeOptions,
 } from "@/lib/options";
+import {
+  clearOpportunityComposerDraft,
+  isCreatableOpportunityType,
+  readOpportunityComposerDraft,
+  writeOpportunityComposerDraft,
+  type CreatableOpportunityType,
+  type OpportunityComposerDraftFields,
+} from "@/lib/opportunities/composer-draft";
 
 export function OpportunityComposer({
   defaultCategory,
   defaultType,
   error,
+  userId,
 }: {
   defaultCategory: string;
   defaultType: string;
   error?: string | null;
+  userId: string;
 }) {
   const router = useRouter();
   const confirm = useConfirm();
@@ -40,25 +58,105 @@ export function OpportunityComposer({
   const hasContentRef = useRef(false);
   const historyGuardActiveRef = useRef(false);
   const historyReleaseRef = useRef<(() => void) | null>(null);
-  const [hasContent, setHasContent] = useState(false);
-  const [type, setType] = useState(defaultType);
-  const [descriptionLength, setDescriptionLength] = useState(0);
-  const [summaryLength, setSummaryLength] = useState(0);
+  const initialType = isCreatableOpportunityType(defaultType)
+    ? defaultType
+    : "FREELANCE_PROJECT";
+  const initialFields = createComposerFields(initialType, defaultCategory);
+  const [type, setType] = useState<CreatableOpportunityType>(initialType);
+  const [fields, setFields] = useState<OpportunityComposerDraftFields>(
+    initialFields,
+  );
+  const [authorityDeclaration, setAuthorityDeclaration] = useState("");
+  const [draftReady, setDraftReady] = useState(false);
+  const [draftStatus, setDraftStatus] = useState("");
+  const [optionalOpen, setOptionalOpen] = useState(Boolean(error));
+  const optionalSectionId = useId();
+  const fieldsRef = useRef(fields);
+  const typeRef = useRef(type);
   const propertyMode = type === "PROPERTY";
+  const hasContent = hasComposerContent({
+    authorityDeclaration,
+    defaultCategory,
+    defaultType: initialType,
+    fields,
+    type,
+  });
+
+  useEffect(() => {
+    fieldsRef.current = fields;
+    typeRef.current = type;
+    hasContentRef.current = hasContent;
+  }, [fields, hasContent, type]);
+
+  const persistBrowserDraft = useCallback(
+    (
+      draftType: CreatableOpportunityType,
+      draftFields: OpportunityComposerDraftFields,
+    ) => {
+      if (!hasBrowserDraftContent(draftType, draftFields)) {
+        return clearOpportunityComposerDraft(userId, draftType);
+      }
+      return writeOpportunityComposerDraft(userId, draftType, draftFields);
+    },
+    [userId],
+  );
+
+  useEffect(() => {
+    let active = true;
+    window.queueMicrotask(() => {
+      if (!active) return;
+      const restored = readOpportunityComposerDraft(userId, initialType);
+      if (restored) {
+        setFields(restored.fields);
+        setDraftStatus("Restored local draft");
+      }
+      setDraftReady(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, [initialType, userId]);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    const timer = window.setTimeout(() => {
+      setDraftStatus(
+        persistBrowserDraft(type, fields)
+          ? "Saved locally"
+          : "Local autosave is unavailable",
+      );
+    }, 450);
+    return () => window.clearTimeout(timer);
+  }, [draftReady, fields, persistBrowserDraft, type]);
+
+  useEffect(() => {
+    const flush = () => {
+      persistBrowserDraft(typeRef.current, fieldsRef.current);
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [persistBrowserDraft]);
 
   const confirmDiscard = useCallback(async () => {
     if (hasContent) {
+      persistBrowserDraft(type, fields);
       const approved = await confirm({
-        confirmLabel: "Discard changes",
+        confirmLabel: "Leave and keep draft",
         description:
-          "Your entered content has not been saved. You can stay and save it as a draft instead.",
-        title: "Discard this draft?",
-        tone: "danger",
+          "Your local browser draft will remain available on this device. It has not been saved to your PerX account.",
+        title: "Leave Create Post?",
       });
       if (!approved) return false;
     }
     return true;
-  }, [confirm, hasContent]);
+  }, [confirm, fields, hasContent, persistBrowserDraft, type]);
 
   const armHistoryGuard = useCallback(() => {
     if (historyGuardActiveRef.current || allowNavigationRef.current) return;
@@ -187,36 +285,50 @@ export function OpportunityComposer({
     };
   }, [confirmDiscard, hasContent, leaveComposer, releaseHistoryGuard]);
 
-  const updateContentState = () => {
-    const form = formRef.current;
-    if (!form) return;
-    const data = new FormData(form);
-    const meaningfulFields = [
-      "authorityDeclaration",
-      "budgetMax",
-      "budgetMin",
-      "description",
-      "location",
-      "propertyListingType",
-      "propertyType",
-      "skills",
-      "summary",
-      "title",
-    ];
-    const changedDefaults =
-      data.get("type") !== defaultType ||
-      data.get("category") !== defaultCategory ||
-      data.get("currency") !== "NGN" ||
-      data.get("remote") !== "on" ||
-      (data.get("type") === "PROPERTY" &&
-        Boolean(data.get("contactPreference"))) ||
-      Boolean(data.get("listingRulesAccepted"));
-    const nextHasContent = Boolean(
-      changedDefaults ||
-        meaningfulFields.some((name) => String(data.get(name) ?? "").trim()),
+  const updateField = <K extends keyof OpportunityComposerDraftFields>(
+    key: K,
+    value: OpportunityComposerDraftFields[K],
+  ) => {
+    setFields((current) => ({ ...current, [key]: value }));
+  };
+
+  const changeType = (nextValue: string) => {
+    if (!isCreatableOpportunityType(nextValue) || nextValue === type) return;
+    persistBrowserDraft(type, fields);
+    const restored = readOpportunityComposerDraft(userId, nextValue);
+    setType(nextValue);
+    const nextDefaults = createComposerFields(
+      nextValue,
+      defaultOpportunityCategoryByType[nextValue],
     );
-    hasContentRef.current = nextHasContent;
-    setHasContent(nextHasContent);
+    setFields(
+      restored?.fields ?? {
+        ...nextDefaults,
+        description: fields.description,
+        summary: fields.summary,
+        title: fields.title,
+      },
+    );
+    setDraftStatus(restored ? "Restored local draft" : "");
+  };
+
+  const clearLocalDraft = async () => {
+    const approved = await confirm({
+      confirmLabel: "Clear local draft",
+      description:
+        "This removes only this post type's browser recovery for your current PerX account. It does not delete any saved PerX post.",
+      title: "Clear this local draft?",
+      tone: "danger",
+    });
+    if (!approved) return;
+    clearOpportunityComposerDraft(userId, type);
+    const reset = createComposerFields(
+      type,
+      defaultOpportunityCategoryByType[type],
+    );
+    setFields(reset);
+    setAuthorityDeclaration("");
+    setDraftStatus("Local draft cleared");
   };
 
   return (
@@ -224,7 +336,6 @@ export function OpportunityComposer({
       action={createOpportunityAction}
       className="min-h-full bg-[color:var(--px-page)]"
       id="create-post-form"
-      onChange={updateContentState}
       onSubmit={(event) => {
         const submitter = event.nativeEvent.submitter as HTMLButtonElement | null;
         if (
@@ -239,6 +350,7 @@ export function OpportunityComposer({
           return;
         }
         const savingDraft = submitter?.value === "draft";
+        persistBrowserDraft(type, fields);
         allowNavigationRef.current = true;
         toast({
           description: "Your content is being validated and saved.",
@@ -309,29 +421,31 @@ export function OpportunityComposer({
                 label="Post title"
               >
                 <Input
-                  autoFocus={!error}
                   maxLength={140}
                   minLength={8}
                   name="title"
+                  onChange={(event) => updateField("title", event.target.value)}
                   placeholder="e.g. Looking for a product designer for a fintech launch"
                   required
+                  value={fields.title}
                 />
               </Field>
               <Field
-                hint={`${summaryLength}/260 characters`}
+                hint={`${fields.summary.length}/260 characters`}
                 label="Short summary"
               >
                 <Input
                   maxLength={260}
                   minLength={20}
                   name="summary"
-                  onChange={(event) => setSummaryLength(event.target.value.length)}
+                  onChange={(event) => updateField("summary", event.target.value)}
                   placeholder="Give people the essential context at a glance"
                   required
+                  value={fields.summary}
                 />
               </Field>
               <Field
-                hint={`${descriptionLength}/4000 characters. Include scope, outcomes, timing, and expectations.`}
+                hint={`${fields.description.length}/4000 characters. Include scope, outcomes, timing, and expectations.`}
                 label="Details"
               >
                 <Textarea
@@ -340,10 +454,11 @@ export function OpportunityComposer({
                   minLength={80}
                   name="description"
                   onChange={(event) =>
-                    setDescriptionLength(event.target.value.length)
+                    updateField("description", event.target.value)
                   }
                   placeholder="Describe the opportunity clearly enough for the right people to respond..."
                   required
+                  value={fields.description}
                 />
               </Field>
 
@@ -351,7 +466,7 @@ export function OpportunityComposer({
                 <Field label="Post type">
                   <Select
                     name="type"
-                    onChange={(event) => setType(event.target.value)}
+                    onChange={(event) => changeType(event.target.value)}
                     required
                     value={type}
                   >
@@ -363,7 +478,12 @@ export function OpportunityComposer({
                   </Select>
                 </Field>
                 <Field label="Category">
-                  <Select defaultValue={defaultCategory} name="category" required>
+                  <Select
+                    name="category"
+                    onChange={(event) => updateField("category", event.target.value as OpportunityComposerDraftFields["category"])}
+                    required
+                    value={fields.category}
+                  >
                     {opportunityCategoryOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
@@ -373,9 +493,33 @@ export function OpportunityComposer({
                 </Field>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <Field label="Currency">
-                  <Select defaultValue="NGN" name="currency" required>
+              <section className="grid gap-3 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] p-3 sm:border-0 sm:bg-transparent sm:p-0">
+                <button
+                  aria-controls={optionalSectionId}
+                  aria-expanded={optionalOpen}
+                  className="flex min-h-11 items-center justify-between gap-3 rounded-xl px-2 text-left text-sm font-black text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] sm:hidden"
+                  onClick={() => setOptionalOpen((current) => !current)}
+                  type="button"
+                >
+                  Budget, location and participation
+                  <ChevronDown
+                    aria-hidden
+                    className={`transition ${optionalOpen ? "rotate-180" : ""}`}
+                    size={18}
+                  />
+                </button>
+                <div
+                  className={`${optionalOpen ? "grid" : "hidden"} gap-4 sm:grid`}
+                  id={optionalSectionId}
+                >
+                  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <Field label="Currency">
+                  <Select
+                    name="currency"
+                    onChange={(event) => updateField("currency", event.target.value as OpportunityComposerDraftFields["currency"])}
+                    required
+                    value={fields.currency}
+                  >
                     {currencyOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.value}
@@ -383,22 +527,40 @@ export function OpportunityComposer({
                     ))}
                   </Select>
                 </Field>
-                <Field label="Budget minimum">
-                  <Input
-                    inputMode="decimal"
+                <Field
+                  hint="Digits and up to two decimal places; do not include commas."
+                  label={`Budget minimum (${fields.currency})`}
+                >
+                  <MoneyInput
+                    aria-label={`Budget minimum (${fields.currency})`}
+                    currency={fields.currency}
                     name="budgetMin"
+                    onChange={(event) => updateField("budgetMin", event.target.value)}
                     placeholder="250000.00"
+                    value={fields.budgetMin}
                   />
                 </Field>
-                <Field label="Budget maximum">
-                  <Input
-                    inputMode="decimal"
+                <Field
+                  hint="Digits and up to two decimal places; do not include commas."
+                  label={`Budget maximum (${fields.currency})`}
+                >
+                  <MoneyInput
+                    aria-label={`Budget maximum (${fields.currency})`}
+                    currency={fields.currency}
                     name="budgetMax"
+                    onChange={(event) => updateField("budgetMax", event.target.value)}
                     placeholder="1200000.00"
+                    value={fields.budgetMax}
                   />
                 </Field>
                 <Field label="Location">
-                  <Input name="location" placeholder="Lagos, hybrid" />
+                  <Input
+                    maxLength={120}
+                    name="location"
+                    onChange={(event) => updateField("location", event.target.value)}
+                    placeholder="Lagos, hybrid"
+                    value={fields.location}
+                  />
                 </Field>
               </div>
 
@@ -409,9 +571,24 @@ export function OpportunityComposer({
                 <Input
                   maxLength={500}
                   name="skills"
+                  onChange={(event) => updateField("skills", event.target.value)}
                   placeholder="Product design, Research, Fintech"
+                  value={fields.skills}
                 />
               </Field>
+
+                  <label className="flex min-h-11 items-center gap-3 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 text-sm font-semibold text-[color:var(--px-text)]">
+                    <input
+                      checked={fields.remote}
+                      className="size-5 accent-[color:var(--px-primary)]"
+                      name="remote"
+                      onChange={(event) => updateField("remote", event.target.checked)}
+                      type="checkbox"
+                    />
+                    Remote participation is supported
+                  </label>
+                </div>
+              </section>
 
               {propertyMode ? (
                 <section className="grid gap-4 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] p-4 sm:p-5">
@@ -433,7 +610,12 @@ export function OpportunityComposer({
                   </div>
                   <div className="grid gap-4 sm:grid-cols-3">
                     <Field label="Property type">
-                      <Select name="propertyType" required>
+                      <Select
+                        name="propertyType"
+                        onChange={(event) => updateField("propertyType", event.target.value as OpportunityComposerDraftFields["propertyType"])}
+                        required
+                        value={fields.propertyType}
+                      >
                         <option value="">Choose type</option>
                         {propertyTypeOptions.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -443,7 +625,12 @@ export function OpportunityComposer({
                       </Select>
                     </Field>
                     <Field label="Listing type">
-                      <Select name="propertyListingType" required>
+                      <Select
+                        name="propertyListingType"
+                        onChange={(event) => updateField("propertyListingType", event.target.value as OpportunityComposerDraftFields["propertyListingType"])}
+                        required
+                        value={fields.propertyListingType}
+                      >
                         <option value="">Choose listing</option>
                         {propertyListingTypeOptions.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -453,7 +640,12 @@ export function OpportunityComposer({
                       </Select>
                     </Field>
                     <Field label="Contact preference">
-                      <Select name="contactPreference" required>
+                      <Select
+                        name="contactPreference"
+                        onChange={(event) => updateField("contactPreference", event.target.value as OpportunityComposerDraftFields["contactPreference"])}
+                        required
+                        value={fields.contactPreference}
+                      >
                         <option value="">Choose contact</option>
                         {contactPreferenceOptions.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -468,14 +660,18 @@ export function OpportunityComposer({
                       maxLength={1000}
                       minLength={20}
                       name="authorityDeclaration"
+                      onChange={(event) => setAuthorityDeclaration(event.target.value)}
                       placeholder="State your authority to list this property."
                       required
+                      value={authorityDeclaration}
                     />
                   </Field>
                   <label className="flex min-h-11 items-start gap-3 rounded-xl bg-[color:var(--px-surface)] p-3 text-sm font-semibold text-[color:var(--px-text)] ring-1 ring-[color:var(--px-border)]">
                     <input
                       className="mt-0.5 size-5 accent-[color:var(--px-primary)]"
+                      checked={fields.listingRulesAccepted}
                       name="listingRulesAccepted"
+                      onChange={(event) => updateField("listingRulesAccepted", event.target.checked)}
                       required
                       type="checkbox"
                     />
@@ -487,15 +683,24 @@ export function OpportunityComposer({
                 </section>
               ) : null}
 
-              <label className="flex min-h-11 items-center gap-3 rounded-xl border border-[color:var(--px-border)] px-3 text-sm font-semibold text-[color:var(--px-text)]">
-                <input
-                  className="size-5 accent-[color:var(--px-primary)]"
-                  defaultChecked
-                  name="remote"
-                  type="checkbox"
-                />
-                Remote participation is supported
-              </label>
+              <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-3 text-xs leading-5 text-[color:var(--px-text-muted)]">
+                Browser recovery is local to this device and scoped to your
+                PerX account and post type. Do not enter private contact,
+                payment, identity-document, or verification information. The
+                property authority declaration is never browser-autosaved.
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                  <span aria-live="polite" role="status">
+                    {draftStatus}
+                  </span>
+                  <button
+                    className="min-h-11 rounded-xl px-3 font-black text-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    onClick={() => void clearLocalDraft()}
+                    type="button"
+                  >
+                    Clear local draft
+                  </button>
+                </div>
+              </div>
             </div>
           </section>
         </div>
@@ -534,5 +739,68 @@ export function OpportunityComposer({
         </aside>
       </div>
     </form>
+  );
+}
+
+function createComposerFields(
+  type: CreatableOpportunityType,
+  category: string,
+): OpportunityComposerDraftFields {
+  const validCategory = opportunityCategoryOptions.some(
+    (option) => option.value === category,
+  )
+    ? (category as OpportunityComposerDraftFields["category"])
+    : defaultOpportunityCategoryByType[type];
+  return {
+    budgetMax: "",
+    budgetMin: "",
+    category: validCategory,
+    contactPreference: "",
+    currency: "NGN",
+    description: "",
+    listingRulesAccepted: false,
+    location: "",
+    propertyListingType: "",
+    propertyType: "",
+    remote: true,
+    skills: "",
+    summary: "",
+    title: "",
+  };
+}
+
+function hasBrowserDraftContent(
+  type: CreatableOpportunityType,
+  fields: OpportunityComposerDraftFields,
+) {
+  const defaults = createComposerFields(
+    type,
+    defaultOpportunityCategoryByType[type],
+  );
+  return (Object.keys(fields) as Array<keyof OpportunityComposerDraftFields>).some(
+    (key) => fields[key] !== defaults[key],
+  );
+}
+
+function hasComposerContent({
+  authorityDeclaration,
+  defaultCategory,
+  defaultType,
+  fields,
+  type,
+}: {
+  authorityDeclaration: string;
+  defaultCategory: string;
+  defaultType: CreatableOpportunityType;
+  fields: OpportunityComposerDraftFields;
+  type: CreatableOpportunityType;
+}) {
+  const defaults = createComposerFields(defaultType, defaultCategory);
+  return Boolean(
+    authorityDeclaration.trim() ||
+      type !== defaultType ||
+      (Object.keys(fields) as Array<keyof OpportunityComposerDraftFields>).some(
+        (key) => fields[key] !== defaults[key],
+      ),
   );
 }

@@ -101,6 +101,45 @@ describe("session account enforcement", () => {
     expect(mocks.sessionUpdateMany).toHaveBeenCalled();
   });
 
+  it("maps profile discovery and messaging privacy from the session", async () => {
+    mocks.sessionFindUnique.mockResolvedValue({
+      expiresAt: new Date("2099-01-01T00:00:00.000Z"),
+      id: "session-1",
+      user: sessionUser({
+        profile: {
+          allowConnectionRequests: false,
+          allowMessagesFromConnections: false,
+          allowMessagesFromMembers: true,
+          averageRating: 0,
+          biography: "Biography",
+          completedDeals: 0,
+          headline: "Headline",
+          isDiscoverable: true,
+          location: "Location",
+          profileCompleteness: 80,
+          profileImageUrl: null,
+          showLastActiveTime: true,
+          showLocation: false,
+          showPresence: true,
+          showSkills: false,
+          skills: [],
+          trustScore: 0,
+        },
+      }),
+    });
+
+    await expect(getCurrentUser()).resolves.toMatchObject({
+      profile: {
+        allowConnectionRequests: false,
+        allowMessagesFromConnections: false,
+        allowMessagesFromMembers: true,
+        isDiscoverable: true,
+        showLocation: false,
+        showSkills: false,
+      },
+    });
+  });
+
   it("rejects a banned account even when isActive was not independently cleared", async () => {
     mocks.sessionFindUnique.mockResolvedValue({
       expiresAt: new Date("2099-01-01T00:00:00.000Z"),

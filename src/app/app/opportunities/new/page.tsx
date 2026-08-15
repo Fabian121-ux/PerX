@@ -24,7 +24,7 @@ export default async function NewOpportunityPage({
 }: {
   searchParams: Promise<{ category?: string; error?: string; type?: string }>;
 }) {
-  await requireCapabilityOrNotFound("opportunity:create");
+  const user = await requireCapabilityOrNotFound("opportunity:create");
   const params = await searchParams;
   const defaultType = findOption(creatableOpportunityTypeOptions, params.type ?? "")
     ? params.type
@@ -45,6 +45,7 @@ export default async function NewOpportunityPage({
       defaultCategory={defaultCategory ?? "software"}
       defaultType={defaultType ?? "FREELANCE_PROJECT"}
       error={error}
+      userId={user.id}
     />
   );
 }

@@ -52,6 +52,7 @@ export async function GET(request: Request) {
   const snapshot = await getMessageSnapshot({
     conversationId,
     userId: user.id,
+    userRoles: user.roles,
   });
 
   if (snapshot.notFound) {

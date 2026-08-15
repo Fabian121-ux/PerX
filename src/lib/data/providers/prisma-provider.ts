@@ -14,8 +14,17 @@ import {
   type CursorPageParams,
 } from "@/lib/data/cursor";
 import { buildConversationAccessWhere } from "@/lib/messages/access";
+import {
+  getAdminAccountState,
+  getAdminActiveRestrictions,
+} from "@/lib/admin/operational-summaries";
 import type { Prisma } from "@/generated/prisma/client";
-import type { AdminListKind, PerXDataProvider } from "./interfaces";
+import type {
+  AdminDealSummary,
+  AdminListKind,
+  AdminUserSummary,
+  PerXDataProvider,
+} from "./interfaces";
 
 type OpportunityTypeValue =
   | "JOB"
@@ -180,6 +189,13 @@ async function getConversationsPage(
   };
   const rows = await getPrisma().conversation.findMany({
     include: {
+      _count: {
+        select: {
+          proposals: {
+            where: { status: { in: ["DRAFT", "SENT", "COUNTERED", "ACCEPTED"] } },
+          },
+        },
+      },
       events: {
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 50,
@@ -210,9 +226,19 @@ async function getConversationsPage(
               name: true,
               profile: {
                 select: {
+                  biography: true,
+                  headline: true,
+                  location: true,
                   profileImageUrl: true,
                   showLastActiveTime: true,
+                  showLocation: true,
                   showPresence: true,
+                  showSkills: true,
+                  skills: {
+                    orderBy: { name: "asc" },
+                    select: { name: true },
+                    take: 12,
+                  },
                 },
               },
               sessions: {
@@ -324,7 +350,151 @@ async function getConversationMessagesPage(
   });
 }
 
+async function getAdminUsersPage(
+  params?: CursorPageParams,
+): Promise<CursorPage<AdminUserSummary>> {
+  const scope = "admin:users";
+  const { cursor, pageSize, requestedCursor } = normalizeCursorPageParams(
+    params,
+    scope,
+  );
+  const rows = await getPrisma().user.findMany({
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: {
+      _count: {
+        select: {
+          deals: {
+            where: { deal: { status: { in: ["APPROVED", "RELEASED"] } } },
+          },
+          opportunities: true,
+          reviewsReceived: { where: { visibility: "PUBLIC" } },
+        },
+      },
+      accountClassification: true,
+      bannedAt: true,
+      connectionRequestsRestrictedUntil: true,
+      createdAt: true,
+      deactivatedAt: true,
+      email: true,
+      id: true,
+      isActive: true,
+      messagingRestrictedUntil: true,
+      name: true,
+      publishingRestrictedUntil: true,
+      roles: {
+        select: { role: { select: { label: true, name: true } } },
+      },
+      suspendedAt: true,
+      suspendedUntil: true,
+      username: true,
+      verificationStatus: true,
+    },
+    take: pageSize + 1,
+    where: withCursor<Prisma.UserWhereInput>(
+      {},
+      cursor,
+      { direction: "desc", field: "createdAt" },
+    ),
+  });
+  const hasNextPage = rows.length > pageSize;
+  const pageRows = hasNextPage ? rows.slice(0, pageSize) : rows;
+  const items: AdminUserSummary[] = pageRows.map((row) => ({
+    accountClassification: row.accountClassification,
+    accountState: getAdminAccountState(row),
+    activeRestrictions: getAdminActiveRestrictions(row),
+    activity: {
+      completedAgreements: row._count.deals,
+      ownedOpportunities: row._count.opportunities,
+      publicReviewsReceived: row._count.reviewsReceived,
+    },
+    createdAt: row.createdAt,
+    email: row.email,
+    id: row.id,
+    name: row.name,
+    roles: row.roles.map(({ role }) => role),
+    suspendedUntil: row.suspendedUntil,
+    username: row.username,
+    verificationStatus: row.verificationStatus,
+  }));
+  return createCursorPage(items, {
+    cursor: requestedCursor,
+    getTimestamp: (item) => item.createdAt,
+    hasNextPage,
+    nextCursorItem: items.at(-1),
+    pageSize,
+    scope,
+  });
+}
+
+async function getAdminDealsPage(
+  params?: CursorPageParams,
+): Promise<CursorPage<AdminDealSummary>> {
+  const scope = "admin:deals";
+  const { cursor, pageSize, requestedCursor } = normalizeCursorPageParams(
+    params,
+    scope,
+  );
+  const rows = await getPrisma().deal.findMany({
+    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+    select: {
+      _count: {
+        select: {
+          disputes: { where: { status: { not: "RESOLVED" } } },
+          milestones: true,
+          participants: true,
+        },
+      },
+      currency: true,
+      id: true,
+      participants: {
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        select: {
+          role: true,
+          user: { select: { name: true, username: true } },
+        },
+        take: 6,
+      },
+      proposal: { select: { opportunity: { select: { title: true } } } },
+      settlementMode: true,
+      status: true,
+      updatedAt: true,
+      valueMinor: true,
+    },
+    take: pageSize + 1,
+    where: withCursor<Prisma.DealWhereInput>(
+      {},
+      cursor,
+      { direction: "desc", field: "updatedAt" },
+    ),
+  });
+  const hasNextPage = rows.length > pageSize;
+  const pageRows = hasNextPage ? rows.slice(0, pageSize) : rows;
+  const items: AdminDealSummary[] = pageRows.map((row) => ({
+    currency: row.currency,
+    id: row.id,
+    milestoneCount: row._count.milestones,
+    participantCount: row._count.participants,
+    participantPreview: row.participants,
+    settlementMode: row.settlementMode,
+    status: row.status,
+    title: row.proposal.opportunity.title,
+    unresolvedDisputeCount: row._count.disputes,
+    updatedAt: row.updatedAt,
+    valueMinor: row.valueMinor,
+  }));
+  return createCursorPage(items, {
+    cursor: requestedCursor,
+    getTimestamp: (item) => item.updatedAt,
+    hasNextPage,
+    nextCursorItem: items.at(-1),
+    pageSize,
+    scope,
+  });
+}
+
 async function getAdminListPage(kind: AdminListKind, params?: CursorPageParams) {
+  if (kind === "users") return getAdminUsersPage(params);
+  if (kind === "deals") return getAdminDealsPage(params);
   const scope = `admin:${kind}`;
   const { cursor, pageSize, requestedCursor } = normalizeCursorPageParams(
     params,
@@ -343,31 +513,6 @@ async function getAdminListPage(kind: AdminListKind, params?: CursorPageParams) 
   };
 
   switch (kind) {
-    case "users": {
-      const rows = await getPrisma().user.findMany({
-        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-        select: {
-          accountClassification: true,
-          createdAt: true,
-          email: true,
-          id: true,
-          isActive: true,
-          name: true,
-          roles: {
-            select: { role: { select: { label: true, name: true } } },
-          },
-          username: true,
-          verificationStatus: true,
-        },
-        take: pageSize + 1,
-        where: withCursor<Prisma.UserWhereInput>(
-          {},
-          cursor,
-          { direction: "desc", field: "createdAt" },
-        ),
-      });
-      return page(rows, "createdAt");
-    }
     case "profiles": {
       const rows = await getPrisma().profile.findMany({
         orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
@@ -690,9 +835,11 @@ export const prismaProvider: PerXDataProvider = {
           },
           profile: {
             include: {
-              portfolio: true,
+              portfolio: { orderBy: [{ createdAt: "desc" }, { id: "desc" }] },
               skills: { orderBy: { name: "asc" } },
-              workHistory: true,
+              workHistory: {
+                orderBy: [{ startedAt: "desc" }, { id: "desc" }],
+              },
             },
           },
           reviewsReceived: {
@@ -725,6 +872,7 @@ export const prismaProvider: PerXDataProvider = {
     },
   },
   admin: {
+    getAdminDealsPage,
     getAdminMetrics: async () => {
       const [users, opportunities, reports, reviews, disputes, verification, auditLogs] = await Promise.all([
         getPrisma().user.count(),
@@ -744,5 +892,6 @@ export const prismaProvider: PerXDataProvider = {
         })
       ).items,
     getAdminListPage,
+    getAdminUsersPage,
   },
 };

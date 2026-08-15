@@ -15,13 +15,13 @@ export function Field({ children, hint, label }: { children: ReactNode; hint?: s
 }
 
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(
-  (props, ref) => {
+  ({ className, ...props }, ref) => {
     return (
       <input
         ref={ref}
         className={cn(
           "min-h-11 w-full min-w-0 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)] shadow-sm outline-none transition placeholder:text-[color:var(--px-text-muted)] focus:border-[color:var(--px-focus)] focus:ring-2 focus:ring-[color:var(--px-focus)]/25 disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-[color:var(--px-error)] aria-invalid:ring-2 aria-invalid:ring-red-500/20",
-          props.className,
+          className,
         )}
         {...props}
       />
@@ -31,25 +31,27 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
 Input.displayName = "Input";
 
 export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const { className, ...textareaProps } = props;
   return (
     <textarea
       className={cn(
         "min-h-28 w-full min-w-0 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)] shadow-sm outline-none transition placeholder:text-[color:var(--px-text-muted)] focus:border-[color:var(--px-focus)] focus:ring-2 focus:ring-[color:var(--px-focus)]/25 disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-[color:var(--px-error)] aria-invalid:ring-2 aria-invalid:ring-red-500/20",
-        props.className,
+        className,
       )}
-      {...props}
+      {...textareaProps}
     />
   );
 }
 
 export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
+  const { className, ...selectProps } = props;
   return (
     <select
       className={cn(
         "min-h-11 w-full min-w-0 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)] shadow-sm outline-none transition focus:border-[color:var(--px-focus)] focus:ring-2 focus:ring-[color:var(--px-focus)]/25 disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-[color:var(--px-error)] aria-invalid:ring-2 aria-invalid:ring-red-500/20",
-        props.className,
+        className,
       )}
-      {...props}
+      {...selectProps}
     />
   );
 }

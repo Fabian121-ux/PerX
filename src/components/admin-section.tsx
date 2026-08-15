@@ -22,18 +22,18 @@ export function AdminSection({
   );
 }
 
-export function AdminList({
+export function AdminList<T extends { id: string }>({
   empty,
   items,
   render,
 }: {
   empty: string;
-  items: unknown[];
-  render: (item: unknown) => ReactNode;
+  items: T[];
+  render: (item: T) => ReactNode;
 }) {
   if (!items.length) {
     return <EmptyState body="Connect PostgreSQL and seed data to populate this operational queue." title={empty} />;
   }
 
-  return <div className="grid gap-3">{items.map((item, index) => <Card key={index}>{render(item)}</Card>)}</div>;
+  return <div className="grid gap-3">{items.map((item) => <Card key={item.id}>{render(item)}</Card>)}</div>;
 }

@@ -49,6 +49,23 @@ describe("opportunity controlled values", () => {
     expect(result.success).toBe(false);
   });
 
+  it("normalizes empty property-only controls for non-property posts", () => {
+    const result = opportunityFormSchema.safeParse({
+      ...validOpportunity,
+      category: "services",
+      contactPreference: "",
+      propertyListingType: "",
+      propertyType: "",
+      type: "SERVICE",
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    expect(result.data.contactPreference).toBeUndefined();
+    expect(result.data.propertyListingType).toBeUndefined();
+    expect(result.data.propertyType).toBeUndefined();
+  });
+
   it("keeps investment publishing unavailable and maps active type defaults", () => {
     expect(
       creatableOpportunityTypeOptions.some(

@@ -46,6 +46,7 @@ vi.mock("@/lib/logging/audit", () => ({ writeAuditLog: mocks.writeAuditLog }));
 import { sendMessageAction } from "@/features/messages/actions";
 
 const conversationId = "cl01234567890123456789012";
+const replyMessageId = "cl11234567890123456789012";
 
 describe("message send authorization", () => {
   beforeEach(() => {
@@ -122,6 +123,35 @@ describe("message send authorization", () => {
       data: { removedAt: null },
       where: { conversationId },
     });
+  });
+
+  it("persists only a reply target from the same conversation", async () => {
+    tx.message.findFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ id: replyMessageId });
+
+    await expect(
+      sendMessageAction(conversationId, "Reply body", replyMessageId),
+    ).resolves.toEqual({ messageId: "message-1", success: true });
+
+    expect(tx.message.findFirst).toHaveBeenLastCalledWith({
+      select: { id: true },
+      where: { conversationId, id: replyMessageId },
+    });
+    expect(tx.message.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ replyToMessageId: replyMessageId }),
+    });
+  });
+
+  it("rejects a forged reply target from another conversation", async () => {
+    tx.message.findFirst.mockResolvedValue(null);
+
+    await expect(
+      sendMessageAction(conversationId, "Reply body", replyMessageId),
+    ).resolves.toEqual({
+      error: "The message you are replying to is unavailable.",
+    });
+    expect(tx.message.create).not.toHaveBeenCalled();
   });
 
   it("rejects enforcement that commits before the locked recheck", async () => {
