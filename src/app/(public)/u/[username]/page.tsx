@@ -6,9 +6,11 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   ExternalLink,
+  Flag,
   Globe2,
   Mail,
   MapPin,
+  ShieldBan,
   Star,
 } from "lucide-react";
 
@@ -23,6 +25,9 @@ import {
 } from "@/components/trust/trust-presentation-card";
 import {
   acceptConnectionAction,
+  blockUserAction,
+  cancelConnectionRequestAction,
+  disconnectAction,
   rejectConnectionAction,
   requestConnectionAction,
   startConversationAction,
@@ -543,20 +548,30 @@ function ProfilePrimaryAction({
 
   if (relationship.blocked || relationship.status === "BLOCKED") {
     return (
-      <form
-        action={async () => {
-          "use server";
-          await unblockUserAction(targetUserId);
-        }}
-      >
-        <PendingSubmitButton
-          className="w-full sm:w-auto"
-          pendingLabel="Unblocking..."
-          type="submit"
+      <div className="flex flex-wrap gap-2">
+        <form
+          action={async () => {
+            "use server";
+            await unblockUserAction(targetUserId);
+          }}
         >
-          Unblock
-        </PendingSubmitButton>
-      </form>
+          <PendingSubmitButton
+            className="w-full sm:w-auto"
+            pendingLabel="Unblocking..."
+            type="submit"
+          >
+            Unblock
+          </PendingSubmitButton>
+        </form>
+        <ButtonLink
+          href={`/app/reports/new?targetType=USER&targetId=${encodeURIComponent(targetUserId)}`}
+          size="sm"
+          variant="ghost"
+        >
+          <Flag aria-hidden className="mr-1.5" size={14} />
+          Report
+        </ButtonLink>
+      </div>
     );
   }
 
@@ -583,18 +598,81 @@ function ProfilePrimaryAction({
             </PendingSubmitButton>
           </form>
         ) : null}
+        <form
+          action={async () => {
+            "use server";
+            await disconnectAction(relationship.connectionId!);
+          }}
+        >
+          <PendingSubmitButton
+            className="w-full sm:w-auto"
+            pendingLabel="Removing..."
+            type="submit"
+            variant="secondary"
+          >
+            Remove Connection
+          </PendingSubmitButton>
+        </form>
+        <form
+          action={async () => {
+            "use server";
+            await blockUserAction(targetUserId);
+          }}
+        >
+          <PendingSubmitButton
+            className="w-full sm:w-auto"
+            pendingLabel="Blocking..."
+            type="submit"
+            variant="outline"
+          >
+            <ShieldBan aria-hidden className="mr-2" size={16} />
+            Block
+          </PendingSubmitButton>
+        </form>
       </div>
     );
   }
 
   if (
     relationship.status === "PENDING" &&
-    relationship.connectionDirection === "outgoing"
+    relationship.connectionDirection === "outgoing" &&
+    relationship.connectionId
   ) {
     return (
-      <Button className="w-full sm:w-auto" disabled variant="secondary">
-        Request sent
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button className="w-full sm:w-auto" disabled variant="secondary">
+          Pending
+        </Button>
+        <form
+          action={async () => {
+            "use server";
+            await cancelConnectionRequestAction(relationship.connectionId!);
+          }}
+        >
+          <PendingSubmitButton
+            className="w-full sm:w-auto"
+            pendingLabel="Cancelling..."
+            type="submit"
+            variant="secondary"
+          >
+            Cancel Request
+          </PendingSubmitButton>
+        </form>
+        <form
+          action={async () => {
+            "use server";
+            await blockUserAction(targetUserId);
+          }}
+        >
+          <PendingSubmitButton
+            pendingLabel="Blocking..."
+            type="submit"
+            variant="outline"
+          >
+            Block
+          </PendingSubmitButton>
+        </form>
+      </div>
     );
   }
 
@@ -634,26 +712,56 @@ function ProfilePrimaryAction({
             Decline
           </PendingSubmitButton>
         </form>
+        <form
+          action={async () => {
+            "use server";
+            await blockUserAction(targetUserId);
+          }}
+        >
+          <PendingSubmitButton
+            pendingLabel="Blocking..."
+            type="submit"
+            variant="outline"
+          >
+            Block
+          </PendingSubmitButton>
+        </form>
       </div>
     );
   }
 
   if (allowConnectionRequests) {
     return (
-      <form
-        action={async () => {
-          "use server";
-          await requestConnectionAction(targetUserId);
-        }}
-      >
-        <PendingSubmitButton
-          className="w-full sm:w-auto"
-          pendingLabel="Sending request..."
-          type="submit"
+      <div className="flex flex-wrap gap-2">
+        <form
+          action={async () => {
+            "use server";
+            await requestConnectionAction(targetUserId);
+          }}
         >
-          Connect With
-        </PendingSubmitButton>
-      </form>
+          <PendingSubmitButton
+            className="w-full sm:w-auto"
+            pendingLabel="Sending request..."
+            type="submit"
+          >
+            Connect
+          </PendingSubmitButton>
+        </form>
+        <form
+          action={async () => {
+            "use server";
+            await blockUserAction(targetUserId);
+          }}
+        >
+          <PendingSubmitButton
+            pendingLabel="Blocking..."
+            type="submit"
+            variant="outline"
+          >
+            Block
+          </PendingSubmitButton>
+        </form>
+      </div>
     );
   }
 
