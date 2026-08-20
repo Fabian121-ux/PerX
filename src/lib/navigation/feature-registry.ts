@@ -4,7 +4,6 @@ import {
   Bell,
   Bookmark,
   BriefcaseBusiness,
-  Building2,
   ClipboardList,
   Compass,
   FileText,
@@ -83,7 +82,9 @@ export const featureRegistry = [
     showInSidebar: true,
   },
   {
-    activePaths: [getAppRoute("network")],
+    // `/app/network` and `/app/people` are redirect shims kept for existing
+    // links; both must keep this item highlighted while the redirect resolves.
+    activePaths: [getAppRoute("network"), "/app/people"],
     description: "Manage connections, requests, and suggestions.",
     group: "work",
     href: getAppRoute("connections"),
@@ -149,16 +150,11 @@ export const featureRegistry = [
     label: "Deals",
     showInSidebar: true,
   },
-  {
-    description: "Explore property opportunities and listings.",
-    group: "ecosystem",
-    href: getAppRoute("real_estate"),
-    icon: Building2,
-    id: "real-estate",
-    keywords: ["property", "housing", "buildings"],
-    label: "Real Estate",
-    showInSidebar: true,
-  },
+  // The "Real Estate" vertical was retired from the product experience.
+  // It is intentionally absent from the registry, which removes it from the
+  // sidebar, the feature directory, in-app search, and the preview shell in
+  // one place. The underlying `PROPERTY` data and the admin moderation console
+  // are deliberately retained - see docs/implementation/REAL_ESTATE_RETIREMENT.md.
   {
     description: "Explore logistics-related opportunities and providers.",
     group: "ecosystem",
@@ -326,16 +322,42 @@ export const featureRegistry = [
 
 export type FeatureId = (typeof featureRegistry)[number]["id"];
 
-export const authenticatedMobileNavigation = [
-  { featureId: "connections" },
-  { featureId: "create-post" },
-  { featureId: "home", prominent: true },
-  { featureId: "messages" },
-  { featureId: "profile" },
-] as const satisfies readonly {
+export type MobileNavigationItem = {
+  /** Extra paths that should keep this destination highlighted. */
+  activePaths?: readonly string[];
   featureId: FeatureId;
+  /** Overrides the registry label where the bottom bar needs a shorter word. */
+  label?: string;
+  /** Rendered as the raised centre action rather than a flat tab. */
   prominent?: boolean;
-}[];
+};
+
+/**
+ * The five primary mobile destinations, in visual left-to-right order.
+ *
+ *   Home | Network | Create | Messages | Profile
+ *
+ * Home leads because the authenticated experience is feed-first. Create is the
+ * prominent centre action: it is the single most common intentional act and it
+ * opens a full-screen composer, so it reads as an action rather than a tab.
+ *
+ * Labels are overridden here rather than in the registry because the sidebar
+ * and feature directory have room for the longer, more descriptive names
+ * ("Connections", "Create Post") while the bottom bar does not.
+ */
+export const authenticatedMobileNavigation = [
+  { featureId: "home", label: "Home" },
+  {
+    // Discovery is the natural sibling of connections on mobile, where there
+    // is no sidebar to reach it from, so the tab covers both surfaces.
+    activePaths: [getAppRoute("discover"), getAppRoute("network"), "/app/people"],
+    featureId: "connections",
+    label: "Network",
+  },
+  { featureId: "create-post", label: "Create", prominent: true },
+  { featureId: "messages", label: "Messages" },
+  { featureId: "profile", label: "Profile" },
+] as const satisfies readonly MobileNavigationItem[];
 
 export const secondaryNavigation = [
   { featureId: "profile", label: "Account" },

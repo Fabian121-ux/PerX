@@ -141,21 +141,37 @@ describe("opportunity composer", () => {
     expect(mocks.push).not.toHaveBeenCalled();
   });
 
-  it("treats a property contact selection as unsaved content", async () => {
+  it("does not offer the retired property vertical, even when requested by query", async () => {
+    // The Real Estate vertical was retired. A stale link carrying
+    // `?type=PROPERTY&category=real-estate` must fall back to a live type
+    // rather than reopening a composer for content that can no longer be
+    // created. See docs/implementation/REAL_ESTATE_RETIREMENT.md.
     const view = renderComposer({
       defaultCategory: "real-estate",
       defaultType: "PROPERTY",
     });
-    fireEvent.change(view.getByLabelText("Contact preference"), {
-      target: { value: "PERX_MESSAGES" },
-    });
+    // Let the deferred local-draft restore settle before asserting.
+    await act(async () => Promise.resolve());
 
-    fireEvent.click(view.getByRole("button", { name: "Back from Create Post" }));
+    const typeSelect = view.getByLabelText("Post type") as HTMLSelectElement;
+    const typeValues = Array.from(typeSelect.options).map(
+      (option) => option.value,
+    );
+    expect(typeValues).not.toContain("PROPERTY");
+    expect(typeSelect.value).toBe("FREELANCE_PROJECT");
 
+    const categorySelect = view.getByLabelText(
+      "Category",
+    ) as HTMLSelectElement;
     expect(
-      await view.findByRole("dialog", { name: "Leave Create Post?" }),
-    ).toBeTruthy();
-    expect(mocks.push).not.toHaveBeenCalled();
+      Array.from(categorySelect.options).map((option) => option.value),
+    ).not.toContain("real-estate");
+
+    // Property-only fields must not be reachable at all.
+    expect(view.queryByLabelText("Contact preference")).toBeNull();
+    expect(
+      view.queryByLabelText("Ownership or authority declaration"),
+    ).toBeNull();
   });
 
   it("announces draft and publish submissions distinctly", async () => {
@@ -244,7 +260,7 @@ describe("opportunity composer", () => {
     );
   });
 
-  it("autosaves by type, restores on switch, and excludes authority text", async () => {
+  it("autosaves per type and restores the matching draft when switching back", async () => {
     const view = renderComposer();
     fireEvent.change(view.getByLabelText("Post title"), {
       target: { value: "Service type draft" },
@@ -259,30 +275,24 @@ describe("opportunity composer", () => {
     ).toContain("Service type draft");
 
     fireEvent.change(view.getByLabelText("Post type"), {
-      target: { value: "PROPERTY" },
+      target: { value: "PARTNERSHIP" },
     });
     expect((view.getByLabelText("Category") as HTMLSelectElement).value).toBe(
-      "real-estate",
+      "startups",
     );
     fireEvent.change(view.getByLabelText("Post title"), {
-      target: { value: "Property type draft" },
-    });
-    fireEvent.change(view.getByLabelText("Ownership or authority declaration"), {
-      target: { value: "Sensitive proof must not be in browser storage" },
+      target: { value: "Partnership type draft" },
     });
     await waitFor(() =>
       expect(
         window.localStorage.getItem(
-          "perx:opportunity-composer:v1:user-1:PROPERTY",
+          "perx:opportunity-composer:v1:user-1:PARTNERSHIP",
         ),
-      ).toContain("Property type draft"),
+      ).toContain("Partnership type draft"),
     );
-    expect(
-      window.localStorage.getItem(
-        "perx:opportunity-composer:v1:user-1:PROPERTY",
-      ),
-    ).not.toContain("Sensitive proof");
 
+    // Drafts are keyed per type, so switching back restores the earlier one
+    // rather than carrying the current title across.
     fireEvent.change(view.getByLabelText("Post type"), {
       target: { value: "SERVICE" },
     });

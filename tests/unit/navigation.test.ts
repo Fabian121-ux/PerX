@@ -111,17 +111,49 @@ describe("authenticated navigation destinations", () => {
   it("uses exactly the required five mobile destinations in order", () => {
     const destinations = authenticatedMobileNavigation.map((item) => {
       const feature = getFeatureById(item.featureId);
-      return { href: feature.href, label: feature.label };
+      return { href: feature.href, label: item.label ?? feature.label };
     });
 
+    // Home leads because the authenticated experience is feed-first, and
+    // Create sits in the centre as the prominent action.
     expect(destinations).toEqual([
-      { href: "/app/connections", label: "Connections" },
-      { href: "/app/opportunities/new", label: "Create Post" },
       { href: "/app", label: "Home" },
+      { href: "/app/connections", label: "Network" },
+      { href: "/app/opportunities/new", label: "Create" },
       { href: "/app/messages", label: "Messages" },
       { href: "/app/profile", label: "Profile" },
     ]);
-    expect(authenticatedMobileNavigation[2]).toMatchObject({ prominent: true });
+    expect(authenticatedMobileNavigation[2]).toMatchObject({
+      featureId: "create-post",
+      prominent: true,
+    });
+  });
+
+  it("keeps the mobile Network tab highlighted across its discovery surfaces", () => {
+    const network = authenticatedMobileNavigation.find(
+      (item) => item.featureId === "connections",
+    );
+    const feature = getFeatureById("connections");
+    const aliases = [
+      ...(feature.activePaths ?? []),
+      ...(network && "activePaths" in network ? network.activePaths : []),
+    ];
+
+    for (const pathname of [
+      "/app/connections",
+      "/app/discover",
+      "/app/network",
+      "/app/people",
+    ]) {
+      expect(
+        isNavigationItemActive(pathname, feature.href, { aliases }),
+      ).toBe(true);
+    }
+
+    // Must not bleed into unrelated destinations.
+    expect(isNavigationItemActive("/app/messages", feature.href, { aliases })).toBe(
+      false,
+    );
   });
 
   it("keeps the secondary menu focused instead of duplicating primary navigation", () => {

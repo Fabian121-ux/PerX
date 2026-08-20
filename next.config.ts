@@ -20,8 +20,11 @@ const nextConfig: NextConfig = {
   deploymentId: process.env.VERCEL_GIT_COMMIT_SHA ? process.env.VERCEL_GIT_COMMIT_SHA.substring(0, 32) : undefined,
   async redirects() {
     return [
-      { source: "/dashboard", destination: "/app", permanent: true },
-      { source: "/app/dashboard", destination: "/app", permanent: true },
+      // The separate Dashboard route was retired: personal activity now lives
+      // inside Profile rather than competing with it as a second primary
+      // destination. Legacy dashboard links land on the user's own hub.
+      { source: "/dashboard", destination: "/app/profile", permanent: false },
+      { source: "/app/dashboard", destination: "/app/profile", permanent: false },
       { source: "/deals/:path*", destination: "/app/deals/:path*", permanent: true },
       { source: "/escrow", destination: "/app/escrow", permanent: true },
       { source: "/logistics", destination: "/app/logistics", permanent: true },
@@ -34,7 +37,14 @@ const nextConfig: NextConfig = {
       { source: "/opportunities/:opportunityId/edit", destination: "/app/opportunities/:opportunityId/edit", permanent: true },
       { source: "/profile/:path*", destination: "/app/profile/:path*", permanent: true },
       { source: "/proposals/:path*", destination: "/app/proposals/:path*", permanent: true },
-      { source: "/real-estate", destination: "/app/real-estate", permanent: true },
+      // The Real Estate vertical was retired. Legacy `/real-estate` and
+      // `/app/real-estate` links are folded back into general discovery
+      // rather than 404ing, so old bookmarks and shared links still land
+      // somewhere useful. Not `permanent`: the redirect target is a product
+      // decision that may change, and a 308 would be cached indefinitely.
+      { source: "/real-estate", destination: "/app/discover", permanent: false },
+      { source: "/app/real-estate", destination: "/app/discover", permanent: false },
+      { source: "/preview/real-estate", destination: "/preview", permanent: false },
       { source: "/reports", destination: "/app/reports", permanent: true },
       { source: "/reviews", destination: "/app/reviews", permanent: true },
       { source: "/roles", destination: "/app/roles", permanent: true },

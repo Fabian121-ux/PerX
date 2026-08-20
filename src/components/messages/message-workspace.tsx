@@ -638,6 +638,26 @@ export function MessageWorkspace({
   }, []);
 
   useEffect(() => {
+    if (backHref) return;
+    const conversationId = (
+      window.history.state as {
+        perxMessagesConversationId?: unknown;
+      } | null
+    )?.perxMessagesConversationId;
+    if (
+      typeof conversationId === "string" &&
+      !mobileDetailOpenRef.current &&
+      syncedConversationsRef.current.some(
+        (conversation) => conversation.id === conversationId,
+      )
+    ) {
+      // Next may remount this workspace while traversing same-URL entries.
+      // Reauthorize before restoring the conversation from the history state.
+      void openHistoryConversation(conversationId);
+    }
+  }, [backHref]);
+
+  useEffect(() => {
     let active = true;
     let eventSource: EventSource | null = null;
     let fallbackInterval: number | null = null;
@@ -815,6 +835,7 @@ export function MessageWorkspace({
       return;
     }
     const conversationId = activeConversation?.id;
+    const positionDeadline = Date.now() + 10_000;
     const positionPendingLatest = () => {
       if (
         !conversationId ||
@@ -833,7 +854,44 @@ export function MessageWorkspace({
       return true;
     };
     positionPendingLatest();
-    const updateHistoryPosition = (event?: Event) => {
+    let positionFrame = 0;
+    const continuePendingPosition = () => {
+      if (pendingLatestPositionRef.current !== conversationId) {
+        return;
+      }
+      if (Date.now() >= positionDeadline) {
+        positionPendingLatest();
+        if (pendingLatestPositionRef.current === conversationId) {
+          pendingLatestPositionRef.current = "";
+        }
+        return;
+      }
+      positionPendingLatest();
+      positionFrame = window.requestAnimationFrame(continuePendingPosition);
+    };
+    positionFrame = window.requestAnimationFrame(continuePendingPosition);
+    let positionTimer = 0;
+    const continueTimedPosition = () => {
+      if (pendingLatestPositionRef.current !== conversationId) {
+        return;
+      }
+      if (Date.now() >= positionDeadline) {
+        positionPendingLatest();
+        if (pendingLatestPositionRef.current === conversationId) {
+          pendingLatestPositionRef.current = "";
+        }
+        return;
+      }
+      positionPendingLatest();
+      positionTimer = window.setTimeout(continueTimedPosition, 100);
+    };
+    positionTimer = window.setTimeout(continueTimedPosition, 100);
+    const stopPendingPosition = () => {
+      if (pendingLatestPositionRef.current === conversationId) {
+        pendingLatestPositionRef.current = "";
+      }
+    };
+    const updateHistoryPosition = () => {
       if (!node.clientHeight || !historyPositionedRef.current) {
         historyAtBottomRef.current = false;
         setHistoryAtBottom(false);
@@ -842,20 +900,16 @@ export function MessageWorkspace({
       const distanceFromBottom =
         node.scrollHeight - node.scrollTop - node.clientHeight;
       const atBottom = distanceFromBottom <= 72;
-      if (
-        !atBottom &&
-        event &&
-        pendingLatestPositionRef.current === conversationId
-      ) {
-        pendingLatestPositionRef.current = "";
-      }
       historyAtBottomRef.current = atBottom;
       setHistoryAtBottom(atBottom);
       if (atBottom) setNewMessageCount(0);
     };
     updateHistoryPosition();
-    const handleHistoryScroll = (event: Event) => updateHistoryPosition(event);
+    const handleHistoryScroll = () => updateHistoryPosition();
     node.addEventListener("scroll", handleHistoryScroll, { passive: true });
+    node.addEventListener("pointerdown", stopPendingPosition, { passive: true });
+    node.addEventListener("touchstart", stopPendingPosition, { passive: true });
+    node.addEventListener("wheel", stopPendingPosition, { passive: true });
     let previousScrollHeight = node.scrollHeight;
     const resizeObserver =
       typeof ResizeObserver === "undefined"
@@ -881,7 +935,12 @@ export function MessageWorkspace({
     const handleViewportResize = () => updateHistoryPosition();
     viewport?.addEventListener("resize", handleViewportResize);
     return () => {
+      window.cancelAnimationFrame(positionFrame);
+      window.clearTimeout(positionTimer);
       node.removeEventListener("scroll", handleHistoryScroll);
+      node.removeEventListener("pointerdown", stopPendingPosition);
+      node.removeEventListener("touchstart", stopPendingPosition);
+      node.removeEventListener("wheel", stopPendingPosition);
       resizeObserver?.disconnect();
       viewport?.removeEventListener("resize", handleViewportResize);
     };
@@ -1529,6 +1588,8 @@ export function MessageWorkspace({
       persistDraft(draftStorageKey, conversationId, "");
     }
     pendingLatestPositionRef.current = conversationId;
+    historyPositionedRef.current = false;
+    historyAtBottomRef.current = false;
     setHistoryPositioned(false);
     setHistoryAtBottom(false);
     toast({ title: "Proposal submitted", tone: "success" });
@@ -1573,9 +1634,25 @@ export function MessageWorkspace({
   const jumpToLatest = () => {
     const node = historyRef.current;
     if (!node) return;
+    const conversationId = activeConversation?.id;
+    if (conversationId) {
+      pendingLatestPositionRef.current = conversationId;
+    }
+    historyPositionedRef.current = true;
+    historyAtBottomRef.current = true;
+    setHistoryPositioned(true);
+    setHistoryAtBottom(true);
+    setNewMessageCount(0);
     node.scrollTo({
-      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      behavior: "auto",
       top: node.scrollHeight,
+    });
+    node.scrollTop = node.scrollHeight;
+    window.requestAnimationFrame(() => {
+      node.scrollTop = node.scrollHeight;
+      if (pendingLatestPositionRef.current === conversationId) {
+        pendingLatestPositionRef.current = "";
+      }
     });
     node.focus({ preventScroll: true });
   };
@@ -1957,6 +2034,7 @@ export function MessageWorkspace({
               aria-label="Message history"
               aria-live="off"
               className="bg-dot-pattern h-full overflow-y-auto overscroll-contain p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--px-focus)] sm:p-4"
+              data-history-positioned={historyPositioned}
               onFocusCapture={() =>
                 setActivatedConversationId(activeConversation.id)
               }

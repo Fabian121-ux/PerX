@@ -8,8 +8,11 @@ import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { parseMoneyToMinor } from "@/lib/money";
 import {
+  allOpportunityCategoryOptions,
   contactPreferenceOptions,
   findOption,
+  isRetiredOpportunityCategory,
+  isRetiredOpportunityType,
   opportunityCategoryOptions,
   propertyListingTypeOptions,
   propertyTypeOptions,
@@ -43,7 +46,6 @@ function revalidateOpportunityViews(slug?: string) {
   revalidatePath("/app/manage");
   revalidatePath("/app/opportunities");
   revalidatePath("/app/discover");
-  revalidatePath("/app/real-estate");
   revalidatePath("/app/services");
   revalidatePath("/app/market");
   revalidatePath("/app/logistics");
@@ -53,7 +55,12 @@ function revalidateOpportunityViews(slug?: string) {
 }
 
 function propertyPublishRedirect(target: "new" | string, error: string) {
-  if (target === "new") redirect(`/app/opportunities/new?error=${error}&type=PROPERTY&category=real-estate`);
+  // `target === "new"` is now unreachable for PROPERTY: the type cannot be
+  // selected in the composer and is refused server-side by
+  // `createOpportunityAction`. The branch is kept so the validator stays total
+  // and degrades to the generic composer rather than throwing, but it no
+  // longer pre-selects the retired vertical.
+  if (target === "new") redirect(`/app/opportunities/new?error=${error}`);
   redirect(`/app/opportunities/${target}/edit?error=${error}`);
 }
 
@@ -162,6 +169,15 @@ export async function createOpportunityAction(formData: FormData) {
     );
   }
   if (parsed.data.type === "INVESTMENT") {
+    redirect("/app/opportunities/new?error=type-unavailable");
+  }
+  // Retired verticals are removed from every picker, but the client is never
+  // the authority: a hand-crafted POST must not be able to create new content
+  // in a vertical the product no longer offers.
+  if (
+    isRetiredOpportunityType(parsed.data.type) ||
+    isRetiredOpportunityCategory(parsed.data.category)
+  ) {
     redirect("/app/opportunities/new?error=type-unavailable");
   }
   if (parsed.data.intent === "publish") {
@@ -356,12 +372,33 @@ export async function updateOpportunityAction(
   ) {
     redirect(`/app/opportunities/${opportunityId}/edit?error=type-unavailable`);
   }
+  // Migrating an existing record INTO a retired vertical is refused, but a
+  // record that is already in one may be saved unchanged - otherwise the owner
+  // could never edit or archive their legacy listings.
+  if (
+    isRetiredOpportunityType(parsed.data.type) &&
+    parsed.data.type !== opportunity.type
+  ) {
+    redirect(`/app/opportunities/${opportunityId}/edit?error=type-unavailable`);
+  }
+  if (
+    isRetiredOpportunityCategory(parsed.data.category) &&
+    parsed.data.category !== opportunity.category?.slug
+  ) {
+    redirect(`/app/opportunities/${opportunityId}/edit?error=type-unavailable`);
+  }
   if (parsed.data.intent === "publish") {
     const restriction = await assertCanPublish(user.id);
     if (restriction) redirect("/app/manage?error=publishing-restricted");
   }
 
-  const categoryOption = findOption(opportunityCategoryOptions, parsed.data.category);
+  // Retired categories bypass the picker list but must still resolve for
+  // legacy records that already hold one.
+  const categoryOption =
+    findOption(opportunityCategoryOptions, parsed.data.category) ??
+    (parsed.data.category === opportunity.category?.slug
+      ? findOption(allOpportunityCategoryOptions, parsed.data.category)
+      : undefined);
   if (!categoryOption) redirect(`/app/opportunities/${opportunityId}/edit?error=check-fields`);
 
   const policy = evaluatePolicy({

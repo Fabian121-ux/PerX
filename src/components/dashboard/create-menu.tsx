@@ -6,7 +6,6 @@ import {
   Briefcase,
   FileSignature,
   Handshake,
-  FolderPlus,
   Rocket,
 } from "lucide-react";
 import Link from "next/link";
@@ -76,19 +75,6 @@ export function CreateMenu({ previewMode = false }: { previewMode?: boolean }) {
           </DropdownMenu.Item>
 
           <DropdownMenu.Separator className="my-1 h-px bg-[color:var(--px-border)]" />
-
-          <DropdownMenu.Item asChild>
-            <Link
-              href={getHref("/app/opportunities/new?type=PROPERTY&category=real-estate")}
-              className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
-            >
-              <FolderPlus
-                size={16}
-                className="text-[color:var(--px-text-muted)]"
-              />
-              Create real-estate listing
-            </Link>
-          </DropdownMenu.Item>
 
           <DropdownMenu.Item asChild>
             <Link

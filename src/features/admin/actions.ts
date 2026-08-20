@@ -1049,6 +1049,5 @@ export async function reviewPropertyListingAction(formData: FormData) {
   revalidatePath("/admin/real-estate");
   revalidatePath("/admin/opportunities");
   revalidatePath("/app/manage");
-  revalidatePath("/app/real-estate");
   revalidatePath("/discover");
 }

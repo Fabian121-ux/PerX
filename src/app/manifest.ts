@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 
+import { PWA_START_URL } from "@/lib/navigation/entry";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     background_color: "#f4f7fb",
@@ -7,6 +9,10 @@ export default function manifest(): MetadataRoute.Manifest {
     description:
       "An opportunity ecosystem for discovery, trust, structured proposals, deals, beta-stage simulated payment states, and reputation.",
     display: "standalone",
+    // Stable install identity so changing `start_url` does not orphan
+    // already-installed instances.
+    id: "/",
+    scope: "/",
     icons: [
       {
         purpose: "any",
@@ -35,7 +41,10 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     name: "perX",
     short_name: "perX",
-    start_url: "/",
+    // Launches at `/`, which resolves server-side: an authenticated user is
+    // redirected to the app home, an unauthenticated user still gets the
+    // public landing page. See `src/lib/navigation/entry.ts`.
+    start_url: PWA_START_URL,
     theme_color: "#061936",
   };
 }

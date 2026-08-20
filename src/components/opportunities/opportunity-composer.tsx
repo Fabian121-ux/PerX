@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  ArrowLeft,
-  ChevronDown,
-  FileText,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+import { ArrowLeft, ChevronDown, FileText, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
@@ -20,13 +14,10 @@ import { MoneyInput } from "@/components/ui/money-input";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { createOpportunityAction } from "@/features/opportunities/actions";
 import {
-  contactPreferenceOptions,
   creatableOpportunityTypeOptions,
   currencyOptions,
   defaultOpportunityCategoryByType,
   opportunityCategoryOptions,
-  propertyListingTypeOptions,
-  propertyTypeOptions,
 } from "@/lib/options";
 import {
   clearOpportunityComposerDraft,
@@ -66,16 +57,27 @@ export function OpportunityComposer({
   const [fields, setFields] = useState<OpportunityComposerDraftFields>(
     initialFields,
   );
-  const [authorityDeclaration, setAuthorityDeclaration] = useState("");
   const [draftReady, setDraftReady] = useState(false);
   const [draftStatus, setDraftStatus] = useState("");
+  /**
+   * Explicit publish lifecycle, rather than a generic `loading` flag.
+   *
+   *   idle -> saving-draft | publishing -> (navigation on success)
+   *                                     -> failed (route re-renders with ?error)
+   *
+   * A successful submit navigates away, so there is no "published" state to
+   * render here - the destination route carries the success feedback. A
+   * failure returns to this same route with an `error` param, which is why the
+   * initial state is derived from `error` instead of always starting at idle.
+   */
+  const [submission, setSubmission] = useState<
+    "failed" | "idle" | "publishing" | "saving-draft"
+  >(error ? "failed" : "idle");
   const [optionalOpen, setOptionalOpen] = useState(Boolean(error));
   const optionalSectionId = useId();
   const fieldsRef = useRef(fields);
   const typeRef = useRef(type);
-  const propertyMode = type === "PROPERTY";
   const hasContent = hasComposerContent({
-    authorityDeclaration,
     defaultCategory,
     defaultType: initialType,
     fields,
@@ -327,7 +329,6 @@ export function OpportunityComposer({
       defaultOpportunityCategoryByType[type],
     );
     setFields(reset);
-    setAuthorityDeclaration("");
     setDraftStatus("Local draft cleared");
   };
 
@@ -350,8 +351,12 @@ export function OpportunityComposer({
           return;
         }
         const savingDraft = submitter?.value === "draft";
+        // The browser draft is persisted BEFORE the request leaves. A server
+        // rejection re-renders this route with an `error` param and no form
+        // state, so without this the user's work would be gone.
         persistBrowserDraft(type, fields);
         allowNavigationRef.current = true;
+        setSubmission(savingDraft ? "saving-draft" : "publishing");
         toast({
           description: "Your content is being validated and saved.",
           title: savingDraft ? "Saving draft" : "Publishing post",
@@ -379,23 +384,62 @@ export function OpportunityComposer({
         </div>
         <PendingSubmitButton
           name="intent"
-          pendingLabel={propertyMode ? "Saving..." : "Publishing..."}
+          pendingLabel="Publishing..."
           size="sm"
           type="submit"
-          value={propertyMode ? "draft" : "publish"}
+          value="publish"
         >
-          {propertyMode ? "Save & add images" : "Publish"}
+          Publish
         </PendingSubmitButton>
       </header>
 
       <div className="mx-auto grid w-full max-w-6xl gap-6 px-3 py-5 pb-[max(6rem,env(safe-area-inset-bottom))] sm:px-5 xl:grid-cols-[minmax(0,1fr)_300px] xl:pb-8">
         <div className="min-w-0">
+          {/*
+            Publish lifecycle, announced politely so a screen reader user is
+            told the submission is in flight rather than being left with a
+            silently disabled button.
+          */}
+          <p aria-live="polite" className="sr-only" role="status">
+            {submission === "publishing"
+              ? "Publishing your post."
+              : submission === "saving-draft"
+                ? "Saving your draft."
+                : ""}
+          </p>
+
           {error ? (
             <div
               className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200"
               role="alert"
             >
-              {error}
+              <p>{error}</p>
+              {/*
+                A failed publish must always offer a way forward. The entered
+                content is still in the form and in browser recovery, so
+                resubmitting is safe and is the expected retry path.
+              */}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <PendingSubmitButton
+                  name="intent"
+                  pendingLabel="Retrying..."
+                  size="sm"
+                  type="submit"
+                  value="publish"
+                >
+                  Retry publish
+                </PendingSubmitButton>
+                <PendingSubmitButton
+                  name="intent"
+                  pendingLabel="Saving draft..."
+                  size="sm"
+                  type="submit"
+                  value="draft"
+                  variant="secondary"
+                >
+                  Save as draft instead
+                </PendingSubmitButton>
+              </div>
             </div>
           ) : null}
 
@@ -590,106 +634,20 @@ export function OpportunityComposer({
                 </div>
               </section>
 
-              {propertyMode ? (
-                <section className="grid gap-4 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] p-4 sm:p-5">
-                  <div className="flex items-start gap-3">
-                    <ShieldCheck
-                      aria-hidden
-                      className="mt-0.5 text-[color:var(--px-primary)]"
-                      size={20}
-                    />
-                    <div>
-                      <h2 className="font-black text-[color:var(--px-text)]">
-                        Property verification details
-                      </h2>
-                      <p className="mt-1 text-sm leading-6 text-[color:var(--px-text-muted)]">
-                        Save the draft, add real listing images, then submit it
-                        for PerX review from the edit page.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-3">
-                    <Field label="Property type">
-                      <Select
-                        name="propertyType"
-                        onChange={(event) => updateField("propertyType", event.target.value as OpportunityComposerDraftFields["propertyType"])}
-                        required
-                        value={fields.propertyType}
-                      >
-                        <option value="">Choose type</option>
-                        {propertyTypeOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </Select>
-                    </Field>
-                    <Field label="Listing type">
-                      <Select
-                        name="propertyListingType"
-                        onChange={(event) => updateField("propertyListingType", event.target.value as OpportunityComposerDraftFields["propertyListingType"])}
-                        required
-                        value={fields.propertyListingType}
-                      >
-                        <option value="">Choose listing</option>
-                        {propertyListingTypeOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </Select>
-                    </Field>
-                    <Field label="Contact preference">
-                      <Select
-                        name="contactPreference"
-                        onChange={(event) => updateField("contactPreference", event.target.value as OpportunityComposerDraftFields["contactPreference"])}
-                        required
-                        value={fields.contactPreference}
-                      >
-                        <option value="">Choose contact</option>
-                        {contactPreferenceOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </Select>
-                    </Field>
-                  </div>
-                  <Field label="Ownership or authority declaration">
-                    <Textarea
-                      maxLength={1000}
-                      minLength={20}
-                      name="authorityDeclaration"
-                      onChange={(event) => setAuthorityDeclaration(event.target.value)}
-                      placeholder="State your authority to list this property."
-                      required
-                      value={authorityDeclaration}
-                    />
-                  </Field>
-                  <label className="flex min-h-11 items-start gap-3 rounded-xl bg-[color:var(--px-surface)] p-3 text-sm font-semibold text-[color:var(--px-text)] ring-1 ring-[color:var(--px-border)]">
-                    <input
-                      className="mt-0.5 size-5 accent-[color:var(--px-primary)]"
-                      checked={fields.listingRulesAccepted}
-                      name="listingRulesAccepted"
-                      onChange={(event) => updateField("listingRulesAccepted", event.target.checked)}
-                      required
-                      type="checkbox"
-                    />
-                    <span>
-                      I confirm this listing is accurate and understand PerX
-                      review does not replace legal property due diligence.
-                    </span>
-                  </label>
-                </section>
-              ) : null}
-
               <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-3 text-xs leading-5 text-[color:var(--px-text-muted)]">
                 Browser recovery is local to this device and scoped to your
                 PerX account and post type. Do not enter private contact,
-                payment, identity-document, or verification information. The
-                property authority declaration is never browser-autosaved.
+                payment, identity-document, or verification information.
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                  <span aria-live="polite" role="status">
+                  {/*
+                    Named so it stays addressable now that the composer has a
+                    second live region for the publish lifecycle.
+                  */}
+                  <span
+                    aria-label="Local draft status"
+                    aria-live="polite"
+                    role="status"
+                  >
                     {draftStatus}
                   </span>
                   <button
@@ -783,13 +741,11 @@ function hasBrowserDraftContent(
 }
 
 function hasComposerContent({
-  authorityDeclaration,
   defaultCategory,
   defaultType,
   fields,
   type,
 }: {
-  authorityDeclaration: string;
   defaultCategory: string;
   defaultType: CreatableOpportunityType;
   fields: OpportunityComposerDraftFields;
@@ -797,8 +753,7 @@ function hasComposerContent({
 }) {
   const defaults = createComposerFields(defaultType, defaultCategory);
   return Boolean(
-    authorityDeclaration.trim() ||
-      type !== defaultType ||
+    type !== defaultType ||
       (Object.keys(fields) as Array<keyof OpportunityComposerDraftFields>).some(
         (key) => fields[key] !== defaults[key],
       ),

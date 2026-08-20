@@ -13,8 +13,8 @@ import { getServerEnv } from "@/lib/env";
 import {
   contactPreferenceOptions,
   currencyOptions,
-  opportunityCategoryOptions,
-  opportunityTypeOptions,
+  editableOpportunityCategoryOptions,
+  editableOpportunityTypeOptions,
   propertyListingTypeOptions,
   propertyTypeOptions,
 } from "@/lib/options";
@@ -84,9 +84,14 @@ export default async function EditOpportunityPage({
             <Textarea defaultValue={opportunity.description} name="description" required />
           </Field>
           <div className="grid gap-4 md:grid-cols-2">
+            {/*
+              Retired types/categories are hidden from the picker, except when
+              this record already uses one - keeping it listed prevents an
+              unrelated save from silently reclassifying the listing.
+            */}
             <Field label="Type">
               <Select defaultValue={opportunity.type} name="type" required>
-                {opportunityTypeOptions.map((option) => (
+                {editableOpportunityTypeOptions(opportunity.type).map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -95,7 +100,9 @@ export default async function EditOpportunityPage({
             </Field>
             <Field label="Category">
               <Select defaultValue={opportunity.category?.slug ?? "software"} name="category" required>
-                {opportunityCategoryOptions.map((option) => (
+                {editableOpportunityCategoryOptions(
+                  opportunity.category?.slug,
+                ).map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>

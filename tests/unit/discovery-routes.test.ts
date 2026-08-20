@@ -32,16 +32,37 @@ describe("discovery route destinations", () => {
     );
   });
 
-  it("canonicalizes legacy dashboard routes to Home", async () => {
+  it("sends legacy dashboard routes to Profile, which now owns personal activity", async () => {
     const redirects = await nextConfig.redirects!();
 
     expect(redirects).toEqual(
       expect.arrayContaining([
-        { destination: "/app", permanent: true, source: "/dashboard" },
+        { destination: "/app/profile", permanent: false, source: "/dashboard" },
         {
-          destination: "/app",
-          permanent: true,
+          destination: "/app/profile",
+          permanent: false,
           source: "/app/dashboard",
+        },
+      ]),
+    );
+  });
+
+  it("retires the Real Estate routes without breaking existing links", async () => {
+    const redirects = await nextConfig.redirects!();
+
+    // Not permanent: a 308 is cached indefinitely, and where retired-vertical
+    // links should land is a product decision that may still change.
+    expect(redirects).toEqual(
+      expect.arrayContaining([
+        {
+          destination: "/app/discover",
+          permanent: false,
+          source: "/real-estate",
+        },
+        {
+          destination: "/app/discover",
+          permanent: false,
+          source: "/app/real-estate",
         },
       ]),
     );

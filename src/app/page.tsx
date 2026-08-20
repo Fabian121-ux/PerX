@@ -13,6 +13,8 @@ import {
   UsersRound,
 } from "lucide-react";
 
+import { redirect } from "next/navigation";
+
 import { SiteHeader } from "@/components/layout/site-header";
 import { OpportunityCard } from "@/components/opportunity-card";
 import { ButtonLink } from "@/components/ui/button";
@@ -22,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { getOpportunityFeedResult } from "@/lib/data/opportunities";
 import { getPublicPeopleDirectory } from "@/lib/data/people";
 import { getCurrentUser } from "@/lib/auth/session";
+import { AUTHENTICATED_HOME_PATH } from "@/lib/navigation/entry";
 import { SponsoredSlot } from "@/components/sponsored/sponsored-slot";
 import { trustBadgeClassName } from "@/lib/trust/engine";
 
@@ -108,11 +111,23 @@ const activityCards = [
 ];
 
 export default async function Home() {
+  // Resolve identity FIRST, before any marketing data is fetched or any
+  // marketing component is constructed. An authenticated visitor must never
+  // pay for - or briefly see - the public landing page.
+  //
+  // A database/session failure is deliberately treated as "unauthenticated"
+  // so the public landing page stays available during a partial outage.
   const currentUser = await getCurrentUser().catch(() => null);
-  const discoveryHref = currentUser ? "/app/discover" : "/discover";
-  const postOpportunityHref = currentUser
-    ? "/app/opportunities/new"
-    : "/sign-up";
+
+  if (currentUser) {
+    // Server-side redirect: no client flash, no marketing render, no extra
+    // round trip. `/app` performs its own authoritative `requireUser()` check,
+    // so this is an entry optimisation and never an authorization decision.
+    redirect(AUTHENTICATED_HOME_PATH);
+  }
+
+  const discoveryHref = "/discover";
+  const postOpportunityHref = "/sign-up";
 
   return (
     <div className="min-h-dvh bg-[color:var(--px-page)]">

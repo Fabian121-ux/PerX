@@ -485,7 +485,6 @@ export async function markConversationReadAction(
   if (!marked) return { error: "Conversation not found." };
 
   revalidatePath("/app/messages");
-  revalidatePath(`/app/messages/${parsed.data}`);
   revalidatePath("/app/notifications");
   return { success: true };
 }

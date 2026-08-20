@@ -10,20 +10,44 @@ export const opportunityTypeValues = [
   "INVESTMENT",
 ] as const;
 
+/**
+ * Opportunity types that are no longer offered in the product.
+ *
+ * These values are intentionally still present in `opportunityTypeValues` and
+ * in the database: existing rows must keep validating, keep rendering a human
+ * label, and remain moderatable by admins. They are simply removed from every
+ * surface where a user chooses a type.
+ *
+ * PROPERTY backed the retired "Real Estate" vertical.
+ */
+export const retiredOpportunityTypeValues = ["PROPERTY"] as const;
+
+export function isRetiredOpportunityType(value: string): boolean {
+  return (retiredOpportunityTypeValues as readonly string[]).includes(value);
+}
+
+/**
+ * Every known type with a display label, including retired ones.
+ *
+ * Use this ONLY to label data that already exists. For anything the user picks
+ * from, use `creatableOpportunityTypeOptions`.
+ */
 export const opportunityTypeOptions = [
   { label: "Freelance project", value: "FREELANCE_PROJECT" },
   { label: "Job", value: "JOB" },
   { label: "Service", value: "SERVICE" },
   { label: "Product", value: "PRODUCT" },
-  { label: "Real estate", value: "PROPERTY" },
+  { label: "Property", value: "PROPERTY" },
   { label: "Partnership", value: "PARTNERSHIP" },
   { label: "Startup", value: "STARTUP" },
   { label: "Cofounder", value: "COFOUNDER" },
   { label: "Investment", value: "INVESTMENT" },
 ] as const;
 
+/** Types a user may actually choose when creating or editing a post. */
 export const creatableOpportunityTypeOptions = opportunityTypeOptions.filter(
-  (option) => option.value !== "INVESTMENT",
+  (option) =>
+    option.value !== "INVESTMENT" && !isRetiredOpportunityType(option.value),
 );
 
 export const defaultOpportunityCategoryByType = {
@@ -49,7 +73,23 @@ export const opportunityCategoryValues = [
   "market",
 ] as const;
 
-export const opportunityCategoryOptions = [
+/**
+ * Categories retired from the product experience.
+ *
+ * Kept in `opportunityCategoryValues` and in `allOpportunityCategoryOptions`
+ * so existing rows still validate and still render a label, but excluded from
+ * every selection surface. See `retiredOpportunityTypeValues`.
+ */
+export const retiredOpportunityCategoryValues = ["real-estate"] as const;
+
+export function isRetiredOpportunityCategory(value: string): boolean {
+  return (retiredOpportunityCategoryValues as readonly string[]).includes(
+    value,
+  );
+}
+
+/** Every known category with a display label, including retired ones. */
+export const allOpportunityCategoryOptions = [
   {
     description: "Product engineering, automation, and infrastructure work.",
     label: "Software",
@@ -67,7 +107,7 @@ export const opportunityCategoryOptions = [
   },
   {
     description: "Homes, land, rentals, and property services.",
-    label: "Real estate",
+    label: "Property",
     value: "real-estate",
   },
   {
@@ -96,6 +136,52 @@ export const opportunityCategoryOptions = [
     value: "market",
   },
 ] as const;
+
+/** Categories a user may actually choose when creating or editing a post. */
+export const opportunityCategoryOptions = allOpportunityCategoryOptions.filter(
+  (option) => !isRetiredOpportunityCategory(option.value),
+);
+
+type LabelledOption = { readonly label: string; readonly value: string };
+
+/**
+ * Selection options for an EDIT form.
+ *
+ * Retired values are hidden from new selections, but an existing record that
+ * already holds one must still show it - otherwise the `<select>` would silently
+ * change the record's type/category the moment the owner saves an unrelated
+ * field, which is data loss disguised as a UI cleanup.
+ */
+function withCurrentValue<T extends LabelledOption>(
+  available: readonly T[],
+  all: readonly T[],
+  currentValue: string | null | undefined,
+): readonly T[] {
+  if (!currentValue) return available;
+  if (available.some((option) => option.value === currentValue)) {
+    return available;
+  }
+  const retained = all.find((option) => option.value === currentValue);
+  return retained ? [retained, ...available] : available;
+}
+
+export function editableOpportunityTypeOptions(currentValue?: string | null) {
+  return withCurrentValue(
+    creatableOpportunityTypeOptions,
+    opportunityTypeOptions,
+    currentValue,
+  );
+}
+
+export function editableOpportunityCategoryOptions(
+  currentValue?: string | null,
+) {
+  return withCurrentValue(
+    opportunityCategoryOptions,
+    allOpportunityCategoryOptions,
+    currentValue,
+  );
+}
 
 export const currencyValues = ["NGN", "USD", "EUR", "GBP"] as const;
 

@@ -14,7 +14,9 @@ const targetLabels: Record<string, string> = {
   MESSAGE: "message",
   OPPORTUNITY: "opportunity",
   OTHER_CONTENT: "content",
-  REAL_ESTATE_LISTING: "real-estate listing",
+  // Retained so legacy PROPERTY listings remain reportable; the label no
+  // longer names the retired vertical.
+  REAL_ESTATE_LISTING: "property listing",
   REVIEW: "review",
   USER: "user",
 };

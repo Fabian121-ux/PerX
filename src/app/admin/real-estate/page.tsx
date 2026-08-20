@@ -32,8 +32,8 @@ export default async function AdminRealEstatePage() {
 
   return (
     <AdminSection
-      description="Review property listing images, declarations, verification state, reports, and publication status."
-      title="Real estate review"
+      description="Legacy PROPERTY listings. This vertical is retired for members and no new listings can be created, but existing records still require moderation."
+      title="Property review (legacy)"
     >
       {listings.length ? (
         <div className="grid gap-4">

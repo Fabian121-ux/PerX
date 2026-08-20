@@ -1,10 +1,12 @@
 import {
   contactPreferenceValues,
   currencyValues,
+  isRetiredOpportunityType,
   opportunityCategoryValues,
   opportunityTypeValues,
   propertyListingTypeValues,
   propertyTypeValues,
+  retiredOpportunityTypeValues,
 } from "@/lib/options";
 
 export const OPPORTUNITY_COMPOSER_DRAFT_VERSION = 1;
@@ -13,7 +15,7 @@ const maxDraftBytes = 16_000;
 
 export type CreatableOpportunityType = Exclude<
   (typeof opportunityTypeValues)[number],
-  "INVESTMENT"
+  "INVESTMENT" | (typeof retiredOpportunityTypeValues)[number]
 >;
 
 export type OpportunityComposerDraftFields = {
@@ -40,8 +42,13 @@ export type OpportunityComposerDraft = {
   version: typeof OPPORTUNITY_COMPOSER_DRAFT_VERSION;
 };
 
+// Retired types are excluded here too, so a stale localStorage draft saved
+// before the vertical was retired is simply not restored rather than
+// resurrecting a composer for content that can no longer be published.
 const creatableTypes = new Set<string>(
-  opportunityTypeValues.filter((value) => value !== "INVESTMENT"),
+  opportunityTypeValues.filter(
+    (value) => value !== "INVESTMENT" && !isRetiredOpportunityType(value),
+  ),
 );
 const categories = new Set<string>(opportunityCategoryValues);
 const currencies = new Set<string>(currencyValues);

@@ -9,7 +9,10 @@ const adminLinks = [
   ["/admin", "Dashboard"],
   ["/admin/users", "Users"],
   ["/admin/opportunities", "Opportunities"],
-  ["/admin/real-estate", "Real Estate"],
+  // The Real Estate vertical was retired from the member experience, but
+  // existing PROPERTY listings still need moderating, so this admin-only
+  // console is deliberately retained and relabelled as legacy.
+  ["/admin/real-estate", "Property (legacy)"],
   ["/admin/messages", "Messages"],
   ["/admin/moderation", "Moderation"],
   ["/admin/broadcasts", "Broadcasts"],

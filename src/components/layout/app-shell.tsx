@@ -17,6 +17,8 @@ import { BrandLogo } from "@/components/brand-logo";
 import { AppScrollRestoration } from "@/components/layout/app-scroll-restoration";
 import { PresenceHeartbeat } from "@/components/layout/presence-heartbeat";
 import { AuthenticatedMobileNav } from "@/components/navigation/authenticated-mobile-nav";
+import { SoftwareKeyboardProvider } from "@/components/layout/software-keyboard-provider";
+import { isImmersiveRoute } from "@/lib/navigation/immersive-routes";
 import type { UnreadCounts } from "@/lib/data/unread-counts";
 
 export function AppShell({
@@ -38,8 +40,9 @@ export function AppShell({
       ? liveUnreadState.counts
       : unreadCounts;
   const pathname = usePathname();
-  const directMessageConversation = /^\/app\/messages\/[^/]+$/.test(pathname);
-  const distractionFreeCreate = pathname === "/app/opportunities/new";
+  const immersive = isImmersiveRoute(pathname);
+  const directMessageConversation = immersive === "mobile-conversation";
+  const distractionFreeCreate = immersive === "distraction-free";
 
   useEffect(() => {
     document.documentElement.classList.toggle(
@@ -101,47 +104,49 @@ export function AppShell({
   }, [serverUnreadKey]);
 
   return (
-    <div
-      className={`perx-shell relative flex h-dvh overflow-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200 ${directMessageConversation ? "perx-mobile-conversation-active" : ""} ${distractionFreeCreate ? "perx-distraction-free" : ""}`}
-    >
-      <a
-        className="perx-skip-link rounded-lg bg-[color:var(--px-primary)] px-4 py-2 text-sm font-bold text-white shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-        href="#main-content"
+    <SoftwareKeyboardProvider>
+      <div
+        className={`perx-shell relative flex h-dvh overflow-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200 ${directMessageConversation ? "perx-mobile-conversation-active" : ""} ${distractionFreeCreate ? "perx-distraction-free" : ""}`}
       >
-        Skip to main content
-      </a>
-      <AnimatedBackground />
-      <PresenceHeartbeat />
-      <DashboardSidebar
-        badges={liveUnreadCounts}
-        featureDirectory
-        userRoles={user.roles}
-      />
-
-      <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
-        <DashboardTopbar
+        <a
+          className="perx-skip-link rounded-lg bg-[color:var(--px-primary)] px-4 py-2 text-sm font-bold text-white shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          href="#main-content"
+        >
+          Skip to main content
+        </a>
+        <AnimatedBackground />
+        <PresenceHeartbeat />
+        <DashboardSidebar
+          badges={liveUnreadCounts}
           featureDirectory
-          secondaryMenu
-          unreadCounts={liveUnreadCounts}
-          user={user}
+          userRoles={user.roles}
         />
 
-        <main
-          className="dashboard-main min-h-0 flex-1 overflow-y-auto px-4 pt-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--px-focus)] sm:px-6 sm:pt-6 lg:px-8 lg:pt-8"
-          id="main-content"
-          tabIndex={-1}
-        >
-          <AppScrollRestoration />
-          <div className="dashboard-content mx-auto max-w-[1480px]">
-            {children}
-          </div>
-        </main>
+        <div className="relative z-10 flex min-w-0 flex-1 flex-col overflow-hidden">
+          <DashboardTopbar
+            featureDirectory
+            secondaryMenu
+            unreadCounts={liveUnreadCounts}
+            user={user}
+          />
+
+          <main
+            className="dashboard-main min-h-0 flex-1 overflow-y-auto px-4 pt-4 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--px-focus)] sm:px-6 sm:pt-6 lg:px-8 lg:pt-8"
+            id="main-content"
+            tabIndex={-1}
+          >
+            <AppScrollRestoration />
+            <div className="dashboard-content mx-auto max-w-[1480px]">
+              {children}
+            </div>
+          </main>
+        </div>
+        <AuthenticatedMobileNav
+          unreadCounts={liveUnreadCounts}
+          userRoles={user.roles}
+        />
       </div>
-      <AuthenticatedMobileNav
-        unreadCounts={liveUnreadCounts}
-        userRoles={user.roles}
-      />
-    </div>
+    </SoftwareKeyboardProvider>
   );
 }
 

@@ -1024,14 +1024,20 @@ describeOrSkip(
             .trim(),
         ),
       );
+      // Home leads because the authenticated experience is feed-first, and
+      // Create is the prominent centre action rather than a flat tab.
       expect(labels).toEqual([
-        "Connections",
-        "Create Post",
         "Home",
+        "Network",
+        "Create",
         "Messages",
         "Profile",
       ]);
-      await expect(links.nth(2)).toHaveAttribute("aria-label", "Home");
+      await expect(links.nth(2)).toHaveAttribute("aria-label", "Create");
+
+      // Active state must not rely on colour alone.
+      await expect(links.nth(0)).toHaveAttribute("aria-current", "page");
+      await expect(links.nth(1)).not.toHaveAttribute("aria-current", "page");
       await page.close();
     });
 
@@ -1048,8 +1054,10 @@ describeOrSkip(
         name: "Primary navigation",
       });
       await expect(bottomNav.getByRole("link")).toHaveCount(4);
+      // The bottom bar labels this destination "Create"; the registry (and the
+      // feature directory below) still call it "Create Post".
       await expect(
-        bottomNav.getByRole("link", { name: "Create Post" }),
+        bottomNav.getByRole("link", { name: "Create", exact: true }),
       ).toHaveCount(0);
       await page
         .getByRole("button", { name: "Open PerX feature directory" })
@@ -1150,16 +1158,27 @@ describeOrSkip(
           page.getByLabel("Remote participation is supported"),
         ).toBeVisible();
 
+        // The Real Estate vertical is retired. A stale link carrying the
+        // retired type/category must fall back to a live type instead of
+        // reopening the property composer.
+        // See docs/implementation/REAL_ESTATE_RETIREMENT.md.
         await page.goto(
           `${BASE}/app/opportunities/new?type=PROPERTY&category=real-estate`,
         );
-        await expect(page.getByLabel("Property type")).toBeVisible();
-        await expect(page.getByLabel("Listing type")).toBeVisible();
-        await expect(page.getByLabel("Contact preference")).toBeVisible();
+        await expect(page.getByLabel("Property type")).toHaveCount(0);
+        await expect(page.getByLabel("Listing type")).toHaveCount(0);
+        await expect(page.getByLabel("Contact preference")).toHaveCount(0);
         await expect(
           page.getByLabel("Ownership or authority declaration"),
-        ).toBeVisible();
-        await expect(page.getByLabel("Budget minimum (NGN)")).toBeHidden();
+        ).toHaveCount(0);
+        await expect(page.getByLabel("Post type")).toHaveValue(
+          "FREELANCE_PROJECT",
+        );
+        await expect(
+          page.getByLabel("Post type").getByRole("option", {
+            name: "Property",
+          }),
+        ).toHaveCount(0);
         await expect(
           page.getByLabel("Post type").getByRole("option", {
             name: "Investment",
@@ -1208,7 +1227,7 @@ describeOrSkip(
         );
         await page.reload();
         await expect(page.getByLabel("Post title")).toHaveValue(serviceTitle);
-        await expect(page.getByRole("status")).toHaveText(
+        await expect(page.getByRole("status", { name: "Local draft status" })).toHaveText(
           "Restored local draft",
         );
 
@@ -1289,7 +1308,7 @@ describeOrSkip(
           };
         });
         await page.getByLabel("Post title").fill("Quota-safe draft");
-        await expect(page.getByRole("status")).toHaveText(
+        await expect(page.getByRole("status", { name: "Local draft status" })).toHaveText(
           "Local autosave is unavailable",
         );
 
@@ -2651,12 +2670,17 @@ describeOrSkip(
         await alicePage.goto(`${BASE}/app/messages/${conversationId}`);
         const history = alicePage.getByLabel("Message history");
         await expect(history).toBeVisible();
+        await expect(history).toHaveAttribute("data-history-positioned", "true", {
+          timeout: 15_000,
+        });
         await expect
-          .poll(async () =>
-            history.evaluate(
-              (element) =>
-                element.scrollHeight - element.scrollTop - element.clientHeight,
-            ),
+          .poll(
+            async () =>
+              history.evaluate(
+                (element) =>
+                  element.scrollHeight - element.scrollTop - element.clientHeight,
+              ),
+            { timeout: 15_000 },
           )
           .toBeLessThanOrEqual(72);
 

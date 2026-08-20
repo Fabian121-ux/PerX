@@ -70,7 +70,6 @@ function classify(route) {
       "/profile/setup",
       "/proposals/received",
       "/proposals/sent",
-      "/real-estate",
       "/reports",
       "/reviews",
       "/roles",

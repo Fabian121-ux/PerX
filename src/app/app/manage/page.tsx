@@ -21,6 +21,7 @@ import { requireUser } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
 import {
   creatableOpportunityTypeOptions,
+  editableOpportunityTypeOptions,
   opportunityTypeOptions,
 } from "@/lib/options";
 import { hasCapability } from "@/lib/permissions/capabilities";
@@ -182,9 +183,14 @@ export default async function ManageContentPage({
             </label>
             <label>
               <span className="sr-only">Content type</span>
+              {/*
+                Retired types are not offered as filters. Any legacy record the
+                user still owns remains listed under "All content types", so
+                nothing becomes unreachable.
+              */}
               <Select defaultValue={type} name="type">
                 <option value="">All content types</option>
-                {opportunityTypeOptions.map((option) => (
+                {editableOpportunityTypeOptions(type).map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>

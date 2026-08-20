@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 
+import { cache } from "react";
 import { cookies, headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
@@ -137,7 +138,16 @@ export async function destroySession() {
   });
 }
 
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+/**
+ * Request-scoped memoization of the session lookup.
+ *
+ * Several server components in the same render tree (root layout, page,
+ * site header, feature guards) each need the viewer. Without this the same
+ * session + user + profile + roles join runs once per caller. `react.cache`
+ * dedupes within a single request only, so it can never leak identity across
+ * requests and can never serve stale authorization.
+ */
+async function loadCurrentUser(): Promise<CurrentUser | null> {
   if (!hasDatabaseUrl()) return null;
 
   const cookieStore = await cookies();
@@ -264,6 +274,9 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     roles: session.user.roles.map((entry) => entry.role.name as RoleName),
   };
 }
+
+export const getCurrentUser: () => Promise<CurrentUser | null> =
+  cache(loadCurrentUser);
 
 export async function validateCurrentSessionAccess() {
   if (!hasDatabaseUrl()) return false;

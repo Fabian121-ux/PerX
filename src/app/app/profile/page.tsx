@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { UserRound, MapPin, Calendar, CheckCircle2 } from "lucide-react";
 import { AppSection } from "@/components/app-section";
 import { ButtonLink } from "@/components/ui/button";
@@ -9,10 +10,15 @@ import {
   TrustLevelBadge,
   TrustPresentationCard,
 } from "@/components/trust/trust-presentation-card";
+import { ProfileActivitySummary } from "@/components/profile/profile-activity-summary";
+import { getProfileActivity } from "@/lib/data/profile-activity";
 import { createTrustPresentation } from "@/lib/trust/presentation";
 import { getTrustRecordEvidence } from "@/lib/trust/records";
 
 export default async function ProfilePage() {
+  // CRITICAL dependency: identity and authorization. Resolved before anything
+  // streams, so an unauthenticated request still redirects correctly and a
+  // missing profile still produces the setup branch rather than a shell.
   const user = await requireUser();
 
   if (!user.profile) {
@@ -119,6 +125,17 @@ export default async function ProfilePage() {
               <p className="whitespace-pre-wrap break-words text-[color:var(--px-text)]">{user.profile.biography}</p>
             </Card>
           )}
+
+          {/*
+            OPTIONAL dependency. Activity counts are several aggregate queries;
+            streaming them behind Suspense means the identity header above is
+            painted immediately rather than waiting on them. The boundary is
+            scoped to this one section, so it cannot flush an incorrect HTTP
+            status for the route the way a segment-wide loading.tsx would.
+          */}
+          <Suspense fallback={<ProfileActivitySkeleton />}>
+            <ProfileActivitySection userId={user.id} />
+          </Suspense>
         </div>
         
         <div className="flex flex-col gap-6">
@@ -163,5 +180,33 @@ export default async function ProfilePage() {
         </div>
       </div>
     </AppSection>
+  );
+}
+
+async function ProfileActivitySection({ userId }: { userId: string }) {
+  const activity = await getProfileActivity(userId);
+  return <ProfileActivitySummary activity={activity} />;
+}
+
+function ProfileActivitySkeleton() {
+  return (
+    <Card aria-busy="true">
+      <div className="h-5 w-32 animate-pulse rounded bg-[color:var(--px-muted)]" />
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 7 }).map((_, index) => (
+          <div
+            className="flex items-center gap-3 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] p-3"
+            key={index}
+          >
+            <div className="h-10 w-10 shrink-0 animate-pulse rounded-[var(--px-radius-sm)] bg-[color:var(--px-muted)]" />
+            <div className="min-w-0 flex-1">
+              <div className="h-5 w-10 animate-pulse rounded bg-[color:var(--px-muted)]" />
+              <div className="mt-1.5 h-3 w-24 animate-pulse rounded bg-[color:var(--px-muted)]" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <span className="sr-only">Loading your activity summary.</span>
+    </Card>
   );
 }

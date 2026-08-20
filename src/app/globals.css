@@ -461,6 +461,29 @@ a {
         var(--mobile-nav-height) + env(safe-area-inset-bottom) + 1.5rem
       );
     }
+
+    /*
+      The bottom navigation unmounts while the software keyboard is open, so
+      the space it reserved must be released too - otherwise the focused input
+      is pushed a further 72px up and can end up scrolled off screen.
+
+      `--px-keyboard-inset` is published by SoftwareKeyboardProvider and is
+      non-zero only on platforms that overlay the keyboard (iOS). On
+      `resizes-content` platforms the layout viewport already excludes the
+      keyboard, so the inset is 0 and no double padding is applied.
+    */
+    :root[data-perx-keyboard="open"] .dashboard-main {
+      padding-bottom: calc(var(--px-keyboard-inset, 0px) + 1rem);
+      scroll-padding-bottom: calc(var(--px-keyboard-inset, 0px) + 1rem);
+    }
+  }
+
+  /*
+    Toasts are anchored above the bottom navigation; when the nav is gone they
+    must drop with it, and must never sit behind the keyboard.
+  */
+  :root[data-perx-keyboard="open"] .perx-toast-viewport {
+    bottom: calc(var(--px-keyboard-inset, 0px) + env(safe-area-inset-bottom) + 0.75rem);
   }
 
   .dashboard-scroll {

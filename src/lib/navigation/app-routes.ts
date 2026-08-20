@@ -6,7 +6,6 @@ export type RouteKey =
   | "connections"
   | "manage"
   | "network"
-  | "real_estate"
   | "logistics"
   | "travel_stay"
   | "services"
@@ -40,7 +39,6 @@ const routeMap: Record<RouteKey, string> = {
   connections: "/app/connections",
   manage: "/app/manage",
   network: "/app/network",
-  real_estate: "/app/real-estate",
   logistics: "/app/logistics",
   travel_stay: "/app/travel-stay",
   services: "/app/services",

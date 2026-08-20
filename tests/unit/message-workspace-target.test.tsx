@@ -1013,6 +1013,7 @@ describe("message workspace exact targets", () => {
       scrollHeight: { configurable: true, value: 1000 },
       scrollTop: { configurable: true, value: 100, writable: true },
     });
+    fireEvent.pointerDown(history);
     fireEvent.scroll(history);
     await act(async () => {
       EventSourceMock.current?.emit("conversations", {
@@ -1449,6 +1450,69 @@ describe("message workspace exact targets", () => {
     expect(view.getAllByText("Current User").length).toBeGreaterThan(0);
   });
 
+  it("restores a same-URL history conversation after a workspace remount", async () => {
+    window.history.replaceState(
+      { perxMessagesConversationId: "conversation-history" },
+      "",
+      "/app/messages",
+    );
+    const fetchMock = vi.fn().mockResolvedValue({
+      json: async () => ({
+        conversations: [
+          {
+            id: "conversation-history",
+            messages: [
+              {
+                body: "Restored browser history",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-history",
+                senderId: "user-3",
+                senderName: "History User",
+              },
+            ],
+            participantName: "History User",
+          },
+        ],
+      }),
+      ok: true,
+      status: 200,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Current User",
+          },
+          {
+            historyLoaded: false,
+            id: "conversation-history",
+            messages: [],
+            participantName: "History User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/messages/sync?conversationId=conversation-history",
+        { cache: "no-store" },
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        view
+          .getByLabelText("Message workspace")
+          .getAttribute("data-mobile-view"),
+      ).toBe("conversation"),
+    );
+    expect(view.getByText("Restored browser history")).toBeTruthy();
+  });
+
   it("keeps the latest rapid conversation selection when responses arrive out of order", async () => {
     let resolveSecond:
       | ((response: {
@@ -1595,6 +1659,7 @@ describe("message workspace exact targets", () => {
       scrollHeight: { configurable: true, value: 1000 },
       scrollTop: { configurable: true, value: 100, writable: true },
     });
+    fireEvent.pointerDown(history);
     fireEvent.scroll(history);
 
     await act(async () => {
@@ -1689,6 +1754,7 @@ describe("message workspace exact targets", () => {
     const composer = view.getByLabelText("Message") as HTMLTextAreaElement;
     fireEvent.change(composer, { target: { value: "Unsent draft" } });
     const history = view.getByLabelText("Message history");
+    fireEvent.pointerDown(history);
     history.scrollTop = 96;
 
     const incomingBubble = view.container.querySelector(

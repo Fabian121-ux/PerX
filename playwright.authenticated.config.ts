@@ -1,10 +1,16 @@
 import { defineConfig, devices } from "@playwright/test";
 
 import { enforceTestDatabaseIsolation } from "./tests/e2e/utils/db-guard";
+import { loadTestEnv } from "./tests/utils/load-test-env";
 
 const defaultBaseURL = "http://127.0.0.1:3100";
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? defaultBaseURL;
 
+// Must run before the guard: local test credentials live in
+// `.env.test.local`, which test runners do not load automatically because
+// plain `.env` holds Production values. Matches playwright.config.ts.
+// The guard still fails closed on any non-loopback URL.
+loadTestEnv();
 enforceTestDatabaseIsolation();
 if (baseURL !== defaultBaseURL) {
   throw new Error(
