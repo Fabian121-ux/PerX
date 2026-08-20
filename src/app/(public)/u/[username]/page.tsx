@@ -10,7 +10,6 @@ import {
   Globe2,
   Mail,
   MapPin,
-  ShieldBan,
   Star,
 } from "lucide-react";
 
@@ -18,7 +17,10 @@ import { PublicPageShell } from "@/components/standard-page";
 import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
-import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import {
+  ProfileRelationshipActions,
+  type ProfileRelationshipState,
+} from "@/components/network/profile-relationship-actions";
 import {
   TrustLevelBadge,
   TrustPresentationCard,
@@ -504,6 +506,64 @@ async function getProfileRelationship(viewerId: string, targetUserId: string) {
   };
 }
 
+function ProfileReportAction({ targetUserId }: { targetUserId: string }) {
+  return (
+    <ButtonLink
+      className="w-full sm:w-auto"
+      href={`/app/reports/new?targetType=USER&targetId=${encodeURIComponent(
+        targetUserId,
+      )}`}
+      variant="ghost"
+    >
+      <Flag aria-hidden className="mr-2" size={16} />
+      Report
+    </ButtonLink>
+  );
+}
+
+/**
+ * Network actions throw on failure. The client boundary needs a result value so
+ * it can roll back optimistic state, so failures are converted to `{ error }`.
+ * Next.js control-flow errors (redirect / notFound) carry a `digest` and must
+ * propagate untouched.
+ */
+function isFrameworkControlFlowError(error: unknown) {
+  const digest = (error as { digest?: unknown } | null)?.digest;
+  return (
+    typeof digest === "string" &&
+    (digest.startsWith("NEXT_REDIRECT") || digest === "NEXT_NOT_FOUND")
+  );
+}
+
+async function runRelationshipAction(operation: () => Promise<unknown>) {
+  try {
+    await operation();
+  } catch (error) {
+    if (isFrameworkControlFlowError(error)) throw error;
+    return {
+      error:
+        error instanceof Error && error.message
+          ? error.message
+          : "Something went wrong. Please try again.",
+    };
+  }
+  return {};
+}
+
+function getRelationshipState(
+  relationship: Awaited<ReturnType<typeof getProfileRelationship>>,
+): ProfileRelationshipState {
+  if (relationship.blocked || relationship.status === "BLOCKED")
+    return "BLOCKED";
+  if (relationship.status === "ACCEPTED") return "CONNECTED";
+  if (relationship.status === "PENDING" && relationship.connectionId) {
+    return relationship.connectionDirection === "incoming"
+      ? "INCOMING"
+      : "OUTGOING";
+  }
+  return "UNKNOWN";
+}
+
 function ProfilePrimaryAction({
   allowConnectionRequests,
   allowMessagesFromConnections,
@@ -546,229 +606,77 @@ function ProfilePrimaryAction({
     );
   }
 
-  if (relationship.blocked || relationship.status === "BLOCKED") {
-    return (
-      <div className="flex flex-wrap gap-2">
-        <form
-          action={async () => {
-            "use server";
-            await unblockUserAction(targetUserId);
-          }}
-        >
-          <PendingSubmitButton
-            className="w-full sm:w-auto"
-            pendingLabel="Unblocking..."
-            type="submit"
-          >
-            Unblock
-          </PendingSubmitButton>
-        </form>
-        <ButtonLink
-          href={`/app/reports/new?targetType=USER&targetId=${encodeURIComponent(targetUserId)}`}
-          size="sm"
-          variant="ghost"
-        >
-          <Flag aria-hidden className="mr-1.5" size={14} />
-          Report
-        </ButtonLink>
-      </div>
-    );
-  }
+  const state = getRelationshipState(relationship);
+  const connectionId = relationship.connectionId;
 
-  if (relationship.status === "ACCEPTED") {
+  // Requests may be closed while an existing relationship still needs actions
+  // (cancel / disconnect / unblock), so only the UNKNOWN entry point is gated.
+  if (state === "UNKNOWN" && !allowConnectionRequests) {
     return (
-      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
         <Button className="w-full sm:w-auto" disabled variant="secondary">
-          Connected
+          Connect
         </Button>
-        {allowMessagesFromConnections ? (
-          <form
-            action={async () => {
-              "use server";
-              await startConversationAction(targetUserId);
-            }}
-          >
-            <PendingSubmitButton
-              className="w-full sm:w-auto"
-              pendingLabel="Opening conversation..."
-              type="submit"
-            >
-              <Mail aria-hidden className="mr-2" size={16} />
-              Message
-            </PendingSubmitButton>
-          </form>
-        ) : null}
-        <form
-          action={async () => {
-            "use server";
-            await disconnectAction(relationship.connectionId!);
-          }}
-        >
-          <PendingSubmitButton
-            className="w-full sm:w-auto"
-            pendingLabel="Removing..."
-            type="submit"
-            variant="secondary"
-          >
-            Remove Connection
-          </PendingSubmitButton>
-        </form>
-        <form
-          action={async () => {
-            "use server";
-            await blockUserAction(targetUserId);
-          }}
-        >
-          <PendingSubmitButton
-            className="w-full sm:w-auto"
-            pendingLabel="Blocking..."
-            type="submit"
-            variant="outline"
-          >
-            <ShieldBan aria-hidden className="mr-2" size={16} />
-            Block
-          </PendingSubmitButton>
-        </form>
-      </div>
-    );
-  }
-
-  if (
-    relationship.status === "PENDING" &&
-    relationship.connectionDirection === "outgoing" &&
-    relationship.connectionId
-  ) {
-    return (
-      <div className="flex flex-wrap gap-2">
-        <Button className="w-full sm:w-auto" disabled variant="secondary">
-          Pending
-        </Button>
-        <form
-          action={async () => {
-            "use server";
-            await cancelConnectionRequestAction(relationship.connectionId!);
-          }}
-        >
-          <PendingSubmitButton
-            className="w-full sm:w-auto"
-            pendingLabel="Cancelling..."
-            type="submit"
-            variant="secondary"
-          >
-            Cancel Request
-          </PendingSubmitButton>
-        </form>
-        <form
-          action={async () => {
-            "use server";
-            await blockUserAction(targetUserId);
-          }}
-        >
-          <PendingSubmitButton
-            pendingLabel="Blocking..."
-            type="submit"
-            variant="outline"
-          >
-            Block
-          </PendingSubmitButton>
-        </form>
-      </div>
-    );
-  }
-
-  if (
-    relationship.status === "PENDING" &&
-    relationship.connectionDirection === "incoming" &&
-    relationship.connectionId
-  ) {
-    return (
-      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-        <form
-          action={async () => {
-            "use server";
-            await acceptConnectionAction(relationship.connectionId!);
-          }}
-        >
-          <PendingSubmitButton
-            className="w-full sm:w-auto"
-            pendingLabel="Accepting..."
-            type="submit"
-          >
-            Accept Connection
-          </PendingSubmitButton>
-        </form>
-        <form
-          action={async () => {
-            "use server";
-            await rejectConnectionAction(relationship.connectionId!);
-          }}
-        >
-          <PendingSubmitButton
-            className="w-full sm:w-auto"
-            pendingLabel="Declining..."
-            type="submit"
-            variant="secondary"
-          >
-            Decline
-          </PendingSubmitButton>
-        </form>
-        <form
-          action={async () => {
-            "use server";
-            await blockUserAction(targetUserId);
-          }}
-        >
-          <PendingSubmitButton
-            pendingLabel="Blocking..."
-            type="submit"
-            variant="outline"
-          >
-            Block
-          </PendingSubmitButton>
-        </form>
-      </div>
-    );
-  }
-
-  if (allowConnectionRequests) {
-    return (
-      <div className="flex flex-wrap gap-2">
-        <form
-          action={async () => {
-            "use server";
-            await requestConnectionAction(targetUserId);
-          }}
-        >
-          <PendingSubmitButton
-            className="w-full sm:w-auto"
-            pendingLabel="Sending request..."
-            type="submit"
-          >
-            Connect
-          </PendingSubmitButton>
-        </form>
-        <form
-          action={async () => {
-            "use server";
-            await blockUserAction(targetUserId);
-          }}
-        >
-          <PendingSubmitButton
-            pendingLabel="Blocking..."
-            type="submit"
-            variant="outline"
-          >
-            Block
-          </PendingSubmitButton>
-        </form>
+        <ProfileReportAction targetUserId={targetUserId} />
       </div>
     );
   }
 
   return (
-    <Button className="w-full sm:w-auto" disabled variant="secondary">
-      Connect With
-    </Button>
+    <ProfileRelationshipActions
+      actions={{
+        accept: async () => {
+          "use server";
+          if (!connectionId) return { error: "Request is no longer available." };
+          return runRelationshipAction(() =>
+            acceptConnectionAction(connectionId),
+          );
+        },
+        block: async () => {
+          "use server";
+          return runRelationshipAction(() => blockUserAction(targetUserId));
+        },
+        cancel: async () => {
+          "use server";
+          if (!connectionId) return { error: "Request is no longer available." };
+          return runRelationshipAction(() =>
+            cancelConnectionRequestAction(connectionId),
+          );
+        },
+        connect: async () => {
+          "use server";
+          return runRelationshipAction(() =>
+            requestConnectionAction(targetUserId),
+          );
+        },
+        decline: async () => {
+          "use server";
+          if (!connectionId) return { error: "Request is no longer available." };
+          return runRelationshipAction(() =>
+            rejectConnectionAction(connectionId),
+          );
+        },
+        disconnect: async () => {
+          "use server";
+          if (!connectionId)
+            return { error: "Connection is no longer available." };
+          return runRelationshipAction(() => disconnectAction(connectionId));
+        },
+        message: async () => {
+          "use server";
+          return runRelationshipAction(() =>
+            startConversationAction(targetUserId),
+          );
+        },
+        unblock: async () => {
+          "use server";
+          return runRelationshipAction(() => unblockUserAction(targetUserId));
+        },
+      }}
+      allowMessages={allowMessagesFromConnections}
+      initialState={state}
+      targetUserId={targetUserId}
+    />
   );
 }
 

@@ -1012,7 +1012,18 @@ describeOrSkip(
       const count = await links.count();
       expect(count).toBe(5);
 
-      const labels = await links.allInnerTexts();
+      // Both the visible text and the accessible name intentionally carry
+      // unread badges (e.g. "Messages, 1 unread conversations"), which depend
+      // on mailbox state. The destination contract is asserted on the leading
+      // name only, so the test stays state-independent.
+      const labels = await links.evaluateAll((nodes) =>
+        nodes.map((node) =>
+          (node.getAttribute("aria-label") ?? node.textContent ?? "")
+            .trim()
+            .split(",")[0]
+            .trim(),
+        ),
+      );
       expect(labels).toEqual([
         "Connections",
         "Create Post",
@@ -1241,12 +1252,19 @@ describeOrSkip(
         await expect(
           page.getByRole("heading", { name: "What would you like to share?" }),
         ).toBeVisible();
-        expect(
-          await page.evaluate(
-            (key) => window.localStorage.getItem(key),
-            serviceKey,
-          ),
-        ).toBeNull();
+        // The composer reads (and purges) the stored draft in a queued
+        // microtask after mount, so the removal is observed by polling rather
+        // than by reading storage on the same tick as the heading assertion.
+        await expect
+          .poll(
+            () =>
+              page.evaluate(
+                (key) => window.localStorage.getItem(key),
+                serviceKey,
+              ),
+            { timeout: 10_000 },
+          )
+          .toBeNull();
 
         await page.evaluate(
           (key) => window.localStorage.setItem(key, "x".repeat(16_001)),
@@ -1254,12 +1272,16 @@ describeOrSkip(
         );
         await page.reload();
         await expect(page.getByLabel("Post title")).toHaveValue("");
-        expect(
-          await page.evaluate(
-            (key) => window.localStorage.getItem(key),
-            serviceKey,
-          ),
-        ).toBeNull();
+        await expect
+          .poll(
+            () =>
+              page.evaluate(
+                (key) => window.localStorage.getItem(key),
+                serviceKey,
+              ),
+            { timeout: 10_000 },
+          )
+          .toBeNull();
 
         await page.evaluate(() => {
           Storage.prototype.setItem = () => {
@@ -1559,17 +1581,26 @@ describeOrSkip(
       browser,
     }) => {
       const notificationPrefix = await createNotificationPaginationFixture();
+      // The fixture namespaces every title with a unique run prefix so parallel
+      // or repeated runs cannot collide; assertions must use that same prefix.
+      const { titlePrefix } = notificationPrefix;
       const page = await browser.newPage();
       try {
         await createSession(page, "alice-test@perx.test");
         await page.goto(`${BASE}/app/notifications?type=messages`);
 
-        await expect(page.getByText("Pagination message 052")).toBeVisible();
-        await expect(page.getByText("Pagination message 003")).toBeVisible();
-        await expect(page.getByText("Pagination message 002")).toHaveCount(0);
-        await expect(page.getByText("Pagination system sentinel")).toHaveCount(
-          0,
-        );
+        await expect(
+          page.getByText(`${titlePrefix} message 052`),
+        ).toBeVisible();
+        await expect(
+          page.getByText(`${titlePrefix} message 003`),
+        ).toBeVisible();
+        await expect(
+          page.getByText(`${titlePrefix} message 002`),
+        ).toHaveCount(0);
+        await expect(
+          page.getByText(`${titlePrefix} system sentinel`),
+        ).toHaveCount(0);
         const firstPageUrl = page.url();
 
         const olderLink = page.getByRole("link", {
@@ -1584,18 +1615,28 @@ describeOrSkip(
         await page.goto(new URL(olderHref!, BASE).href);
         expect(new URL(page.url()).searchParams.get("type")).toBe("messages");
         expect(new URL(page.url()).searchParams.get("cursor")).toBeTruthy();
-        await expect(page.getByText("Pagination message 002")).toBeVisible();
-        await expect(page.getByText("Pagination message 001")).toBeVisible();
-        await expect(page.getByText("Pagination message 003")).toHaveCount(0);
+        await expect(
+          page.getByText(`${titlePrefix} message 002`),
+        ).toBeVisible();
+        await expect(
+          page.getByText(`${titlePrefix} message 001`),
+        ).toBeVisible();
+        await expect(
+          page.getByText(`${titlePrefix} message 003`),
+        ).toHaveCount(0);
         const olderPageUrl = page.url();
 
         await page.goBack();
         await expect(page).toHaveURL(firstPageUrl, { timeout: 30_000 });
-        await expect(page.getByText("Pagination message 052")).toBeVisible();
+        await expect(
+          page.getByText(`${titlePrefix} message 052`),
+        ).toBeVisible();
 
         await page.goForward();
         await expect(page).toHaveURL(olderPageUrl, { timeout: 30_000 });
-        await expect(page.getByText("Pagination message 001")).toBeVisible();
+        await expect(
+          page.getByText(`${titlePrefix} message 001`),
+        ).toBeVisible();
       } finally {
         await page.close();
         await deleteNotificationPaginationFixture(notificationPrefix.ids);
@@ -2005,31 +2046,25 @@ describeOrSkip(
           blockedFixture.aliceId,
         );
         await createSession(blockedPage, "alice-test@perx.test");
-        await blockedPage.goto(
+        const blockedResponse = await blockedPage.goto(
           `${BASE}/app/messages/${blockedFixture.conversationId}`,
         );
+        // `buildConversationAccessWhere` excludes conversations where either
+        // participant has blocked the other, so a blocked participant is
+        // unauthorized for the conversation and the route must answer 404
+        // rather than rendering a workspace that offers Proposal entry.
+        expect(blockedResponse?.status()).toBe(404);
         await expect(
-          blockedPage.getByText("Live", { exact: true }),
-        ).toBeVisible({
-          timeout: 30_000,
-        });
-        await blockedPage
-          .getByRole("button", { name: "Make a Deal" })
-          .click({ timeout: 30_000 });
-        const dialog = blockedPage.getByRole("dialog", { name: "Make a Deal" });
-        await dialog.getByLabel("Agreement amount (NGN)").fill("50000");
-        await dialog.getByLabel("Delivery days").fill("5");
-        await dialog.getByLabel("Included revisions").fill("0");
-        await dialog
-          .getByLabel("Proposal terms")
-          .fill(
-            "Blocked participants must not create this structured Proposal record.",
-          );
-        await dialog.getByRole("button", { name: "Submit proposal" }).click();
-        await expect(dialog.getByRole("alert")).toHaveText(
-          "This conversation is unavailable.",
-        );
-        await expect(dialog).toBeVisible();
+          blockedPage.getByRole("button", { name: "Make a Deal" }),
+        ).toHaveCount(0);
+        await expect(
+          blockedPage.getByRole("dialog", { name: "Make a Deal" }),
+        ).toHaveCount(0);
+        await expect(
+          blockedPage.getByText(
+            "Use the structured terms entry when you are ready.",
+          ),
+        ).toHaveCount(0);
         const count = await pool.query<{ proposals: number }>(
           `SELECT COUNT(*)::int AS proposals
            FROM "Proposal" WHERE "conversationId" = ANY($1::text[])`,
@@ -2220,16 +2255,27 @@ describeOrSkip(
         );
         const trigger = incoming.getByLabel("Message actions");
 
+        // The conversation timeline streams in; wait for the target message to
+        // exist before interacting, otherwise the first hover/click races the
+        // client render and the test stalls on a not-yet-mounted control.
+        await expect(incoming).toBeAttached({ timeout: 30_000 });
         await incoming.scrollIntoViewIfNeeded();
+
+        // Radix DropdownMenu is modal: while open it disables pointer events
+        // outside the menu, so Playwright's actionability check can never
+        // resolve for the covered trigger/header. Closing therefore uses the
+        // menu's real dismissal affordances (Escape / outside pointerdown)
+        // rather than an actionable click on an intentionally covered element.
         await trigger.click();
         await expect(trigger).toHaveAttribute("aria-expanded", "true");
-        await trigger.click();
-        await expect(trigger).toHaveAttribute("aria-expanded", "false");
-        await trigger.click();
-        await page.locator(".message-conversation-header").click();
-        await expect(trigger).toHaveAttribute("aria-expanded", "false");
-        await trigger.click();
         await page.keyboard.press("Escape");
+        await expect(trigger).toHaveAttribute("aria-expanded", "false");
+
+        await trigger.click();
+        await expect(trigger).toHaveAttribute("aria-expanded", "true");
+        await page
+          .locator(".message-conversation-header")
+          .dispatchEvent("pointerdown");
         await expect(trigger).toHaveAttribute("aria-expanded", "false");
 
         await incoming.hover();
@@ -2908,8 +2954,11 @@ describeOrSkip(
       await expect(
         bobPage.getByText("Online payment unavailable"),
       ).toBeVisible();
+      // A newly created Deal uses PROVIDER_DISABLED settlement, whose
+      // disclosure reads "does not hold funds". The "collected, held,
+      // transferred, or released" wording belongs to legacy SIMULATED deals.
       await expect(
-        bobPage.getByText(/does not collect or hold funds/i),
+        bobPage.getByText(/does not hold funds/i).first(),
       ).toBeVisible();
       const dealUrl = bobPage.url();
 

@@ -1,9 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
 import { enforceTestDatabaseIsolation } from "./tests/e2e/utils/db-guard";
+import { loadTestEnv } from "./tests/utils/load-test-env";
 
 const defaultBaseURL = "http://127.0.0.1:3100";
 
+loadTestEnv();
 enforceTestDatabaseIsolation();
 if (
   process.env.PLAYWRIGHT_BASE_URL &&
