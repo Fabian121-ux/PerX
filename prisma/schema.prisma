@@ -512,6 +512,10 @@ model Opportunity {
   images                    OpportunityImage[]
 
   @@index([status, moderationStatus, publishedAt])
+  // Home feed keyset. Extends the index above with the `id` tie-breaker so the
+  // (publishedAt DESC, id DESC) cursor is resolved inside the index instead of
+  // as a heap re-check. See 20260821120000_home_feed_keyset_index.
+  @@index([status, moderationStatus, publishedAt(sort: Desc), id(sort: Desc)])
   @@index([ownerId, status])
   @@index([ownerId, status, updatedAt])
   @@index([type])

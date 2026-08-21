@@ -1,11 +1,6 @@
 import { getPerXDataProvider } from "./provider";
 import { isProductionMockModeError } from "@/lib/env";
 import { logServerDataError } from "@/lib/logging/runtime";
-import {
-  clampPublicOpportunityPageSize,
-  getPublicOpportunityPage,
-  normalizePublicOpportunityCursor,
-} from "@/lib/data/public-opportunities";
 import type { CursorPageParams } from "@/lib/data/cursor";
 
 export { getCanonicalOpportunityPath } from "@/lib/data/opportunity-path";
@@ -43,35 +38,6 @@ export async function getOpportunityFeed(filters?: {
 }) {
   const result = await getOpportunityFeedResult(filters);
   return result.opportunities;
-}
-
-export async function getAuthenticatedHomeOpportunityPageResult({
-  cursor,
-  pageSize,
-  viewerId,
-}: {
-  cursor?: string;
-  pageSize?: number;
-  viewerId: string;
-}) {
-  try {
-    const page = await getPublicOpportunityPage({
-      cursor,
-      excludeOwnerId: viewerId,
-      pageSize,
-      viewerId,
-    });
-    return { ...page, unavailable: false };
-  } catch (error) {
-    logPublicDataFailure("authenticated home opportunity feed", error);
-    return {
-      cursor: normalizePublicOpportunityCursor(cursor) ?? null,
-      items: [],
-      nextCursor: null,
-      pageSize: clampPublicOpportunityPageSize(pageSize),
-      unavailable: true,
-    };
-  }
 }
 
 export async function getPublicDiscoveryData(filters?: {

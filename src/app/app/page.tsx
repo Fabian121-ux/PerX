@@ -1,196 +1,56 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
+
+import { FeedSkeletonList } from "@/components/feed/feed-post-skeleton";
+import { HomeFeedView } from "@/components/feed/home-feed-view";
+import { HomeFeedSection } from "@/components/feed/home-feed-section";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getDashboardMetrics } from "@/lib/data/app";
-import { getAuthenticatedHomeOpportunityPageResult } from "@/lib/data/opportunities";
-import { getTemporaryOpportunityImage } from "@/lib/data/temporary-images";
-import { HomeDashboard } from "@/components/dashboard/home-dashboard";
-import type { HomeDashboardData } from "@/components/dashboard/types";
-import { calculateTrustSummary } from "@/lib/trust/engine";
-import { getPrisma } from "@/lib/db/prisma";
 import { getUnreadCounts } from "@/lib/data/unread-counts";
 import { hasCapability } from "@/lib/permissions/capabilities";
-import { getTrustRecordEvidence } from "@/lib/trust/records";
 
 export const dynamic = "force-dynamic";
 
-function getTimeAgo(dateString: string | Date | undefined) {
-  if (!dateString) return "recently";
-  const date = new Date(dateString);
-  const diffInMs = new Date().getTime() - date.getTime();
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-  if (diffInHours < 24) return `${diffInHours || 1}h ago`;
-  const diffInDays = Math.floor(diffInHours / 24);
-  return `${diffInDays}d ago`;
-}
-
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ cursor?: string; limit?: string }>;
-}) {
+/**
+ * Authenticated Home - the primary social surface.
+ *
+ * Home is post-first: the feed is the main column, and the personal activity
+ * that used to dominate this page now lives in Profile (Batch 1) or the rail.
+ *
+ * Only what Home renders is fetched. The deal, proposal and draft counts were
+ * removed along with the metric grid rather than left querying for a surface
+ * that no longer displays them.
+ *
+ * The feed streams behind a Suspense boundary declared *here*, inside the page,
+ * rather than as `src/app/app/loading.tsx`. A segment-level `loading.tsx` would
+ * sit above every nested authenticated route and flush the response before
+ * their `notFound()` gates run, which is the 404-correctness regression Batch 1
+ * removed. Scoping the boundary to the feed keeps those statuses intact while
+ * still showing feed-shaped skeletons.
+ */
+export default async function HomePage() {
   const user = await getCurrentUser();
   if (!user) {
     redirect("/sign-in");
   }
 
-  const params = await searchParams;
-  const requestedPageSize = params.limit ? Number(params.limit) : undefined;
-  const metrics = await getDashboardMetrics(user.id);
-  const [
-    opportunityPage,
-    unreadCounts,
-    activeOutgoingConnectionCount,
-    draftsCount,
-    publishedItemsCount,
-  ] = await Promise.all([
-    getAuthenticatedHomeOpportunityPageResult({
-      cursor: params.cursor,
-      pageSize: requestedPageSize,
-      viewerId: user.id,
-    }),
-    getUnreadCounts(user.id),
-    getPrisma().connection.count({
-      where: {
-        requesterId: user.id,
-        status: { in: ["PENDING", "ACCEPTED"] },
-      },
-    }),
-    getPrisma().opportunity.count({
-      where: { ownerId: user.id, status: "DRAFT" },
-    }),
-    getPrisma().opportunity.count({
-      where: { ownerId: user.id, status: "PUBLISHED" },
-    }),
-  ]);
-  const [savedBookmarks, currentUserTrustEvidence] = await Promise.all([
-    getPrisma().opportunityBookmark.findMany({
-      select: { opportunityId: true },
-      where: {
-        opportunityId: { in: opportunityPage.items.map((item: any) => item.id) },
-        userId: user.id,
-      },
-    }),
-    getTrustRecordEvidence(user.id),
-  ]);
-  const savedOpportunityIds = new Set(
-    savedBookmarks.map((bookmark) => bookmark.opportunityId),
-  );
-  const canCreate = hasCapability(user.roles, "opportunity:create");
-
-  const dashboardData: HomeDashboardData = {
-    user,
-    connections: [],
-    trust: calculateTrustSummary({
-      averageRating: currentUserTrustEvidence.averageRating,
-      completedDeals: currentUserTrustEvidence.completedAgreements,
-      emailVerifiedAt: user.emailVerifiedAt ?? null,
-      profileCompleteness: user.profile?.profileCompleteness ?? 0,
-      verificationStatus: user.verificationStatus,
-    }),
-    activeDealsCount: metrics.deals,
-    activeDealsDetail: "Active workflows",
-    connectionRequestsCount: unreadCounts.pendingConnectionRequests,
-    draftsCount,
-    activityCount: unreadCounts.generalActivity,
-    openProposalsCount: metrics.proposals,
-    openProposalsDetail: "Sent or countered",
-    publishedItemsCount,
-    unreadConversationsCount: unreadCounts.unreadConversations,
-    onboarding: {
-      dismissed: Boolean(user.onboardingDismissedAt),
-      items: [
-        {
-          complete: (user.profile?.profileCompleteness ?? 0) >= 70,
-          href: "/app/profile/edit",
-          label: "Complete your profile",
-        },
-        {
-          complete: Boolean(user.imageUrl || user.profile?.profileImageUrl),
-          href: "/app/profile/edit",
-          label: "Add a profile image",
-        },
-        {
-          complete: Boolean(user.profile?.skills?.length),
-          href: "/app/profile/edit",
-          label: "Select skills or interests",
-        },
-        {
-          complete: activeOutgoingConnectionCount > 0,
-          href: "/app/people",
-          label: "Find people",
-        },
-        ...(canCreate
-          ? [
-              {
-                complete: publishedItemsCount > 0,
-                href: "/app/opportunities/new",
-                label: "Publish your first item",
-              },
-            ]
-          : []),
-        {
-          complete: activeOutgoingConnectionCount > 0,
-          href: "/app/people",
-          label: "Send a connection request",
-        },
-      ],
-    },
-    recommendedProfiles: [],
-    recommendedOpportunities: opportunityPage.items.map((opp: any) => {
-      const fallbackImage = getTemporaryOpportunityImage(opp.slug);
-      const storedImage = opp.images?.find((image: any) => image.isCover) ??
-        opp.images?.[0];
-      const recordEvidence = opp.owner.trustRecordEvidence;
-      return {
-        authorAvatarUrl:
-          opp.owner?.profile?.profileImageUrl ?? opp.owner?.imageUrl ?? undefined,
-        authorUsername: opp.owner?.username ?? undefined,
-        id: opp.id,
-        slug: opp.slug,
-        title: opp.title,
-        organisation: opp.owner?.name ?? "Independent",
-        location: opp.location ?? "Location not specified",
-        remote: opp.remote,
-        budgetMinMinor: opp.budgetMinMinor?.toString() ?? null,
-        budgetMaxMinor: opp.budgetMaxMinor?.toString() ?? null,
-        currency: opp.currency,
-        type: opp.type,
-        postedTimeAgo: getTimeAgo(opp.publishedAt || undefined),
-        imageAlt:
-          storedImage?.altText ??
-          fallbackImage.alt ??
-          `${opp.title} opportunity preview`,
-        imageUrl: storedImage?.url ?? fallbackImage.src,
-        summary: opp.summary,
-        trust: calculateTrustSummary({
-          averageRating: recordEvidence?.averageRating ?? 0,
-          completedDeals: recordEvidence?.completedAgreements ?? 0,
-          emailVerifiedAt: opp.owner?.emailVerifiedAt ?? null,
-          profileCompleteness: opp.owner?.profile?.profileCompleteness ?? 0,
-          verificationStatus: opp.owner?.verificationStatus,
-        }),
-        viewerHasSaved: savedOpportunityIds.has(opp.id),
-      };
-    }),
-    activityFeed: [],
-    opportunityTrends: [],
-  };
-
-  const nextHref = opportunityPage.nextCursor
-    ? `/app?${new URLSearchParams({
-        cursor: opportunityPage.nextCursor,
-        limit: String(opportunityPage.pageSize),
-      }).toString()}`
-    : null;
+  // Cheap, and needed for the rail that renders immediately around the feed.
+  const unreadCounts = await getUnreadCounts(user.id);
 
   return (
-    <HomeDashboard
-      data={dashboardData}
-      opportunityFeed={{
-        firstPageHref: opportunityPage.cursor ? "/app" : null,
-        nextHref,
-        unavailable: opportunityPage.unavailable,
+    <HomeFeedView
+      canCreate={hasCapability(user.roles, "opportunity:create")}
+      connectionRequestsCount={unreadCounts.pendingConnectionRequests}
+      feed={
+        <Suspense fallback={<FeedSkeletonList />}>
+          <HomeFeedSection userId={user.id} />
+        </Suspense>
+      }
+      profileCompleteness={user.profile?.profileCompleteness ?? 0}
+      unreadConversationsCount={unreadCounts.unreadConversations}
+      user={{
+        avatarUrl: user.profile?.profileImageUrl ?? user.imageUrl ?? null,
+        id: user.id,
+        name: user.name,
       }}
     />
   );

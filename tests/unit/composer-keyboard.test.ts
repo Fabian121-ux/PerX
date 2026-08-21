@@ -9,6 +9,7 @@ describe("message composer keyboard contract", () => {
         ctrlKey: false,
         key: "Enter",
         metaKey: false,
+        shiftKey: true,
       }),
     ).toBe(false);
     expect(
@@ -27,6 +28,14 @@ describe("message composer keyboard contract", () => {
     expect(
       shouldSubmitMessage({ ctrlKey: false, key: "Enter", metaKey: true }),
     ).toBe(true);
+    expect(
+      shouldSubmitMessage({
+        ctrlKey: true,
+        key: "Enter",
+        metaKey: false,
+        shiftKey: true,
+      }),
+    ).toBe(false);
   });
 
   it("never submits during IME composition or key code 229", () => {

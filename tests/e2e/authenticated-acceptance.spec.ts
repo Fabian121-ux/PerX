@@ -2776,6 +2776,104 @@ describeOrSkip(
               ),
             ).toBe(true);
 
+            const composer = page.locator("#message-draft");
+            const defaultComposerHeight = await composer.evaluate(
+              (element) => element.getBoundingClientRect().height,
+            );
+            const longUrl = `https://perx.test/${"unbroken".repeat(40)}`;
+            await composer.fill(
+              `A long message that must wrap within the mobile composer ${longUrl}`,
+            );
+            await expect
+              .poll(() =>
+                composer.evaluate(
+                  (element) => element.getBoundingClientRect().height,
+                ),
+              )
+              .toBeGreaterThan(defaultComposerHeight);
+            const wrappingState = await composer.evaluate((element) => {
+              const style = window.getComputedStyle(element);
+              const box = element.getBoundingClientRect();
+              return {
+                overflowWrap: style.overflowWrap,
+                overflowX: style.overflowX,
+                right: box.right,
+                scrollWidth: element.scrollWidth,
+                width: box.width,
+              };
+            });
+            expect(wrappingState.overflowWrap).toBe("anywhere");
+            expect(wrappingState.overflowX).toBe("hidden");
+            expect(wrappingState.right).toBeLessThanOrEqual(viewport.width);
+            expect(wrappingState.scrollWidth).toBeLessThanOrEqual(
+              wrappingState.width + 1,
+            );
+            expect(
+              await page.evaluate(
+                () =>
+                  document.documentElement.scrollWidth <= window.innerWidth + 1,
+              ),
+            ).toBe(true);
+
+            await composer.fill(
+              Array.from(
+                { length: 20 },
+                (_, index) => `Line ${index + 1}`,
+              ).join("\n"),
+            );
+            await expect
+              .poll(() =>
+                composer.evaluate((element) => ({
+                  clientHeight: element.clientHeight,
+                  overflowY: window.getComputedStyle(element).overflowY,
+                  scrollHeight: element.scrollHeight,
+                })),
+              )
+              .toEqual(
+                expect.objectContaining({
+                  clientHeight: 144,
+                  overflowY: "auto",
+                }),
+              );
+            expect(
+              await composer.evaluate(
+                (element) => element.scrollHeight > element.clientHeight,
+              ),
+            ).toBe(true);
+
+            if (viewport.width === 375) {
+              const multilineBody = `Mobile multiline ${crypto.randomUUID()}\nSecond line`;
+              await composer.fill(multilineBody);
+              const expandedHeight = await composer.evaluate(
+                (element) => element.getBoundingClientRect().height,
+              );
+              await page.getByRole("button", { name: "Send message" }).click();
+              await expect(composer).toHaveValue("");
+              await expect
+                .poll(() =>
+                  composer.evaluate(
+                    (element) => element.getBoundingClientRect().height,
+                  ),
+                )
+                .toBe(defaultComposerHeight);
+              expect(expandedHeight).toBeGreaterThan(defaultComposerHeight);
+              await expect(
+                page
+                  .locator("[data-message-id]")
+                  .getByText(multilineBody, { exact: true })
+                  .last(),
+              ).toBeVisible();
+            }
+
+            await composer.fill("");
+            await expect
+              .poll(() =>
+                composer.evaluate(
+                  (element) => element.getBoundingClientRect().height,
+                ),
+              )
+              .toBe(defaultComposerHeight);
+
             if (viewport.width === 430) {
               await page.setViewportSize({ width: 430, height: 700 });
               const resizedBox = await workspace.boundingBox();
@@ -2791,7 +2889,7 @@ describeOrSkip(
             }
 
             if (viewport.width === 375) {
-              await page.locator("#message-draft").fill("Direct-route draft");
+              await composer.fill("Direct-route draft");
             }
 
             await page

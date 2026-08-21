@@ -5868,28 +5868,28 @@ export type ListEnumProposalStatusFieldRefInput<$PrismaModel> = FieldRefInputTyp
  * Reference to a field of type 'ProposalVersionStatus'
  */
 export type EnumProposalVersionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProposalVersionStatus'>
-
+    
 
 
 /**
  * Reference to a field of type 'ProposalVersionStatus[]'
  */
 export type ListEnumProposalVersionStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProposalVersionStatus[]'>
-
+    
 
 
 /**
  * Reference to a field of type 'ConversationEventType'
  */
 export type EnumConversationEventTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ConversationEventType'>
-
+    
 
 
 /**
  * Reference to a field of type 'ConversationEventType[]'
  */
 export type ListEnumConversationEventTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ConversationEventType[]'>
-
+    
 
 
 /**
@@ -5910,14 +5910,14 @@ export type ListEnumDealStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$P
  * Reference to a field of type 'DealSettlementMode'
  */
 export type EnumDealSettlementModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DealSettlementMode'>
-
+    
 
 
 /**
  * Reference to a field of type 'DealSettlementMode[]'
  */
 export type ListEnumDealSettlementModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DealSettlementMode[]'>
-
+    
 
 
 /**
@@ -6273,3 +6273,4 @@ export type PrismaAction =
  * `PrismaClient` proxy available in interactive transactions.
  */
 export type TransactionClient = Omit<DefaultPrismaClient, runtime.ITXClientDenyList>
+

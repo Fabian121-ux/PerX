@@ -947,6 +947,11 @@ export function MessageWorkspace({
   }, [activeConversation?.id, highlightedMessageId, historyVisible]);
 
   const draft = drafts[activeConversation?.id ?? activeId] ?? "";
+
+  useLayoutEffect(() => {
+    resizeMessageComposer(composerRef.current);
+  }, [activeConversation?.id, draft]);
+
   const visibleConversations = useMemo(() => {
     const query = conversationQuery.trim().toLocaleLowerCase();
     return syncedConversations.filter((conversation) => {
@@ -2175,13 +2180,13 @@ export function MessageWorkspace({
 
           <form
             aria-label="Message composer"
-            className="message-composer shrink-0 border-t border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-3"
+            className="message-composer min-w-0 max-w-full shrink-0 border-t border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-3"
             onFocusCapture={() =>
               setActivatedConversationId(activeConversation.id)
             }
             onSubmit={sendMessage}
           >
-            <div className="mx-auto grid max-w-3xl gap-2">
+            <div className="mx-auto grid w-full min-w-0 max-w-3xl gap-2">
               {replyTarget ? (
                 <div className="flex items-start justify-between gap-3 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-primary-soft)] p-3">
                   <div className="min-w-0 border-l-4 border-[color:var(--px-primary)] pl-3">
@@ -2202,7 +2207,7 @@ export function MessageWorkspace({
                   </button>
                 </div>
               ) : null}
-              <div className="flex items-end gap-2 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-2">
+              <div className="flex w-full min-w-0 max-w-full items-end gap-2 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-2">
                 {activeConversation.dealOffer ? (
                   <button
                     aria-label="Make a Deal"
@@ -2218,7 +2223,7 @@ export function MessageWorkspace({
                   Message
                 </label>
                 <textarea
-                  className="max-h-36 min-h-11 flex-1 resize-none bg-transparent px-2 py-2 text-sm text-[color:var(--px-text)] outline-none placeholder:text-[color:var(--px-text-muted)]"
+                  className="max-h-36 min-h-11 w-full min-w-0 flex-1 resize-none overflow-x-hidden overflow-y-hidden whitespace-pre-wrap bg-transparent px-2 py-2 text-sm text-[color:var(--px-text)] [overflow-wrap:anywhere] [word-break:break-word] outline-none placeholder:text-[color:var(--px-text-muted)]"
                   id="message-draft"
                   maxLength={2000}
                   onChange={(event) => {
@@ -2236,7 +2241,9 @@ export function MessageWorkspace({
                   onCompositionStart={() => {
                     isComposingRef.current = true;
                   }}
-                  onInput={autoResize}
+                  onInput={(event) =>
+                    resizeMessageComposer(event.currentTarget)
+                  }
                   onKeyDown={(event) => {
                     if (
                       shouldSubmitMessage({
@@ -2247,6 +2254,7 @@ export function MessageWorkspace({
                         key: event.key,
                         keyCode: event.keyCode,
                         metaKey: event.metaKey,
+                        shiftKey: event.shiftKey,
                       })
                     ) {
                       event.preventDefault();
@@ -2257,6 +2265,7 @@ export function MessageWorkspace({
                   ref={composerRef}
                   rows={1}
                   value={draft}
+                  wrap="soft"
                 />
                 <button
                   aria-label="Send message"
@@ -2497,7 +2506,7 @@ function MessageBubble({
       ref={refCallback}
     >
       <div
-        className={`group max-w-[min(82%,42rem)] touch-pan-y overflow-visible rounded-3xl px-4 py-3 shadow-sm transition motion-reduce:transform-none ${
+        className={`group min-w-0 max-w-[min(82%,42rem)] touch-pan-y overflow-visible rounded-3xl px-4 py-3 shadow-sm transition motion-reduce:transform-none ${
           swipeOffset > 0 ? "relative" : ""
         } ${
           mine
@@ -2639,6 +2648,7 @@ function MessageBubble({
                     key: event.key,
                     keyCode: event.keyCode,
                     metaKey: event.metaKey,
+                    shiftKey: event.shiftKey,
                   })
                 ) {
                   event.preventDefault();
@@ -2672,7 +2682,7 @@ function MessageBubble({
             </div>
           </div>
         ) : (
-          <p className="whitespace-pre-wrap break-words text-sm leading-6">
+          <p className="min-w-0 whitespace-pre-wrap text-sm leading-6 [overflow-wrap:anywhere] [word-break:break-word]">
             {message.body}
           </p>
         )}
@@ -3312,10 +3322,28 @@ function Avatar({
   );
 }
 
+const MESSAGE_COMPOSER_MIN_HEIGHT = 44;
+const MESSAGE_COMPOSER_MAX_HEIGHT = 144;
+
+function resizeMessageComposer(target: HTMLTextAreaElement | null) {
+  if (!target) return;
+  target.style.height = "auto";
+  const contentHeight = target.value
+    ? target.scrollHeight
+    : MESSAGE_COMPOSER_MIN_HEIGHT;
+  target.style.height = `${Math.min(
+    Math.max(contentHeight, MESSAGE_COMPOSER_MIN_HEIGHT),
+    MESSAGE_COMPOSER_MAX_HEIGHT,
+  )}px`;
+  target.style.overflowY =
+    contentHeight > MESSAGE_COMPOSER_MAX_HEIGHT ? "auto" : "hidden";
+}
+
 function autoResize(event: FormEvent<HTMLTextAreaElement>) {
   const target = event.currentTarget;
   target.style.height = "auto";
   target.style.height = `${Math.min(target.scrollHeight, 160)}px`;
+  target.style.overflowY = target.scrollHeight > 160 ? "auto" : "hidden";
 }
 
 function persistDraft(

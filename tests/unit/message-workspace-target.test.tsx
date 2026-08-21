@@ -229,6 +229,7 @@ describe("message workspace exact targets", () => {
 
     fireEvent.change(composer, { target: { value: "First line" } });
     fireEvent.keyDown(composer, { key: "Enter" });
+    fireEvent.keyDown(composer, { key: "Enter", shiftKey: true });
     expect(mocks.sendMessageAction).not.toHaveBeenCalled();
 
     fireEvent.compositionStart(composer);
@@ -253,6 +254,60 @@ describe("message workspace exact targets", () => {
     await waitFor(() =>
       expect(mocks.sendMessageAction).toHaveBeenCalledTimes(2),
     );
+  });
+
+  it("wraps long text, grows to a bounded height, and resets after send", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+    const composer = view.getByLabelText("Message") as HTMLTextAreaElement;
+    let contentHeight = 44;
+    Object.defineProperty(composer, "scrollHeight", {
+      configurable: true,
+      get: () => (composer.value ? contentHeight : 44),
+    });
+
+    expect(composer.tagName).toBe("TEXTAREA");
+    expect(composer.wrap).toBe("soft");
+    expect(composer.className).toContain("min-w-0");
+    expect(composer.className).toContain("overflow-x-hidden");
+    expect(composer.className).toContain("[overflow-wrap:anywhere]");
+
+    const longUrl = `https://perx.test/${"unbroken".repeat(30)}`;
+    contentHeight = 92;
+    fireEvent.input(composer, {
+      target: { value: `A long paragraph that wraps naturally ${longUrl}` },
+    });
+    expect(composer.style.height).toBe("92px");
+    expect(composer.style.overflowY).toBe("hidden");
+
+    contentHeight = 320;
+    fireEvent.input(composer, {
+      target: { value: `First\nSecond\nThird\nFourth\nFifth\n${longUrl}` },
+    });
+    expect(composer.style.height).toBe("144px");
+    expect(composer.style.overflowY).toBe("auto");
+
+    fireEvent.click(view.getByRole("button", { name: "Send message" }));
+    await waitFor(() =>
+      expect(mocks.sendMessageAction).toHaveBeenCalledWith(
+        "conversation-1",
+        `First\nSecond\nThird\nFourth\nFifth\n${longUrl}`,
+        null,
+      ),
+    );
+    await waitFor(() => expect(composer.value).toBe(""));
+    expect(composer.style.height).toBe("44px");
+    expect(composer.style.overflowY).toBe("hidden");
   });
 
   it("renders and highlights structured immutable Deal events", async () => {

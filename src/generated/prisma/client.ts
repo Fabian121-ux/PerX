@@ -188,17 +188,17 @@ export type BlockedUser = Prisma.BlockedUserModel
 export type Proposal = Prisma.ProposalModel
 /**
  * Model ProposalVersion
- *
+ * 
  */
 export type ProposalVersion = Prisma.ProposalVersionModel
 /**
  * Model ProposalVersionMilestone
- *
+ * 
  */
 export type ProposalVersionMilestone = Prisma.ProposalVersionMilestoneModel
 /**
  * Model ConversationEvent
- *
+ * 
  */
 export type ConversationEvent = Prisma.ConversationEventModel
 /**

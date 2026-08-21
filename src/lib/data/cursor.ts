@@ -19,6 +19,16 @@ export type CursorToken = {
   timestamp: Date;
 };
 
+/**
+ * Timestamp columns a keyset cursor may sort on.
+ *
+ * `publishedAt` is nullable on `Opportunity`, so any query using it must also
+ * constrain `publishedAt: { not: null }` (as `buildPublicOpportunityWhere`
+ * does). Without that, NULL rows sort unpredictably and the keyset comparison
+ * silently drops them.
+ */
+export type CursorField = "createdAt" | "publishedAt" | "updatedAt";
+
 type CursorPayload = {
   id?: unknown;
   scope?: unknown;
@@ -126,7 +136,7 @@ export function buildCursorPredicate(
     field,
   }: {
     direction: "asc" | "desc";
-    field: "createdAt" | "updatedAt";
+    field: CursorField;
   },
 ) {
   const operator = direction === "desc" ? "lt" : "gt";
@@ -144,7 +154,7 @@ export function withCursor<T extends object>(
   cursor: CursorToken | null,
   options: {
     direction: "asc" | "desc";
-    field: "createdAt" | "updatedAt";
+    field: CursorField;
   },
 ) {
   if (!cursor) return where;
