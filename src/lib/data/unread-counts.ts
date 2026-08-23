@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { NotificationType } from "@/generated/prisma/enums";
 import { getPrisma } from "@/lib/db/prisma";
 import { getVisibleNewsWhere } from "@/lib/data/news";
@@ -28,7 +30,7 @@ export type UnreadCounts = {
   unreadNews: number;
 };
 
-export async function getUnreadCounts(userId: string): Promise<UnreadCounts> {
+async function loadUnreadCounts(userId: string): Promise<UnreadCounts> {
   const prisma = getPrisma();
   const now = new Date();
   const [
@@ -82,3 +84,19 @@ export async function getUnreadCounts(userId: string): Promise<UnreadCounts> {
     unreadNews,
   };
 }
+
+/**
+ * Per-request memoised unread counts.
+ *
+ * The authenticated layout renders these as navigation badges and Home renders
+ * them again in its rail, so an uncached call meant every Home load issued
+ * these four queries twice. React's `cache` scopes the result to a single
+ * server request, matching how `getCurrentUser` is deduped in
+ * `src/lib/auth/session.ts`.
+ *
+ * Safe to memoise: the value is derived per `userId`, is presentational
+ * (badge counts), and never grants access. The cache lives for one render pass
+ * only, so a subsequent request always re-reads the database.
+ */
+export const getUnreadCounts: (userId: string) => Promise<UnreadCounts> =
+  cache(loadUnreadCounts);

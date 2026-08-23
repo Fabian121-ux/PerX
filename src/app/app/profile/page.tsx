@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Image from "next/image";
 import { UserRound, MapPin, Calendar, CheckCircle2 } from "lucide-react";
 import { AppSection } from "@/components/app-section";
 import { ButtonLink } from "@/components/ui/button";
@@ -72,10 +73,22 @@ export default async function ProfilePage() {
             <div className="h-24 bg-[color:var(--px-primary-soft)] sm:h-32" />
             <div className="px-4 pb-6 sm:px-6">
               <div className="relative -mt-12 mb-4 flex flex-col gap-4 sm:-mt-16 sm:flex-row sm:items-end sm:justify-between">
-                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-[color:var(--px-surface)] bg-[color:var(--px-muted)] sm:h-32 sm:w-32">
+                <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-[color:var(--px-surface)] bg-[color:var(--px-muted)] sm:h-32 sm:w-32">
                   {user.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={user.imageUrl} alt={user.name} className="h-full w-full object-cover" />
+                    <Image
+                      alt={user.name}
+                      className="object-cover"
+                      fill
+                      /*
+                        The viewer's own avatar is the visual anchor of this
+                        page and is above the fold, so it is one of the few
+                        images that genuinely warrants eager loading.
+                      */
+                      priority
+                      // Renders at 96px, or 128px from the `sm` breakpoint up.
+                      sizes="(max-width: 640px) 96px, 128px"
+                      src={user.imageUrl}
+                    />
                   ) : (
                     <UserRound size={48} className="text-[color:var(--px-text-muted)]" />
                   )}

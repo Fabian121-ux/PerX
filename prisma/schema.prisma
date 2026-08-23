@@ -511,11 +511,15 @@ model Opportunity {
   conversations             Conversation[]
   images                    OpportunityImage[]
 
+  // Serves the Home feed's [publishedAt desc, id desc] keyset ordering.
+  //
+  // A wider variant ending in `id` was benchmarked for Batch 2 and rejected:
+  // Prisma's typed API emits the keyset tie-breaker as an OR predicate, which
+  // Postgres cannot push into an index condition, so the extra column was never
+  // used and the query measured slightly slower (2.03ms vs 1.64ms at 50k posts,
+  // ~4800 rows deep). Reconsider only alongside a raw-SQL row-values cursor
+  // (`(publishedAt, id) < (...)`), which does push down and measured 0.11ms.
   @@index([status, moderationStatus, publishedAt])
-  // Home feed keyset. Extends the index above with the `id` tie-breaker so the
-  // (publishedAt DESC, id DESC) cursor is resolved inside the index instead of
-  // as a heap re-check. See 20260821120000_home_feed_keyset_index.
-  @@index([status, moderationStatus, publishedAt(sort: Desc), id(sort: Desc)])
   @@index([ownerId, status])
   @@index([ownerId, status, updatedAt])
   @@index([type])

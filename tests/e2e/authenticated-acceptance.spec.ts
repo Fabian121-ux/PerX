@@ -540,6 +540,171 @@ describeOrSkip(
       }
     }
 
+    /**
+     * Seeds enough published posts to force at least two feed pages, plus a
+     * blocked author and a set of ineligible posts that must never surface.
+     *
+     * Authors are distinct so the diversity rule cannot mask a missing post,
+     * and `publishedAt` is spaced by minute so keyset ordering is unambiguous.
+     */
+    async function createHomeFeedFixture(viewerEmail: string) {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      const runId = crypto.randomUUID().slice(0, 8);
+      const authorIds: string[] = [];
+      const opportunityIds: string[] = [];
+      let blockId = "";
+
+      try {
+        await pool.query("BEGIN");
+        const viewer = await pool.query<{ id: string }>(
+          `SELECT id FROM "User" WHERE email = $1`,
+          [viewerEmail],
+        );
+        const viewerId = viewer.rows[0]?.id;
+        if (!viewerId) throw new Error(`Viewer ${viewerEmail} not found`);
+
+        // 20 authors, one post each: more than one page of 12.
+        for (let index = 0; index < 20; index += 1) {
+          const authorId = `feeduser_${runId}_${index}`;
+          authorIds.push(authorId);
+          await pool.query(
+            `INSERT INTO "User" (id,email,"passwordHash",name,username,"accountClassification","emailVerifiedAt","verificationStatus","isActive","createdAt","updatedAt")
+             VALUES ($1,$2,'x',$3,$4,'PUBLIC_BETA_USER',NOW(),'VERIFIED',true,NOW(),NOW())`,
+            [
+              authorId,
+              `${authorId}@perx.test`,
+              `Feed Author ${index}`,
+              authorId,
+            ],
+          );
+          await pool.query(
+            `INSERT INTO "Profile" (id,"userId",headline,biography,location,"isDiscoverable","createdAt","updatedAt")
+             VALUES ($1,$2,'Feed author','Bio','Lagos',true,NOW(),NOW())`,
+            [`feedprof_${runId}_${index}`, authorId],
+          );
+
+          const opportunityId = `feedopp_${runId}_${index}`;
+          opportunityIds.push(opportunityId);
+          await pool.query(
+            `INSERT INTO "Opportunity" (id,"ownerId",type,status,"moderationStatus",title,slug,summary,description,remote,currency,skills,"publishedAt","createdAt","updatedAt")
+             VALUES ($1,$2,'JOB','PUBLISHED','APPROVED',$3,$4,$5,'Description',true,'NGN',ARRAY['x'],NOW() - ($6||' minutes')::interval,NOW(),NOW())`,
+            [
+              opportunityId,
+              authorId,
+              `FeedPost ${runId} ${index}`,
+              `feedpost-${runId}-${index}`,
+              `Feed summary ${index}`,
+              String(index + 1),
+            ],
+          );
+        }
+
+        // Ineligible posts by an otherwise-valid author: each must be hidden
+        // for a different reason.
+        const hiddenAuthor = authorIds[0];
+        for (const [suffix, status, moderation] of [
+          ["draft", "DRAFT", "APPROVED"],
+          ["pending", "PUBLISHED", "PENDING"],
+          ["archived", "ARCHIVED", "APPROVED"],
+        ] as const) {
+          const id = `feedhidden_${runId}_${suffix}`;
+          opportunityIds.push(id);
+          await pool.query(
+            `INSERT INTO "Opportunity" (id,"ownerId",type,status,"moderationStatus",title,slug,summary,description,remote,currency,skills,"publishedAt","createdAt","updatedAt")
+             VALUES ($1,$2,'JOB',$3,$4,$5,$6,'Hidden','Description',true,'NGN',ARRAY['x'],NOW(),NOW(),NOW())`,
+            [
+              id,
+              hiddenAuthor,
+              status,
+              moderation,
+              `HiddenPost ${runId} ${suffix}`,
+              `hiddenpost-${runId}-${suffix}`,
+            ],
+          );
+        }
+
+        // A blocked author with a fully valid published post. B3 block
+        // semantics must keep it out of the feed.
+        const blockedAuthorId = `feedblocked_${runId}`;
+        authorIds.push(blockedAuthorId);
+        await pool.query(
+          `INSERT INTO "User" (id,email,"passwordHash",name,username,"accountClassification","emailVerifiedAt","verificationStatus","isActive","createdAt","updatedAt")
+           VALUES ($1,$2,'x','Blocked Author',$3,'PUBLIC_BETA_USER',NOW(),'VERIFIED',true,NOW(),NOW())`,
+          [blockedAuthorId, `${blockedAuthorId}@perx.test`, blockedAuthorId],
+        );
+        await pool.query(
+          `INSERT INTO "Profile" (id,"userId",headline,biography,location,"isDiscoverable","createdAt","updatedAt")
+           VALUES ($1,$2,'Blocked','Bio','Lagos',true,NOW(),NOW())`,
+          [`feedblockedprof_${runId}`, blockedAuthorId],
+        );
+        const blockedPostId = `feedblockedopp_${runId}`;
+        opportunityIds.push(blockedPostId);
+        await pool.query(
+          `INSERT INTO "Opportunity" (id,"ownerId",type,status,"moderationStatus",title,slug,summary,description,remote,currency,skills,"publishedAt","createdAt","updatedAt")
+           VALUES ($1,$2,'JOB','PUBLISHED','APPROVED',$3,$4,'Blocked summary','Description',true,'NGN',ARRAY['x'],NOW(),NOW(),NOW())`,
+          [
+            blockedPostId,
+            blockedAuthorId,
+            `BlockedPost ${runId}`,
+            `blockedpost-${runId}`,
+          ],
+        );
+        blockId = `feedblock_${runId}`;
+        await pool.query(
+          `INSERT INTO "BlockedUser" (id,"blockerUserId","blockedUserId","createdAt")
+           VALUES ($1,$2,$3,NOW())`,
+          [blockId, viewerId, blockedAuthorId],
+        );
+
+        await pool.query("COMMIT");
+        return {
+          authorIds,
+          blockId,
+          blockedPostTitle: `BlockedPost ${runId}`,
+          hiddenTitlePrefix: `HiddenPost ${runId}`,
+          opportunityIds,
+          runId,
+          viewerId,
+        };
+      } catch (error) {
+        await pool.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        await pool.end();
+      }
+    }
+
+    async function deleteHomeFeedFixture(fixture: {
+      authorIds: string[];
+      blockId: string;
+      opportunityIds: string[];
+    }) {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      try {
+        await pool.query(`DELETE FROM "BlockedUser" WHERE id = $1`, [
+          fixture.blockId,
+        ]);
+        await pool.query(
+          `DELETE FROM "OpportunityBookmark" WHERE "opportunityId" = ANY($1::text[])`,
+          [fixture.opportunityIds],
+        );
+        await pool.query(
+          `DELETE FROM "Opportunity" WHERE id = ANY($1::text[])`,
+          [fixture.opportunityIds],
+        );
+        await pool.query(`DELETE FROM "Profile" WHERE "userId" = ANY($1::text[])`, [
+          fixture.authorIds,
+        ]);
+        await pool.query(`DELETE FROM "User" WHERE id = ANY($1::text[])`, [
+          fixture.authorIds,
+        ]);
+      } finally {
+        await pool.end();
+      }
+    }
+
     function opportunityDraftKey(userId: string, type: "PRODUCT" | "SERVICE") {
       return `perx:opportunity-composer:v1:${encodeURIComponent(userId)}:${type}`;
     }
@@ -993,6 +1158,155 @@ describeOrSkip(
       await page.close();
     });
 
+    test("Home feed is post-first, paginates, and hides ineligible content", async ({
+      browser,
+    }) => {
+      const fixture = await createHomeFeedFixture("alice-test@perx.test");
+      const page = await browser.newPage({
+        viewport: { width: 1280, height: 900 },
+      });
+
+      try {
+        await createSession(page, "alice-test@perx.test");
+        await page.goto(`${BASE}/app`);
+        await page.waitForLoadState("networkidle");
+
+        const cards = page.locator("[data-post-id]");
+        await expect(cards.first()).toBeVisible();
+
+        // Bounded page: a feed request must never return the whole table.
+        const initialCount = await cards.count();
+        expect(initialCount).toBeGreaterThan(0);
+        expect(initialCount).toBeLessThanOrEqual(24);
+        const firstId = await cards.first().getAttribute("data-post-id");
+
+        /*
+          The feed streams network-then-discovery, so the fixture's authors
+          (none of whom are connected to the viewer) only appear once the
+          discovery segment loads. Waiting for a specific fixture post proves
+          the whole continuation chain worked, not merely that a count grew.
+        */
+        await expect
+          .poll(
+            async () => {
+              await page.evaluate(() => {
+                const main = document.querySelector(".dashboard-main");
+                main?.scrollTo({ top: main.scrollHeight });
+              });
+              return page.locator("[data-post-id]").count();
+            },
+            { timeout: 30_000 },
+          )
+          .toBeGreaterThan(initialCount);
+
+        await expect(
+          page.getByText(`FeedPost ${fixture.runId} 0`, { exact: true }),
+        ).toBeVisible({ timeout: 15_000 });
+
+        // Posts loaded earlier stayed on screen while later pages arrived.
+        expect(await cards.first().getAttribute("data-post-id")).toBe(firstId);
+
+        // Deduplication across every appended page.
+        const ids = await cards.evaluateAll((nodes) =>
+          nodes.map((node) => node.getAttribute("data-post-id")),
+        );
+        expect(new Set(ids).size).toBe(ids.length);
+
+        // Visibility, asserted only after discovery has actually run: drafts,
+        // pending moderation and archived posts must never appear, and B3
+        // block semantics must survive the broader discovery query.
+        const body = await page.innerText("body");
+        expect(body).not.toContain(fixture.hiddenTitlePrefix);
+        expect(body).not.toContain(fixture.blockedPostTitle);
+      } finally {
+        if (!page.isClosed()) await page.close();
+        await deleteHomeFeedFixture(fixture);
+      }
+    });
+
+    test("Home feed survives navigation away and back", async ({ browser }) => {
+      const fixture = await createHomeFeedFixture("alice-test@perx.test");
+      const page = await browser.newPage({
+        viewport: { width: 1280, height: 900 },
+      });
+
+      try {
+        await createSession(page, "alice-test@perx.test");
+        await page.goto(`${BASE}/app`);
+        await page.waitForLoadState("networkidle");
+
+        const cards = page.locator("[data-post-id]");
+        await expect(cards.first()).toBeVisible();
+
+        await page.evaluate(() => {
+          const main = document.querySelector(".dashboard-main");
+          main?.scrollTo({ top: main.scrollHeight });
+        });
+        await expect
+          .poll(async () => cards.count(), { timeout: 15_000 })
+          .toBeGreaterThan(12);
+        const loadedCount = await cards.count();
+
+        await page.goto(`${BASE}/app/profile`);
+        await page.waitForLoadState("networkidle");
+        await page.goBack();
+        await page.waitForLoadState("networkidle");
+
+        // Returning restores the pages already loaded rather than rebuilding
+        // the feed from post #1.
+        await expect
+          .poll(async () => cards.count(), { timeout: 15_000 })
+          .toBeGreaterThanOrEqual(loadedCount);
+      } finally {
+        if (!page.isClosed()) await page.close();
+        await deleteHomeFeedFixture(fixture);
+      }
+    });
+
+    test("Home feed is usable at 320px without horizontal overflow", async ({
+      browser,
+    }) => {
+      const fixture = await createHomeFeedFixture("alice-test@perx.test");
+      const page = await browser.newPage({
+        viewport: { width: 320, height: 568 },
+      });
+
+      try {
+        await createSession(page, "alice-test@perx.test");
+        await page.goto(`${BASE}/app`);
+        await page.waitForLoadState("networkidle");
+
+        const card = page.locator("[data-post-id]").first();
+        await expect(card).toBeVisible();
+
+        const overflow = await page.evaluate(
+          () =>
+            document.documentElement.scrollWidth -
+            document.documentElement.clientWidth,
+        );
+        expect(overflow).toBeLessThanOrEqual(1);
+
+        // Cards must fit the viewport rather than forcing sideways scrolling.
+        const box = await card.boundingBox();
+        expect(box!.width).toBeLessThanOrEqual(320);
+
+        // Batch 1 bottom navigation still works from the feed.
+        const bottomNav = page.getByRole("navigation", {
+          name: "Primary navigation",
+        });
+        await expect(bottomNav).toBeVisible();
+        await expect(bottomNav.getByRole("link")).toHaveCount(5);
+
+        // Feed actions remain reachable at accessible touch-target size.
+        const save = card.getByRole("button", { name: /Save|Remove from saved/ });
+        const saveBox = await save.boundingBox();
+        expect(saveBox!.height).toBeGreaterThanOrEqual(40);
+      } finally {
+        if (!page.isClosed()) await page.close();
+        await deleteHomeFeedFixture(fixture);
+      }
+    });
+
     test("mobile bottom navigation has 5 destinations at 320px", async ({
       browser,
     }) => {
@@ -1227,9 +1541,20 @@ describeOrSkip(
         );
         await page.reload();
         await expect(page.getByLabel("Post title")).toHaveValue(serviceTitle);
-        await expect(page.getByRole("status", { name: "Local draft status" })).toHaveText(
-          "Restored local draft",
-        );
+        /*
+          The restore message is transient by design: the composer announces
+          "Restored local draft", then its 450ms autosave timer fires and
+          replaces it with "Saved locally". Asserting the intermediate value
+          alone made this test depend on Playwright polling inside that window,
+          which produced intermittent failures.
+
+          Both strings prove the draft was recovered - the field value assertion
+          above is what actually verifies the restored content - so either
+          settled state is accepted.
+        */
+        await expect(
+          page.getByRole("status", { name: "Local draft status" }),
+        ).toHaveText(/Restored local draft|Saved locally/);
 
         await page.goto(
           `${BASE}/app/opportunities/new?type=PRODUCT&category=market`,

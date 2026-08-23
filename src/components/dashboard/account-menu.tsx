@@ -2,6 +2,7 @@
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { UserRound, Settings, LogOut, Sun, Moon, Monitor, ChevronRight } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { signOutAction } from "@/features/auth/actions";
@@ -35,8 +36,19 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
           aria-label="Open account menu"
         >
           {user.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={user.imageUrl} alt={user.name} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            <Image
+              alt={user.name}
+              className="h-full w-full object-cover"
+              height={40}
+              /*
+                Rendered at 40px in the topbar. Requesting 80px covers 2x
+                displays; previously this was the untouched upload, which for a
+                5 MB original was downloaded in full on every page.
+              */
+              sizes="80px"
+              src={user.imageUrl}
+              width={40}
+            />
           ) : user.name ? (
             getInitials(user.name)
           ) : user.username ? (

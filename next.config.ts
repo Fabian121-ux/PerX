@@ -10,12 +10,32 @@ if (
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   images: {
+    /*
+      Uploads are stored as full-resolution originals (up to UPLOAD_MAX_BYTES,
+      5 MB by default) in Supabase Storage - there is no server-side resizing.
+      Without the Supabase host listed here, `next/image` refuses to optimize
+      those URLs, so a 44px avatar and a 640px feed card were both downloading
+      the untouched original. Listing the host routes them through the built-in
+      optimizer, which resizes and re-encodes per request.
+    */
     remotePatterns: [
-      {
-        hostname: "images.unsplash.com",
-        protocol: "https",
-      },
+      { hostname: "images.unsplash.com", protocol: "https" },
+      { hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**", protocol: "https" },
+      { hostname: "*.supabase.in", pathname: "/storage/v1/object/public/**", protocol: "https" },
     ],
+    // AVIF first, WebP second: both are far smaller than the stored JPEG/PNG,
+    // and the browser picks whichever it supports.
+    formats: ["image/avif", "image/webp"],
+    /*
+      The feed column is capped at 640px and avatars render at 44px, so the
+      default ladder (which starts at 640 and runs to 3840) generated many
+      variants the UI can never use. These match the sizes actually rendered.
+    */
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Optimized derivatives are content-addressed by URL, so a long TTL is
+    // safe: a changed image gets a new storage key and therefore a new URL.
+    minimumCacheTTL: 60 * 60 * 24 * 30,
   },
   deploymentId: process.env.VERCEL_GIT_COMMIT_SHA ? process.env.VERCEL_GIT_COMMIT_SHA.substring(0, 32) : undefined,
   async redirects() {

@@ -181,15 +181,22 @@ export function isPrismaDatabaseCommand(argv: readonly string[]): boolean {
   return DATABASE_SUBCOMMANDS.includes(subcommand);
 }
 
-export function isRemoteCommandAuthorized(
-  env: NodeJS.ProcessEnv = process.env,
-): boolean {
+/**
+ * Minimal environment shape.
+ *
+ * Only the variables the guard reads, rather than `NodeJS.ProcessEnv`, so
+ * callers (and tests) can pass a small literal without having to satisfy
+ * unrelated required keys such as `NODE_ENV`.
+ */
+export type GuardEnv = Readonly<Record<string, string | undefined>>;
+
+export function isRemoteCommandAuthorized(env: GuardEnv = process.env): boolean {
   return env[REMOTE_OPT_IN_VARIABLE] === REMOTE_OPT_IN_VALUE;
 }
 
 export type GuardInput = {
   argv?: readonly string[];
-  env?: NodeJS.ProcessEnv;
+  env?: GuardEnv;
 };
 
 /**

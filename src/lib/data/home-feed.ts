@@ -259,12 +259,19 @@ export async function getHomeFeedPage({
     viewerId,
   });
 
-  // Network produced nothing at all on this request - either the viewer has no
-  // connections, or their network ran dry exactly on a page boundary. Serve
-  // discovery immediately so the request still returns useful content rather
-  // than an empty page that the client would have to chase with another round
-  // trip.
-  if (resolvedSegment === "network" && !rows.length) {
+  /*
+    Network produced nothing on its FIRST request - the viewer has no
+    connections, or none of them have posted. Serve discovery immediately so
+    the response still carries content instead of an empty page the client
+    would have to chase with another round trip.
+
+    Deliberately restricted to `!cursor`. Mid-stream (a cursor is present) an
+    empty network page means that segment is simply finished, and restarting
+    discovery from the top here would rewind the viewer to posts they have
+    already scrolled past. That case is handled by the `nextSegment` handoff
+    below, which lets the client request discovery as a separate page.
+  */
+  if (resolvedSegment === "network" && !rows.length && !cursor) {
     active = "discovery";
     ({ hasNextPage, rows } = await queryFeedSegment({
       cursor: null,

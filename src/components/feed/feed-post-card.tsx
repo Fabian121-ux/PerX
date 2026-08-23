@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 import { FeedSaveButton } from "@/components/dashboard/feed-save-button";
+import { Avatar } from "@/components/ui/avatar";
 import type { HomeFeedPost } from "@/lib/data/home-feed-view";
 import { getCanonicalOpportunityPath } from "@/lib/data/opportunity-path";
 import { recordFeedEvent } from "@/lib/feed/events";
@@ -67,22 +68,17 @@ export function FeedPostCard({
     >
       <header className="flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5">
         <div className="flex min-w-0 items-center gap-3">
-          {post.authorAvatarUrl ? (
-            <Image
-              alt={`${post.authorName} profile photo`}
-              className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-[color:var(--px-border)]"
-              height={44}
-              src={post.authorAvatarUrl}
-              width={44}
-            />
-          ) : (
-            <span
-              aria-hidden
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[color:var(--px-primary)] text-sm font-black text-white"
-            >
-              {getInitials(post.authorName)}
-            </span>
-          )}
+          {/*
+            Every feed avatar is lazy. Only the composer avatar above it is
+            eager, so a long scroll never fetches avatars the viewer has not
+            reached.
+          */}
+          <Avatar
+            className="ring-1 ring-[color:var(--px-border)]"
+            name={post.authorName}
+            size={44}
+            src={post.authorAvatarUrl}
+          />
           <div className="min-w-0">
             {authorHref ? (
               <Link
@@ -269,13 +265,4 @@ function PostGraphic({ title, type }: { title: string; type: string }) {
       <ShieldCheck className="absolute bottom-5 right-5 text-white" size={24} />
     </div>
   );
-}
-
-function getInitials(value: string) {
-  return value
-    .split(/\s+/)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 }

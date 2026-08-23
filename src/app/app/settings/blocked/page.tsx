@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AppSection } from "@/components/app-section";
+import { Avatar } from "@/components/ui/avatar";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
@@ -41,12 +42,13 @@ export default async function BlockedUsersPage() {
             >
               <div className="flex min-w-0 items-center gap-3">
                 <Avatar
-                  imageUrl={
+                  name={block.blockedUser.name}
+                  size={48}
+                  src={
                     block.blockedUser.imageUrl ??
                     block.blockedUser.profile?.profileImageUrl ??
                     null
                   }
-                  name={block.blockedUser.name}
                 />
                 <div className="min-w-0">
                   <Link
@@ -84,25 +86,5 @@ export default async function BlockedUsersPage() {
         />
       )}
     </AppSection>
-  );
-}
-
-function Avatar({ imageUrl, name }: { imageUrl: string | null; name: string }) {
-  const initials = name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  return (
-    <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-[color:var(--px-primary)] font-black text-white">
-      {imageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img alt={`${name} profile image`} className="h-full w-full object-cover" src={imageUrl} />
-      ) : (
-        initials
-      )}
-    </div>
   );
 }

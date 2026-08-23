@@ -225,7 +225,31 @@ export function HomeFeed({
     );
 
     observer.observe(sentinel);
-    return () => observer.disconnect();
+
+    /*
+      A short first page never produces a scroll, so the sentinel may already be
+      on screen and no intersection event will ever fire - the feed would stall
+      holding a valid continuation. This is not hypothetical: the network
+      segment is often smaller than one page, and the discovery handoff carries
+      no cursor, so a viewer with few connections would see a near-empty Home.
+
+      IntersectionObserver does deliver an initial entry for an already-visible
+      target, but only once the element has been laid out; checking on the next
+      frame covers the case where the callback has not yet run.
+    */
+    const frame = requestAnimationFrame(() => {
+      const container = root ?? document.documentElement;
+      const sentinelTop = sentinel.getBoundingClientRect().top;
+      const containerBottom = container.getBoundingClientRect().bottom;
+      if (sentinelTop <= containerBottom + PREFETCH_MARGIN_PX) {
+        void loadMore(cursor, segment);
+      }
+    });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, [cursor, loadMore, segment, status, unavailable]);
 
   /** Abort any in-flight request on unmount so it cannot set state afterwards. */
