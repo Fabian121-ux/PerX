@@ -65,6 +65,13 @@ type ReplyPreview = {
 export type WorkspaceMessage = {
   body: string;
   canMutate?: boolean;
+  /**
+   * Server id assigned to an optimistic message once the send succeeds. The
+   * optimistic copy is retained until a snapshot carries this id, so the
+   * bubble never disappears between the action resolving and the next stream
+   * tick. Only ever set on `local-` messages.
+   */
+  confirmedId?: string | null;
   createdAt: string;
   deletedAt?: string | null;
   editedAt?: string | null;
@@ -244,7 +251,12 @@ export function MessageWorkspace({
   const [olderConversationCursor, setOlderConversationCursor] = useState(
     olderConversationsCursor ?? null,
   );
-  const [documentVisible, setDocumentVisible] = useState(false);
+  // Read the real visibility up front so a foreground mount opens the stream on
+  // the first commit instead of connecting a tick later. Not rendered into
+  // markup, so this cannot cause a hydration mismatch.
+  const [documentVisible, setDocumentVisible] = useState(
+    () => typeof document === "undefined" || document.visibilityState === "visible",
+  );
   const [historyAtBottom, setHistoryAtBottom] = useState(false);
   const [historyPositioned, setHistoryPositioned] = useState(false);
   const [newMessageCount, setNewMessageCount] = useState(0);
@@ -431,6 +443,12 @@ export function MessageWorkspace({
           highlightMessageId,
           highlightEventId,
         ),
+      );
+      // Retire optimistic copies the incoming snapshot now covers. Done here
+      // rather than in an effect so the authoritative message and the removal
+      // of its placeholder land in the same commit.
+      setLocalMessages((current) =>
+        retireConfirmedLocalMessages(current, incoming),
       );
     },
   );
@@ -657,7 +675,16 @@ export function MessageWorkspace({
     }
   }, [backHref]);
 
+  /**
+   * Live message transport.
+   *
+   * Streams only while the tab is visible. Each open connection costs a server
+   * snapshot every two seconds, so a hidden tab would otherwise keep paying
+   * for updates nobody can see. On return the stream is rebuilt and the first
+   * snapshot immediately restores anything missed.
+   */
   useEffect(() => {
+    if (!documentVisible) return;
     let active = true;
     let eventSource: EventSource | null = null;
     let fallbackInterval: number | null = null;
@@ -809,6 +836,19 @@ export function MessageWorkspace({
       eventSource.onerror = () => {
         if (!active) return;
         setLiveState("reconnecting");
+        // A mutation cursor older than the server's retention window is
+        // rejected with 400, which closes the stream permanently. Replaying it
+        // on reconnect would fail the same way, so drop it and let the next
+        // connection start from a fresh baseline.
+        if (
+          activeId &&
+          eventSource?.readyState === EventSource.CLOSED &&
+          mutationCursorsRef.current[activeId]
+        ) {
+          delete mutationCursorsRef.current[activeId];
+          setLiveConnectionVersion((version) => version + 1);
+          return;
+        }
         startFallback();
       };
     }
@@ -819,7 +859,7 @@ export function MessageWorkspace({
       eventSource?.close();
       stopFallback();
     };
-  }, [activeId, liveConnectionVersion]);
+  }, [activeId, documentVisible, liveConnectionVersion]);
 
   const activeConversation =
     syncedConversations.find((conversation) => conversation.id === activeId) ??
@@ -971,9 +1011,26 @@ export function MessageWorkspace({
   }, [conversationFilter, conversationQuery, syncedConversations]);
   const messages = useMemo(() => {
     if (!activeConversation) return [];
+    const persisted = activeConversation.messages ?? [];
+    const pending = localMessages[activeConversation.id] ?? [];
+    if (!pending.length) return persisted;
+    // Guard the window between the server echo arriving and the reconciliation
+    // effect running, during which both copies would otherwise be rendered.
+    const persistedIds = new Set(persisted.map((message) => message.id));
     return [
-      ...(activeConversation.messages ?? []),
-      ...(localMessages[activeConversation.id] ?? []),
+      ...persisted,
+      ...pending.filter(
+        (entry) =>
+          !(entry.confirmedId && persistedIds.has(entry.confirmedId)) &&
+          !(
+            entry.status === "sent" &&
+            persisted.some(
+              (message) =>
+                message.senderId === entry.senderId &&
+                message.body === entry.body,
+            )
+          ),
+      ),
     ];
   }, [activeConversation, localMessages]);
   const timeline = useMemo(
@@ -1481,12 +1538,40 @@ export function MessageWorkspace({
 
     const body = draft.trim();
     const conversationId = activeConversation.id;
-    const messageId = `local-${Date.now()}`;
     const originalReplyTarget = replyTarget;
     const localReply = originalReplyTarget
       ? toReplyPreview(originalReplyTarget)
       : null;
     setSendError("");
+    setDrafts((value) => ({ ...value, [conversationId]: "" }));
+    persistDraft(draftStorageKey, conversationId, "");
+    setReplyTarget(null);
+    dispatchMessage({ body, conversationId, replyPreview: localReply });
+  };
+
+  /**
+   * Sends an optimistic message and reconciles it against the server result.
+   *
+   * The optimistic bubble is retained until the authoritative message is
+   * observed in a snapshot, rather than being dropped as soon as the action
+   * resolves - removing it early leaves a visible gap until the next stream
+   * tick delivers the real message.
+   *
+   * On failure the bubble is kept and marked `failed` so the text is not lost
+   * and the send can be retried in place.
+   */
+  const dispatchMessage = ({
+    body,
+    conversationId,
+    replyPreview,
+    retryOfId,
+  }: {
+    body: string;
+    conversationId: string;
+    replyPreview: ReplyPreview | null;
+    retryOfId?: string;
+  }) => {
+    const messageId = retryOfId ?? createLocalMessageId();
     pendingLatestPositionRef.current = conversationId;
     historyPositionedRef.current = false;
     historyAtBottomRef.current = false;
@@ -1498,19 +1583,20 @@ export function MessageWorkspace({
       body,
       createdAt: new Date().toISOString(),
       id: messageId,
-      replyTo: localReply,
+      replyTo: replyPreview,
       senderId: currentUserId,
       senderName: "You",
       status: "sending",
     };
 
-    setLocalMessages((value) => ({
-      ...value,
-      [conversationId]: [...(value[conversationId] ?? []), message],
-    }));
-    setDrafts((value) => ({ ...value, [conversationId]: "" }));
-    persistDraft(draftStorageKey, conversationId, "");
-    setReplyTarget(null);
+    setLocalMessages((value) => {
+      const existing = value[conversationId] ?? [];
+      // A retry re-sends an existing bubble in place; a fresh send appends.
+      const next = existing.some((entry) => entry.id === messageId)
+        ? existing.map((entry) => (entry.id === messageId ? message : entry))
+        : [...existing, message];
+      return { ...value, [conversationId]: next };
+    });
 
     startTransition(async () => {
       let result: Awaited<ReturnType<typeof sendMessageAction>>;
@@ -1518,25 +1604,24 @@ export function MessageWorkspace({
         result = await sendMessageAction(
           conversationId,
           body,
-          localReply?.id ?? null,
+          replyPreview?.id ?? null,
         );
       } catch {
         result = { error: "Unable to send this message. Please try again." };
       }
       if (result.error) {
+        // Keep the bubble so the text is preserved and can be retried in
+        // place. The draft box is deliberately not repopulated - doing both
+        // would show the same message twice.
         setLocalMessages((value) => ({
           ...value,
-          [conversationId]: (value[conversationId] ?? []).filter(
-            (m) => m.id !== messageId,
+          [conversationId]: (value[conversationId] ?? []).map((entry) =>
+            entry.id === messageId
+              ? { ...entry, status: "failed" as const }
+              : entry,
           ),
         }));
-        setDrafts((value) => {
-          if (value[conversationId]?.trim()) return value;
-          persistDraft(draftStorageKey, conversationId, body);
-          return { ...value, [conversationId]: body };
-        });
         if (activeIdRef.current === conversationId) {
-          setReplyTarget(originalReplyTarget);
           setSendError(result.error);
         } else {
           toast({
@@ -1546,10 +1631,20 @@ export function MessageWorkspace({
           });
         }
       } else {
+        // Record the authoritative id so the optimistic copy can be dropped
+        // once the real message arrives in a snapshot. Without a returned id
+        // (for example a server-side duplicate) fall back to matching on the
+        // body, which the reconciliation effect also handles.
         setLocalMessages((value) => ({
           ...value,
-          [conversationId]: (value[conversationId] ?? []).filter(
-            (m) => m.id !== messageId,
+          [conversationId]: (value[conversationId] ?? []).map((entry) =>
+            entry.id === messageId
+              ? {
+                  ...entry,
+                  confirmedId: result.messageId ?? null,
+                  status: "sent" as const,
+                }
+              : entry,
           ),
         }));
         window.dispatchEvent(new Event("perx-unread-refresh"));
@@ -1566,6 +1661,28 @@ export function MessageWorkspace({
   const startReply = (message: WorkspaceMessage) => {
     setReplyTarget(message);
     composerRef.current?.focus();
+  };
+
+  const retryFailedMessage = (message: WorkspaceMessage) => {
+    if (isPending) return;
+    setSendError("");
+    dispatchMessage({
+      body: message.body,
+      conversationId: activeIdRef.current,
+      replyPreview: message.replyTo ?? null,
+      retryOfId: message.id,
+    });
+  };
+
+  const discardFailedMessage = (message: WorkspaceMessage) => {
+    const conversationId = activeIdRef.current;
+    setSendError("");
+    setLocalMessages((value) => ({
+      ...value,
+      [conversationId]: (value[conversationId] ?? []).filter(
+        (entry) => entry.id !== message.id,
+      ),
+    }));
   };
 
   const addSubmittedProposalEvent = (
@@ -2123,7 +2240,9 @@ export function MessageWorkspace({
                         onChangeEdit={setEditDraft}
                         onCloseActionMenu={closeActionMenu}
                         onDelete={() => void deleteMessage(entry.message)}
+                        onDiscardFailed={discardFailedMessage}
                         onReply={() => startReply(entry.message)}
+                        onRetry={retryFailedMessage}
                         onSaveEdit={saveEdit}
                         onStartEdit={startEditing}
                         onToggleActionMenu={toggleActionMenu}
@@ -2334,7 +2453,9 @@ function MessageBubble({
   onChangeEdit,
   onCloseActionMenu,
   onDelete,
+  onDiscardFailed,
   onReply,
+  onRetry,
   onSaveEdit,
   onStartEdit,
   onToggleActionMenu,
@@ -2355,7 +2476,9 @@ function MessageBubble({
   onChangeEdit: (value: string) => void;
   onCloseActionMenu: () => void;
   onDelete: () => void;
+  onDiscardFailed: (message: WorkspaceMessage) => void;
   onReply: () => void;
+  onRetry: (message: WorkspaceMessage) => void;
   onSaveEdit: (message: WorkspaceMessage) => void;
   onStartEdit: (message: WorkspaceMessage) => void;
   onToggleActionMenu: (messageId: string) => void;
@@ -2695,6 +2818,24 @@ function MessageBubble({
           </span>
           {mine ? <MessageStateIcon message={message} /> : null}
         </div>
+        {mine && message.status === "failed" ? (
+          <div className="mt-1 flex items-center justify-end gap-2">
+            <button
+              className="min-h-9 rounded-lg bg-white/15 px-2.5 text-[11px] font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              onClick={() => onRetry(message)}
+              type="button"
+            >
+              Retry
+            </button>
+            <button
+              className="min-h-9 rounded-lg px-2.5 text-[11px] font-semibold text-blue-100 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              onClick={() => onDiscardFailed(message)}
+              type="button"
+            >
+              Discard
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -3366,6 +3507,79 @@ function persistDraft(
   }
 }
 
+/**
+ * Chooses which `olderMessagesCursor` survives a snapshot merge.
+ *
+ * Only a full-history snapshot carries a meaningful cursor. A list-only
+ * snapshot loads a single message per conversation and always reports `null`
+ * (see `getMessageSnapshot`), which must not be mistaken for "no older
+ * messages" - treating it as authoritative would pin the cursor to `null` and
+ * hide the "Load older messages" control for every conversation the user had
+ * not already opened.
+ *
+ * Once the client holds a cursor it wins, so paginating backwards is not
+ * rewound by a live snapshot that still points at the first page.
+ */
+function resolveOlderMessagesCursor(
+  current: WorkspaceConversation,
+  next: WorkspaceConversation,
+) {
+  if (next.historyLoaded !== true) return current.olderMessagesCursor;
+  return current.olderMessagesCursor === undefined
+    ? next.olderMessagesCursor
+    : current.olderMessagesCursor;
+}
+
+/**
+ * Drops optimistic messages that an incoming snapshot now covers.
+ *
+ * A confirmed send is matched on the id the send action returned. When no id
+ * came back - server-side duplicate suppression, for example - sender and body
+ * are matched instead so the placeholder is not orphaned.
+ *
+ * Messages still sending, or failed and awaiting a retry, are always kept.
+ */
+function retireConfirmedLocalMessages(
+  current: Record<string, WorkspaceMessage[]>,
+  incoming: WorkspaceConversation[],
+) {
+  let changed = false;
+  const next: Record<string, WorkspaceMessage[]> = { ...current };
+  for (const conversation of incoming) {
+    const pending = current[conversation.id];
+    if (!pending?.length) continue;
+    const persisted = conversation.messages ?? [];
+    if (!persisted.length) continue;
+    const persistedIds = new Set(persisted.map((message) => message.id));
+    const remaining = pending.filter((entry) => {
+      if (entry.status !== "sent") return true;
+      if (entry.confirmedId) return !persistedIds.has(entry.confirmedId);
+      return !persisted.some(
+        (message) =>
+          message.senderId === entry.senderId && message.body === entry.body,
+      );
+    });
+    if (remaining.length === pending.length) continue;
+    next[conversation.id] = remaining;
+    changed = true;
+  }
+  return changed ? next : current;
+}
+
+let localMessageSequence = 0;
+
+/**
+ * Builds a client-only message id.
+ *
+ * The trailing sequence guarantees uniqueness for sends issued within the same
+ * millisecond, which a bare timestamp does not - colliding ids would collapse
+ * two bubbles onto one React key.
+ */
+function createLocalMessageId() {
+  localMessageSequence += 1;
+  return `local-${Date.now()}-${localMessageSequence}`;
+}
+
 function mergeWorkspaceConversationSnapshots(
   current: WorkspaceConversation[],
   incoming: WorkspaceConversation[],
@@ -3403,10 +3617,7 @@ function mergeWorkspaceConversationSnapshots(
         historyLoaded:
           conversation.historyLoaded === true || next.historyLoaded === true,
         messages: mergedMessages,
-        olderMessagesCursor:
-          conversation.olderMessagesCursor === undefined
-            ? next.olderMessagesCursor
-            : conversation.olderMessagesCursor,
+        olderMessagesCursor: resolveOlderMessagesCursor(conversation, next),
       };
     }
     const target = conversation.messages.find(
@@ -3430,10 +3641,7 @@ function mergeWorkspaceConversationSnapshots(
       historyLoaded:
         conversation.historyLoaded === true || next.historyLoaded === true,
       messages: mergeWorkspaceMessages([], mergedMessages),
-      olderMessagesCursor:
-        conversation.olderMessagesCursor === undefined
-          ? next.olderMessagesCursor
-          : conversation.olderMessagesCursor,
+      olderMessagesCursor: resolveOlderMessagesCursor(conversation, next),
     };
   });
   for (const conversation of incoming) {
