@@ -284,34 +284,20 @@ export function MessageWorkspace({
   const isComposingRef = useRef(false);
   const historyAtBottomRef = useRef(false);
   const historyPositionedRef = useRef(false);
+  /**
+   * Opening a conversation always lands on the latest message.
+   *
+   * The unread divider is informational: it marks where unread history begins
+   * so a user scrolling upward can find it. It deliberately does NOT own the
+   * initial scroll destination, because a thread whose entire loaded history
+   * is unread would otherwise open thousands of pixels above the newest
+   * message. Only an explicit highlight target (a deep link to a specific
+   * message or event) overrides latest positioning.
+   */
   const pendingLatestPositionRef = useRef(
-    highlightMessageId ||
-      highlightEventId ||
-      conversations.find(
-        (conversation) =>
-          conversation.id ===
-          (defaultConversationId ?? conversations[0]?.id ?? ""),
-      )?.initialUnreadMessageId
+    highlightMessageId || highlightEventId
       ? ""
       : (defaultConversationId ?? conversations[0]?.id ?? ""),
-  );
-  const pendingInitialUnreadRef = useRef<{
-    conversationId: string;
-    messageId: string;
-  } | null>(
-    (() => {
-      const conversationId =
-        defaultConversationId ?? conversations[0]?.id ?? "";
-      const messageId = conversations.find(
-        (conversation) => conversation.id === conversationId,
-      )?.initialUnreadMessageId;
-      return !highlightMessageId &&
-        !highlightEventId &&
-        conversationId &&
-        messageId
-        ? { conversationId, messageId }
-        : null;
-    })(),
   );
   const previousTimelineRef = useRef<{
     conversationId: string;
@@ -712,18 +698,7 @@ export function MessageWorkspace({
             highlightEventId,
           ),
         );
-        const openedConversation = incoming.conversations.find(
-          (conversation) => conversation.id === conversationId,
-        );
-        pendingInitialUnreadRef.current =
-          openedConversation?.initialUnreadMessageId
-            ? {
-                conversationId,
-                messageId: openedConversation.initialUnreadMessageId,
-              }
-            : null;
-        pendingLatestPositionRef.current =
-          openedConversation?.initialUnreadMessageId ? "" : conversationId;
+        pendingLatestPositionRef.current = conversationId;
         historyPositionedRef.current = false;
         historyAtBottomRef.current = false;
         setHistoryPositioned(false);
@@ -1201,23 +1176,6 @@ export function MessageWorkspace({
   const latestEntryId = latestPersistedEntry?.id;
   const latestEntryKind = latestPersistedEntry?.kind;
 
-  useLayoutEffect(() => {
-    const pending = pendingInitialUnreadRef.current;
-    if (
-      !pending ||
-      pending.conversationId !== activeConversation?.id ||
-      !historyVisible
-    ) {
-      return;
-    }
-    const target = messageRefs.current[pending.messageId];
-    if (!target) return;
-    pendingInitialUnreadRef.current = null;
-    target.scrollIntoView({ behavior: "auto", block: "center" });
-    historyPositionedRef.current = true;
-    setHistoryPositioned(true);
-  }, [activeConversation?.id, historyVisible, timeline.length]);
-
   const loadOlderMessages = () => {
     const conversationId = activeConversation?.id;
     const cursor = activeConversation?.olderMessagesCursor;
@@ -1556,9 +1514,6 @@ export function MessageWorkspace({
 
   const openMobileConversation = async (conversationId: string) => {
     const requestId = ++conversationOpenRequestRef.current;
-    let initialUnreadMessageId = syncedConversationsRef.current.find(
-      (conversation) => conversation.id === conversationId,
-    )?.initialUnreadMessageId;
     if (!fullHistoryConversationIdsRef.current.has(conversationId)) {
       try {
         const response = await fetch(
@@ -1596,9 +1551,6 @@ export function MessageWorkspace({
         if (incoming.conversationList) {
           setOlderConversationCursor(incoming.conversationList.nextCursor);
         }
-        initialUnreadMessageId = incoming.conversations.find(
-          (conversation) => conversation.id === conversationId,
-        )?.initialUnreadMessageId;
         setSyncedConversations((current) =>
           mergeWorkspaceConversationSnapshots(
             current,
@@ -1636,12 +1588,7 @@ export function MessageWorkspace({
     );
     setOpenActionMenuMessageId("");
     setDealOfferOpen(false);
-    pendingInitialUnreadRef.current = initialUnreadMessageId
-      ? { conversationId, messageId: initialUnreadMessageId }
-      : null;
-    pendingLatestPositionRef.current = initialUnreadMessageId
-      ? ""
-      : conversationId;
+    pendingLatestPositionRef.current = conversationId;
     historyPositionedRef.current = false;
     historyAtBottomRef.current = false;
     setHistoryPositioned(false);

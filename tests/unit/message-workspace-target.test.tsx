@@ -256,7 +256,128 @@ describe("message workspace exact targets", () => {
     );
   });
 
-  it("renders and positions the immutable initial unread boundary", async () => {
+  /**
+   * Initial scroll ownership.
+   *
+   * Opening a conversation always lands on the latest message. The unread
+   * divider is informational and marks where unread history begins; it must
+   * never pull the initial scroll position away from latest, otherwise a
+   * thread whose entire loaded history is unread opens far above the newest
+   * message. Only an explicit highlight target overrides latest positioning.
+   */
+  const unreadBoundaryScroll = { behavior: "auto", block: "center" } as const;
+
+  it("CASE A: opens at latest when every loaded message is unread", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            initialUnreadMessageId: "message-unread-1",
+            messages: Array.from({ length: 40 }, (_, index) => ({
+              body: `Unread message ${index + 1}`,
+              createdAt: `2026-07-31T10:${String(index).padStart(2, "0")}:00.000Z`,
+              id: `message-unread-${index + 1}`,
+              senderId: "user-2",
+              senderName: "Other User",
+            })),
+            participantName: "Other User",
+            unreadCount: 40,
+          },
+        ]}
+        currentUserId="user-1"
+        defaultConversationId="conversation-1"
+      />,
+    );
+
+    const history = view.getByLabelText("Message history");
+    await waitFor(() =>
+      expect(history.getAttribute("data-history-positioned")).toBe("true"),
+    );
+    expect(history.scrollTop).toBe(history.scrollHeight);
+    expect(scrollIntoView).not.toHaveBeenCalledWith(unreadBoundaryScroll);
+    // The divider still marks the boundary; it just does not own positioning.
+    expect(view.getByRole("separator", { name: "New messages" })).toBeTruthy();
+  });
+
+  it("CASE B: opens at latest when only some messages are unread", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            initialUnreadMessageId: "message-unread",
+            messages: [
+              {
+                body: "Previously read",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-read",
+                readByCurrentUser: true,
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+              {
+                body: "First unread",
+                createdAt: "2026-07-31T11:00:00.000Z",
+                id: "message-unread",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+            unreadCount: 1,
+          },
+        ]}
+        currentUserId="user-1"
+        defaultConversationId="conversation-1"
+      />,
+    );
+
+    const history = view.getByLabelText("Message history");
+    await waitFor(() =>
+      expect(history.getAttribute("data-history-positioned")).toBe("true"),
+    );
+    expect(history.scrollTop).toBe(history.scrollHeight);
+    expect(scrollIntoView).not.toHaveBeenCalledWith(unreadBoundaryScroll);
+    expect(view.getByRole("separator", { name: "New messages" })).toBeTruthy();
+  });
+
+  it("CASE C: opens at latest when nothing is unread and shows no divider", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            initialUnreadMessageId: null,
+            messages: [
+              {
+                body: "Read message",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-read",
+                readByCurrentUser: true,
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+            unreadCount: 0,
+          },
+        ]}
+        currentUserId="user-1"
+        defaultConversationId="conversation-1"
+      />,
+    );
+
+    const history = view.getByLabelText("Message history");
+    await waitFor(() =>
+      expect(history.getAttribute("data-history-positioned")).toBe("true"),
+    );
+    expect(history.scrollTop).toBe(history.scrollHeight);
+    expect(scrollIntoView).not.toHaveBeenCalledWith(unreadBoundaryScroll);
+    expect(view.queryByRole("separator", { name: "New messages" })).toBeNull();
+  });
+
+  it("keeps the unread divider stable after the server clears the unread count", async () => {
     const view = render(
       <MessageWorkspace
         conversations={[
@@ -289,12 +410,6 @@ describe("message workspace exact targets", () => {
     );
 
     expect(view.getByRole("separator", { name: "New messages" })).toBeTruthy();
-    await waitFor(() =>
-      expect(scrollIntoView).toHaveBeenCalledWith({
-        behavior: "auto",
-        block: "center",
-      }),
-    );
 
     await act(async () => {
       EventSourceMock.current?.emit("conversations", {
@@ -1929,6 +2044,82 @@ describe("message workspace exact targets", () => {
         name: "2 new messages. Jump to latest messages",
       }),
     ).toBeTruthy();
+  });
+
+  it("CASE D/E: keeps position when scrolled up, then Jump to latest returns to latest", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [
+              {
+                body: "Existing message",
+                createdAt: "2026-08-10T10:00:00.000Z",
+                id: "message-existing",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+        defaultConversationId="conversation-1"
+      />,
+    );
+    const history = view.getByLabelText("Message history");
+    await waitFor(() =>
+      expect(history.getAttribute("data-history-positioned")).toBe("true"),
+    );
+
+    // The user intentionally moves away from latest.
+    Object.defineProperties(history, {
+      clientHeight: { configurable: true, value: 200 },
+      scrollHeight: { configurable: true, value: 1000 },
+      scrollTop: { configurable: true, value: 100, writable: true },
+    });
+    fireEvent.pointerDown(history);
+    fireEvent.scroll(history);
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversations: [
+          {
+            id: "conversation-1",
+            messages: [
+              {
+                body: "Arrived while scrolled up",
+                createdAt: "2026-08-10T11:00:00.000Z",
+                id: "message-new-1",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+
+    // CASE D: an incoming message must not force-scroll the reader to latest.
+    expect(history.scrollTop).toBe(100);
+    const jump = await view.findByRole("button", {
+      name: "1 new message. Jump to latest messages",
+    });
+
+    // CASE E: the explicit control is what returns the reader to latest.
+    await act(async () => {
+      fireEvent.click(jump);
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(history.scrollTop).toBe(history.scrollHeight));
+    expect(
+      view.queryByRole("button", {
+        name: "1 new message. Jump to latest messages",
+      }),
+    ).toBeNull();
   });
 
   it("preserves chat state while app navigation opens and closes", async () => {
