@@ -114,23 +114,31 @@ describeOrSkip(
       return `c${crypto.randomBytes(12).toString("hex")}`;
     }
 
-    async function createIsolatedConversation(messageCount = 1) {
+    async function createIsolatedConversation(
+      messageCount = 1,
+      otherUserId?: string,
+    ) {
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: TEST_DB, ssl: false });
       const conversationId = testCuid();
       const messageIdPrefix = `c${crypto.randomBytes(8).toString("hex")}`;
       try {
-        const users = await pool.query(
-          `SELECT id, email FROM "User" WHERE email = ANY($1::text[])`,
-          [["alice-test@perx.test", "bob-test@perx.test"]],
+        const users = await pool.query<{ email: string; id: string }>(
+          `SELECT id, email
+           FROM "User"
+           WHERE email = 'alice-test@perx.test'
+              OR id = $1
+              OR ($1::text IS NULL AND email = 'bob-test@perx.test')`,
+          [otherUserId ?? null],
         );
         const aliceId = users.rows.find(
           (row) => row.email === "alice-test@perx.test",
-        )?.id as string | undefined;
-        const bobId = users.rows.find(
-          (row) => row.email === "bob-test@perx.test",
-        )?.id as string | undefined;
-        if (!aliceId || !bobId) throw new Error("Test participants not found");
+        )?.id;
+        const participantId = otherUserId
+          ? users.rows.find((row) => row.id === otherUserId)?.id
+          : users.rows.find((row) => row.email === "bob-test@perx.test")?.id;
+        if (!aliceId || !participantId)
+          throw new Error("Test participants not found");
 
         await pool.query("BEGIN");
         await pool.query(
@@ -141,7 +149,7 @@ describeOrSkip(
         await pool.query(
           `INSERT INTO "ConversationParticipant" (id, "conversationId", "userId", "createdAt")
            VALUES ($1, $2, $3, NOW()), ($4, $2, $5, NOW())`,
-          [testCuid(), conversationId, aliceId, testCuid(), bobId],
+          [testCuid(), conversationId, aliceId, testCuid(), participantId],
         );
         await pool.query(
           `INSERT INTO "Message" (id, "conversationId", "senderId", body, "createdAt")
@@ -151,7 +159,7 @@ describeOrSkip(
                   'Isolated acceptance message ' || value::text || ' with enough text to create a scrollable mobile timeline.',
                   NOW() - (($4 - value) * INTERVAL '1 second')
            FROM generate_series(1, $4) AS value`,
-          [messageIdPrefix, conversationId, bobId, messageCount],
+          [messageIdPrefix, conversationId, participantId, messageCount],
         );
         await pool.query("COMMIT");
         return conversationId;
@@ -163,8 +171,8 @@ describeOrSkip(
       }
     }
 
-    async function createMessageInteractionFixture() {
-      const conversationId = await createIsolatedConversation(28);
+    async function createMessageInteractionFixture(otherUserId?: string) {
+      const conversationId = await createIsolatedConversation(28, otherUserId);
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: TEST_DB, ssl: false });
       const incomingId = testCuid();
@@ -180,16 +188,19 @@ describeOrSkip(
         }>(
           `SELECT email, id, name
            FROM "User"
-           WHERE email = ANY($1::text[])`,
-          [["alice-test@perx.test", "bob-test@perx.test"]],
+           WHERE email = 'alice-test@perx.test'
+              OR id = $1
+              OR ($1::text IS NULL AND email = 'bob-test@perx.test')`,
+          [otherUserId ?? null],
         );
         const alice = users.rows.find(
           (user) => user.email === "alice-test@perx.test",
         );
-        const bob = users.rows.find(
-          (user) => user.email === "bob-test@perx.test",
-        );
-        if (!alice || !bob) throw new Error("Message fixture users not found");
+        const other = otherUserId
+          ? users.rows.find((user) => user.id === otherUserId)
+          : users.rows.find((user) => user.email === "bob-test@perx.test");
+        if (!alice || !other)
+          throw new Error("Message fixture users not found");
 
         await pool.query("BEGIN");
         await pool.query(
@@ -208,7 +219,7 @@ describeOrSkip(
             expiredOwnId,
             replyId,
             conversationId,
-            bob.id,
+            other.id,
             alice.id,
           ],
         );
@@ -219,8 +230,8 @@ describeOrSkip(
         await pool.query("COMMIT");
         return {
           aliceId: alice.id,
-          bobId: bob.id,
-          bobName: bob.name,
+          bobId: other.id,
+          bobName: other.name,
           conversationId,
           expiredOwnId,
           incomingId,
@@ -694,9 +705,10 @@ describeOrSkip(
           `DELETE FROM "Opportunity" WHERE id = ANY($1::text[])`,
           [fixture.opportunityIds],
         );
-        await pool.query(`DELETE FROM "Profile" WHERE "userId" = ANY($1::text[])`, [
-          fixture.authorIds,
-        ]);
+        await pool.query(
+          `DELETE FROM "Profile" WHERE "userId" = ANY($1::text[])`,
+          [fixture.authorIds],
+        );
         await pool.query(`DELETE FROM "User" WHERE id = ANY($1::text[])`, [
           fixture.authorIds,
         ]);
@@ -955,30 +967,12 @@ describeOrSkip(
     async function createLongProfileFixture() {
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: TEST_DB, ssl: false });
-      const fixturePrefix = `profile_${crypto.randomUUID()}`;
+      const runId = crypto.randomUUID().replaceAll("-", "");
+      const fixturePrefix = `profile_${runId}`;
+      const userId = testCuid();
+      const profileId = testCuid();
+      const username = `profile_fixture_${runId}`;
       try {
-        const result = await pool.query(
-          `SELECT u.id AS "userId",
-                  p.id AS "profileId",
-                  p.biography,
-                   p."websiteUrl",
-                   p."updatedAt"
-           FROM "User" u
-           JOIN "Profile" p ON p."userId" = u.id
-           WHERE u.email = $1`,
-          ["bob-test@perx.test"],
-        );
-        const original = result.rows[0] as
-          | {
-              biography: string;
-              profileId: string;
-              userId: string;
-              updatedAt: Date;
-              websiteUrl: string | null;
-            }
-          | undefined;
-        if (!original) throw new Error("Long-profile fixture user not found");
-
         const skillIds = [
           `${fixturePrefix}_skill_1`,
           `${fixturePrefix}_skill_2`,
@@ -991,19 +985,32 @@ describeOrSkip(
         ];
         await pool.query("BEGIN");
         await pool.query(
-          `UPDATE "Profile"
-           SET biography = $1,
-               "websiteUrl" = $2,
-               "updatedAt" = NOW()
-           WHERE id = $3`,
+          `INSERT INTO "User" (
+             id, email, "passwordHash", name, username,
+             "accountClassification", "emailVerifiedAt", "verificationStatus",
+             "isActive", "createdAt", "updatedAt"
+           ) VALUES ($1, $2, 'x', $3, $4, 'PUBLIC_BETA_USER', NOW(), 'VERIFIED', TRUE, NOW(), NOW())`,
           [
+            userId,
+            `${fixturePrefix}@perx.test`,
+            `Profile Fixture ${runId.slice(0, 8)}`,
+            username,
+          ],
+        );
+        await pool.query(
+          `INSERT INTO "Profile" (
+             id, "userId", headline, biography, location, "websiteUrl",
+             "isDiscoverable", "showLocation", "showSkills", "createdAt", "updatedAt"
+           ) VALUES ($1, $2, 'Lead product engineer', $3, 'Lagos', $4, TRUE, TRUE, TRUE, NOW(), NOW())`,
+          [
+            profileId,
+            userId,
             Array.from(
               { length: 8 },
               (_, index) =>
-                `Profile evidence paragraph ${index + 1}. Bob documents durable product delivery, accessible interfaces, secure collaboration, and measurable outcomes for clients and partners.`,
+                `Profile evidence paragraph ${index + 1}. This professional documents durable product delivery, accessible interfaces, secure collaboration, and measurable outcomes for clients and partners.`,
             ).join("\n\n"),
-            "https://example.com/bob-profile",
-            original.profileId,
+            "https://example.com/profile-fixture",
           ],
         );
         await pool.query(
@@ -1012,7 +1019,7 @@ describeOrSkip(
            ON CONFLICT ("profileId", name) DO NOTHING`,
           [
             skillIds[0],
-            original.profileId,
+            profileId,
             "Profile fixture strategy",
             skillIds[1],
             "Accessible systems",
@@ -1028,7 +1035,7 @@ describeOrSkip(
              ($5, $2, 'Platform engineer', 'Example Labs', $6, $7, $8)`,
           [
             workIds[0],
-            original.profileId,
+            profileId,
             "Led a multi-year marketplace programme with secure workflows and accessible delivery practices.",
             new Date("2024-01-15T12:00:00.000Z"),
             workIds[1],
@@ -1045,7 +1052,7 @@ describeOrSkip(
              ($5, $2, 'Accessible operations dashboard', $6, $7, NOW() - INTERVAL '1 day')`,
           [
             portfolioIds[0],
-            original.profileId,
+            profileId,
             "A persisted portfolio project with structured milestones, reviews, and clear evidence.",
             "https://example.com/trust-workflow",
             portfolioIds[1],
@@ -1055,7 +1062,7 @@ describeOrSkip(
         );
 
         await pool.query("COMMIT");
-        return { original, portfolioIds, skillIds, workIds };
+        return { profileId, userId, username };
       } catch (error) {
         await pool.query("ROLLBACK").catch(() => undefined);
         throw error;
@@ -1065,44 +1072,12 @@ describeOrSkip(
     }
 
     async function deleteLongProfileFixture({
-      original,
-      portfolioIds,
-      skillIds,
-      workIds,
+      userId,
     }: Awaited<ReturnType<typeof createLongProfileFixture>>) {
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: TEST_DB, ssl: false });
       try {
-        await pool.query("BEGIN");
-        await pool.query(
-          `DELETE FROM "ProfileSkill" WHERE id = ANY($1::text[])`,
-          [skillIds],
-        );
-        await pool.query(
-          `DELETE FROM "WorkHistory" WHERE id = ANY($1::text[])`,
-          [workIds],
-        );
-        await pool.query(
-          `DELETE FROM "PortfolioItem" WHERE id = ANY($1::text[])`,
-          [portfolioIds],
-        );
-        await pool.query(
-          `UPDATE "Profile"
-           SET biography = $1,
-               "websiteUrl" = $2,
-                "updatedAt" = $3
-            WHERE id = $4`,
-          [
-            original.biography,
-            original.websiteUrl,
-            original.updatedAt,
-            original.profileId,
-          ],
-        );
-        await pool.query("COMMIT");
-      } catch (error) {
-        await pool.query("ROLLBACK").catch(() => undefined);
-        throw error;
+        await pool.query(`DELETE FROM "User" WHERE id = $1`, [userId]);
       } finally {
         await pool.end();
       }
@@ -1298,7 +1273,9 @@ describeOrSkip(
         await expect(bottomNav.getByRole("link")).toHaveCount(5);
 
         // Feed actions remain reachable at accessible touch-target size.
-        const save = card.getByRole("button", { name: /Save|Remove from saved/ });
+        const save = card.getByRole("button", {
+          name: /Save|Remove from saved/,
+        });
         const saveBox = await save.boundingBox();
         expect(saveBox!.height).toBeGreaterThanOrEqual(40);
       } finally {
@@ -1633,9 +1610,9 @@ describeOrSkip(
           };
         });
         await page.getByLabel("Post title").fill("Quota-safe draft");
-        await expect(page.getByRole("status", { name: "Local draft status" })).toHaveText(
-          "Local autosave is unavailable",
-        );
+        await expect(
+          page.getByRole("status", { name: "Local draft status" }),
+        ).toHaveText("Local autosave is unavailable");
 
         await page.reload();
         await page.evaluate(
@@ -1860,7 +1837,7 @@ describeOrSkip(
         viewport: { width: 320, height: 568 },
       });
       try {
-        await page.goto(`${BASE}/u/bob_test`);
+        await page.goto(`${BASE}/u/${fixture.username}`);
         await expect(
           page.getByRole("heading", { name: "Portfolio" }),
         ).toBeVisible();
@@ -1868,7 +1845,7 @@ describeOrSkip(
         await expect(page.getByText("Jan 2024 - Present")).toBeVisible();
         await expect(
           page.getByRole("link", { name: "Website" }),
-        ).toHaveAttribute("href", "https://example.com/bob-profile");
+        ).toHaveAttribute("href", "https://example.com/profile-fixture");
         const dimensions = await page.evaluate(() => ({
           clientHeight: document.documentElement.clientHeight,
           clientWidth: document.documentElement.clientWidth,
@@ -1939,9 +1916,9 @@ describeOrSkip(
         await expect(
           page.getByText(`${titlePrefix} message 003`),
         ).toBeVisible();
-        await expect(
-          page.getByText(`${titlePrefix} message 002`),
-        ).toHaveCount(0);
+        await expect(page.getByText(`${titlePrefix} message 002`)).toHaveCount(
+          0,
+        );
         await expect(
           page.getByText(`${titlePrefix} system sentinel`),
         ).toHaveCount(0);
@@ -1965,9 +1942,9 @@ describeOrSkip(
         await expect(
           page.getByText(`${titlePrefix} message 001`),
         ).toBeVisible();
-        await expect(
-          page.getByText(`${titlePrefix} message 003`),
-        ).toHaveCount(0);
+        await expect(page.getByText(`${titlePrefix} message 003`)).toHaveCount(
+          0,
+        );
         const olderPageUrl = page.url();
 
         await page.goBack();
@@ -2465,9 +2442,17 @@ describeOrSkip(
         "This test owns the profile fixture and exercises all required widths directly.",
       );
       test.setTimeout(180_000);
-      const profileFixture = await createLongProfileFixture();
-      const messageFixture = await createMessageInteractionFixture();
+      let profileFixture: Awaited<
+        ReturnType<typeof createLongProfileFixture>
+      > | null = null;
+      let messageFixture: Awaited<
+        ReturnType<typeof createMessageInteractionFixture>
+      > | null = null;
       try {
+        profileFixture = await createLongProfileFixture();
+        messageFixture = await createMessageInteractionFixture(
+          profileFixture.userId,
+        );
         for (const width of [320, 375, 430, 768, 1023, 1024, 1280]) {
           const page = await browser.newPage({
             viewport: { height: width === 320 ? 568 : 700, width },
@@ -2564,8 +2549,12 @@ describeOrSkip(
           }
         }
       } finally {
-        await deleteIsolatedConversation(messageFixture.conversationId);
-        await deleteLongProfileFixture(profileFixture);
+        if (messageFixture) {
+          await deleteIsolatedConversation(messageFixture.conversationId).catch(
+            () => undefined,
+          );
+        }
+        if (profileFixture) await deleteLongProfileFixture(profileFixture);
       }
     });
 
@@ -2995,15 +2984,21 @@ describeOrSkip(
         await alicePage.goto(`${BASE}/app/messages/${conversationId}`);
         const history = alicePage.getByLabel("Message history");
         await expect(history).toBeVisible();
-        await expect(history).toHaveAttribute("data-history-positioned", "true", {
-          timeout: 15_000,
-        });
+        await expect(history).toHaveAttribute(
+          "data-history-positioned",
+          "true",
+          {
+            timeout: 15_000,
+          },
+        );
         await expect
           .poll(
             async () =>
               history.evaluate(
                 (element) =>
-                  element.scrollHeight - element.scrollTop - element.clientHeight,
+                  element.scrollHeight -
+                  element.scrollTop -
+                  element.clientHeight,
               ),
             { timeout: 15_000 },
           )

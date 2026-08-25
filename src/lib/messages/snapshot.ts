@@ -26,6 +26,28 @@ type ConversationListSnapshot = {
   nextCursor: string | null;
 };
 
+type InitialUnreadMessage = Prisma.MessageGetPayload<{
+  include: ReturnType<typeof messageSnapshotInclude>;
+}>;
+
+export async function getInitialUnreadMessage(
+  conversationId: string,
+  userId: string,
+  lastReadAt: Date | null,
+): Promise<InitialUnreadMessage | null> {
+  return getPrisma().message.findFirst({
+    include: messageSnapshotInclude(),
+    orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    where: {
+      conversation: buildConversationAccessWhere(userId),
+      conversationId,
+      ...(lastReadAt ? { createdAt: { gt: lastReadAt } } : {}),
+      readReceipts: { none: { userId } },
+      senderId: { not: userId },
+    },
+  });
+}
+
 export async function getMessageSnapshot({
   conversationId,
   includeConversationList = true,
@@ -45,6 +67,15 @@ export async function getMessageSnapshot({
   if (conversationId) {
     if (!includeConversationList) {
       const exactConversations = await loadConversations(true, conversationId);
+      const initialUnreadMessage = exactConversations[0]
+        ? await getInitialUnreadMessage(
+            conversationId,
+            userId,
+            exactConversations[0].participants.find(
+              (participant) => participant.userId === userId,
+            )?.lastReadAt ?? null,
+          )
+        : null;
       return exactConversations.length
         ? formatMessageSnapshot(
             exactConversations,
@@ -52,6 +83,7 @@ export async function getMessageSnapshot({
             userId,
             userRoles,
             null,
+            initialUnreadMessage,
           )
         : { conversationList: null, conversations: null, notFound: true };
     }
@@ -71,12 +103,20 @@ export async function getMessageSnapshot({
     );
     conversationsById.set(conversationId, exactConversations[0]!);
     conversations = [...conversationsById.values()];
+    const initialUnreadMessage = await getInitialUnreadMessage(
+      conversationId,
+      userId,
+      exactConversations[0]!.participants.find(
+        (participant) => participant.userId === userId,
+      )?.lastReadAt ?? null,
+    );
     return formatMessageSnapshot(
       conversations,
       conversationId,
       userId,
       userRoles,
       conversationListSnapshot(listConversations, userId),
+      initialUnreadMessage,
     );
   } else {
     const listConversations = await loadConversations(false);
@@ -87,6 +127,7 @@ export async function getMessageSnapshot({
       userId,
       userRoles,
       conversationListSnapshot(listConversations, userId),
+      null,
     );
   }
 }
@@ -97,6 +138,7 @@ function formatMessageSnapshot(
   userId: string,
   userRoles: RoleName[],
   conversationList: ConversationListSnapshot | null,
+  initialUnreadMessage: InitialUnreadMessage | null,
 ) {
   const mutationCutoff = new Date(
     Date.now() - getServerEnv().MESSAGE_EDIT_WINDOW_MINUTES * 60_000,
@@ -119,6 +161,18 @@ function formatMessageSnapshot(
         fullHistory ? 50 : 1,
       );
       const messages = [...visibleMessages].reverse();
+      if (
+        fullHistory &&
+        initialUnreadMessage &&
+        !messages.some((message) => message.id === initialUnreadMessage.id)
+      ) {
+        messages.push(initialUnreadMessage);
+        messages.sort((left, right) => {
+          const timeDifference =
+            left.createdAt.getTime() - right.createdAt.getTime();
+          return timeDifference || left.id.localeCompare(right.id);
+        });
+      }
       const olderMessagesCursor =
         fullHistory && conversation.messages.length > visibleMessages.length
           ? encodeCursor({
@@ -188,6 +242,9 @@ function formatMessageSnapshot(
         })),
         historyLoaded: fullHistory,
         id: conversation.id,
+        initialUnreadMessageId: fullHistory
+          ? (initialUnreadMessage?.id ?? null)
+          : undefined,
         lastMessage: latestEventIsNewer
           ? eventSummary(latestEvent.type)
           : latestMessage?.deletedAt
@@ -208,11 +265,17 @@ function formatMessageSnapshot(
             ),
           readByOtherParticipants:
             otherParticipantIds.length > 0 &&
-            otherParticipantIds.every((participantId) =>
-              message.readReceipts.some(
-                (receipt) => receipt.userId === participantId,
+            conversation.participants
+              .filter((entry) => entry.userId !== userId)
+              .every(
+                (entry) =>
+                  message.readReceipts.some(
+                    (receipt) => receipt.userId === entry.userId,
+                  ) ||
+                  Boolean(
+                    entry.lastReadAt && message.createdAt <= entry.lastReadAt,
+                  ),
               ),
-            ),
           replyTo: message.replyTo
             ? {
                 body: message.replyTo.deletedAt ? "" : message.replyTo.body,
@@ -287,21 +350,7 @@ function conversationSnapshotInclude(fullHistory: boolean) {
       take: fullHistory ? 50 : 1,
     },
     messages: {
-      include: {
-        readReceipts: { select: { userId: true } },
-        replyTo: {
-          select: {
-            body: true,
-            deletedAt: true,
-            id: true,
-            sender: { select: { id: true, name: true, username: true } },
-            senderId: true,
-          },
-        },
-        sender: {
-          select: { id: true, imageUrl: true, name: true, username: true },
-        },
-      },
+      include: messageSnapshotInclude(),
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: fullHistory ? 51 : 1,
     },
@@ -366,6 +415,24 @@ function conversationSnapshotInclude(fullHistory: boolean) {
       where: { deal: { isNot: null } },
     },
   } satisfies Prisma.ConversationInclude;
+}
+
+function messageSnapshotInclude() {
+  return {
+    readReceipts: { select: { userId: true } },
+    replyTo: {
+      select: {
+        body: true,
+        deletedAt: true,
+        id: true,
+        sender: { select: { id: true, name: true, username: true } },
+        senderId: true,
+      },
+    },
+    sender: {
+      select: { id: true, imageUrl: true, name: true, username: true },
+    },
+  } satisfies Prisma.MessageInclude;
 }
 
 function toEventSnapshot(value: unknown): Record<string, unknown> {

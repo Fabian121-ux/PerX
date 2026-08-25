@@ -20,6 +20,7 @@ import {
   parseMessageRouteId,
 } from "@/lib/messages/entry";
 import { createMessageMutationBaseline } from "@/lib/messages/mutations";
+import { getInitialUnreadMessage } from "@/lib/messages/snapshot";
 import {
   getRequestCorrelationId,
   logServerDataError,
@@ -75,6 +76,7 @@ type DbConversationLike = {
     title: string;
   } | null;
   participants: {
+    lastReadAt?: Date | null;
     user?: {
       imageUrl?: string | null;
       name: string | null;
@@ -187,7 +189,11 @@ function toWorkspaceConversation(
       dealHref: event.dealId ? `/app/deals/${event.dealId}` : null,
       id: event.id,
       proposalVersionId: event.proposalVersionId ?? null,
-      proposalHref: getConversationProposalHref(event.type, event.actorId, user.id),
+      proposalHref: getConversationProposalHref(
+        event.type,
+        event.actorId,
+        user.id,
+      ),
       snapshot: toEventSnapshot(event.snapshot),
       type: event.type,
     })),
@@ -334,6 +340,27 @@ export default async function ConversationPage({
   );
   let fullMessages = messagePage.items;
   const olderMessagesCursor = messagePage.nextCursor;
+  const initialUnreadMessage = await loadConversationRouteData(
+    "load-initial-unread-message",
+    conversationId,
+    () =>
+      getInitialUnreadMessage(
+        conversationId,
+        user.id,
+        (selected as DbConversationLike).participants.find(
+          (participant) => participant.userId === user.id,
+        )?.lastReadAt ?? null,
+      ),
+  );
+  if (
+    initialUnreadMessage &&
+    !fullMessages.some((message) => message.id === initialUnreadMessage.id)
+  ) {
+    fullMessages = [...fullMessages, initialUnreadMessage].sort((a, b) => {
+      const timeDifference = a.createdAt.getTime() - b.createdAt.getTime();
+      return timeDifference || a.id.localeCompare(b.id);
+    });
+  }
   if (
     exactTarget &&
     !fullMessages.some((message) => message.id === exactTarget.id)
@@ -354,9 +381,9 @@ export default async function ConversationPage({
                 senderId: true,
               },
             },
-             sender: {
-               select: { id: true, imageUrl: true, name: true, username: true },
-             },
+            sender: {
+              select: { id: true, imageUrl: true, name: true, username: true },
+            },
           },
           where: {
             conversationId,
@@ -397,7 +424,10 @@ export default async function ConversationPage({
   const selectedWorkspace = workspaceConversations.find(
     (conversation) => conversation.id === conversationId,
   );
-  if (selectedWorkspace) selectedWorkspace.olderMessagesCursor = olderMessagesCursor;
+  if (selectedWorkspace) {
+    selectedWorkspace.initialUnreadMessageId = initialUnreadMessage?.id ?? null;
+    selectedWorkspace.olderMessagesCursor = olderMessagesCursor;
+  }
 
   return (
     <MessageWorkspace

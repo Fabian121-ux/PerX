@@ -22,7 +22,9 @@ const tx = vi.hoisted(() => ({
 }));
 
 const prisma = vi.hoisted(() => ({
-  $transaction: vi.fn((callback: (client: typeof tx) => unknown) => callback(tx)),
+  $transaction: vi.fn((callback: (client: typeof tx) => unknown) =>
+    callback(tx),
+  ),
   conversation: { findFirst: vi.fn() },
 }));
 
@@ -58,10 +60,7 @@ describe("message send authorization", () => {
     prisma.conversation.findFirst.mockResolvedValue({ id: conversationId });
     tx.conversation.findFirst.mockResolvedValue({
       opportunityId: null,
-      participants: [
-        { userId: "user-1" },
-        { userId: "user-2" },
-      ],
+      participants: [{ userId: "user-1" }, { userId: "user-2" }],
     });
     tx.blockedUser.findFirst.mockResolvedValue(null);
     tx.message.count.mockResolvedValue(0);
@@ -121,7 +120,7 @@ describe("message send authorization", () => {
     expect(tx.conversationParticipant.updateMany).toHaveBeenCalledTimes(1);
     expect(tx.conversationParticipant.updateMany).toHaveBeenCalledWith({
       data: { removedAt: null },
-      where: { conversationId },
+      where: { conversationId, removedAt: { not: null } },
     });
   });
 

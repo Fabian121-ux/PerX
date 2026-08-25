@@ -256,6 +256,185 @@ describe("message workspace exact targets", () => {
     );
   });
 
+  it("renders and positions the immutable initial unread boundary", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            initialUnreadMessageId: "message-unread",
+            messages: [
+              {
+                body: "Previously read",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-read",
+                readByCurrentUser: true,
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+              {
+                body: "First unread",
+                createdAt: "2026-07-31T11:00:00.000Z",
+                id: "message-unread",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+        defaultConversationId="conversation-1"
+      />,
+    );
+
+    expect(view.getByRole("separator", { name: "New messages" })).toBeTruthy();
+    await waitFor(() =>
+      expect(scrollIntoView).toHaveBeenCalledWith({
+        behavior: "auto",
+        block: "center",
+      }),
+    );
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversations: [
+          {
+            id: "conversation-1",
+            initialUnreadMessageId: null,
+            messages: [],
+            participantName: "Other User",
+            unreadCount: 0,
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+
+    expect(view.getByRole("separator", { name: "New messages" })).toBeTruthy();
+  });
+
+  it("prioritizes an exact target over unread positioning", async () => {
+    render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            initialUnreadMessageId: "message-unread",
+            messages: [
+              {
+                body: "First unread",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-unread",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+              {
+                body: "Exact target",
+                createdAt: "2026-07-31T11:00:00.000Z",
+                id: "message-target",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+        defaultConversationId="conversation-1"
+        highlightMessageId="message-target"
+      />,
+    );
+
+    await waitFor(() =>
+      expect(scrollIntoView).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "center",
+      }),
+    );
+    expect(scrollIntoView).not.toHaveBeenCalledWith({
+      behavior: "auto",
+      block: "center",
+    });
+  });
+
+  it("applies realtime inserts, updates, and deletes authoritatively", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            lastMessage: "Original body",
+            messages: [
+              {
+                body: "Original body",
+                createdAt: "2026-07-31T10:00:00.000Z",
+                id: "message-original",
+                senderId: "user-2",
+                senderName: "Other User",
+              },
+            ],
+            participantName: "Other User",
+            timestamp: "2026-07-31T10:00:00.000Z",
+            unreadCount: 0,
+          },
+        ]}
+        currentUserId="user-1"
+        defaultConversationId="conversation-1"
+      />,
+    );
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversation-message", {
+        conversationId: "conversation-1",
+        message: {
+          body: "Inserted body",
+          createdAt: "2026-07-31T11:00:00.000Z",
+          id: "message-live",
+          readByCurrentUser: false,
+          senderId: "user-2",
+          senderName: "Other User",
+        },
+        messageId: "message-live",
+        operation: "INSERT",
+      });
+      await Promise.resolve();
+    });
+    expect(view.getAllByText("Inserted body").length).toBeGreaterThan(0);
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversation-message", {
+        conversationId: "conversation-1",
+        message: {
+          body: "Edited live body",
+          createdAt: "2026-07-31T11:00:00.000Z",
+          editedAt: "2026-07-31T11:01:00.000Z",
+          id: "message-live",
+          readByCurrentUser: false,
+          senderId: "user-2",
+          senderName: "Other User",
+        },
+        messageId: "message-live",
+        operation: "UPDATE",
+      });
+      await Promise.resolve();
+    });
+    expect(view.queryByText("Inserted body")).toBeNull();
+    expect(view.getAllByText("Edited live body").length).toBeGreaterThan(0);
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversation-message", {
+        conversationId: "conversation-1",
+        message: null,
+        messageId: "message-live",
+        operation: "DELETE",
+      });
+      await Promise.resolve();
+    });
+    expect(view.queryByText("Edited live body")).toBeNull();
+    expect(view.getAllByText("Original body").length).toBeGreaterThan(0);
+  });
+
   it("wraps long text, grows to a bounded height, and resets after send", async () => {
     const view = render(
       <MessageWorkspace

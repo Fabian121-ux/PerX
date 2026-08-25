@@ -129,7 +129,9 @@ describe("conversation exact message entry", () => {
       id: "message-target",
       senderId: "user-2",
     });
-    mocks.messageFindFirst.mockResolvedValue(olderTarget);
+    mocks.messageFindFirst
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(olderTarget);
 
     const element = await ConversationPage({
       params: Promise.resolve({ conversationId: "conversation-1" }),

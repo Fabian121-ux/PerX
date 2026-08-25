@@ -326,6 +326,24 @@ a {
     .message-workspace[data-mobile-view="conversation"] .message-composer {
       padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
     }
+
+    :root[data-perx-keyboard="open"]
+      .perx-mobile-conversation-active
+      .dashboard-main {
+      padding-bottom: 0;
+      scroll-padding-bottom: 0;
+    }
+
+    :root[data-perx-keyboard="open"]
+      .message-workspace[data-mobile-view="conversation"] {
+      height: calc(100dvh - var(--px-keyboard-inset, 0px));
+    }
+
+    :root[data-perx-keyboard="open"]
+      .message-workspace[data-mobile-view="conversation"]
+      .message-composer {
+      padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+    }
   }
 
   .perx-card {
@@ -483,7 +501,9 @@ a {
     must drop with it, and must never sit behind the keyboard.
   */
   :root[data-perx-keyboard="open"] .perx-toast-viewport {
-    bottom: calc(var(--px-keyboard-inset, 0px) + env(safe-area-inset-bottom) + 0.75rem);
+    bottom: calc(
+      var(--px-keyboard-inset, 0px) + env(safe-area-inset-bottom) + 0.75rem
+    );
   }
 
   .dashboard-scroll {

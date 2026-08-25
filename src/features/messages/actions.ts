@@ -5,10 +5,7 @@ import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import {
-  getCurrentSessionTokenHash,
-  requireUser,
-} from "@/lib/auth/session";
+import { getCurrentSessionTokenHash, requireUser } from "@/lib/auth/session";
 import {
   assertAccountAccessWithClient,
   assertCanMessage,
@@ -24,12 +21,20 @@ import { evaluatePolicy, isPolicyBlocking } from "@/lib/policy/enforcement";
 
 const sendMessageSchema = z.object({
   conversationId: z.string().cuid(),
-  body: z.string().trim().min(1, "Message cannot be empty.").max(2000, "Message is too long."),
+  body: z
+    .string()
+    .trim()
+    .min(1, "Message cannot be empty.")
+    .max(2000, "Message is too long."),
   replyToMessageId: z.string().cuid().optional().nullable(),
 });
 
 const editMessageSchema = z.object({
-  body: z.string().trim().min(1, "Message cannot be empty.").max(2000, "Message is too long."),
+  body: z
+    .string()
+    .trim()
+    .min(1, "Message cannot be empty.")
+    .max(2000, "Message is too long."),
   messageId: z.string().cuid(),
 });
 
@@ -51,7 +56,11 @@ export async function sendMessageAction(
   const user = await requireUser();
   const sessionTokenHash = await getCurrentSessionTokenHash();
   if (!sessionTokenHash) return { error: "Authentication required." };
-  const parsed = sendMessageSchema.safeParse({ conversationId, body, replyToMessageId });
+  const parsed = sendMessageSchema.safeParse({
+    conversationId,
+    body,
+    replyToMessageId,
+  });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid message." };
   }
@@ -106,152 +115,158 @@ export async function sendMessageAction(
       };
     }
 
-    const result = await getPrisma().$transaction(async (tx) => {
-      const currentConversation = await tx.conversation.findFirst({
-        include: { participants: true },
-        where: {
-          id: parsed.data.conversationId,
-          participants: { some: { removedAt: null, userId: user.id } },
-          status: "ACTIVE",
-        },
-      });
-      if (!currentConversation) {
-        return { error: "You are not a participant in this conversation." };
-      }
-      const otherParticipantIds = currentConversation.participants
-        .map((participant) => participant.userId)
-        .filter((participantId) => participantId !== user.id);
-      if (!otherParticipantIds.length) {
-        return { error: "Messaging is unavailable." };
-      }
+    const result = await getPrisma().$transaction(
+      async (tx) => {
+        const currentConversation = await tx.conversation.findFirst({
+          include: { participants: true },
+          where: {
+            id: parsed.data.conversationId,
+            participants: { some: { removedAt: null, userId: user.id } },
+            status: "ACTIVE",
+          },
+        });
+        if (!currentConversation) {
+          return { error: "You are not a participant in this conversation." };
+        }
+        const otherParticipantIds = currentConversation.participants
+          .map((participant) => participant.userId)
+          .filter((participantId) => participantId !== user.id);
+        if (!otherParticipantIds.length) {
+          return { error: "Messaging is unavailable." };
+        }
 
-      await lockUserAccount(tx, user.id);
-      await lockUserPairs(tx, user.id, otherParticipantIds);
-      const activeSession = await tx.session.findFirst({
-        select: { id: true },
-        where: {
-          expiresAt: { gt: new Date() },
-          tokenHash: sessionTokenHash,
-          userId: user.id,
-        },
-      });
-      if (!activeSession) {
-        return { error: "Authentication required." };
-      }
-      const lockedRestriction = await assertAccountAccessWithClient(
-        tx,
-        user.id,
-        "message:send",
-      );
-      if (lockedRestriction) return { error: lockedRestriction };
-      const [blocked, recentMessages, duplicate] = await Promise.all([
-        tx.blockedUser.findFirst({
+        await lockUserAccount(tx, user.id);
+        await lockUserPairs(tx, user.id, otherParticipantIds);
+        const activeSession = await tx.session.findFirst({
           select: { id: true },
           where: {
-            OR: otherParticipantIds.flatMap((participantId) => [
-              { blockerUserId: user.id, blockedUserId: participantId },
-              { blockerUserId: participantId, blockedUserId: user.id },
-            ]),
+            expiresAt: { gt: new Date() },
+            tokenHash: sessionTokenHash,
+            userId: user.id,
           },
-        }),
-        tx.message.count({
-          where: {
-            createdAt: { gte: new Date(Date.now() - rateLimitWindowMs) },
-            senderId: user.id,
-          },
-        }),
-        tx.message.findFirst({
-          select: { id: true },
-          where: {
-            body: parsed.data.body.trim(),
-            conversationId: parsed.data.conversationId,
-            createdAt: { gte: new Date(Date.now() - 5_000) },
-            replyToMessageId: parsed.data.replyToMessageId ?? null,
-            senderId: user.id,
-          },
-        }),
-      ]);
-      if (blocked) return { error: "Messaging is unavailable." };
-      if (recentMessages >= rateLimitMaxMessages) {
-        return { error: "Please slow down before sending more messages." };
-      }
-      if (duplicate) return { duplicate: true };
+        });
+        if (!activeSession) {
+          return { error: "Authentication required." };
+        }
+        const lockedRestriction = await assertAccountAccessWithClient(
+          tx,
+          user.id,
+          "message:send",
+        );
+        if (lockedRestriction) return { error: lockedRestriction };
+        const [blocked, recentMessages, duplicate] = await Promise.all([
+          tx.blockedUser.findFirst({
+            select: { id: true },
+            where: {
+              OR: otherParticipantIds.flatMap((participantId) => [
+                { blockerUserId: user.id, blockedUserId: participantId },
+                { blockerUserId: participantId, blockedUserId: user.id },
+              ]),
+            },
+          }),
+          tx.message.count({
+            where: {
+              createdAt: { gte: new Date(Date.now() - rateLimitWindowMs) },
+              senderId: user.id,
+            },
+          }),
+          tx.message.findFirst({
+            select: { id: true },
+            where: {
+              body: parsed.data.body.trim(),
+              conversationId: parsed.data.conversationId,
+              createdAt: { gte: new Date(Date.now() - 5_000) },
+              replyToMessageId: parsed.data.replyToMessageId ?? null,
+              senderId: user.id,
+            },
+          }),
+        ]);
+        if (blocked) return { error: "Messaging is unavailable." };
+        if (recentMessages >= rateLimitMaxMessages) {
+          return { error: "Please slow down before sending more messages." };
+        }
+        if (duplicate) return { duplicate: true };
 
-      if (
-        !currentConversation.opportunityId &&
-        currentConversation.participants.length === 2
-      ) {
-        const [otherParticipantId] = otherParticipantIds;
-        const acceptedConnection = otherParticipantId
-          ? await tx.connection.findFirst({
+        if (
+          !currentConversation.opportunityId &&
+          currentConversation.participants.length === 2
+        ) {
+          const [otherParticipantId] = otherParticipantIds;
+          const acceptedConnection = otherParticipantId
+            ? await tx.connection.findFirst({
+                select: { id: true },
+                where: {
+                  status: "ACCEPTED",
+                  OR: [
+                    { requesterId: user.id, receiverId: otherParticipantId },
+                    { requesterId: otherParticipantId, receiverId: user.id },
+                  ],
+                },
+              })
+            : null;
+          if (!acceptedConnection) {
+            return { error: "Connect before sending a private message." };
+          }
+        }
+
+        const replyTarget = parsed.data.replyToMessageId
+          ? await tx.message.findFirst({
               select: { id: true },
               where: {
-                status: "ACCEPTED",
-                OR: [
-                  { requesterId: user.id, receiverId: otherParticipantId },
-                  { requesterId: otherParticipantId, receiverId: user.id },
-                ],
+                conversationId: parsed.data.conversationId,
+                id: parsed.data.replyToMessageId,
               },
             })
           : null;
-        if (!acceptedConnection) {
-          return { error: "Connect before sending a private message." };
+        if (parsed.data.replyToMessageId && !replyTarget) {
+          return { error: "The message you are replying to is unavailable." };
         }
-      }
 
-      const replyTarget = parsed.data.replyToMessageId
-        ? await tx.message.findFirst({
-            select: { id: true },
-            where: {
-              conversationId: parsed.data.conversationId,
-              id: parsed.data.replyToMessageId,
-            },
-          })
-        : null;
-      if (parsed.data.replyToMessageId && !replyTarget) {
-        return { error: "The message you are replying to is unavailable." };
-      }
-
-      const message = await tx.message.create({
-        data: {
-          body: parsed.data.body.trim(),
-          conversationId: parsed.data.conversationId,
-          replyToMessageId: replyTarget?.id ?? null,
-          senderId: user.id,
-        },
-      });
-
-      await tx.conversation.update({
-        where: { id: parsed.data.conversationId },
-        data: { updatedAt: new Date() },
-      });
-
-      await tx.messageReadReceipt.create({
-        data: { messageId: message.id, userId: user.id },
-      });
-
-      await tx.conversationParticipant.updateMany({
-        data: { removedAt: null },
-        where: { conversationId: parsed.data.conversationId },
-      });
-
-      await tx.notification.createMany({
-        data: otherParticipantIds.map((participantId) => ({
-          actionUrl: `/app/messages/${parsed.data.conversationId}?message=${message.id}`,
-          body: `${user.name} sent you a message.`,
-          metadata: {
+        const message = await tx.message.create({
+          data: {
+            body: parsed.data.body.trim(),
             conversationId: parsed.data.conversationId,
-            messageId: message.id,
-            recipientId: participantId,
+            replyToMessageId: replyTarget?.id ?? null,
             senderId: user.id,
           },
-          title: "New message",
-          type: "NEW_MESSAGE" as const,
-          userId: participantId,
-        })),
-      });
-      return { messageId: message.id };
-    }, { timeout: 10_000 });
+        });
+
+        await tx.conversation.update({
+          where: { id: parsed.data.conversationId },
+          data: { updatedAt: new Date() },
+        });
+
+        await tx.messageReadReceipt.create({
+          data: { messageId: message.id, userId: user.id },
+        });
+
+        await tx.conversationParticipant.updateMany({
+          data: { removedAt: null },
+          where: {
+            conversationId: parsed.data.conversationId,
+            removedAt: { not: null },
+          },
+        });
+
+        await tx.notification.createMany({
+          data: otherParticipantIds.map((participantId) => ({
+            actionUrl: `/app/messages/${parsed.data.conversationId}?message=${message.id}`,
+            body: `${user.name} sent you a message.`,
+            metadata: {
+              conversationId: parsed.data.conversationId,
+              messageId: message.id,
+              recipientId: participantId,
+              senderId: user.id,
+            },
+            title: "New message",
+            type: "NEW_MESSAGE" as const,
+            userId: participantId,
+          })),
+        });
+        return { messageId: message.id };
+      },
+      { timeout: 10_000 },
+    );
 
     if ("error" in result) return { error: result.error };
     if ("duplicate" in result) return { success: true };
@@ -327,38 +342,40 @@ export async function editMessageAction(messageId: string, body: string) {
   if (isPolicyBlocking(policy)) {
     return {
       error:
-        policy.userMessage ??
-        "This edit needs review before it can be saved.",
+        policy.userMessage ?? "This edit needs review before it can be saved.",
     };
   }
 
-  await getPrisma().$transaction(async (tx) => {
-    await tx.message.update({
-      data: { body: nextBody, editedAt: new Date() },
-      where: { id: message.id },
-    });
-    await tx.messageEdit.create({
-      data: {
-        editorId: user.id,
-        messageId: message.id,
-        nextBodyHash: hashMessageBody(nextBody),
-        previousBodyHash: hashMessageBody(message.body),
-      },
-    });
-    await tx.auditLog.create({
-      data: {
-        action: "message.edited",
-        actorId: user.id,
-        entityId: message.id,
-        entityType: "message",
-        metadata: {
-          bodyChanged: true,
-          conversationId: message.conversationId,
-          policyOutcome: policy.outcome,
+  await getPrisma().$transaction(
+    async (tx) => {
+      await tx.message.update({
+        data: { body: nextBody, editedAt: new Date() },
+        where: { id: message.id },
+      });
+      await tx.messageEdit.create({
+        data: {
+          editorId: user.id,
+          messageId: message.id,
+          nextBodyHash: hashMessageBody(nextBody),
+          previousBodyHash: hashMessageBody(message.body),
         },
-      },
-    });
-  }, { timeout: messageMutationTransactionTimeoutMs });
+      });
+      await tx.auditLog.create({
+        data: {
+          action: "message.edited",
+          actorId: user.id,
+          entityId: message.id,
+          entityType: "message",
+          metadata: {
+            bodyChanged: true,
+            conversationId: message.conversationId,
+            policyOutcome: policy.outcome,
+          },
+        },
+      });
+    },
+    { timeout: messageMutationTransactionTimeoutMs },
+  );
 
   revalidatePath("/app/messages");
   revalidatePath(`/app/messages/${message.conversationId}`);
@@ -399,25 +416,28 @@ export async function deleteMessageAction(messageId: string) {
     return { error: "The removal window for this message has closed." };
   }
 
-  await getPrisma().$transaction(async (tx) => {
-    const updated = await tx.message.updateMany({
-      data: { deletedAt: new Date(), deletedById: user.id },
-      where: { deletedAt: null, id: parsed.data, senderId: user.id },
-    });
-    if (!updated.count) return;
-    await tx.auditLog.create({
-      data: {
-        action: "message.deleted",
-        actorId: user.id,
-        entityId: parsed.data,
-        entityType: "message",
-        metadata: {
-          conversationId: message.conversationId,
-          retainedAsTombstone: true,
+  await getPrisma().$transaction(
+    async (tx) => {
+      const updated = await tx.message.updateMany({
+        data: { deletedAt: new Date(), deletedById: user.id },
+        where: { deletedAt: null, id: parsed.data, senderId: user.id },
+      });
+      if (!updated.count) return;
+      await tx.auditLog.create({
+        data: {
+          action: "message.deleted",
+          actorId: user.id,
+          entityId: parsed.data,
+          entityType: "message",
+          metadata: {
+            conversationId: message.conversationId,
+            retainedAsTombstone: true,
+          },
         },
-      },
-    });
-  }, { timeout: messageMutationTransactionTimeoutMs });
+      });
+    },
+    { timeout: messageMutationTransactionTimeoutMs },
+  );
 
   revalidatePath("/app/messages");
   revalidatePath(`/app/messages/${message.conversationId}`);

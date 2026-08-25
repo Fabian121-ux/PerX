@@ -2,21 +2,31 @@ import {
   getCurrentUser,
   validateCurrentSessionAccess,
 } from "@/lib/auth/session";
-import { getMessageSnapshot } from "@/lib/messages/snapshot";
 import { parseMessageRouteId } from "@/lib/messages/entry";
 import {
   createMessageMutationBaseline,
   getMessageMutationsAfter,
   validateMessageMutationCursor,
 } from "@/lib/messages/mutations";
+import {
+  hasConversationRealtimeAccess,
+  subscribeToConversationRealtime,
+  type ConversationRealtimeChange,
+  type ConversationRealtimeSubscription,
+} from "@/lib/messages/realtime";
+import { getRealtimeWorkspaceMessage } from "@/lib/messages/realtime-message";
+import { getMessageSnapshot } from "@/lib/messages/snapshot";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const streamIntervalMs = 2000;
-const keepAliveIntervalMs = 15000;
-const conversationListRefreshIntervalMs = 10000;
-const mutationCheckpointIntervalMs = 60000;
+const keepAliveIntervalMs = 15_000;
+const accessValidationIntervalMs = 30_000;
+const reconciliationIntervalMs = 60_000;
+const realtimeRetryMaxMs = 60_000;
+const realtimeRetryInitialMs = 5_000;
+const changeDebounceMs = 50;
+const maxMutationPagesPerReconciliation = 4;
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -35,6 +45,13 @@ export async function GET(request: Request) {
   if (rawConversationId && !conversationId) {
     return Response.json({ error: "Invalid conversation." }, { status: 400 });
   }
+  if (
+    conversationId &&
+    !(await hasConversationRealtimeAccess(conversationId, user.id))
+  ) {
+    return Response.json({ error: "Not found." }, { status: 404 });
+  }
+
   const requestedMutationCursor = conversationId
     ? (request.headers.get("last-event-id") ??
       url.searchParams.get("mutationCursor"))
@@ -54,92 +71,86 @@ export async function GET(request: Request) {
       return Response.json({ error: "Invalid cursor." }, { status: 400 });
     }
   }
-  const initialSnapshot = await getMessageSnapshot({
-    conversationId,
-    userId: user.id,
-    userRoles: user.roles,
-  });
-
-  if (initialSnapshot.notFound) {
-    return Response.json({ error: "Not found." }, { status: 404 });
-  }
 
   const encoder = new TextEncoder();
-  let lastSignature = "";
-
+  let closeStream = () => {};
   const stream = new ReadableStream({
     start(controller) {
       let closed = false;
-      let interval: ReturnType<typeof setInterval> | null = null;
+      let realtime: ConversationRealtimeSubscription | null = null;
+      let realtimeGeneration = 0;
+      let realtimeStart: Promise<void> | null = null;
+      let realtimeRetryMs = realtimeRetryInitialMs;
+      let realtimeRetry: ReturnType<typeof setTimeout> | null = null;
       let keepAlive: ReturnType<typeof setInterval> | null = null;
-      let lastAccessValidationAt = Date.now();
-      let accessValid = true;
+      let accessValidation: ReturnType<typeof setInterval> | null = null;
+      let reconciliation: ReturnType<typeof setInterval> | null = null;
+      let changeTimer: ReturnType<typeof setTimeout> | null = null;
+      let changeIncludesConversationList = false;
+      let realtimeRestartTimer: ReturnType<typeof setTimeout> | null = null;
+      let reconciliationInFlight = false;
+      let pendingReconciliation = false;
+      let pendingReconciliationIncludeList = false;
+      let accessValidationInFlight = false;
       let mutationCursor = initialMutationCursor;
-      let pendingInitialSnapshot: typeof initialSnapshot | null = initialSnapshot;
-      let lastConversationListRefreshAt = 0;
-      let lastMutationCheckpointSentAt = 0;
-      let snapshotInFlight = false;
+      const messageChangeVersions = new Map<string, number>();
 
       const enqueue = (chunk: string) => {
         if (closed) return;
         try {
           controller.enqueue(encoder.encode(chunk));
         } catch {
-          closed = true;
+          close();
         }
       };
-
+      const sendEvent = (event: string, data: unknown, id?: string | null) => {
+        enqueue(
+          `${id ? `id: ${id}\n` : ""}event: ${event}\ndata: ${JSON.stringify(data)}\n\n`,
+        );
+      };
       const close = () => {
+        if (closed) return;
         closed = true;
-        if (interval) clearInterval(interval);
+        if (realtimeRetry) clearTimeout(realtimeRetry);
         if (keepAlive) clearInterval(keepAlive);
+        if (accessValidation) clearInterval(accessValidation);
+        if (reconciliation) clearInterval(reconciliation);
+        if (changeTimer) clearTimeout(changeTimer);
+        if (realtimeRestartTimer) clearTimeout(realtimeRestartTimer);
+        realtimeGeneration += 1;
+        void realtime?.close();
+        realtime = null;
         try {
           controller.close();
         } catch {
-          // The client may already have closed the connection.
+          // The browser may have already released the connection.
         }
       };
+      closeStream = close;
 
-      const sendSnapshot = async () => {
-        if (closed || snapshotInFlight) return;
-        snapshotInFlight = true;
+      const sendReconciliation = async (includeConversationList: boolean) => {
+        if (closed) return;
+        if (reconciliationInFlight) {
+          pendingReconciliation = true;
+          pendingReconciliationIncludeList ||= includeConversationList;
+          return;
+        }
+        reconciliationInFlight = true;
         try {
-          if (Date.now() - lastAccessValidationAt >= keepAliveIntervalMs) {
-            lastAccessValidationAt = Date.now();
-            accessValid = await validateCurrentSessionAccess();
-          }
-          if (!accessValid) {
-            enqueue("event: unavailable\ndata: {}\n\n");
-            close();
-            return;
-          }
-          const conversationListRefreshDue =
-            lastConversationListRefreshAt === 0 ||
-            Date.now() - lastConversationListRefreshAt >=
-              conversationListRefreshIntervalMs;
-          const includeConversationList =
-            !conversationId || conversationListRefreshDue;
-          const snapshot = pendingInitialSnapshot
-            ? pendingInitialSnapshot
-            : await getMessageSnapshot({
-                conversationId,
-                 includeConversationList,
-                 userId: user.id,
-                 userRoles: user.roles,
-               });
-          if (pendingInitialSnapshot) pendingInitialSnapshot = null;
-          if (conversationListRefreshDue) {
-            lastConversationListRefreshAt = Date.now();
-          }
+          const snapshot = await getMessageSnapshot({
+            conversationId,
+            includeConversationList,
+            userId: user.id,
+            userRoles: user.roles,
+          });
+          if (closed) return;
           if (snapshot.notFound) {
-            enqueue("event: unavailable\ndata: {}\n\n");
+            sendEvent("unavailable", {});
             close();
             return;
           }
 
-          const conversations = snapshot.conversations ?? [];
-          const previousMutationCursor = mutationCursor;
-          const mutationPage =
+          let mutationPage =
             conversationId && mutationCursor
               ? await getMessageMutationsAfter({
                   conversationId,
@@ -147,63 +158,217 @@ export async function GET(request: Request) {
                   userId: user.id,
                 })
               : null;
+          if (closed) return;
           if (mutationPage) mutationCursor = mutationPage.checkpoint;
-          const signature = JSON.stringify(
-            conversations.map((conversation) => [
-              conversation.id,
-              conversation.timestamp,
-              conversation.unreadCount,
-              conversation.messages.map((message) => [
-                message.id,
-                message.deletedAt,
-                message.editedAt,
-                message.readByOtherParticipants,
-                message.replyTo?.id ?? null,
-                message.replyTo?.deletedAt ?? null,
-              ]),
-            ]),
+          sendEvent(
+            "conversations",
+            {
+              conversationList: snapshot.conversationList,
+              conversations: snapshot.conversations ?? [],
+              messageMutations: mutationPage?.items ?? [],
+            },
+            mutationCursor,
           );
-
-          if (
-            conversationListRefreshDue ||
-            signature !== lastSignature ||
-            Boolean(mutationPage?.items.length)
-          ) {
-            lastSignature = signature;
-            lastMutationCheckpointSentAt = Date.now();
-            enqueue(
-              `${mutationCursor ? `id: ${mutationCursor}\n` : ""}event: conversations\ndata: ${JSON.stringify({
-                conversationList: snapshot.conversationList,
-                conversations,
-                messageMutations: mutationPage?.items ?? [],
-              })}\n\n`,
-            );
-          } else if (
+          let mutationPagesLoaded = mutationPage ? 1 : 0;
+          while (
+            conversationId &&
+            mutationPage?.hasMore &&
             mutationCursor &&
-            mutationCursor !== previousMutationCursor &&
-            Date.now() - lastMutationCheckpointSentAt >=
-              mutationCheckpointIntervalMs
+            mutationPagesLoaded < maxMutationPagesPerReconciliation
           ) {
-            lastMutationCheckpointSentAt = Date.now();
-            enqueue(
-              `id: ${mutationCursor}\nevent: mutation-checkpoint\ndata: {}\n\n`,
+            mutationPage = await getMessageMutationsAfter({
+              conversationId,
+              cursor: mutationCursor,
+              userId: user.id,
+            });
+            if (closed) return;
+            mutationCursor = mutationPage.checkpoint;
+            mutationPagesLoaded += 1;
+            sendEvent(
+              "conversations",
+              {
+                conversationList: null,
+                conversations: [],
+                messageMutations: mutationPage.items,
+              },
+              mutationCursor,
             );
           }
+          if (mutationPage?.hasMore) pendingReconciliation = true;
         } catch {
-          enqueue(
-            `event: stream-error\ndata: ${JSON.stringify({
-              message: "Message updates are reconnecting.",
-            })}\n\n`,
-          );
+          sendEvent("stream-error", {
+            message: "Message updates are reconnecting.",
+          });
         } finally {
-          snapshotInFlight = false;
+          reconciliationInFlight = false;
+          if (pendingReconciliation && !closed) {
+            pendingReconciliation = false;
+            const includePendingList = pendingReconciliationIncludeList;
+            pendingReconciliationIncludeList = false;
+            void sendReconciliation(includePendingList);
+          }
         }
       };
 
-      request.signal.addEventListener("abort", close);
-      void sendSnapshot();
-      interval = setInterval(sendSnapshot, streamIntervalMs);
-      keepAlive = setInterval(() => enqueue(": keepalive\n\n"), keepAliveIntervalMs);
+      const scheduleRealtimeRestart = () => {
+        if (closed || realtimeRestartTimer) return;
+        realtimeRestartTimer = setTimeout(() => {
+          realtimeRestartTimer = null;
+          void restartRealtime();
+        }, changeDebounceMs);
+      };
+
+      const handleRealtimeChange = (change: ConversationRealtimeChange) => {
+        if (closed) return;
+        if (change.kind === "conversation") {
+          if (change.refreshSubscription) scheduleRealtimeRestart();
+          changeIncludesConversationList ||= change.includeConversationList;
+          if (changeTimer) clearTimeout(changeTimer);
+          changeTimer = setTimeout(() => {
+            changeTimer = null;
+            const includeConversationList = changeIncludesConversationList;
+            changeIncludesConversationList = false;
+            void sendReconciliation(includeConversationList);
+          }, changeDebounceMs);
+          return;
+        }
+
+        const messageChangeVersion =
+          (messageChangeVersions.get(change.messageId) ?? 0) + 1;
+        messageChangeVersions.set(change.messageId, messageChangeVersion);
+        if (change.eventType === "DELETE") {
+          sendEvent("conversation-message", {
+            conversationId,
+            message: null,
+            messageId: change.messageId,
+            operation: change.eventType,
+          });
+          return;
+        }
+
+        void getRealtimeWorkspaceMessage({
+          conversationId: conversationId!,
+          messageId: change.messageId,
+          userId: user.id,
+        })
+          .then((message) => {
+            if (
+              closed ||
+              messageChangeVersions.get(change.messageId) !==
+                messageChangeVersion
+            ) {
+              return;
+            }
+            if (!message) {
+              void sendReconciliation(true);
+              return;
+            }
+            sendEvent("conversation-message", {
+              conversationId,
+              message,
+              messageId: change.messageId,
+              operation: change.eventType,
+            });
+          })
+          .catch(() => {
+            sendEvent("stream-error", {
+              message: "Message updates are reconnecting.",
+            });
+          });
+      };
+
+      const scheduleRealtimeRetry = () => {
+        if (closed || realtimeRetry) return;
+        realtimeRetry = setTimeout(() => {
+          realtimeRetry = null;
+          startRealtime();
+        }, realtimeRetryMs);
+        realtimeRetryMs = Math.min(realtimeRetryMs * 2, realtimeRetryMaxMs);
+      };
+      const startRealtime = () => {
+        if (closed || realtime || realtimeStart) return;
+        const generation = ++realtimeGeneration;
+        let subscription: ConversationRealtimeSubscription | null = null;
+        realtimeStart = subscribeToConversationRealtime({
+          conversationId,
+          onChange: handleRealtimeChange,
+          onStatus: (status) => {
+            if (closed || generation !== realtimeGeneration) return;
+            if (status === "subscribed") {
+              realtimeRetryMs = realtimeRetryInitialMs;
+              void sendReconciliation(true);
+              return;
+            }
+            realtimeGeneration += 1;
+            if (realtime === subscription) realtime = null;
+            sendEvent("stream-error", {
+              message: "Message updates are reconnecting.",
+            });
+            void subscription?.close();
+            scheduleRealtimeRetry();
+          },
+          userId: user.id,
+        })
+          .then(async (createdSubscription) => {
+            subscription = createdSubscription;
+            if (closed || generation !== realtimeGeneration) {
+              await createdSubscription.close();
+              return;
+            }
+            realtime = createdSubscription;
+          })
+          .catch(() => {
+            if (closed || generation !== realtimeGeneration) return;
+            realtimeGeneration += 1;
+            sendEvent("stream-error", {
+              message: "Message updates are reconnecting.",
+            });
+            scheduleRealtimeRetry();
+          })
+          .finally(() => {
+            realtimeStart = null;
+          });
+      };
+      const restartRealtime = async () => {
+        realtimeGeneration += 1;
+        const current = realtime;
+        realtime = null;
+        await Promise.all([
+          current?.close() ?? Promise.resolve(),
+          realtimeStart ?? Promise.resolve(),
+        ]);
+        startRealtime();
+      };
+
+      enqueue("retry: 5000\n\n");
+      startRealtime();
+      keepAlive = setInterval(
+        () => enqueue(": keepalive\n\n"),
+        keepAliveIntervalMs,
+      );
+      accessValidation = setInterval(async () => {
+        if (closed || accessValidationInFlight) return;
+        accessValidationInFlight = true;
+        const [sessionValid, conversationValid] = await Promise.all([
+          validateCurrentSessionAccess(),
+          conversationId
+            ? hasConversationRealtimeAccess(conversationId, user.id)
+            : Promise.resolve(true),
+        ]).catch(() => [false, false]);
+        if (!sessionValid || !conversationValid) {
+          sendEvent("unavailable", {});
+          close();
+        }
+        accessValidationInFlight = false;
+      }, accessValidationIntervalMs);
+      reconciliation = setInterval(
+        () => void sendReconciliation(true),
+        reconciliationIntervalMs,
+      );
+      request.signal.addEventListener("abort", close, { once: true });
+    },
+    cancel() {
+      closeStream();
     },
   });
 

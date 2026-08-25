@@ -76,6 +76,7 @@ export type WorkspaceMessage = {
   deletedAt?: string | null;
   editedAt?: string | null;
   id: string;
+  readByCurrentUser?: boolean;
   readByOtherParticipants?: boolean;
   replyTo?: ReplyPreview | null;
   senderId: string;
@@ -125,6 +126,7 @@ export type WorkspaceConversation = {
   events?: WorkspaceConversationEvent[];
   historyLoaded?: boolean;
   id: string;
+  initialUnreadMessageId?: string | null;
   lastMessage?: string;
   messages: WorkspaceMessage[];
   olderMessagesCursor?: string | null;
@@ -156,6 +158,13 @@ type WorkspaceMessageMutation = {
 type WorkspaceConversationListSnapshot = {
   ids: string[];
   nextCursor: string | null;
+};
+
+type WorkspaceRealtimeMessageEnvelope = {
+  conversationId: string;
+  message: WorkspaceMessage | null;
+  messageId: string;
+  operation: "INSERT" | "UPDATE" | "DELETE";
 };
 
 const subscribeToHydration = () => () => {};
@@ -255,7 +264,8 @@ export function MessageWorkspace({
   // the first commit instead of connecting a tick later. Not rendered into
   // markup, so this cannot cause a hydration mismatch.
   const [documentVisible, setDocumentVisible] = useState(
-    () => typeof document === "undefined" || document.visibilityState === "visible",
+    () =>
+      typeof document === "undefined" || document.visibilityState === "visible",
   );
   const [historyAtBottom, setHistoryAtBottom] = useState(false);
   const [historyPositioned, setHistoryPositioned] = useState(false);
@@ -275,9 +285,33 @@ export function MessageWorkspace({
   const historyAtBottomRef = useRef(false);
   const historyPositionedRef = useRef(false);
   const pendingLatestPositionRef = useRef(
-    highlightMessageId || highlightEventId
+    highlightMessageId ||
+      highlightEventId ||
+      conversations.find(
+        (conversation) =>
+          conversation.id ===
+          (defaultConversationId ?? conversations[0]?.id ?? ""),
+      )?.initialUnreadMessageId
       ? ""
       : (defaultConversationId ?? conversations[0]?.id ?? ""),
+  );
+  const pendingInitialUnreadRef = useRef<{
+    conversationId: string;
+    messageId: string;
+  } | null>(
+    (() => {
+      const conversationId =
+        defaultConversationId ?? conversations[0]?.id ?? "";
+      const messageId = conversations.find(
+        (conversation) => conversation.id === conversationId,
+      )?.initialUnreadMessageId;
+      return !highlightMessageId &&
+        !highlightEventId &&
+        conversationId &&
+        messageId
+        ? { conversationId, messageId }
+        : null;
+    })(),
   );
   const previousTimelineRef = useRef<{
     conversationId: string;
@@ -550,6 +584,85 @@ export function MessageWorkspace({
     },
   );
 
+  const applyRealtimeMessage = useEffectEvent(
+    (incoming: WorkspaceRealtimeMessageEnvelope) => {
+      if (incoming.conversationId !== activeIdRef.current) return;
+      setSyncedConversations((current) =>
+        sortWorkspaceConversations(
+          current.map((conversation) => {
+            if (conversation.id !== incoming.conversationId)
+              return conversation;
+            if (incoming.operation === "DELETE") {
+              const deletedMessage = conversation.messages.find(
+                (message) => message.id === incoming.messageId,
+              );
+              return withWorkspaceConversationSummary({
+                ...conversation,
+                messages: conversation.messages
+                  .filter((message) => message.id !== incoming.messageId)
+                  .map((message) =>
+                    message.replyTo?.id === incoming.messageId
+                      ? { ...message, replyTo: null }
+                      : message,
+                  ),
+                unreadCount:
+                  deletedMessage &&
+                  deletedMessage.senderId !== currentUserId &&
+                  !deletedMessage.readByCurrentUser
+                    ? Math.max(0, (conversation.unreadCount ?? 0) - 1)
+                    : conversation.unreadCount,
+              });
+            }
+            if (!incoming.message) return conversation;
+
+            const existingMessage = conversation.messages.find(
+              (message) => message.id === incoming.messageId,
+            );
+            const messages = mergeWorkspaceMessages(
+              conversation.messages.map((message) =>
+                message.replyTo?.id === incoming.messageId
+                  ? {
+                      ...message,
+                      replyTo: {
+                        body: incoming.message!.body,
+                        deletedAt: incoming.message!.deletedAt,
+                        id: incoming.message!.id,
+                        senderId: incoming.message!.senderId,
+                        senderName: incoming.message!.senderName,
+                      },
+                    }
+                  : message,
+              ),
+              [incoming.message],
+            );
+            const isIncomingInsert =
+              incoming.operation === "INSERT" &&
+              !existingMessage &&
+              incoming.message.senderId !== currentUserId;
+            return withWorkspaceConversationSummary({
+              ...conversation,
+              messages,
+              unreadCount:
+                (conversation.unreadCount ?? 0) + (isIncomingInsert ? 1 : 0),
+            });
+          }),
+        ),
+      );
+      if (incoming.message) {
+        setLocalMessages((current) =>
+          retireConfirmedLocalMessages(current, [
+            {
+              id: incoming.conversationId,
+              messages: [incoming.message!],
+              participantName: "",
+            },
+          ]),
+        );
+      }
+      window.dispatchEvent(new Event("perx-unread-refresh"));
+    },
+  );
+
   const openHistoryConversation = useEffectEvent(
     async (conversationId: string) => {
       const requestId = ++conversationOpenRequestRef.current;
@@ -599,7 +712,18 @@ export function MessageWorkspace({
             highlightEventId,
           ),
         );
-        pendingLatestPositionRef.current = conversationId;
+        const openedConversation = incoming.conversations.find(
+          (conversation) => conversation.id === conversationId,
+        );
+        pendingInitialUnreadRef.current =
+          openedConversation?.initialUnreadMessageId
+            ? {
+                conversationId,
+                messageId: openedConversation.initialUnreadMessageId,
+              }
+            : null;
+        pendingLatestPositionRef.current =
+          openedConversation?.initialUnreadMessageId ? "" : conversationId;
         historyPositionedRef.current = false;
         historyAtBottomRef.current = false;
         setHistoryPositioned(false);
@@ -678,10 +802,9 @@ export function MessageWorkspace({
   /**
    * Live message transport.
    *
-   * Streams only while the tab is visible. Each open connection costs a server
-   * snapshot every two seconds, so a hidden tab would otherwise keep paying
-   * for updates nobody can see. On return the stream is rebuilt and the first
-   * snapshot immediately restores anything missed.
+   * Streams only while the tab is visible. Realtime events deliver active
+   * messages immediately, while bounded snapshots reconcile conversation-list
+   * state and anything missed during reconnects.
    */
   useEffect(() => {
     if (!documentVisible) return;
@@ -817,6 +940,21 @@ export function MessageWorkspace({
           window.dispatchEvent(new Event("perx-unread-refresh"));
         }
       });
+      eventSource.addEventListener("conversation-message", (event) => {
+        if (!active) return;
+        let incoming: WorkspaceRealtimeMessageEnvelope | null = null;
+        try {
+          incoming = parseRealtimeMessageEnvelope(
+            JSON.parse((event as MessageEvent).data),
+          );
+        } catch {
+          return;
+        }
+        if (!incoming) return;
+        applyRealtimeMessage(incoming);
+        stopFallback();
+        setLiveState("live");
+      });
       eventSource.addEventListener("mutation-checkpoint", (event) => {
         if (!active || !activeId) return;
         const messageEvent = event as MessageEvent;
@@ -947,7 +1085,9 @@ export function MessageWorkspace({
     updateHistoryPosition();
     const handleHistoryScroll = () => updateHistoryPosition();
     node.addEventListener("scroll", handleHistoryScroll, { passive: true });
-    node.addEventListener("pointerdown", stopPendingPosition, { passive: true });
+    node.addEventListener("pointerdown", stopPendingPosition, {
+      passive: true,
+    });
     node.addEventListener("touchstart", stopPendingPosition, { passive: true });
     node.addEventListener("wheel", stopPendingPosition, { passive: true });
     let previousScrollHeight = node.scrollHeight;
@@ -1060,6 +1200,23 @@ export function MessageWorkspace({
     .find((entry) => entry.kind === "event" || !entry.id.startsWith("local-"));
   const latestEntryId = latestPersistedEntry?.id;
   const latestEntryKind = latestPersistedEntry?.kind;
+
+  useLayoutEffect(() => {
+    const pending = pendingInitialUnreadRef.current;
+    if (
+      !pending ||
+      pending.conversationId !== activeConversation?.id ||
+      !historyVisible
+    ) {
+      return;
+    }
+    const target = messageRefs.current[pending.messageId];
+    if (!target) return;
+    pendingInitialUnreadRef.current = null;
+    target.scrollIntoView({ behavior: "auto", block: "center" });
+    historyPositionedRef.current = true;
+    setHistoryPositioned(true);
+  }, [activeConversation?.id, historyVisible, timeline.length]);
 
   const loadOlderMessages = () => {
     const conversationId = activeConversation?.id;
@@ -1399,6 +1556,9 @@ export function MessageWorkspace({
 
   const openMobileConversation = async (conversationId: string) => {
     const requestId = ++conversationOpenRequestRef.current;
+    let initialUnreadMessageId = syncedConversationsRef.current.find(
+      (conversation) => conversation.id === conversationId,
+    )?.initialUnreadMessageId;
     if (!fullHistoryConversationIdsRef.current.has(conversationId)) {
       try {
         const response = await fetch(
@@ -1436,6 +1596,9 @@ export function MessageWorkspace({
         if (incoming.conversationList) {
           setOlderConversationCursor(incoming.conversationList.nextCursor);
         }
+        initialUnreadMessageId = incoming.conversations.find(
+          (conversation) => conversation.id === conversationId,
+        )?.initialUnreadMessageId;
         setSyncedConversations((current) =>
           mergeWorkspaceConversationSnapshots(
             current,
@@ -1473,7 +1636,12 @@ export function MessageWorkspace({
     );
     setOpenActionMenuMessageId("");
     setDealOfferOpen(false);
-    pendingLatestPositionRef.current = conversationId;
+    pendingInitialUnreadRef.current = initialUnreadMessageId
+      ? { conversationId, messageId: initialUnreadMessageId }
+      : null;
+    pendingLatestPositionRef.current = initialUnreadMessageId
+      ? ""
+      : conversationId;
     historyPositionedRef.current = false;
     historyAtBottomRef.current = false;
     setHistoryPositioned(false);
@@ -2215,6 +2383,19 @@ export function MessageWorkspace({
 
                 {timeline.map((entry, index) => (
                   <Fragment key={`${entry.kind}:${entry.id}`}>
+                    {entry.kind === "message" &&
+                    entry.message.id ===
+                      activeConversation.initialUnreadMessageId ? (
+                      <div
+                        aria-label="New messages"
+                        className="flex items-center gap-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-[color:var(--px-primary)]"
+                        role="separator"
+                      >
+                        <span className="h-px flex-1 bg-[color:var(--px-primary)] opacity-40" />
+                        <span>New messages</span>
+                        <span className="h-px flex-1 bg-[color:var(--px-primary)] opacity-40" />
+                      </div>
+                    ) : null}
                     {shouldShowDateSeparator(
                       timeline[index - 1]?.createdAt,
                       entry.createdAt,
@@ -2287,6 +2468,12 @@ export function MessageWorkspace({
                   type="button"
                 >
                   <ArrowDown aria-hidden size={17} />
+                  {newMessageCount ? (
+                    <span>
+                      {newMessageCount} new{" "}
+                      {newMessageCount === 1 ? "message" : "messages"}
+                    </span>
+                  ) : null}
                 </button>
               </div>
             ) : null}
@@ -3616,6 +3803,10 @@ function mergeWorkspaceConversationSnapshots(
         events: mergedEvents,
         historyLoaded:
           conversation.historyLoaded === true || next.historyLoaded === true,
+        initialUnreadMessageId:
+          conversation.initialUnreadMessageId === undefined
+            ? next.initialUnreadMessageId
+            : conversation.initialUnreadMessageId,
         messages: mergedMessages,
         olderMessagesCursor: resolveOlderMessagesCursor(conversation, next),
       };
@@ -3640,6 +3831,10 @@ function mergeWorkspaceConversationSnapshots(
       events: mergeWorkspaceEvents(undefined, mergedEvents),
       historyLoaded:
         conversation.historyLoaded === true || next.historyLoaded === true,
+      initialUnreadMessageId:
+        conversation.initialUnreadMessageId === undefined
+          ? next.initialUnreadMessageId
+          : conversation.initialUnreadMessageId,
       messages: mergeWorkspaceMessages([], mergedMessages),
       olderMessagesCursor: resolveOlderMessagesCursor(conversation, next),
     };
@@ -3667,6 +3862,45 @@ function sortWorkspaceConversations(conversations: WorkspaceConversation[]) {
     if (Number.isFinite(rightTimestamp)) return 1;
     return 0;
   });
+}
+
+function withWorkspaceConversationSummary(
+  conversation: WorkspaceConversation,
+): WorkspaceConversation {
+  const latestMessage = conversation.messages.at(-1);
+  const latestEvent = conversation.events?.at(-1);
+  const latestEventIsNewer =
+    latestEvent &&
+    (!latestMessage ||
+      new Date(latestEvent.createdAt).getTime() >
+        new Date(latestMessage.createdAt).getTime());
+  if (latestEventIsNewer) {
+    return {
+      ...conversation,
+      lastMessage: workspaceEventSummary(latestEvent.type),
+      timestamp: latestEvent.createdAt,
+    };
+  }
+  return {
+    ...conversation,
+    lastMessage: latestMessage?.deletedAt
+      ? "Message removed"
+      : (latestMessage?.body ?? "No messages yet."),
+    timestamp: latestMessage?.createdAt ?? conversation.timestamp,
+  };
+}
+
+function workspaceEventSummary(type: WorkspaceConversationEvent["type"]) {
+  if (type === "PROPOSAL_OBJECTION_RAISED")
+    return "Proposal revision requested";
+  if (type === "PROPOSAL_ACCEPTED") return "Proposal accepted";
+  if (type === "PROPOSAL_REJECTED") return "Proposal rejected";
+  if (type === "DEAL_CREATED") return "Deal record created";
+  if (type === "MILESTONE_SUBMITTED") return "Milestone delivery submitted";
+  if (type === "MILESTONE_APPROVED") return "Milestone approved";
+  if (type === "SIMULATED_RELEASE_RECORDED")
+    return "Simulated release recorded";
+  return "Proposal version submitted";
 }
 
 function applyWorkspaceMessageMutations(
@@ -3838,6 +4072,39 @@ function parseConversationStreamEnvelope(value: unknown): {
         ? payload.mutationCursor
         : null,
   };
+}
+
+function parseRealtimeMessageEnvelope(
+  value: unknown,
+): WorkspaceRealtimeMessageEnvelope | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const payload = value as Partial<WorkspaceRealtimeMessageEnvelope>;
+  if (
+    typeof payload.conversationId !== "string" ||
+    typeof payload.messageId !== "string" ||
+    !["INSERT", "UPDATE", "DELETE"].includes(payload.operation ?? "")
+  ) {
+    return null;
+  }
+  if (payload.operation === "DELETE") {
+    return { ...payload, message: null } as WorkspaceRealtimeMessageEnvelope;
+  }
+  const message = payload.message as
+    | Partial<WorkspaceMessage>
+    | null
+    | undefined;
+  if (
+    !message ||
+    typeof message.id !== "string" ||
+    message.id !== payload.messageId ||
+    typeof message.body !== "string" ||
+    typeof message.createdAt !== "string" ||
+    typeof message.senderId !== "string" ||
+    typeof message.senderName !== "string"
+  ) {
+    return null;
+  }
+  return payload as WorkspaceRealtimeMessageEnvelope;
 }
 
 function parseMessagePageEnvelope(value: unknown): {
