@@ -1,4 +1,10 @@
 import type { LucideIcon } from "lucide-react";
+
+import {
+  hasCapability,
+  type Capability,
+  type RoleName,
+} from "@/lib/permissions/capabilities";
 import {
   BarChart3,
   Bell,
@@ -54,6 +60,12 @@ export type FeatureDefinition = {
   id: string;
   keywords: readonly string[];
   label: string;
+  /**
+   * Preferred gate. Derives visibility from the same capability the
+   * destination enforces, so navigation cannot drift out of sync with the
+   * server-side authorization it advertises.
+   */
+  requiredCapability?: Capability;
   requiredRoles?: readonly string[];
   showInSidebar?: boolean;
   status?: FeatureStatus;
@@ -102,13 +114,12 @@ export const featureRegistry = [
     id: "create-post",
     keywords: ["new", "publish", "listing", "opportunity", "content"],
     label: "Create Post",
-    requiredRoles: [
-      "ADMIN",
-      "CLIENT",
-      "FOUNDER",
-      "MASTER_ADMIN",
-      "PROPERTY_OWNER",
-    ],
+    // Visibility is derived from the capability the destination actually
+    // enforces (`opportunity:create` in
+    // `src/app/app/opportunities/new/page.tsx`) rather than a duplicated role
+    // list. The two had drifted apart, which is why Create was missing from
+    // the mobile bar for every role without that capability.
+    requiredCapability: "opportunity:create",
   },
   {
     description: "Review your drafts and published posts.",
@@ -370,9 +381,12 @@ export const secondaryNavigation = [
 }[];
 
 export function canAccessFeature(
-  feature: Pick<FeatureDefinition, "requiredRoles">,
+  feature: Pick<FeatureDefinition, "requiredCapability" | "requiredRoles">,
   roles: readonly string[] = [],
 ) {
+  if (feature.requiredCapability) {
+    return hasCapability(roles as RoleName[], feature.requiredCapability);
+  }
   if (!feature.requiredRoles?.length) return true;
   return feature.requiredRoles.some((role) => roles.includes(role));
 }

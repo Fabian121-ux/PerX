@@ -6,6 +6,7 @@ import { FeedPostCard } from "@/components/feed/feed-post-card";
 import { FeedPostSkeleton } from "@/components/feed/feed-post-skeleton";
 import type { HomeFeedSegment } from "@/lib/data/home-feed";
 import type { HomeFeedPost } from "@/lib/data/home-feed-view";
+import { markAuthenticatedSessionActive } from "@/lib/auth/client-session-cleanup";
 import { readFeedCache, writeFeedCache } from "@/lib/feed/feed-cache";
 import { markImpression, recordFeedEvent } from "@/lib/feed/events";
 
@@ -76,6 +77,9 @@ export function HomeFeed({
    */
   const restoreRef = useRef(false);
   useEffect(() => {
+    // Mounting the authenticated feed proves a session exists, which clears any
+    // sign-out suppression left behind by a previous account in this tab.
+    markAuthenticatedSessionActive();
     if (unavailable || restoreRef.current) return;
     restoreRef.current = true;
 

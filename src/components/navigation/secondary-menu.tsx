@@ -3,6 +3,8 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
+
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { usePathname } from "next/navigation";
 import type { ReactElement } from "react";
 
@@ -121,6 +123,16 @@ export function SecondaryMenu({
               })}
             </div>
           </nav>
+
+          {/*
+            The account menu that carries Sign out on desktop lives in a
+            `hidden lg:flex` container, so before this the mobile shell had no
+            sign-out control at all. Uses the same shared button, and therefore
+            the same server-authoritative action, as every other surface.
+          */}
+          <div className="border-t border-[color:var(--px-border)] px-4 pt-3">
+            <SignOutButton className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] disabled:opacity-70 dark:hover:bg-red-950/30" />
+          </div>
 
           <div className="border-t border-[color:var(--px-border)] px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 text-xs leading-5 text-[color:var(--px-text-muted)]">
             Primary destinations stay in the bottom navigation.

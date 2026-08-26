@@ -386,6 +386,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   User: 'User',
   Session: 'Session',
+  PasswordResetToken: 'PasswordResetToken',
   Role: 'Role',
   UserRole: 'UserRole',
   Profile: 'Profile',
@@ -455,7 +456,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "role" | "userRole" | "profile" | "profileSkill" | "portfolioItem" | "workHistory" | "verificationRequest" | "opportunityCategory" | "opportunity" | "opportunityImage" | "opportunityBookmark" | "opportunityReport" | "userReport" | "moderationCase" | "moderationCaseEvent" | "moderationMessageScope" | "enforcementAction" | "enforcementAppeal" | "opportunityStatusHistory" | "conversation" | "conversationParticipant" | "message" | "messageEdit" | "messageAttachment" | "messageReadReceipt" | "blockedUser" | "proposal" | "proposalVersion" | "proposalVersionMilestone" | "conversationEvent" | "proposalMilestone" | "proposalStatusHistory" | "deal" | "dealParticipant" | "dealMilestone" | "delivery" | "approval" | "release" | "refund" | "dispute" | "ledgerEntry" | "escrowStatusHistory" | "review" | "trustSignal" | "notification" | "adminBroadcast" | "broadcastDelivery" | "auditLog" | "moderationAction" | "connection" | "profileBookmark" | "supportTicket" | "ticketMessage" | "sponsoredContent"
+    modelProps: "user" | "session" | "passwordResetToken" | "role" | "userRole" | "profile" | "profileSkill" | "portfolioItem" | "workHistory" | "verificationRequest" | "opportunityCategory" | "opportunity" | "opportunityImage" | "opportunityBookmark" | "opportunityReport" | "userReport" | "moderationCase" | "moderationCaseEvent" | "moderationMessageScope" | "enforcementAction" | "enforcementAppeal" | "opportunityStatusHistory" | "conversation" | "conversationParticipant" | "message" | "messageEdit" | "messageAttachment" | "messageReadReceipt" | "blockedUser" | "proposal" | "proposalVersion" | "proposalVersionMilestone" | "conversationEvent" | "proposalMilestone" | "proposalStatusHistory" | "deal" | "dealParticipant" | "dealMilestone" | "delivery" | "approval" | "release" | "refund" | "dispute" | "ledgerEntry" | "escrowStatusHistory" | "review" | "trustSignal" | "notification" | "adminBroadcast" | "broadcastDelivery" | "auditLog" | "moderationAction" | "connection" | "profileBookmark" | "supportTicket" | "ticketMessage" | "sponsoredContent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -604,6 +605,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.SessionCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.SessionCountAggregateOutputType> | number
+        }
+      }
+    }
+    PasswordResetToken: {
+      payload: Prisma.$PasswordResetTokenPayload<ExtArgs>
+      fields: Prisma.PasswordResetTokenFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PasswordResetTokenFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasswordResetTokenPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PasswordResetTokenFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasswordResetTokenPayload>
+        }
+        findFirst: {
+          args: Prisma.PasswordResetTokenFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasswordResetTokenPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PasswordResetTokenFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasswordResetTokenPayload>
+        }
+        findMany: {
+          args: Prisma.PasswordResetTokenFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasswordResetTokenPayload>[]
+        }
+        create: {
+          args: Prisma.PasswordResetTokenCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasswordResetTokenPayload>
+        }
+        createMany: {
+          args: Prisma.PasswordResetTokenCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PasswordResetTokenCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasswordResetTokenPayload>[]
+        }
+        delete: {
+          args: Prisma.PasswordResetTokenDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasswordResetTokenPayload>
+        }
+        update: {
+          args: Prisma.PasswordResetTokenUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasswordResetTokenPayload>
+        }
+        deleteMany: {
+          args: Prisma.PasswordResetTokenDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PasswordResetTokenUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PasswordResetTokenUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasswordResetTokenPayload>[]
+        }
+        upsert: {
+          args: Prisma.PasswordResetTokenUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PasswordResetTokenPayload>
+        }
+        aggregate: {
+          args: Prisma.PasswordResetTokenAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePasswordResetToken>
+        }
+        groupBy: {
+          args: Prisma.PasswordResetTokenGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PasswordResetTokenGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PasswordResetTokenCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PasswordResetTokenCountAggregateOutputType> | number
         }
       }
     }
@@ -4684,6 +4759,19 @@ export const SessionScalarFieldEnum = {
 export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
 
 
+export const PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  tokenHash: 'tokenHash',
+  userId: 'userId',
+  expiresAt: 'expiresAt',
+  consumedAt: 'consumedAt',
+  requestedByAdminId: 'requestedByAdminId',
+  createdAt: 'createdAt'
+} as const
+
+export type PasswordResetTokenScalarFieldEnum = (typeof PasswordResetTokenScalarFieldEnum)[keyof typeof PasswordResetTokenScalarFieldEnum]
+
+
 export const RoleScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -6157,6 +6245,7 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   session?: Prisma.SessionOmit
+  passwordResetToken?: Prisma.PasswordResetTokenOmit
   role?: Prisma.RoleOmit
   userRole?: Prisma.UserRoleOmit
   profile?: Prisma.ProfileOmit

@@ -51,6 +51,10 @@ describeWithDatabase("10-User Beta constraints and Core Workflow", () => {
       const email = `audit-${runId}-${i}@example.com`;
       const username = `audituser_${runId}_${i}`;
 
+      // Registering signs the new account in, so the next /sign-up would
+      // redirect to /app. Each iteration must start as an anonymous visitor for
+      // the loop to exercise the real registration path.
+      await page.context().clearCookies();
       await page.goto("/sign-up");
 
       // Wait for load

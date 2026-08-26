@@ -316,6 +316,7 @@ model User {
   createdAt                         DateTime                  @default(now())
   updatedAt                         DateTime                  @updatedAt
   sessions                          Session[]
+  passwordResetTokens               PasswordResetToken[]
   roles                             UserRole[]
   profile                           Profile?
   opportunities                     Opportunity[]             @relation("OpportunityOwner")
@@ -364,6 +365,25 @@ model Session {
   userAgent  String?
   ipAddress  String?
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// Single-use password reset grant.
+///
+/// Only the SHA-256 hash of the emitted token is stored, mirroring `Session`,
+/// so a database disclosure cannot be replayed as a reset link. `consumedAt`
+/// makes redemption idempotent and auditable without retaining the raw token.
+model PasswordResetToken {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  userId     String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  requestedByAdminId String?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])

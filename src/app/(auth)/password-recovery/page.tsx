@@ -5,7 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/form";
 import { passwordRecoveryAction } from "@/features/auth/actions";
 
-export default async function PasswordRecoveryPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+export default async function PasswordRecoveryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
   const params = await searchParams;
 
   return (
@@ -13,11 +17,19 @@ export default async function PasswordRecoveryPage({ searchParams }: { searchPar
       <main className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-md place-items-center px-4 py-10">
         <Card className="w-full">
           <BrandLogo className="mb-6 h-11" />
-          <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--px-primary)]">Recovery</p>
-          <h1 className="mt-2 text-3xl font-bold text-[color:var(--px-text)]">Recover password</h1>
+          <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--px-primary)]">
+            Recovery
+          </p>
+          <h1 className="mt-2 text-3xl font-bold text-[color:var(--px-text)]">
+            Recover password
+          </h1>
           {params.status === "requested" ? (
-            <p className="mt-3 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">
-              If that email exists, a recovery workflow has been recorded.
+            <p
+              className="mt-3 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800"
+              role="status"
+            >
+              If that email exists, a password reset link is on its way. The
+              link expires in 30 minutes.
             </p>
           ) : null}
           <form action={passwordRecoveryAction} className="mt-6 grid gap-4">

@@ -25,7 +25,21 @@ import {
   checkRegistrationGate,
   REGISTRATION_CLOSED_MESSAGE,
 } from "@/lib/registration/status";
-import { signInSchema, signUpSchema } from "@/lib/validation/auth";
+import {
+  emailSchema,
+  passwordSchema,
+  signInSchema,
+  signUpSchema,
+} from "@/lib/validation/auth";
+import {
+  consumePasswordResetToken,
+  hasExceededResetRequestLimit,
+  issuePasswordResetToken,
+} from "@/lib/auth/password-reset";
+import {
+  buildPasswordResetUrl,
+  passwordResetDelivery,
+} from "@/lib/auth/password-reset-delivery";
 
 export type AuthFormState = {
   fieldErrors?: Record<string, string>;
@@ -422,12 +436,115 @@ export async function signOutAction() {
   redirect("/sign-in?signedOut=1");
 }
 
+/**
+ * Request a password reset link.
+ *
+ * Always redirects to the same neutral confirmation, whether or not the email
+ * belongs to an account. Any branch that redirected differently - or returned
+ * faster - would turn this into an email-enumeration oracle.
+ *
+ * The previous implementation only wrote an audit row and reset nothing, so
+ * password recovery was non-functional.
+ */
 export async function passwordRecoveryAction(formData: FormData) {
-  const email = String(formData.get("email") ?? "");
-  await writeAuditLog({
-    action: "auth.password_recovery_requested",
-    entityType: "user",
-    metadata: { emailSubmitted: Boolean(email) },
-  });
+  const parsed = emailSchema.safeParse(formData.get("email") ?? "");
+
+  if (parsed.success && hasDatabaseUrl()) {
+    try {
+      const user = await getPrisma().user.findUnique({
+        select: { email: true, id: true, isActive: true },
+        where: { email: parsed.data },
+      });
+
+      // Unknown address, deactivated account, or too many recent requests all
+      // fall through to the same neutral response below.
+      if (user?.isActive && !(await hasExceededResetRequestLimit(user.id))) {
+        const grant = await issuePasswordResetToken({ userId: user.id });
+        await passwordResetDelivery.deliverPasswordResetLink({
+          email: user.email,
+          expiresAt: grant.expiresAt,
+          resetUrl: buildPasswordResetUrl(grant.token),
+        });
+        await writeAuditLog({
+          action: "auth.password_reset_requested",
+          actorId: user.id,
+          entityId: user.id,
+          entityType: "user",
+        });
+      }
+    } catch (error) {
+      // Never surface infrastructure failure to the requester: it would
+      // distinguish "known account" from "unknown account".
+      logServerDataError({
+        error,
+        operation: "auth.password_reset_request",
+        route: "/password-recovery",
+      });
+    }
+  }
+
   redirect("/password-recovery?status=requested");
+}
+
+export type PasswordResetFormState = {
+  message?: string;
+  status: "idle" | "error";
+};
+
+/**
+ * Redeem a reset token and set a new password.
+ *
+ * The token is consumed atomically BEFORE the password is written, so a
+ * replayed link cannot set a password twice. All existing sessions are then
+ * destroyed: account recovery must evict an attacker who already holds a
+ * stolen session cookie.
+ */
+export async function resetPasswordAction(
+  _state: PasswordResetFormState,
+  formData: FormData,
+): Promise<PasswordResetFormState> {
+  const token = String(formData.get("token") ?? "");
+  const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (password !== confirmPassword) {
+    return { message: "Passwords do not match.", status: "error" };
+  }
+  // Same policy as registration; see `passwordSchema`.
+  const parsedPassword = passwordSchema.safeParse(password);
+  if (!parsedPassword.success) {
+    return {
+      message: parsedPassword.error.issues[0]?.message ?? "Invalid password.",
+      status: "error",
+    };
+  }
+  if (!hasDatabaseUrl()) {
+    return { message: "Password reset is unavailable.", status: "error" };
+  }
+
+  const consumed = await consumePasswordResetToken(token);
+  if (!consumed.ok) {
+    return {
+      message: "This reset link is invalid or has expired.",
+      status: "error",
+    };
+  }
+
+  const passwordHash = await hashPassword(parsedPassword.data);
+  await getPrisma().$transaction(async (tx) => {
+    await tx.user.update({
+      data: { passwordHash },
+      where: { id: consumed.userId },
+    });
+    // Server-authoritative sign-out of every existing session.
+    await tx.session.deleteMany({ where: { userId: consumed.userId } });
+  });
+  await writeAuditLog({
+    action: "auth.password_reset_completed",
+    actorId: consumed.userId,
+    entityId: consumed.userId,
+    entityType: "user",
+  });
+
+  redirect("/sign-in?passwordReset=1");
 }

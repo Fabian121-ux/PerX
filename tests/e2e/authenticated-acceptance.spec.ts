@@ -895,6 +895,132 @@ describeOrSkip(
       }
     }
 
+    /**
+     * Invocation-owned APPROVED Deal for the admin Deals summary assertions.
+     *
+     * The admin Deals page renders only the newest 20 records, so a shared
+     * seeded Deal is pushed off page one as soon as other tests accumulate
+     * Deal rows. This fixture creates its own opportunity, proposal, version
+     * and participants with unique identifiers, and stamps `createdAt` in the
+     * future so the record is deterministically first on page one.
+     */
+    async function createAdminDealFixture() {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      const runId = crypto.randomUUID().replaceAll("-", "");
+      const dealId = testCuid();
+      const opportunityId = testCuid();
+      const proposalId = testCuid();
+      const versionId = testCuid();
+      const title = `Admin deal fixture service ${runId.slice(0, 8)}`;
+      const proposalDescription = `Admin deal fixture proposal narrative ${runId}`;
+      const versionDescription = `Admin deal fixture version narrative ${runId}`;
+      try {
+        const users = await pool.query<{ email: string; id: string }>(
+          `SELECT id, email FROM "User"
+           WHERE email IN ('alice-test@perx.test', 'bob-test@perx.test')`,
+        );
+        const aliceId = users.rows.find(
+          (row) => row.email === "alice-test@perx.test",
+        )?.id;
+        const bobId = users.rows.find(
+          (row) => row.email === "bob-test@perx.test",
+        )?.id;
+        if (!aliceId || !bobId) throw new Error("Admin deal users not found");
+
+        await pool.query("BEGIN");
+        await pool.query(
+          `INSERT INTO "Opportunity" (
+             id, "ownerId", type, title, slug, summary, description, status,
+             "moderationStatus", "createdAt", "updatedAt"
+           ) VALUES ($1, $2, 'SERVICE', $3, $4, $5, $6, 'PUBLISHED', 'APPROVED', NOW(), NOW())`,
+          [
+            opportunityId,
+            aliceId,
+            title,
+            `admin-deal-fixture-${runId}`,
+            "Admin deal fixture opportunity summary.",
+            "Admin deal fixture opportunity description.",
+          ],
+        );
+        await pool.query(
+          `INSERT INTO "Proposal" (
+             id, "opportunityId", "senderId", description,
+             "amountMinor", currency, status, "deliveryDays", revisions,
+             "createdAt", "updatedAt"
+           ) VALUES ($1, $2, $3, $4, 100000, 'NGN', 'ACCEPTED', 7, 1, NOW(), NOW())`,
+          [proposalId, opportunityId, bobId, proposalDescription],
+        );
+        // Kept as DRAFT: `enforce_proposal_version_immutability` forbids
+        // deleting a submitted version, which would leak fixture rows.
+        await pool.query(
+          `INSERT INTO "ProposalVersion" (
+             id, "proposalId", "versionNumber", "createdById", description,
+             "amountMinor", currency, status, "deliveryDays", "includedRevisions",
+             "createdAt", "updatedAt"
+           ) VALUES ($1, $2, 1, $3, $4, 100000, 'NGN', 'DRAFT', 7, 1, NOW(), NOW())`,
+          [versionId, proposalId, bobId, versionDescription],
+        );
+        // Future-dated so this Deal sorts first on the bounded admin page.
+        await pool.query(
+          `INSERT INTO "Deal" (
+             id, "proposalId", "proposalVersionId", "opportunityId", status,
+             "valueMinor", currency, "settlementMode", "createdAt", "updatedAt"
+           ) VALUES ($1, $2, $3, $4, 'APPROVED', 100000, 'NGN', 'SIMULATED',
+             NOW() + INTERVAL '1 year', NOW() + INTERVAL '1 year')`,
+          [dealId, proposalId, versionId, opportunityId],
+        );
+        await pool.query(
+          `INSERT INTO "DealParticipant" (id, "dealId", "userId", role, "createdAt")
+           VALUES ($1, $2, $3, 'client', NOW()), ($4, $2, $5, 'provider', NOW())`,
+          [testCuid(), dealId, aliceId, testCuid(), bobId],
+        );
+        await pool.query("COMMIT");
+        return {
+          dealId,
+          opportunityId,
+          proposalDescription,
+          proposalId,
+          title,
+          versionDescription,
+          versionId,
+        };
+      } catch (error) {
+        await pool.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        await pool.end();
+      }
+    }
+
+    async function deleteAdminDealFixture({
+      dealId,
+      opportunityId,
+      proposalId,
+      versionId,
+    }: Awaited<ReturnType<typeof createAdminDealFixture>>) {
+      const { Pool } = await import("pg");
+      const pool = new Pool({ connectionString: TEST_DB, ssl: false });
+      try {
+        // DealParticipant cascades from Deal. The Deal row must go first
+        // because ProposalVersion is referenced by a composite FK.
+        await pool.query(`DELETE FROM "Deal" WHERE id = $1`, [dealId]);
+        await pool.query(
+          `DELETE FROM "ProposalVersionMilestone" WHERE "proposalVersionId" = $1`,
+          [versionId],
+        );
+        await pool.query(`DELETE FROM "ProposalVersion" WHERE id = $1`, [
+          versionId,
+        ]);
+        await pool.query(`DELETE FROM "Proposal" WHERE id = $1`, [proposalId]);
+        await pool.query(`DELETE FROM "Opportunity" WHERE id = $1`, [
+          opportunityId,
+        ]);
+      } finally {
+        await pool.end();
+      }
+    }
+
     async function createNotificationPaginationFixture() {
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: TEST_DB, ssl: false });
@@ -3526,6 +3652,7 @@ describeOrSkip(
       browser,
     }) => {
       const fixture = await createAdminUsersBrowserFixture();
+      const dealFixture = await createAdminDealFixture();
       const page = await browser.newPage();
       await createSession(page, "admin-test@perx.test");
       const { Pool } = await import("pg");
@@ -3606,27 +3733,6 @@ describeOrSkip(
             .getByRole("link", { name: "First page" }),
         ).toBeVisible();
 
-        const dealRecord = await pool.query<{
-          id: string;
-          proposalDescription: string;
-          versionDescription: string;
-        }>(
-          `SELECT deal.id,
-                  proposal.description AS "proposalDescription",
-                  version.description AS "versionDescription"
-           FROM "Deal" deal
-           JOIN "Proposal" proposal ON proposal.id = deal."proposalId"
-           JOIN "ProposalVersion" version ON version.id = deal."proposalVersionId"
-           JOIN "DealParticipant" participant ON participant."dealId" = deal.id
-           JOIN "User" participant_user ON participant_user.id = participant."userId"
-           WHERE deal.status = 'APPROVED'
-             AND deal."valueMinor" = 100000
-             AND participant_user.email = 'bob-test@perx.test'
-           ORDER BY deal."updatedAt", deal.id
-           LIMIT 1`,
-        );
-        expect(dealRecord.rows).toHaveLength(1);
-
         response = await page.goto(`${BASE}/admin/deals`);
         expect(response?.status()).toBe(200);
         main = page.locator("main");
@@ -3635,12 +3741,11 @@ describeOrSkip(
         ).toBeVisible();
         const approvedDeal = main
           .locator("article")
-          .filter({ hasText: "Agreement value: ₦1,000" })
-          .filter({ hasText: "@bob_test · provider" })
+          .filter({ hasText: `Deal reference: ${dealFixture.dealId}` })
           .first();
-        await expect(approvedDeal).toContainText(
-          "Full-stack development service",
-        );
+        await expect(approvedDeal).toContainText("Agreement value: ₦1,000");
+        await expect(approvedDeal).toContainText("@bob_test · provider");
+        await expect(approvedDeal).toContainText(dealFixture.title);
         await expect(
           approvedDeal.getByText("approved", { exact: true }),
         ).toBeVisible();
@@ -3649,9 +3754,6 @@ describeOrSkip(
           "2 participants · 0 milestones · 0 unresolved disputes",
         );
         await expect(approvedDeal).toContainText("@alice_test · client");
-        await expect(approvedDeal).toContainText(
-          `Deal reference: ${dealRecord.rows[0]!.id}`,
-        );
         expect(await main.locator("article").count()).toBeLessThanOrEqual(20);
         await expect(main.locator('a[href^="/admin/deals/"]')).toHaveCount(0);
         await expect(
@@ -3668,8 +3770,8 @@ describeOrSkip(
           fixture.privateMessageBody,
           fixture.sessionHash,
           fixture.storageKey,
-          dealRecord.rows[0]!.proposalDescription,
-          dealRecord.rows[0]!.versionDescription,
+          dealFixture.proposalDescription,
+          dealFixture.versionDescription,
         ]) {
           expect(dealPayload).not.toContain(sensitive);
         }
@@ -3677,6 +3779,7 @@ describeOrSkip(
         await pool.end();
         if (!page.isClosed()) await page.close();
         await deleteAdminUsersBrowserFixture(fixture);
+        await deleteAdminDealFixture(dealFixture);
       }
     });
 

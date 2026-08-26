@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   applyEnforcementAction,
+  initiateUserPasswordResetAction,
   recordMessageScopeRevealAction,
   updateModerationCaseStatusAction,
 } from "@/features/admin/actions";
@@ -28,6 +29,7 @@ export default async function AdminModerationCasePage({
   const admin = await requireCapabilityOrNotFound("admin:moderate");
   const canReadMessages = hasCapability(admin.roles, "messages:moderate");
   const canEnforce = hasCapability(admin.roles, "enforcement:manage");
+  const canManageUsers = hasCapability(admin.roles, "users:manage");
   const { caseId } = await params;
   const moderationCase = await getAdminModerationCase(caseId);
   if (!moderationCase) notFound();
@@ -294,6 +296,36 @@ export default async function AdminModerationCasePage({
                 />
               </label>
               <Button type="submit">Apply action</Button>
+            </form>
+          ) : null}
+
+          {canManageUsers && moderationCase.reportedUserId ? (
+            /*
+              Account recovery, not password replacement: this sends the user a
+              single-use reset link. The admin never sees or chooses the
+              password, and never sees the stored hash. Gated again on the
+              server by `users:manage`.
+            */
+            <form
+              action={initiateUserPasswordResetAction}
+              className="grid gap-3 rounded-[var(--px-radius)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4"
+            >
+              <input
+                name="userId"
+                type="hidden"
+                value={moderationCase.reportedUserId}
+              />
+              <h3 className="text-sm font-black text-[color:var(--px-text)]">
+                Account recovery
+              </h3>
+              <p className="text-sm text-[color:var(--px-text-muted)]">
+                Sends this user a single-use password reset link. Existing
+                sessions end once they choose a new password. The current
+                password is never shown to administrators.
+              </p>
+              <Button type="submit" variant="secondary">
+                Send password reset link
+              </Button>
             </form>
           ) : null}
         </div>

@@ -20,6 +20,11 @@ import { getPrisma } from "@/lib/db/prisma";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { normalizeNotificationActionUrl } from "@/lib/notifications/action-url";
 import { lockUserAccount } from "@/lib/network/pair-lock";
+import { issuePasswordResetToken } from "@/lib/auth/password-reset";
+import {
+  buildPasswordResetUrl,
+  passwordResetDelivery,
+} from "@/lib/auth/password-reset-delivery";
 import { isUnavailableInvestmentPublication } from "@/lib/opportunities/publication";
 
 function textValue(formData: FormData, key: string) {
@@ -1050,4 +1055,53 @@ export async function reviewPropertyListingAction(formData: FormData) {
   revalidatePath("/admin/opportunities");
   revalidatePath("/app/manage");
   revalidatePath("/discover");
+}
+
+/**
+ * Initiate a password reset for a user, as an authorized admin.
+ *
+ * Deliberately a *link initiation*, not a password replacement: the admin
+ * never chooses, sees, or transports the user's password, and never sees the
+ * existing bcrypt hash. The user completes the reset themselves through the
+ * ordinary single-use flow, so control of the account stays with the account
+ * holder.
+ *
+ * Gated on `users:manage` server-side. UI visibility is never the protection:
+ * this action re-checks the capability on every invocation.
+ */
+export async function initiateUserPasswordResetAction(formData: FormData) {
+  const admin = await requireCapabilityOrNotFound("users:manage");
+  const userId = textValue(formData, "userId");
+  if (!userId) throw new Error("Select a user to reset.");
+
+  const user = await getPrisma().user.findUnique({
+    select: { email: true, id: true, isActive: true },
+    where: { id: userId },
+  });
+  // Same neutral failure for "missing" and "inactive": an admin tool should
+  // still not become a probe for which accounts exist.
+  if (!user?.isActive) {
+    throw new Error("That account cannot be reset.");
+  }
+
+  const grant = await issuePasswordResetToken({
+    requestedByAdminId: admin.id,
+    userId: user.id,
+  });
+  await passwordResetDelivery.deliverPasswordResetLink({
+    email: user.email,
+    expiresAt: grant.expiresAt,
+    resetUrl: buildPasswordResetUrl(grant.token),
+  });
+
+  // Records who did it and to whom. Never the token, password, or hash.
+  await writeAuditLog({
+    action: "admin.user_password_reset_initiated",
+    actorId: admin.id,
+    entityId: user.id,
+    entityType: "user",
+    metadata: { expiresAt: grant.expiresAt.toISOString() },
+  });
+
+  revalidatePath("/admin/users");
 }

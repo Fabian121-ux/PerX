@@ -28,6 +28,15 @@ export type User = Prisma.UserModel
  */
 export type Session = Prisma.SessionModel
 /**
+ * Model PasswordResetToken
+ * Single-use password reset grant.
+ * 
+ * Only the SHA-256 hash of the emitted token is stored, mirroring `Session`,
+ * so a database disclosure cannot be replayed as a reset link. `consumedAt`
+ * makes redemption idempotent and auditable without retaining the raw token.
+ */
+export type PasswordResetToken = Prisma.PasswordResetTokenModel
+/**
  * Model Role
  * 
  */

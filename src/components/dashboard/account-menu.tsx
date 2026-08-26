@@ -5,7 +5,7 @@ import { UserRound, Settings, LogOut, Sun, Moon, Monitor, ChevronRight } from "l
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { signOutAction } from "@/features/auth/actions";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import type { CurrentUser } from "@/lib/auth/session";
 
 interface AccountMenuProps {
@@ -141,16 +141,14 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
               </Link>
             </DropdownMenu.Item>
           ) : (
-            <DropdownMenu.Item asChild>
-              <form action={signOutAction} className="w-full">
-                <button
-                  type="submit"
-                  className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 outline-none transition-colors hover:bg-red-50 focus:bg-red-50 dark:hover:bg-red-950/30 dark:focus:bg-red-950/30"
-                >
-                  <LogOut size={16} />
-                  Sign out
-                </button>
-              </form>
+            // `onSelect` is prevented so Radix does not close (and unmount)
+            // the menu before the sign-out request completes. Closing the menu
+            // cancelled the submission, which is why Sign out did nothing.
+            <DropdownMenu.Item
+              className="p-0"
+              onSelect={(event) => event.preventDefault()}
+            >
+              <SignOutButton className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 outline-none transition-colors hover:bg-red-50 focus:bg-red-50 disabled:opacity-70 dark:hover:bg-red-950/30 dark:focus:bg-red-950/30" />
             </DropdownMenu.Item>
           )}
 

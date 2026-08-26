@@ -1,3 +1,4 @@
+import { isSigningOut } from "@/lib/auth/client-session-cleanup";
 import type { HomeFeedPost } from "@/lib/data/home-feed-view";
 import type { HomeFeedSegment } from "@/lib/data/home-feed";
 
@@ -60,7 +61,9 @@ export function isExplicitReload(): boolean {
 
   try {
     const [entry] = window.performance.getEntriesByType("navigation");
-    return (entry as PerformanceNavigationTiming | undefined)?.type === "reload";
+    return (
+      (entry as PerformanceNavigationTiming | undefined)?.type === "reload"
+    );
   } catch {
     return false;
   }
@@ -112,6 +115,10 @@ export function readFeedCache(userId: string): CachedFeed | null {
 }
 
 export function writeFeedCache(entry: Omit<CachedFeed, "savedAt">) {
+  // Signing out purges this cache; without this guard the home feed's unmount
+  // persist would immediately rewrite the previous account's private feed as
+  // the router navigates to the sign-in page.
+  if (isSigningOut()) return;
   if (typeof window === "undefined") return;
 
   try {

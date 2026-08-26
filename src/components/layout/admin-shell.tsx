@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { BrandLogo } from "@/components/brand-logo";
-import { signOutAction } from "@/features/auth/actions";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import type { CurrentUser } from "@/lib/auth/session";
 
 const adminLinks = [
@@ -51,14 +51,7 @@ export function AdminShell({
             >
               User app
             </Link>
-            <form action={signOutAction}>
-              <button
-                className="rounded-[var(--px-radius-sm)] border border-white/15 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10"
-                type="submit"
-              >
-                Sign out
-              </button>
-            </form>
+            <SignOutButton className="inline-flex items-center gap-2 rounded-[var(--px-radius-sm)] border border-white/15 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 disabled:opacity-70" />
           </div>
         </div>
       </header>
