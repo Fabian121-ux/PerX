@@ -81,8 +81,10 @@ describeWithDatabase("10-User Beta constraints and Core Workflow", () => {
 
         if (page.url().includes("/app/profile/setup")) {
           successfulRegistrations++;
-          // Sign out for next user
-          await page.goto("/api/auth/clear-session?next=/sign-in");
+          // No sign-out navigation here: the next iteration clears cookies
+          // before loading /sign-up, which achieves the same anonymous start
+          // without an extra round trip. Eleven of those pushed this spec past
+          // the 90s budget when the suite runs in full.
         }
       }
     }

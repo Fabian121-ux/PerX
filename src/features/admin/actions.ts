@@ -625,7 +625,8 @@ export async function applyEnforcementAction(formData: FormData) {
         status: { in: [...activeMessageModerationCaseStatuses] },
       },
     });
-    if (!moderationCase) throw new Error("Case is not eligible for enforcement.");
+    if (!moderationCase)
+      throw new Error("Case is not eligible for enforcement.");
     if (
       !moderationCase.reportedUserId ||
       moderationCase.reportedUserId !== targetUserId
@@ -948,11 +949,10 @@ export async function reviewPropertyListingAction(formData: FormData) {
   if (decision === "approve" && !hasPublishingRequirements) {
     throw new Error("Property listing requirements are incomplete.");
   }
-  if (
-    decision === "approve" &&
-    isUnavailableInvestmentPublication(listing)
-  ) {
-    throw new Error("Co-investment listings are not available for publication.");
+  if (decision === "approve" && isUnavailableInvestmentPublication(listing)) {
+    throw new Error(
+      "Co-investment listings are not available for publication.",
+    );
   }
 
   const next =
@@ -1104,4 +1104,51 @@ export async function initiateUserPasswordResetAction(formData: FormData) {
   });
 
   revalidatePath("/admin/users");
+}
+
+/**
+ * Revoke every active session for a user.
+ *
+ * The account itself is untouched: no status field changes, nothing is
+ * deleted, and the user may sign in again immediately. This is the response to
+ * a *session* compromise - a shared laptop, a stolen cookie - not to
+ * misconduct. Misconduct goes through `applyEnforcementAction`, which requires
+ * a moderation case, an explanation, and an appeal path.
+ *
+ * Deleting the `Session` rows is the whole mechanism. Authorization reads the
+ * row on every request (`loadCurrentUser`), so removal takes effect on the
+ * next request rather than depending on any client-side flag.
+ *
+ * Audited inside the transaction: `writeAuditLog` swallows its own failures,
+ * which is acceptable for routine logging but not for an action that silently
+ * ejects someone from every device.
+ */
+export async function revokeUserSessionsAction(formData: FormData) {
+  const admin = await requireCapabilityOrNotFound("users:sessions:revoke");
+  const userId = textValue(formData, "userId");
+  if (!userId) throw new Error("Select a user.");
+
+  const user = await getPrisma().user.findUnique({
+    select: { id: true },
+    where: { id: userId },
+  });
+  if (!user) throw new Error("That account is unavailable.");
+
+  const revoked = await getPrisma().$transaction(async (tx) => {
+    const result = await tx.session.deleteMany({ where: { userId: user.id } });
+    await tx.auditLog.create({
+      data: {
+        action: "admin.user_sessions_revoked",
+        actorId: admin.id,
+        entityId: user.id,
+        entityType: "user",
+        metadata: { revokedSessions: result.count },
+      },
+    });
+    return result.count;
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath(`/admin/users/${user.id}`);
+  return { revoked };
 }

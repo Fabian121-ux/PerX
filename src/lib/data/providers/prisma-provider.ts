@@ -109,18 +109,15 @@ async function getUserProposalsPage(
         include: { milestones: { orderBy: { position: "asc" } } },
         orderBy: { versionNumber: "desc" },
         where:
-          direction === "received"
-            ? { submittedAt: { not: null } }
-            : undefined,
+          direction === "received" ? { submittedAt: { not: null } } : undefined,
       },
     },
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: pageSize + 1,
-    where: withCursor<Prisma.ProposalWhereInput>(
-      where,
-      cursor,
-      { direction: "desc", field: "createdAt" },
-    ),
+    where: withCursor<Prisma.ProposalWhereInput>(where, cursor, {
+      direction: "desc",
+      field: "createdAt",
+    }),
   });
   const hasNextPage = rows.length > pageSize;
   const items = hasNextPage ? rows.slice(0, pageSize) : rows;
@@ -192,7 +189,9 @@ async function getConversationsPage(
       _count: {
         select: {
           proposals: {
-            where: { status: { in: ["DRAFT", "SENT", "COUNTERED", "ACCEPTED"] } },
+            where: {
+              status: { in: ["DRAFT", "SENT", "COUNTERED", "ACCEPTED"] },
+            },
           },
         },
       },
@@ -216,7 +215,17 @@ async function getConversationsPage(
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         take: 1,
       },
-      opportunity: true,
+      // Five fields are consumed downstream; the full row carries the listing
+      // description, which can run to several kilobytes per conversation.
+      opportunity: {
+        select: {
+          currency: true,
+          moderationStatus: true,
+          ownerId: true,
+          status: true,
+          title: true,
+        },
+      },
       participants: {
         include: {
           user: {
@@ -226,7 +235,6 @@ async function getConversationsPage(
               name: true,
               profile: {
                 select: {
-                  biography: true,
                   headline: true,
                   location: true,
                   profileImageUrl: true,
@@ -271,11 +279,10 @@ async function getConversationsPage(
     },
     orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
     take: pageSize + 1,
-    where: withCursor<Prisma.ConversationWhereInput>(
-      where,
-      cursor,
-      { direction: "desc", field: "updatedAt" },
-    ),
+    where: withCursor<Prisma.ConversationWhereInput>(where, cursor, {
+      direction: "desc",
+      field: "updatedAt",
+    }),
   });
   const hasNextPage = rows.length > pageSize;
   const items = hasNextPage ? rows.slice(0, pageSize) : rows;
@@ -313,11 +320,10 @@ async function getConversationMessagesPage(
     conversationId,
   };
   const rows = await getPrisma().message.findMany({
-    where: withCursor<Prisma.MessageWhereInput>(
-      where,
-      cursor,
-      { direction: "desc", field: "createdAt" },
-    ),
+    where: withCursor<Prisma.MessageWhereInput>(where, cursor, {
+      direction: "desc",
+      field: "createdAt",
+    }),
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: pageSize + 1,
     include: {
@@ -390,11 +396,10 @@ async function getAdminUsersPage(
       verificationStatus: true,
     },
     take: pageSize + 1,
-    where: withCursor<Prisma.UserWhereInput>(
-      {},
-      cursor,
-      { direction: "desc", field: "createdAt" },
-    ),
+    where: withCursor<Prisma.UserWhereInput>({}, cursor, {
+      direction: "desc",
+      field: "createdAt",
+    }),
   });
   const hasNextPage = rows.length > pageSize;
   const pageRows = hasNextPage ? rows.slice(0, pageSize) : rows;
@@ -461,11 +466,10 @@ async function getAdminDealsPage(
       valueMinor: true,
     },
     take: pageSize + 1,
-    where: withCursor<Prisma.DealWhereInput>(
-      {},
-      cursor,
-      { direction: "desc", field: "updatedAt" },
-    ),
+    where: withCursor<Prisma.DealWhereInput>({}, cursor, {
+      direction: "desc",
+      field: "updatedAt",
+    }),
   });
   const hasNextPage = rows.length > pageSize;
   const pageRows = hasNextPage ? rows.slice(0, pageSize) : rows;
@@ -492,7 +496,10 @@ async function getAdminDealsPage(
   });
 }
 
-async function getAdminListPage(kind: AdminListKind, params?: CursorPageParams) {
+async function getAdminListPage(
+  kind: AdminListKind,
+  params?: CursorPageParams,
+) {
   if (kind === "users") return getAdminUsersPage(params);
   if (kind === "deals") return getAdminDealsPage(params);
   const scope = `admin:${kind}`;
@@ -500,7 +507,14 @@ async function getAdminListPage(kind: AdminListKind, params?: CursorPageParams) 
     params,
     scope,
   );
-  const page = (rows: Array<{ id: string; createdAt?: Date | null; updatedAt?: Date | null }>, field: "createdAt" | "updatedAt") => {
+  const page = (
+    rows: Array<{
+      id: string;
+      createdAt?: Date | null;
+      updatedAt?: Date | null;
+    }>,
+    field: "createdAt" | "updatedAt",
+  ) => {
     const hasNextPage = rows.length > pageSize;
     const items = hasNextPage ? rows.slice(0, pageSize) : rows;
     return createCursorPage(items, {
@@ -525,11 +539,10 @@ async function getAdminListPage(kind: AdminListKind, params?: CursorPageParams) 
           user: { select: { id: true, name: true, username: true } },
         },
         take: pageSize + 1,
-        where: withCursor<Prisma.ProfileWhereInput>(
-          {},
-          cursor,
-          { direction: "desc", field: "updatedAt" },
-        ),
+        where: withCursor<Prisma.ProfileWhereInput>({}, cursor, {
+          direction: "desc",
+          field: "updatedAt",
+        }),
       });
       return page(rows, "updatedAt");
     }
@@ -546,11 +559,10 @@ async function getAdminListPage(kind: AdminListKind, params?: CursorPageParams) 
           updatedAt: true,
         },
         take: pageSize + 1,
-        where: withCursor<Prisma.OpportunityWhereInput>(
-          {},
-          cursor,
-          { direction: "desc", field: "updatedAt" },
-        ),
+        where: withCursor<Prisma.OpportunityWhereInput>({}, cursor, {
+          direction: "desc",
+          field: "updatedAt",
+        }),
       });
       return page(rows, "updatedAt");
     }
@@ -566,11 +578,10 @@ async function getAdminListPage(kind: AdminListKind, params?: CursorPageParams) 
           status: true,
         },
         take: pageSize + 1,
-        where: withCursor<Prisma.OpportunityReportWhereInput>(
-          {},
-          cursor,
-          { direction: "desc", field: "createdAt" },
-        ),
+        where: withCursor<Prisma.OpportunityReportWhereInput>({}, cursor, {
+          direction: "desc",
+          field: "createdAt",
+        }),
       });
       return page(rows, "createdAt");
     }
@@ -589,11 +600,10 @@ async function getAdminListPage(kind: AdminListKind, params?: CursorPageParams) 
           visibility: true,
         },
         take: pageSize + 1,
-        where: withCursor<Prisma.ReviewWhereInput>(
-          {},
-          cursor,
-          { direction: "desc", field: "createdAt" },
-        ),
+        where: withCursor<Prisma.ReviewWhereInput>({}, cursor, {
+          direction: "desc",
+          field: "createdAt",
+        }),
       });
       return page(rows, "createdAt");
     }
@@ -610,11 +620,10 @@ async function getAdminListPage(kind: AdminListKind, params?: CursorPageParams) 
           updatedAt: true,
         },
         take: pageSize + 1,
-        where: withCursor<Prisma.DisputeWhereInput>(
-          {},
-          cursor,
-          { direction: "desc", field: "createdAt" },
-        ),
+        where: withCursor<Prisma.DisputeWhereInput>({}, cursor, {
+          direction: "desc",
+          field: "createdAt",
+        }),
       });
       return page(rows, "createdAt");
     }
@@ -636,11 +645,10 @@ async function getAdminListPage(kind: AdminListKind, params?: CursorPageParams) 
           updatedAt: true,
         },
         take: pageSize + 1,
-        where: withCursor<Prisma.VerificationRequestWhereInput>(
-          {},
-          cursor,
-          { direction: "desc", field: "createdAt" },
-        ),
+        where: withCursor<Prisma.VerificationRequestWhereInput>({}, cursor, {
+          direction: "desc",
+          field: "createdAt",
+        }),
       });
       return page(rows, "createdAt");
     }
@@ -654,14 +662,15 @@ async function getAdminListPage(kind: AdminListKind, params?: CursorPageParams) 
           entityId: true,
           entityType: true,
           id: true,
-          metadata: true,
+          // `metadata` is an unbounded Json column and the list renders a
+          // summary row. It is fetched only when a single entry is opened,
+          // so a page of 30 never ships 30 arbitrary payloads.
         },
         take: pageSize + 1,
-        where: withCursor<Prisma.AuditLogWhereInput>(
-          {},
-          cursor,
-          { direction: "desc", field: "createdAt" },
-        ),
+        where: withCursor<Prisma.AuditLogWhereInput>({}, cursor, {
+          direction: "desc",
+          field: "createdAt",
+        }),
       });
       return page(rows, "createdAt");
     }
@@ -742,7 +751,9 @@ export const prismaProvider: PerXDataProvider = {
       };
     },
     getCategories: async () => {
-      return getPrisma().opportunityCategory.findMany({ orderBy: { name: "asc" } });
+      return getPrisma().opportunityCategory.findMany({
+        orderBy: { name: "asc" },
+      });
     },
     getMyOpportunities: (userId: string) =>
       collectCursorPages((params) => getMyOpportunitiesPage(userId, params)),
@@ -750,29 +761,30 @@ export const prismaProvider: PerXDataProvider = {
   },
   app: {
     getDashboardMetrics: async (userId: string) => {
-      const [opportunities, proposals, deals, notifications] = await Promise.all([
-        getPrisma().opportunity.count({ where: { ownerId: userId } }),
-        getPrisma().proposal.count({
-          where: { senderId: userId, status: { in: ["SENT", "COUNTERED"] } },
-        }),
-        getPrisma().dealParticipant.count({
-          where: {
-            deal: {
-              status: {
-                in: [
-                  "AWAITING_FUNDING",
-                  "FUNDED",
-                  "IN_PROGRESS",
-                  "SUBMITTED",
-                  "UNDER_REVIEW",
-                ],
+      const [opportunities, proposals, deals, notifications] =
+        await Promise.all([
+          getPrisma().opportunity.count({ where: { ownerId: userId } }),
+          getPrisma().proposal.count({
+            where: { senderId: userId, status: { in: ["SENT", "COUNTERED"] } },
+          }),
+          getPrisma().dealParticipant.count({
+            where: {
+              deal: {
+                status: {
+                  in: [
+                    "AWAITING_FUNDING",
+                    "FUNDED",
+                    "IN_PROGRESS",
+                    "SUBMITTED",
+                    "UNDER_REVIEW",
+                  ],
+                },
               },
+              userId,
             },
-            userId,
-          },
-        }),
-        getPrisma().notification.count({ where: { readAt: null, userId } }),
-      ]);
+          }),
+          getPrisma().notification.count({ where: { readAt: null, userId } }),
+        ]);
       return { deals, notifications, opportunities, proposals };
     },
     getUserProposals: (userId: string, direction: "sent" | "received") =>
@@ -874,7 +886,15 @@ export const prismaProvider: PerXDataProvider = {
   admin: {
     getAdminDealsPage,
     getAdminMetrics: async () => {
-      const [users, opportunities, reports, reviews, disputes, verification, auditLogs] = await Promise.all([
+      const [
+        users,
+        opportunities,
+        reports,
+        reviews,
+        disputes,
+        verification,
+        auditLogs,
+      ] = await Promise.all([
         getPrisma().user.count(),
         getPrisma().opportunity.count(),
         getPrisma().opportunityReport.count({ where: { status: "OPEN" } }),
@@ -883,7 +903,15 @@ export const prismaProvider: PerXDataProvider = {
         getPrisma().verificationRequest.count({ where: { status: "PENDING" } }),
         getPrisma().auditLog.count(),
       ]);
-      return { auditLogs, disputes, opportunities, reports, reviews, users, verification };
+      return {
+        auditLogs,
+        disputes,
+        opportunities,
+        reports,
+        reviews,
+        users,
+        verification,
+      };
     },
     getAdminList: async (kind) =>
       (

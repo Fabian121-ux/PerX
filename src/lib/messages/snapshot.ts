@@ -372,7 +372,11 @@ function conversationSnapshotInclude(fullHistory: boolean) {
             name: true,
             profile: {
               select: {
-                biography: true,
+                // Only the opened conversation needs the biography: it renders
+                // in the details drawer for one participant. Selecting it for
+                // every row shipped up to 1600 characters per conversation on
+                // every snapshot, including the periodic reconciliation.
+                biography: fullHistory,
                 headline: true,
                 location: true,
                 profileImageUrl: true,

@@ -24,6 +24,7 @@ const inheritedEnvironment = Object.fromEntries(
 );
 
 export default defineConfig({
+  globalSetup: "./tests/e2e/utils/global-setup.ts",
   testDir: "./tests/e2e",
   timeout: 90_000,
   retries: process.env.CI ? 2 : 1,

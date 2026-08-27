@@ -8,19 +8,36 @@ import { getServerEnv } from "@/lib/env";
  * than invent Production credentials or add a provider nobody asked for, this
  * is a narrow seam with one server-side implementation today.
  *
- * When an email provider is introduced, replace the body of
- * `deliverPasswordResetLink` and nothing else changes: callers already treat
- * delivery as fire-and-forget and always return the same neutral response.
+ * To connect a real provider, implement `PasswordResetDelivery` and swap the
+ * export below - no caller changes. Return `"delivered"` only when the provider
+ * has actually accepted the message.
  *
  * The link is never logged in production, because anything written to a log
  * pipeline is a working credential until it expires.
  */
+
+/**
+ * What actually happened, so the UI can describe it truthfully.
+ *
+ * - `delivered`     a provider accepted the message
+ * - `logged`        development seam; the link went to the server console
+ * - `unconfigured`  no provider exists, so nothing was sent
+ *
+ * Returning a result rather than `void` is the point: without it every caller
+ * has to assume success, and the interface ends up telling users an email is on
+ * its way when nothing was sent.
+ */
+export type PasswordResetDeliveryOutcome =
+  | "delivered"
+  | "logged"
+  | "unconfigured";
+
 export type PasswordResetDelivery = {
   deliverPasswordResetLink(input: {
     email: string;
     expiresAt: Date;
     resetUrl: string;
-  }): Promise<void>;
+  }): Promise<PasswordResetDeliveryOutcome>;
 };
 
 function isDevelopmentDelivery() {
@@ -34,7 +51,7 @@ export const passwordResetDelivery: PasswordResetDelivery = {
       console.info(
         `[password-reset] link for ${email} (expires ${expiresAt.toISOString()}): ${resetUrl}`,
       );
-      return;
+      return "logged";
     }
 
     // No production email provider is configured yet. Failing loudly here
@@ -43,8 +60,20 @@ export const passwordResetDelivery: PasswordResetDelivery = {
     console.warn(
       "[password-reset] no email provider configured; reset link was not delivered",
     );
+    return "unconfigured";
   },
 };
+
+/**
+ * Whether reset links can actually reach a user right now.
+ *
+ * Read by the admin surface so an operator is told plainly that no provider is
+ * connected, instead of being shown a success message for an email that was
+ * never sent.
+ */
+export function isPasswordResetDeliveryConfigured() {
+  return isDevelopmentDelivery();
+}
 
 export function buildPasswordResetUrl(token: string) {
   const base = getServerEnv().NEXT_PUBLIC_APP_URL ?? "";

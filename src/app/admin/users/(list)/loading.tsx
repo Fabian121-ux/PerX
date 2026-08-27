@@ -1,8 +1,21 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+/*
+  Scoped to the `(list)` group on purpose.
+
+  At `admin/users/loading.tsx` this boundary also wrapped `[userId]`, and Next
+  flushes the response when the fallback streams - so `notFound()` for an
+  unknown account could no longer set a status and answered 200. The route
+  group keeps the skeleton for the list while the detail route stays gated.
+*/
+
 export default function AdminLoading() {
   return (
-    <div aria-busy="true" aria-label="Loading admin tools" className="grid gap-5">
+    <div
+      aria-busy="true"
+      aria-label="Loading admin tools"
+      className="grid gap-5"
+    >
       <div className="grid gap-2">
         <Skeleton className="h-8 w-56 bg-white/15" />
         <Skeleton className="h-4 w-96 max-w-full bg-white/10" />

@@ -3681,10 +3681,15 @@ describeOrSkip(
         await expect(restrictedUser).toContainText(
           "publishing restricted until",
         );
-        await expect(main.locator('a[href^="/admin/users/"]')).toHaveCount(0);
+        // The list navigates to the detail record but must never mutate from
+        // here: account actions belong on the detail page, where the capability
+        // is re-checked and the change is audited against a named user.
+        await expect(
+          main.locator('a[href^="/admin/users/"]').first(),
+        ).toBeVisible();
         await expect(
           main.locator(
-            "article a, article form, article input, article select, article textarea, article button",
+            "article form, article input, article select, article textarea, article button",
           ),
         ).toHaveCount(0);
         const firstPayload = await page.content();

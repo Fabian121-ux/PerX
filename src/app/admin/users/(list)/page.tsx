@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { AdminList, AdminSection } from "@/components/admin-section";
 import { CursorPagination } from "@/components/cursor-pagination";
 import { requireCapabilityOrNotFound } from "@/lib/auth/session";
@@ -41,7 +43,17 @@ function AdminRecord({ item }: { item: AdminUserSummary }) {
     <article className="grid gap-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="font-bold text-[color:var(--px-text)]">{item.name}</h2>
+          <h2 className="font-bold text-[color:var(--px-text)]">
+            {/*
+              Navigation only. This list stays free of mutation controls - no
+              forms, inputs or submit buttons - so an account action always
+              happens on the detail record, where the capability is re-checked
+              and the change is audited against a named user.
+            */}
+            <Link className="hover:underline" href={`/admin/users/${item.id}`}>
+              {item.name}
+            </Link>
+          </h2>
           <p className="mt-1 break-all text-sm text-[color:var(--px-text-muted)]">
             @{item.username} · {item.email}
           </p>
@@ -75,15 +87,17 @@ function AdminRecord({ item }: { item: AdminUserSummary }) {
               className="rounded-full bg-amber-500/10 px-2.5 py-1"
               key={restriction.kind}
             >
-              {humanize(restriction.kind)} restricted until {restriction.until.toLocaleString()}
+              {humanize(restriction.kind)} restricted until{" "}
+              {restriction.until.toLocaleString()}
             </span>
           ))}
         </div>
       ) : null}
 
       <p className="text-sm text-[color:var(--px-text-muted)]">
-        {item.activity.ownedOpportunities} opportunities · {item.activity.completedAgreements}{" "}
-        completed agreements · {item.activity.publicReviewsReceived} public reviews
+        {item.activity.ownedOpportunities} opportunities ·{" "}
+        {item.activity.completedAgreements} completed agreements ·{" "}
+        {item.activity.publicReviewsReceived} public reviews
       </p>
       <p className="text-xs text-[color:var(--px-text-muted)]">
         Joined {item.createdAt.toLocaleDateString()}

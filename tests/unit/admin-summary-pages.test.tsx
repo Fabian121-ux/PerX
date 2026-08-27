@@ -16,7 +16,7 @@ vi.mock("@/lib/data/admin", () => ({
 }));
 
 import AdminDealsPage from "@/app/admin/deals/page";
-import AdminUsersPage from "@/app/admin/users/page";
+import AdminUsersPage from "@/app/admin/users/(list)/page";
 
 describe("admin operational summary pages", () => {
   beforeEach(() => {
@@ -74,18 +74,25 @@ describe("admin operational summary pages", () => {
     });
   });
 
-  it("renders typed user summaries without management controls or detail links", async () => {
+  it("renders typed user summaries that navigate to detail without mutating", async () => {
     const markup = renderToStaticMarkup(
       await AdminUsersPage({ searchParams: Promise.resolve({}) }),
     );
 
-    expect(mocks.requireCapabilityOrNotFound).toHaveBeenCalledWith("users:read");
+    expect(mocks.requireCapabilityOrNotFound).toHaveBeenCalledWith(
+      "users:read",
+    );
     expect(markup).toContain("Maya Client");
     expect(markup).toContain("3 opportunities");
     expect(markup).toContain("2 completed agreements");
     expect(markup).toContain("4 public reviews");
-    expect(markup).not.toContain("/admin/users/user-1");
+    // Navigation is expected; mutation is not. Account actions live on the
+    // detail record, where the capability is re-checked and the change is
+    // audited against a named user.
+    expect(markup).toContain("/admin/users/user-1");
     expect(markup).not.toContain("<form");
+    expect(markup).not.toContain("<button");
+    expect(markup).not.toContain("<input");
   });
 
   it("renders bounded Deal counts and settlement disclosure without transitions", async () => {
@@ -93,7 +100,9 @@ describe("admin operational summary pages", () => {
       await AdminDealsPage({ searchParams: Promise.resolve({}) }),
     );
 
-    expect(mocks.requireCapabilityOrNotFound).toHaveBeenCalledWith("deals:review");
+    expect(mocks.requireCapabilityOrNotFound).toHaveBeenCalledWith(
+      "deals:review",
+    );
     expect(markup).toContain("Keyboard delivery");
     expect(markup).toContain("Deal reference: deal-1");
     expect(markup).toContain("Online payment unavailable");

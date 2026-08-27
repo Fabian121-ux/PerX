@@ -89,7 +89,7 @@ test("forgot password returns a neutral response for unknown emails", async ({
   try {
     await page.goto(`${BASE}/password-recovery`);
     await page.getByLabel("Email").fill("definitely-not-a-user@perx.test");
-    await page.getByRole("button", { name: /request recovery/i }).click();
+    await page.getByRole("button", { name: /send reset link/i }).click();
 
     // Must not disclose whether the account exists.
     await expect(page.getByText(/if that email exists/i)).toBeVisible();

@@ -316,6 +316,15 @@ export function MessageWorkspace({
     null,
   );
   const conversationAuthorizationRequestRef = useRef(0);
+  /**
+   * Aborts the in-flight conversation snapshot when another is opened.
+   *
+   * The request-id guard already stops a stale response from being applied, but
+   * the transfer still completes. Switching quickly between conversations left
+   * several full snapshots downloading in parallel, each carrying its own
+   * message page - paid for on a mobile connection and then discarded.
+   */
+  const conversationOpenAbortRef = useRef<AbortController | null>(null);
   const conversationOpenRequestRef = useRef(0);
   const fullHistoryConversationIdsRef = useRef(
     new Set(
@@ -1515,10 +1524,13 @@ export function MessageWorkspace({
   const openMobileConversation = async (conversationId: string) => {
     const requestId = ++conversationOpenRequestRef.current;
     if (!fullHistoryConversationIdsRef.current.has(conversationId)) {
+      conversationOpenAbortRef.current?.abort();
+      const controller = new AbortController();
+      conversationOpenAbortRef.current = controller;
       try {
         const response = await fetch(
           `/api/messages/sync?conversationId=${encodeURIComponent(conversationId)}`,
-          { cache: "no-store" },
+          { cache: "no-store", signal: controller.signal },
         );
         if (requestId !== conversationOpenRequestRef.current) return;
         if (!response.ok) {
@@ -1562,7 +1574,12 @@ export function MessageWorkspace({
             highlightEventId,
           ),
         );
-      } catch {
+      } catch (error) {
+        // A superseded request is not a failure: opening another conversation
+        // aborts this one on purpose, and the id guard below already covers
+        // that case. Named explicitly so the intent survives future edits.
+        if (error instanceof DOMException && error.name === "AbortError")
+          return;
         if (requestId !== conversationOpenRequestRef.current) return;
         toast({
           description: "Please try again.",

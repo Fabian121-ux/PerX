@@ -41,7 +41,18 @@ export type Capability =
   | "trust:recalculate"
   | "trust:review"
   | "users:manage"
-  | "users:read";
+  | "users:read"
+  /**
+   * Sign a user out of every device.
+   *
+   * Separate from `users:manage` (which issues a reset link the user chooses to
+   * act on) because revocation takes effect immediately and without consent -
+   * it is the correct response to a stolen session, and the wrong thing to
+   * hand out casually. Kept distinct from `enforcement:manage` because that
+   * path deliberately requires a moderation case, and locking out a compromised
+   * account should not wait for one.
+   */
+  | "users:sessions:revoke";
 
 const capabilitiesByRole: Record<RoleName, Capability[]> = {
   MASTER_ADMIN: [
@@ -73,6 +84,7 @@ const capabilitiesByRole: Record<RoleName, Capability[]> = {
     "trust:review",
     "users:manage",
     "users:read",
+    "users:sessions:revoke",
   ],
   ADMIN: [
     "admin:access",
@@ -96,6 +108,7 @@ const capabilitiesByRole: Record<RoleName, Capability[]> = {
     "support:manage",
     "users:manage",
     "users:read",
+    "users:sessions:revoke",
   ],
   CLIENT: [
     "conversation:read:participant",
@@ -106,7 +119,11 @@ const capabilitiesByRole: Record<RoleName, Capability[]> = {
     "proposal:decide:received",
     "review:create:eligible",
   ],
-  FOUNDER: ["opportunity:create", "opportunity:update:own", "conversation:read:participant"],
+  FOUNDER: [
+    "opportunity:create",
+    "opportunity:update:own",
+    "conversation:read:participant",
+  ],
   FREELANCER: [
     "conversation:read:participant",
     "deal:transition:participant",
@@ -116,7 +133,11 @@ const capabilitiesByRole: Record<RoleName, Capability[]> = {
   ],
   INVESTOR: ["conversation:read:participant", "proposal:create"],
   MEMBER: [],
-  PROPERTY_OWNER: ["opportunity:create", "opportunity:update:own", "conversation:read:participant"],
+  PROPERTY_OWNER: [
+    "opportunity:create",
+    "opportunity:update:own",
+    "conversation:read:participant",
+  ],
   INTERNAL_TESTER: ["internal:tester"],
 };
 
@@ -128,7 +149,9 @@ export function hasCapability(roles: RoleName[], capability: Capability) {
   return getCapabilities(roles).has(capability);
 }
 
-export function normalizeRole(value: FormDataEntryValue | string): RoleName | null {
+export function normalizeRole(
+  value: FormDataEntryValue | string,
+): RoleName | null {
   const normalized = String(value).toUpperCase().replaceAll(" ", "_");
   return normalized in roleLabels ? (normalized as RoleName) : null;
 }

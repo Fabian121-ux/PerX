@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
-import { BrandLogo } from "@/components/brand-logo";
 import { PublicPageShell } from "@/components/standard-page";
 import { Card } from "@/components/ui/card";
+import { FormNotice } from "@/components/ui/form-notice";
 import { isPasswordResetTokenRedeemable } from "@/lib/auth/password-reset";
 import { hasDatabaseUrl } from "@/lib/env";
 
@@ -25,9 +25,8 @@ export default async function ResetPasswordPage({
 
   return (
     <PublicPageShell>
-      <main className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-md place-items-center px-4 py-10">
+      <main className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-md place-items-center px-4 py-10 sm:px-6 lg:px-8">
         <Card className="w-full">
-          <BrandLogo className="mb-6 h-11" />
           <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--px-primary)]">
             Recovery
           </p>
@@ -42,15 +41,21 @@ export default async function ResetPasswordPage({
                 other devices will be required.
               </p>
               <ResetPasswordForm token={token} />
+              <p className="mt-5 text-sm text-[color:var(--px-text-muted)]">
+                Changed your mind?{" "}
+                <Link
+                  className="font-medium text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"
+                  href="/sign-in"
+                >
+                  Back to sign in
+                </Link>
+              </p>
             </>
           ) : (
             <div className="mt-4 grid gap-4">
-              <p
-                className="rounded-[var(--px-radius-sm)] bg-amber-50 p-3 text-sm font-semibold text-amber-800"
-                role="alert"
-              >
+              <FormNotice tone="warning">
                 This reset link is invalid or has expired.
-              </p>
+              </FormNotice>
               <p className="text-sm text-[color:var(--px-text-muted)]">
                 Reset links can only be used once and expire shortly after they
                 are sent. Request a new one to continue.
