@@ -33,6 +33,52 @@ import {
 import { evaluatePolicy, isPolicyBlocking } from "@/lib/policy/enforcement";
 import { buildPublicOpportunityWhere } from "@/lib/data/public-opportunities";
 
+/**
+ * Result of a create/update attempt.
+ *
+ * The composer previously had no return channel at all: the action always
+ * redirected, so every failure - a mistyped budget, a blocked policy phrase, an
+ * unknown category - collapsed into `?error=check-fields` and the same
+ * "Please check your inputs and try again." banner. The schema was already
+ * producing precise, per-field messages; they were discarded at the redirect.
+ *
+ * `fieldErrors` is keyed by form field name so the composer can mark the exact
+ * control, and `message` carries the summary shown above the form.
+ */
+export type OpportunityFormState = {
+  fieldErrors?: Record<string, string>;
+  message?: string;
+  status: "error" | "idle";
+};
+
+/**
+ * Flatten Zod issues into one message per field.
+ *
+ * First issue wins: showing a single actionable sentence per control is more
+ * useful than stacking every rule that failed on the same input. Mirrors the
+ * reducer the auth actions already use.
+ */
+function fieldErrorsFromIssues(issues: {
+  issues: { message: string; path: PropertyKey[] }[];
+}) {
+  return issues.issues.reduce<Record<string, string>>((errors, issue) => {
+    const field = issue.path[0];
+    if (typeof field === "string" && !errors[field]) {
+      errors[field] = issue.message;
+    }
+    return errors;
+  }, {});
+}
+
+/** Summary line that states how many controls need attention. */
+function summarizeFieldErrors(fieldErrors: Record<string, string>) {
+  const count = Object.keys(fieldErrors).length;
+  if (count === 0) return "We could not save this yet.";
+  return count === 1
+    ? "We could not save this yet. 1 field needs your attention."
+    : `We could not save this yet. ${count} fields need your attention.`;
+}
+
 function slugify(value: string) {
   return value
     .toLowerCase()
@@ -83,7 +129,9 @@ function newOpportunityErrorHref(
 
 function propertyFieldsFromFormData(formData: FormData) {
   return {
-    authorityDeclaration: String(formData.get("authorityDeclaration") ?? "").trim(),
+    authorityDeclaration: String(
+      formData.get("authorityDeclaration") ?? "",
+    ).trim(),
     contactPreference: String(formData.get("contactPreference") ?? ""),
     listingRulesAccepted: formData.get("listingRulesAccepted") === "on",
     propertyListingType: String(formData.get("propertyListingType") ?? ""),
@@ -128,10 +176,14 @@ async function assertPropertyPublishReady({
   }
 }
 
-export async function createOpportunityAction(formData: FormData) {
+export async function createOpportunityAction(
+  _previous: OpportunityFormState,
+  formData: FormData,
+): Promise<OpportunityFormState> {
   const user = await requireUser();
+  // Server remains the authority. Navigation visibility never implies access.
   if (!hasCapability(user.roles, "opportunity:create"))
-    redirect("/app?error=forbidden");
+    redirect("/app/opportunities/new");
 
   if (getResolvedDataMode() === "mock") redirect("/app/market?mock=true");
   if (!hasDatabaseUrl())
@@ -160,13 +212,12 @@ export async function createOpportunityAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect(
-      newOpportunityErrorHref(
-        "check-fields",
-        formData.get("type"),
-        formData.get("category"),
-      ),
-    );
+    const fieldErrors = fieldErrorsFromIssues(parsed.error);
+    return {
+      fieldErrors,
+      message: summarizeFieldErrors(fieldErrors),
+      status: "error",
+    };
   }
   if (parsed.data.type === "INVESTMENT") {
     redirect("/app/opportunities/new?error=type-unavailable");
@@ -185,15 +236,16 @@ export async function createOpportunityAction(formData: FormData) {
     if (restriction) redirect("/app/manage?error=publishing-restricted");
   }
 
-  const categoryOption = findOption(opportunityCategoryOptions, parsed.data.category);
+  const categoryOption = findOption(
+    opportunityCategoryOptions,
+    parsed.data.category,
+  );
   if (!categoryOption) {
-    redirect(
-      newOpportunityErrorHref(
-        "check-fields",
-        parsed.data.type,
-        parsed.data.category,
-      ),
-    );
+    return {
+      fieldErrors: { category: "Choose a category from the list." },
+      message: summarizeFieldErrors({ category: "" }),
+      status: "error",
+    };
   }
 
   const policy = evaluatePolicy({
@@ -212,13 +264,15 @@ export async function createOpportunityAction(formData: FormData) {
   }
 
   if (isPolicyBlocking(policy)) {
-    redirect(
-      newOpportunityErrorHref(
-        "check-fields",
-        parsed.data.type,
-        parsed.data.category,
-      ),
-    );
+    // A content-policy rejection is not a typo. Telling the user to "check
+    // their inputs" sends them hunting through valid fields; the policy layer
+    // already provides a user-safe explanation.
+    return {
+      message:
+        policy.userMessage ??
+        "This content cannot be published because it breaches the PerX content policy.",
+      status: "error",
+    };
   }
 
   const categorySlug = categoryOption.value;
@@ -361,7 +415,8 @@ export async function updateOpportunityAction(
     type: formData.get("type"),
   });
 
-  if (!parsed.success) redirect(`/app/opportunities/${opportunityId}/edit?error=check-fields`);
+  if (!parsed.success)
+    redirect(`/app/opportunities/${opportunityId}/edit?error=check-fields`);
   if (
     wouldPersistUnavailableInvestmentPublication({
       currentStatus: opportunity.status,
@@ -399,7 +454,8 @@ export async function updateOpportunityAction(
     (parsed.data.category === opportunity.category?.slug
       ? findOption(allOpportunityCategoryOptions, parsed.data.category)
       : undefined);
-  if (!categoryOption) redirect(`/app/opportunities/${opportunityId}/edit?error=check-fields`);
+  if (!categoryOption)
+    redirect(`/app/opportunities/${opportunityId}/edit?error=check-fields`);
 
   const policy = evaluatePolicy({
     actorId: user.id,
@@ -471,7 +527,7 @@ export async function updateOpportunityAction(
             : null,
         publishedAt:
           nextStatus === "PUBLISHED" && parsed.data.type !== "PROPERTY"
-            ? opportunity.publishedAt ?? new Date()
+            ? (opportunity.publishedAt ?? new Date())
             : opportunity.publishedAt,
         propertyListingType:
           parsed.data.type === "PROPERTY"
@@ -485,7 +541,7 @@ export async function updateOpportunityAction(
           parsed.data.type === "PROPERTY"
             ? publishing
               ? "PENDING_VERIFICATION"
-              : opportunity.propertyVerificationState ?? "DRAFT"
+              : (opportunity.propertyVerificationState ?? "DRAFT")
             : null,
         listingRulesAccepted:
           parsed.data.type === "PROPERTY"
@@ -542,7 +598,11 @@ export async function updateOpportunityAction(
 }
 
 export async function publishOpportunityAction(opportunityId: string) {
-  await transitionOpportunity(opportunityId, "PUBLISHED", "opportunity.publish");
+  await transitionOpportunity(
+    opportunityId,
+    "PUBLISHED",
+    "opportunity.publish",
+  );
 }
 
 export async function pauseOpportunityAction(opportunityId: string) {
@@ -657,7 +717,7 @@ async function transitionOpportunity(
         pausedAt: toStatus === "PAUSED" ? new Date() : null,
         publishedAt:
           toStatus === "PUBLISHED"
-            ? opportunity.publishedAt ?? new Date()
+            ? (opportunity.publishedAt ?? new Date())
             : opportunity.publishedAt,
         status: toStatus,
       },
@@ -818,7 +878,7 @@ export async function duplicateOpportunityAction(opportunityId: string) {
 
 export async function bookmarkOpportunityAction(formData: FormData) {
   const user = await requireUser();
-  
+
   if (getResolvedDataMode() === "mock") redirect("/app/saved?mock=true");
   if (!hasDatabaseUrl()) redirect("/app/saved?error=database-not-configured");
 
@@ -883,7 +943,8 @@ export async function setOpportunityBookmarkAction(
 export async function reportOpportunityAction(formData: FormData) {
   const user = await requireUser();
 
-  if (getResolvedDataMode() === "mock") redirect("/discover?status=reported&mock=true");
+  if (getResolvedDataMode() === "mock")
+    redirect("/discover?status=reported&mock=true");
   if (!hasDatabaseUrl()) redirect("/discover?error=database-not-configured");
 
   const parsed = opportunityReportSchema.safeParse({

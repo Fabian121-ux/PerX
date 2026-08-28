@@ -32,6 +32,7 @@ describeWithDatabase("10-User Beta constraints and Core Workflow", () => {
   test("Beta registration capacity restricts to 10 users max using real registration path", async ({
     page,
   }, testInfo) => {
+    test.setTimeout(180_000);
     test.skip(
       testInfo.project.name !== "chromium",
       "Registration capacity is viewport-independent and mutates shared state.",

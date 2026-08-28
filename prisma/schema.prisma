@@ -26,6 +26,27 @@ enum AccountClassification {
   SYSTEM_ACCOUNT
 }
 
+/**
+ * Lifecycle of a request for trading (content creation) access.
+ *
+ * Modelled as an explicit application rather than a self-service toggle so the
+ * grant is reviewable and attributable. `NEEDS_CHANGES` exists so a reviewer can
+ * return an application without destroying the applicant's answers.
+ */
+enum TraderApplicationStatus {
+  DRAFT
+  PENDING_REVIEW
+  NEEDS_CHANGES
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum TraderApplicantKind {
+  INDIVIDUAL
+  BUSINESS
+}
+
 enum VerificationStatus {
   UNVERIFIED
   PENDING
@@ -317,6 +338,7 @@ model User {
   updatedAt                         DateTime                  @updatedAt
   sessions                          Session[]
   passwordResetTokens               PasswordResetToken[]
+  traderApplication                 TraderApplication?
   roles                             UserRole[]
   profile                           Profile?
   opportunities                     Opportunity[]             @relation("OpportunityOwner")
@@ -387,6 +409,35 @@ model PasswordResetToken {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+/**
+ * A user's request for trading access.
+ *
+ * One row per user (`userId @unique`): re-applying updates the existing record
+ * so the review history stays in one place rather than accumulating duplicates.
+ *
+ * Deliberately small. Identity documents are NOT collected - no verification
+ * requirement exists that would justify holding them, and the approval decision
+ * is a human review of stated intent.
+ */
+model TraderApplication {
+  id             String                  @id @default(cuid())
+  userId         String                  @unique
+  status         TraderApplicationStatus @default(DRAFT)
+  applicantKind  TraderApplicantKind     @default(INDIVIDUAL)
+  tradeCategory  String
+  headline       String
+  experience     String
+  reviewerId     String?
+  reviewerNote   String?
+  submittedAt    DateTime?
+  decidedAt      DateTime?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  user           User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, submittedAt])
 }
 
 model Role {

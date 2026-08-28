@@ -20,13 +20,19 @@ async function ensureRole(role: RoleName) {
   });
 }
 
-const selfAssignableRoles = new Set<RoleName>([
-  "CLIENT",
-  "FOUNDER",
-  "FREELANCER",
-  "INVESTOR",
-  "PROPERTY_OWNER",
-]);
+/**
+ * Roles a user may assign to themselves.
+ *
+ * CLIENT, FOUNDER and PROPERTY_OWNER were removed: each one carries
+ * `opportunity:create`, so this form was a self-service grant of creation
+ * access. Anyone could tick a box and bypass review entirely, which made the
+ * Create authorization gate decorative.
+ *
+ * Creation access is now requested through the trader application and granted
+ * by a reviewer. What remains here are descriptive roles that carry no
+ * publishing capability.
+ */
+const selfAssignableRoles = new Set<RoleName>(["FREELANCER", "INVESTOR"]);
 
 export async function updateRolesAction(formData: FormData) {
   const user = await requireUser();
@@ -44,12 +50,25 @@ export async function updateRolesAction(formData: FormData) {
 
   try {
     await getPrisma().$transaction(async (tx) => {
+      /*
+        Only the self-assignable roles are cleared and rewritten.
+
+        The previous predicate excluded ADMIN alone, so submitting this form
+        silently stripped MASTER_ADMIN, INTERNAL_TESTER, MEMBER, and any
+        reviewer-granted trading role - a user could revoke their own approved
+        access just by updating an unrelated preference.
+      */
       await tx.userRole.deleteMany({
-        where: { userId: user.id, role: { name: { not: "ADMIN" } } },
+        where: {
+          role: { name: { in: [...selfAssignableRoles] } },
+          userId: user.id,
+        },
       });
       for (const roleName of roles) {
         const role = await ensureRole(roleName);
-        await tx.userRole.create({ data: { roleId: role.id, userId: user.id } });
+        await tx.userRole.create({
+          data: { roleId: role.id, userId: user.id },
+        });
       }
     });
   } catch (error) {

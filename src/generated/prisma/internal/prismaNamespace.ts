@@ -387,6 +387,7 @@ export const ModelName = {
   User: 'User',
   Session: 'Session',
   PasswordResetToken: 'PasswordResetToken',
+  TraderApplication: 'TraderApplication',
   Role: 'Role',
   UserRole: 'UserRole',
   Profile: 'Profile',
@@ -456,7 +457,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "session" | "passwordResetToken" | "role" | "userRole" | "profile" | "profileSkill" | "portfolioItem" | "workHistory" | "verificationRequest" | "opportunityCategory" | "opportunity" | "opportunityImage" | "opportunityBookmark" | "opportunityReport" | "userReport" | "moderationCase" | "moderationCaseEvent" | "moderationMessageScope" | "enforcementAction" | "enforcementAppeal" | "opportunityStatusHistory" | "conversation" | "conversationParticipant" | "message" | "messageEdit" | "messageAttachment" | "messageReadReceipt" | "blockedUser" | "proposal" | "proposalVersion" | "proposalVersionMilestone" | "conversationEvent" | "proposalMilestone" | "proposalStatusHistory" | "deal" | "dealParticipant" | "dealMilestone" | "delivery" | "approval" | "release" | "refund" | "dispute" | "ledgerEntry" | "escrowStatusHistory" | "review" | "trustSignal" | "notification" | "adminBroadcast" | "broadcastDelivery" | "auditLog" | "moderationAction" | "connection" | "profileBookmark" | "supportTicket" | "ticketMessage" | "sponsoredContent"
+    modelProps: "user" | "session" | "passwordResetToken" | "traderApplication" | "role" | "userRole" | "profile" | "profileSkill" | "portfolioItem" | "workHistory" | "verificationRequest" | "opportunityCategory" | "opportunity" | "opportunityImage" | "opportunityBookmark" | "opportunityReport" | "userReport" | "moderationCase" | "moderationCaseEvent" | "moderationMessageScope" | "enforcementAction" | "enforcementAppeal" | "opportunityStatusHistory" | "conversation" | "conversationParticipant" | "message" | "messageEdit" | "messageAttachment" | "messageReadReceipt" | "blockedUser" | "proposal" | "proposalVersion" | "proposalVersionMilestone" | "conversationEvent" | "proposalMilestone" | "proposalStatusHistory" | "deal" | "dealParticipant" | "dealMilestone" | "delivery" | "approval" | "release" | "refund" | "dispute" | "ledgerEntry" | "escrowStatusHistory" | "review" | "trustSignal" | "notification" | "adminBroadcast" | "broadcastDelivery" | "auditLog" | "moderationAction" | "connection" | "profileBookmark" | "supportTicket" | "ticketMessage" | "sponsoredContent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -679,6 +680,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.PasswordResetTokenCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.PasswordResetTokenCountAggregateOutputType> | number
+        }
+      }
+    }
+    TraderApplication: {
+      payload: Prisma.$TraderApplicationPayload<ExtArgs>
+      fields: Prisma.TraderApplicationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TraderApplicationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraderApplicationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TraderApplicationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraderApplicationPayload>
+        }
+        findFirst: {
+          args: Prisma.TraderApplicationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraderApplicationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TraderApplicationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraderApplicationPayload>
+        }
+        findMany: {
+          args: Prisma.TraderApplicationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraderApplicationPayload>[]
+        }
+        create: {
+          args: Prisma.TraderApplicationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraderApplicationPayload>
+        }
+        createMany: {
+          args: Prisma.TraderApplicationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TraderApplicationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraderApplicationPayload>[]
+        }
+        delete: {
+          args: Prisma.TraderApplicationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraderApplicationPayload>
+        }
+        update: {
+          args: Prisma.TraderApplicationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraderApplicationPayload>
+        }
+        deleteMany: {
+          args: Prisma.TraderApplicationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TraderApplicationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TraderApplicationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraderApplicationPayload>[]
+        }
+        upsert: {
+          args: Prisma.TraderApplicationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TraderApplicationPayload>
+        }
+        aggregate: {
+          args: Prisma.TraderApplicationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTraderApplication>
+        }
+        groupBy: {
+          args: Prisma.TraderApplicationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TraderApplicationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TraderApplicationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TraderApplicationCountAggregateOutputType> | number
         }
       }
     }
@@ -4772,6 +4847,25 @@ export const PasswordResetTokenScalarFieldEnum = {
 export type PasswordResetTokenScalarFieldEnum = (typeof PasswordResetTokenScalarFieldEnum)[keyof typeof PasswordResetTokenScalarFieldEnum]
 
 
+export const TraderApplicationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  status: 'status',
+  applicantKind: 'applicantKind',
+  tradeCategory: 'tradeCategory',
+  headline: 'headline',
+  experience: 'experience',
+  reviewerId: 'reviewerId',
+  reviewerNote: 'reviewerNote',
+  submittedAt: 'submittedAt',
+  decidedAt: 'decidedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TraderApplicationScalarFieldEnum = (typeof TraderApplicationScalarFieldEnum)[keyof typeof TraderApplicationScalarFieldEnum]
+
+
 export const RoleScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -5673,6 +5767,34 @@ export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
 
 
 /**
+ * Reference to a field of type 'TraderApplicationStatus'
+ */
+export type EnumTraderApplicationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TraderApplicationStatus'>
+    
+
+
+/**
+ * Reference to a field of type 'TraderApplicationStatus[]'
+ */
+export type ListEnumTraderApplicationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TraderApplicationStatus[]'>
+    
+
+
+/**
+ * Reference to a field of type 'TraderApplicantKind'
+ */
+export type EnumTraderApplicantKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TraderApplicantKind'>
+    
+
+
+/**
+ * Reference to a field of type 'TraderApplicantKind[]'
+ */
+export type ListEnumTraderApplicantKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TraderApplicantKind[]'>
+    
+
+
+/**
  * Reference to a field of type 'RoleName'
  */
 export type EnumRoleNameFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RoleName'>
@@ -6246,6 +6368,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   session?: Prisma.SessionOmit
   passwordResetToken?: Prisma.PasswordResetTokenOmit
+  traderApplication?: Prisma.TraderApplicationOmit
   role?: Prisma.RoleOmit
   userRole?: Prisma.UserRoleOmit
   profile?: Prisma.ProfileOmit

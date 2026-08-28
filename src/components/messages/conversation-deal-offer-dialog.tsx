@@ -159,11 +159,14 @@ export function ConversationDealOfferDialog({
               />
             </Field>
             <div className="rounded-2xl border border-amber-400/40 bg-amber-500/10 p-3 text-xs leading-5 text-amber-900 dark:text-amber-100">
-              Payments are currently unavailable. This Deal records agreed
-              terms but does not hold funds.
+              Payments are currently unavailable. This Deal records agreed terms
+              but does not hold funds.
             </div>
             {error ? (
-              <p className="text-sm font-semibold text-[color:var(--px-error)]" role="alert">
+              <p
+                className="text-sm font-semibold text-[color:var(--px-error)]"
+                role="alert"
+              >
                 {error}
               </p>
             ) : null}

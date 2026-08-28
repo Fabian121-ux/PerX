@@ -1,5 +1,3 @@
-import "server-only";
-
 import { getPrisma } from "@/lib/db/prisma";
 import {
   getAdminActiveRestrictions,

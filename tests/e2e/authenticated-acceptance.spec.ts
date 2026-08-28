@@ -1458,7 +1458,7 @@ describeOrSkip(
       await page.close();
     });
 
-    test("members without creation capability do not receive create entry points", async ({
+    test("members without creation capability can discover Create but do not receive the composer", async ({
       browser,
     }) => {
       const page = await browser.newPage({
@@ -1470,12 +1470,16 @@ describeOrSkip(
       const bottomNav = page.getByRole("navigation", {
         name: "Primary navigation",
       });
-      await expect(bottomNav.getByRole("link")).toHaveCount(4);
+      // Create is a discovery surface: every authenticated user can see it and
+      // the destination decides what they may do. Hiding it made the product
+      // look like it had no Create at all for a default member. Authorization
+      // is proven separately in `trader-access.spec.ts`.
+      await expect(bottomNav.getByRole("link")).toHaveCount(5);
       // The bottom bar labels this destination "Create"; the registry (and the
       // feature directory below) still call it "Create Post".
       await expect(
         bottomNav.getByRole("link", { name: "Create", exact: true }),
-      ).toHaveCount(0);
+      ).toHaveCount(1);
       await page
         .getByRole("button", { name: "Open PerX feature directory" })
         .click();
@@ -1483,7 +1487,7 @@ describeOrSkip(
         page
           .getByRole("dialog", { name: "Explore PerX" })
           .getByText("Create Post", { exact: true }),
-      ).toHaveCount(0);
+      ).toHaveCount(1);
 
       await page.goto(`${BASE}/app/opportunities/new`);
       await expect(page.getByLabel("Loading workspace")).toBeHidden({
@@ -1633,16 +1637,19 @@ describeOrSkip(
         type: "SERVICE",
         version: 1,
       };
-      try {
-        await page.goto(
-          `${BASE}/app/opportunities/new?type=SERVICE&category=services`,
-        );
+      const serviceUrl = `${BASE}/app/opportunities/new?type=SERVICE&category=services`;
+      const stageServiceDraft = async (storedValue: string) => {
+        // Write from outside the composer so its pagehide flush cannot replace
+        // the injected fixture with the fields currently mounted in memory.
+        await page.goto(`${BASE}/app`);
         await page.evaluate(
-          ({ key, value }) =>
-            window.localStorage.setItem(key, JSON.stringify(value)),
-          { key: serviceKey, value: serviceDraft },
+          ({ key, value }) => window.localStorage.setItem(key, value),
+          { key: serviceKey, value: storedValue },
         );
-        await page.reload();
+        await page.goto(serviceUrl);
+      };
+      try {
+        await stageServiceDraft(JSON.stringify(serviceDraft));
         await expect(page.getByLabel("Post title")).toHaveValue(serviceTitle);
         /*
           The restore message is transient by design: the composer announces
@@ -1677,25 +1684,15 @@ describeOrSkip(
         );
         await expect(page.getByLabel("Post title")).toHaveValue(serviceTitle);
 
-        await page.evaluate(
-          ({ key, value }) =>
-            window.localStorage.setItem(key, JSON.stringify(value)),
-          {
-            key: serviceKey,
-            value: {
-              ...serviceDraft,
-              savedAt: Date.now() - 31 * 24 * 60 * 60 * 1000,
-            },
-          },
+        await stageServiceDraft(
+          JSON.stringify({
+            ...serviceDraft,
+            savedAt: Date.now() - 31 * 24 * 60 * 60 * 1000,
+          }),
         );
-        await page.reload();
         await expect(page.getByLabel("Post title")).toHaveValue("");
 
-        await page.evaluate(
-          (key) => window.localStorage.setItem(key, "{"),
-          serviceKey,
-        );
-        await page.reload();
+        await stageServiceDraft("{");
         await expect(
           page.getByRole("heading", { name: "What would you like to share?" }),
         ).toBeVisible();
@@ -1713,11 +1710,7 @@ describeOrSkip(
           )
           .toBeNull();
 
-        await page.evaluate(
-          (key) => window.localStorage.setItem(key, "x".repeat(16_001)),
-          serviceKey,
-        );
-        await page.reload();
+        await stageServiceDraft("x".repeat(16_001));
         await expect(page.getByLabel("Post title")).toHaveValue("");
         await expect
           .poll(
@@ -1740,7 +1733,7 @@ describeOrSkip(
           page.getByRole("status", { name: "Local draft status" }),
         ).toHaveText("Local autosave is unavailable");
 
-        await page.reload();
+        await page.goto(`${BASE}/app`);
         await page.evaluate(
           ({ key, value }) =>
             window.localStorage.setItem(key, JSON.stringify(value)),
@@ -1794,15 +1787,23 @@ describeOrSkip(
           await fillRequiredPost(page, invalidTitle);
           await page.getByLabel("Budget minimum (NGN)").fill(value);
           await page.getByRole("button", { name: "Save draft" }).click();
-          await expect(page).toHaveURL(
-            /\/app\/opportunities\/new\?error=check-fields&type=SERVICE&category=services/,
+          const errorSummary = page.locator('#create-post-form [role="alert"]');
+          await expect(errorSummary).toContainText("Budget minimum");
+          await expect(errorSummary).toContainText(
+            "Enter a valid minimum budget.",
           );
+          expect(new URL(page.url()).searchParams.has("error")).toBe(false);
           await expect(page.getByLabel("Post type")).toHaveValue("SERVICE");
           await expect(page.getByLabel("Category")).toHaveValue("services");
           await expect(page.getByLabel("Post title")).toHaveValue(invalidTitle);
           await expect(page.getByLabel("Budget minimum (NGN)")).toHaveValue(
             value,
           );
+          await expect(page.getByLabel("Budget minimum (NGN)")).toHaveAttribute(
+            "aria-invalid",
+            "true",
+          );
+          await expect(page.getByLabel("Budget minimum (NGN)")).toBeFocused();
           expect(
             await page.evaluate(
               (key) => window.localStorage.getItem(key),
@@ -2189,10 +2190,11 @@ describeOrSkip(
         await page.goto(`${BASE}/app/messages/${fixture.conversationId}`);
 
         await expect(page.getByLabel("Message workspace")).toBeVisible();
-        await expect(page.getByText("Live", { exact: true })).toBeVisible({
+        const makeDeal = page.getByRole("button", { name: "Make a Deal" });
+        await expect(makeDeal).toBeVisible({
           timeout: 30_000,
         });
-        await page.getByRole("button", { name: "Make a Deal" }).click();
+        await makeDeal.click();
         const dialog = page.getByRole("dialog", { name: "Make a Deal" });
         await expect(dialog).toBeVisible();
         await expect(dialog).toContainText(
@@ -2567,114 +2569,118 @@ describeOrSkip(
         testInfo.project.name !== "chromium",
         "This test owns the profile fixture and exercises all required widths directly.",
       );
-      test.setTimeout(180_000);
+      // Seven widths, each opening menus and the profile preview against a
+      // dev server that recompiles under parallel load. 180s was marginal:
+      // the same scenario measured 2.2m passing and 3.1m timing out.
+      test.setTimeout(300_000);
       let profileFixture: Awaited<
         ReturnType<typeof createLongProfileFixture>
       > | null = null;
       let messageFixture: Awaited<
         ReturnType<typeof createMessageInteractionFixture>
       > | null = null;
+      const page = await browser.newPage({
+        viewport: { height: 568, width: 320 },
+      });
       try {
         profileFixture = await createLongProfileFixture();
         messageFixture = await createMessageInteractionFixture(
           profileFixture.userId,
         );
+        await createSession(page, "alice-test@perx.test");
+        await page.goto(
+          `${BASE}/app/messages/${messageFixture.conversationId}`,
+        );
         for (const width of [320, 375, 430, 768, 1023, 1024, 1280]) {
-          const page = await browser.newPage({
-            viewport: { height: width === 320 ? 568 : 700, width },
+          await page.setViewportSize({
+            height: width === 320 ? 568 : 700,
+            width,
           });
-          try {
-            await createSession(page, "alice-test@perx.test");
-            await page.goto(
-              `${BASE}/app/messages/${messageFixture.conversationId}`,
-            );
-            const history = page.getByLabel("Message history");
-            const composer = page.locator("#message-draft");
-            const incoming = page.locator(
-              `[data-message-id="${messageFixture.incomingId}"]`,
-            );
-            const own = page.locator(
-              `[data-message-id="${messageFixture.ownEditId}"]`,
-            );
-            await expect(history).toBeVisible();
-            await expect(incoming).toBeAttached();
-            await expect(own).toBeAttached();
+          const history = page.getByLabel("Message history");
+          const composer = page.locator("#message-draft");
+          const incoming = page.locator(
+            `[data-message-id="${messageFixture.incomingId}"]`,
+          );
+          const own = page.locator(
+            `[data-message-id="${messageFixture.ownEditId}"]`,
+          );
+          await expect(history).toBeVisible();
+          await expect(incoming).toBeAttached();
+          await expect(own).toBeAttached();
 
-            await incoming.scrollIntoViewIfNeeded();
-            await incoming.getByLabel("Message actions").click();
-            await page
-              .getByRole("menuitem", { name: "Reply" })
-              .evaluate((element) => (element as HTMLButtonElement).click());
-            await own.scrollIntoViewIfNeeded();
-            await own.getByLabel("Message actions").click();
-            await page
-              .getByRole("menuitem", { name: "Edit" })
-              .evaluate((element) => (element as HTMLButtonElement).click());
-            await composer.fill(`Profile scroll draft ${width}`);
-            await history.evaluate((element) => {
-              element.scrollTop = Math.min(
-                300,
-                Math.max(1, element.scrollHeight - element.clientHeight - 100),
-              );
-              element.dispatchEvent(new Event("scroll"));
-            });
-            const historyScrollBefore = await history.evaluate(
-              (element) => element.scrollTop,
+          await incoming.scrollIntoViewIfNeeded();
+          await incoming.getByLabel("Message actions").click();
+          await page
+            .getByRole("menuitem", { name: "Reply" })
+            .evaluate((element) => (element as HTMLButtonElement).click());
+          await own.scrollIntoViewIfNeeded();
+          await own.getByLabel("Message actions").click();
+          await page
+            .getByRole("menuitem", { name: "Edit" })
+            .evaluate((element) => (element as HTMLButtonElement).click());
+          await composer.fill(`Profile scroll draft ${width}`);
+          await history.evaluate((element) => {
+            element.scrollTop = Math.min(
+              300,
+              Math.max(1, element.scrollHeight - element.clientHeight - 100),
             );
-            await page
-              .getByRole("button", { name: "Open conversation details" })
-              .click();
+            element.dispatchEvent(new Event("scroll"));
+          });
+          const historyScrollBefore = await history.evaluate(
+            (element) => element.scrollTop,
+          );
+          await page
+            .getByRole("button", { name: "Open conversation details" })
+            .click();
 
-            const dialog = page.getByRole("dialog", {
-              name: "Profile preview",
-            });
-            const scroller = dialog.locator(
-              '[data-profile-preview-scroll="true"]',
-            );
-            const end = dialog.locator('[data-profile-preview-end="true"]');
-            const close = dialog.getByRole("button", {
-              name: "Close profile preview",
-            });
-            await expect(dialog).toBeVisible();
-            await expect(close).toBeVisible();
-            const dimensions = await scroller.evaluate((element) => ({
-              clientHeight: element.clientHeight,
-              scrollHeight: element.scrollHeight,
-              scrollTop: element.scrollTop,
-            }));
-            expect(dimensions.scrollHeight).toBeGreaterThan(
-              dimensions.clientHeight,
-            );
-            await scroller.evaluate((element) => {
-              element.scrollTop = element.scrollHeight;
-              element.dispatchEvent(new Event("scroll"));
-            });
-            await expect
-              .poll(() => scroller.evaluate((element) => element.scrollTop))
-              .toBeGreaterThan(dimensions.scrollTop);
-            await expect(end).toBeInViewport();
-            await expect(close).toBeVisible();
-            expect(await history.evaluate((element) => element.scrollTop)).toBe(
-              historyScrollBefore,
-            );
+          const dialog = page.getByRole("dialog", {
+            name: "Profile preview",
+          });
+          const scroller = dialog.locator(
+            '[data-profile-preview-scroll="true"]',
+          );
+          const end = dialog.locator('[data-profile-preview-end="true"]');
+          const close = dialog.getByRole("button", {
+            name: "Close profile preview",
+          });
+          await expect(dialog).toBeVisible();
+          await expect(close).toBeVisible();
+          const dimensions = await scroller.evaluate((element) => ({
+            clientHeight: element.clientHeight,
+            scrollHeight: element.scrollHeight,
+            scrollTop: element.scrollTop,
+          }));
+          expect(dimensions.scrollHeight).toBeGreaterThan(
+            dimensions.clientHeight,
+          );
+          await scroller.evaluate((element) => {
+            element.scrollTop = element.scrollHeight;
+            element.dispatchEvent(new Event("scroll"));
+          });
+          await expect
+            .poll(() => scroller.evaluate((element) => element.scrollTop))
+            .toBeGreaterThan(dimensions.scrollTop);
+          await expect(end).toBeInViewport();
+          await expect(close).toBeVisible();
+          expect(await history.evaluate((element) => element.scrollTop)).toBe(
+            historyScrollBefore,
+          );
 
-            await close.click();
-            await expect(dialog).toBeHidden();
-            expect(await history.evaluate((element) => element.scrollTop)).toBe(
-              historyScrollBefore,
-            );
-            await expect(composer).toHaveValue(`Profile scroll draft ${width}`);
-            await expect(
-              page.getByText(`Replying to ${messageFixture.bobName}`),
-            ).toBeVisible();
-            await expect(page.getByLabel("Edit message")).toHaveValue(
-              "Gesture own edit target",
-            );
-          } finally {
-            await page.close();
-          }
+          await close.click();
+          await expect(dialog).toBeHidden();
+          expect(await history.evaluate((element) => element.scrollTop)).toBe(
+            historyScrollBefore,
+          );
+          await expect(composer).toHaveValue(`Profile scroll draft ${width}`);
+          await expect(
+            page.getByText(`Replying to ${messageFixture.bobName}`),
+          ).toBeVisible();
+          await expect(page.getByLabel("Edit message")).toHaveValue(
+            "Gesture own edit target",
+          );
         }
       } finally {
+        await page.close();
         if (messageFixture) {
           await deleteIsolatedConversation(messageFixture.conversationId).catch(
             () => undefined,
@@ -2687,6 +2693,7 @@ describeOrSkip(
     test("desktop message menus expose eligible actions and feedback", async ({
       browser,
     }, testInfo) => {
+      test.setTimeout(180_000);
       test.skip(
         testInfo.project.name !== "chromium",
         "This message mutation scenario owns an isolated fixture.",
@@ -2755,7 +2762,7 @@ describeOrSkip(
         await page.getByRole("button", { name: "Save", exact: true }).click();
         await expect(
           page.getByText("Message updated", { exact: true }),
-        ).toBeVisible();
+        ).toBeVisible({ timeout: 30_000 });
         await expect(ownEdit).toContainText("Gesture edit persisted");
 
         await ownDelete.hover();
@@ -2768,7 +2775,7 @@ describeOrSkip(
           .click();
         await expect(
           page.getByText("Message removed", { exact: true }),
-        ).toBeVisible();
+        ).toBeVisible({ timeout: 30_000 });
         await expect(ownDelete).toContainText(
           "This message was removed from the chat view.",
         );

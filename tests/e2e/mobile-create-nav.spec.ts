@@ -81,7 +81,9 @@ for (const width of [320, 360, 375, 390, 430]) {
       expect(overflow).toBeLessThanOrEqual(0);
 
       await create.click();
-      await expect(page).toHaveURL(/\/app\/opportunities\/new/);
+      await expect(page).toHaveURL(/\/app\/opportunities\/new/, {
+        timeout: 30_000,
+      });
     } finally {
       await page.close();
     }

@@ -374,6 +374,9 @@ describeOrSkip("Gated /app route status and loading proof", () => {
   test("all four deal routes each return 200/404/404 without disclosure", async ({
     page,
   }) => {
+    // Twelve full navigations against a dev server that compiles on demand.
+    // The default 90s budget is a harness limit, not a product expectation.
+    test.setTimeout(180_000);
     const routes = [
       { sentinel: fixture.opportunityTitle, suffix: "" },
       { sentinel: fixture.milestoneTitle, suffix: "/milestones" },

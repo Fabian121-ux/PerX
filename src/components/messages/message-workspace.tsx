@@ -413,6 +413,11 @@ export function MessageWorkspace({
   }, [mobileDetailOpen]);
 
   useEffect(() => {
+    if (!isMobileViewport || !mobileDetailOpen) return;
+    conversationHeaderRef.current?.focus();
+  }, [activeId, isMobileViewport, mobileDetailOpen]);
+
+  useEffect(() => {
     const updateVisibility = () =>
       setDocumentVisible(document.visibilityState === "visible");
     updateVisibility();
@@ -439,7 +444,6 @@ export function MessageWorkspace({
 
   const closeActionMenu = useCallback(() => {
     setOpenActionMenuMessageId("");
-    setDealOfferOpen(false);
   }, []);
 
   const updateConversations = useEffectEvent(
@@ -722,9 +726,6 @@ export function MessageWorkspace({
         setMobileDetailOpen(true);
         document.documentElement.classList.add(
           "perx-mobile-conversation-active",
-        );
-        window.requestAnimationFrame(() =>
-          conversationHeaderRef.current?.focus(),
         );
       } catch {
         if (requestId !== conversationOpenRequestRef.current) return;
@@ -1633,9 +1634,6 @@ export function MessageWorkspace({
     if (mobile) {
       document.documentElement.classList.add("perx-mobile-conversation-active");
       setMobileDetailOpen(true);
-      window.requestAnimationFrame(() =>
-        conversationHeaderRef.current?.focus(),
-      );
     }
   };
 
@@ -2480,8 +2478,11 @@ export function MessageWorkspace({
               <div className="flex w-full min-w-0 max-w-full items-end gap-2 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-2">
                 {activeConversation.dealOffer ? (
                   <button
+                    aria-expanded={dealOfferOpen}
+                    aria-haspopup="dialog"
                     aria-label="Make a Deal"
-                    className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 text-xs font-black text-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 text-xs font-black text-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)] disabled:cursor-wait disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    disabled={!useBrowserFormatting}
                     onClick={() => setDealOfferOpen(true)}
                     type="button"
                   >
@@ -3761,9 +3762,19 @@ function mergeWorkspaceConversationSnapshots(
       next.messages,
     );
     const mergedEvents = mergeWorkspaceEvents(conversation.events, next.events);
+    // A snapshot started before proposal submission can arrive after the local
+    // success event. Do not let its stale eligibility restore Make a Deal.
+    const dealOffer = mergedEvents.some(
+      (event) =>
+        event.type === "PROPOSAL_SUBMITTED" ||
+        event.type === "PROPOSAL_REVISION_SUBMITTED",
+    )
+      ? undefined
+      : next.dealOffer;
     if (!highlightMessageId && !highlightEventId) {
       return {
         ...next,
+        dealOffer,
         events: mergedEvents,
         historyLoaded:
           conversation.historyLoaded === true || next.historyLoaded === true,
@@ -3792,6 +3803,7 @@ function mergeWorkspaceConversationSnapshots(
     }
     return {
       ...next,
+      dealOffer,
       events: mergeWorkspaceEvents(undefined, mergedEvents),
       historyLoaded:
         conversation.historyLoaded === true || next.historyLoaded === true,

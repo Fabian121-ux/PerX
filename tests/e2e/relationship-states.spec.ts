@@ -68,7 +68,12 @@ describeOrSkip("Profile relationship states (isolated test DB)", () => {
       await pool.query(
         `INSERT INTO "Session" (id, "tokenHash", "userId", "expiresAt", "createdAt", "lastSeenAt")
          VALUES ($1, $2, $3, $4, NOW(), NOW())`,
-        [sessionId, tokenHash, user.rows[0].id, new Date(Date.now() + 3600_000)],
+        [
+          sessionId,
+          tokenHash,
+          user.rows[0].id,
+          new Date(Date.now() + 3600_000),
+        ],
       );
       createdSessionIds.add(sessionId);
 
@@ -158,10 +163,14 @@ describeOrSkip("Profile relationship states (isolated test DB)", () => {
    * not a retry: the response is awaited exactly once.
    */
   function serverActionSettled(page: Page) {
-    return page.waitForResponse(
-      (response) =>
-        response.request().method() === "POST" && response.status() < 400,
-    );
+    return page.waitForResponse((response) => {
+      const request = response.request();
+      return (
+        request.method() === "POST" &&
+        new URL(response.url()).pathname.startsWith("/u/") &&
+        response.status() < 400
+      );
+    });
   }
 
   test.afterEach(async () => {
@@ -243,9 +252,11 @@ describeOrSkip("Profile relationship states (isolated test DB)", () => {
     await expect(root.getByRole("button", { name: "Pending" })).toBeVisible();
     await expect(root.getByRole("button", { name: "Message" })).toHaveCount(0);
 
+    const settled = serverActionSettled(page);
     await root.getByRole("button", { name: "Cancel Request" }).click();
     await expect(root).toHaveAttribute("data-relationship-state", "UNKNOWN");
     await expect(root.getByRole("button", { name: "Connect" })).toBeVisible();
+    await settled;
     await expect
       .poll(() => connectionStatus(CAROL, BOB), { timeout: 10_000 })
       .not.toBe("PENDING");
@@ -265,8 +276,10 @@ describeOrSkip("Profile relationship states (isolated test DB)", () => {
     ).toBeVisible();
     await expect(root.getByRole("button", { name: "Decline" })).toBeVisible();
 
+    const settled = serverActionSettled(page);
     await root.getByRole("button", { name: "Accept Connection" }).click();
     await expect(root).toHaveAttribute("data-relationship-state", "CONNECTED");
+    await settled;
     await expect
       .poll(() => connectionStatus(CAROL, BOB), { timeout: 10_000 })
       .toBe("ACCEPTED");
@@ -279,8 +292,10 @@ describeOrSkip("Profile relationship states (isolated test DB)", () => {
 
     const root = actions(page);
     await expect(root).toHaveAttribute("data-relationship-state", "INCOMING");
+    const settled = serverActionSettled(page);
     await root.getByRole("button", { name: "Decline" }).click();
     await expect(root).toHaveAttribute("data-relationship-state", "UNKNOWN");
+    await settled;
     await expect
       .poll(() => connectionStatus(CAROL, BOB), { timeout: 10_000 })
       .not.toBe("PENDING");
@@ -299,8 +314,10 @@ describeOrSkip("Profile relationship states (isolated test DB)", () => {
     await expect(root.getByRole("button", { name: "Block" })).toBeVisible();
     await expect(root.getByRole("link", { name: "Report" })).toBeVisible();
 
+    const settled = serverActionSettled(page);
     await root.getByRole("button", { name: "Remove Connection" }).click();
     await expect(root).toHaveAttribute("data-relationship-state", "UNKNOWN");
+    await settled;
     await expect
       .poll(() => connectionStatus(CAROL, BOB), { timeout: 10_000 })
       .not.toBe("ACCEPTED");
@@ -340,8 +357,10 @@ describeOrSkip("Profile relationship states (isolated test DB)", () => {
     await expect(root.getByRole("button", { name: "Connect" })).toHaveCount(0);
     await expect(root.getByRole("button", { name: "Message" })).toHaveCount(0);
 
+    const settled = serverActionSettled(page);
     await root.getByRole("button", { name: "Unblock" }).click();
     await expect(root).toHaveAttribute("data-relationship-state", "UNKNOWN");
+    await settled;
     // Unblocking must not automatically restore a previous connection.
     await expect
       .poll(() => connectionStatus(CAROL, BOB), { timeout: 10_000 })

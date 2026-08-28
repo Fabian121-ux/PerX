@@ -34,6 +34,26 @@ export const AccountClassification = {
 export type AccountClassification = (typeof AccountClassification)[keyof typeof AccountClassification]
 
 
+export const TraderApplicationStatus = {
+  DRAFT: 'DRAFT',
+  PENDING_REVIEW: 'PENDING_REVIEW',
+  NEEDS_CHANGES: 'NEEDS_CHANGES',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  SUSPENDED: 'SUSPENDED'
+} as const
+
+export type TraderApplicationStatus = (typeof TraderApplicationStatus)[keyof typeof TraderApplicationStatus]
+
+
+export const TraderApplicantKind = {
+  INDIVIDUAL: 'INDIVIDUAL',
+  BUSINESS: 'BUSINESS'
+} as const
+
+export type TraderApplicantKind = (typeof TraderApplicantKind)[keyof typeof TraderApplicantKind]
+
+
 export const VerificationStatus = {
   UNVERIFIED: 'UNVERIFIED',
   PENDING: 'PENDING',

@@ -61,6 +61,19 @@ export type Session = Prisma.SessionModel
  */
 export type PasswordResetToken = Prisma.PasswordResetTokenModel
 /**
+ * Model TraderApplication
+ * *
+ *  * A user's request for trading access.
+ *  *
+ *  * One row per user (`userId @unique`): re-applying updates the existing record
+ *  * so the review history stays in one place rather than accumulating duplicates.
+ *  *
+ *  * Deliberately small. Identity documents are NOT collected - no verification
+ *  * requirement exists that would justify holding them, and the approval decision
+ *  * is a human review of stated intent.
+ */
+export type TraderApplication = Prisma.TraderApplicationModel
+/**
  * Model Role
  * 
  */

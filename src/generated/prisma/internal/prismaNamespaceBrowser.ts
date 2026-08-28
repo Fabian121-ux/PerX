@@ -54,6 +54,7 @@ export const ModelName = {
   User: 'User',
   Session: 'Session',
   PasswordResetToken: 'PasswordResetToken',
+  TraderApplication: 'TraderApplication',
   Role: 'Role',
   UserRole: 'UserRole',
   Profile: 'Profile',
@@ -179,6 +180,25 @@ export const PasswordResetTokenScalarFieldEnum = {
 } as const
 
 export type PasswordResetTokenScalarFieldEnum = (typeof PasswordResetTokenScalarFieldEnum)[keyof typeof PasswordResetTokenScalarFieldEnum]
+
+
+export const TraderApplicationScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  status: 'status',
+  applicantKind: 'applicantKind',
+  tradeCategory: 'tradeCategory',
+  headline: 'headline',
+  experience: 'experience',
+  reviewerId: 'reviewerId',
+  reviewerNote: 'reviewerNote',
+  submittedAt: 'submittedAt',
+  decidedAt: 'decidedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TraderApplicationScalarFieldEnum = (typeof TraderApplicationScalarFieldEnum)[keyof typeof TraderApplicationScalarFieldEnum]
 
 
 export const RoleScalarFieldEnum = {

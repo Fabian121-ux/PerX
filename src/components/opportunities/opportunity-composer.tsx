@@ -2,13 +2,17 @@
 
 import { ArrowLeft, ChevronDown, FileText, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 
 import { Button } from "@/components/ui/button";
-import {
-  useConfirm,
-  useToast,
-} from "@/components/ui/feedback-provider";
+import { useConfirm, useToast } from "@/components/ui/feedback-provider";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import { MoneyInput } from "@/components/ui/money-input";
 import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
@@ -27,6 +31,33 @@ import {
   type CreatableOpportunityType,
   type OpportunityComposerDraftFields,
 } from "@/lib/opportunities/composer-draft";
+
+/**
+ * Fields rendered inside the collapsed "Budget, location and participation"
+ * disclosure. An error on one of these must expand the section, otherwise the
+ * message exists in the DOM but the user never sees it.
+ */
+/** Human labels for the error summary, matching the visible field captions. */
+const FIELD_LABELS: Record<string, string> = {
+  budgetMax: "Budget maximum",
+  budgetMin: "Budget minimum",
+  category: "Category",
+  currency: "Currency",
+  description: "Details",
+  location: "Location",
+  skills: "Skills",
+  summary: "Short summary",
+  title: "Post title",
+  type: "Post type",
+};
+
+const OPTIONAL_FIELD_NAMES = new Set([
+  "budgetMax",
+  "budgetMin",
+  "currency",
+  "location",
+  "skills",
+]);
 
 export function OpportunityComposer({
   defaultCategory,
@@ -54,9 +85,8 @@ export function OpportunityComposer({
     : "FREELANCE_PROJECT";
   const initialFields = createComposerFields(initialType, defaultCategory);
   const [type, setType] = useState<CreatableOpportunityType>(initialType);
-  const [fields, setFields] = useState<OpportunityComposerDraftFields>(
-    initialFields,
-  );
+  const [fields, setFields] =
+    useState<OpportunityComposerDraftFields>(initialFields);
   const [draftReady, setDraftReady] = useState(false);
   const [draftStatus, setDraftStatus] = useState("");
   /**
@@ -70,11 +100,73 @@ export function OpportunityComposer({
    * failure returns to this same route with an `error` param, which is why the
    * initial state is derived from `error` instead of always starting at idle.
    */
+  /*
+    `useActionState` gives the action a return channel. Previously it could only
+    redirect, so a rejected budget and a blocked policy phrase both arrived as
+    `?error=check-fields` with no indication of which control was at fault.
+
+    The `error` prop is still honoured as the initial state so an existing
+    `?error=` URL keeps working - a hard reload or an out-of-band redirect has
+    no client state to restore.
+  */
+  const [state, formAction, isPending] = useActionState(
+    createOpportunityAction,
+    {
+      message: error ?? undefined,
+      status: error ? ("error" as const) : ("idle" as const),
+    },
+  );
+  const fieldErrors = state.fieldErrors ?? {};
+  const failed = state.status === "error";
+
   const [submission, setSubmission] = useState<
-    "failed" | "idle" | "publishing" | "saving-draft"
-  >(error ? "failed" : "idle");
-  const [optionalOpen, setOptionalOpen] = useState(Boolean(error));
+    "idle" | "publishing" | "saving-draft"
+  >("idle");
+  const [optionalManuallyOpen, setOptionalManuallyOpen] = useState(
+    Boolean(error),
+  );
+  /*
+    Derived rather than assigned from an effect.
+
+    An error on a field inside this disclosure must expand it, otherwise the
+    message exists in the DOM but the user never sees why the form refused to
+    submit. Computing it during render keeps the section open for exactly as
+    long as the error is present, and avoids the extra render pass (and lint
+    violation) of calling setState from an effect.
+  */
+  const optionalOpen =
+    optionalManuallyOpen ||
+    Object.keys(fieldErrors).some((field) => OPTIONAL_FIELD_NAMES.has(field));
+  const setOptionalOpen = setOptionalManuallyOpen;
   const optionalSectionId = useId();
+
+  /*
+    Move the user to the first control that actually failed.
+
+    The budget and location inputs live inside a collapsed disclosure, so an
+    error there was previously invisible - the page simply refused to submit
+    with no visible cause. The section is expanded first, then focus moves on
+    the next frame once the control is laid out and focusable.
+
+    Keyed on the error identity so correcting one field and resubmitting moves
+    focus again, while an unrelated re-render does not steal it.
+  */
+  const errorSignature = Object.keys(fieldErrors).sort().join(",");
+  useEffect(() => {
+    if (!failed || !errorSignature) return;
+
+    const form = formRef.current;
+    if (!form) return;
+
+    const [firstField] = errorSignature.split(",");
+    const control = form.querySelector<HTMLElement>(`[name="${firstField}"]`);
+    if (!control) return;
+
+    requestAnimationFrame(() => {
+      control.scrollIntoView({ behavior: "smooth", block: "center" });
+      control.focus({ preventScroll: true });
+    });
+  }, [errorSignature, failed]);
   const fieldsRef = useRef(fields);
   const typeRef = useRef(type);
   const hasContent = hasComposerContent({
@@ -171,28 +263,43 @@ export function OpportunityComposer({
     historyGuardActiveRef.current = true;
   }, []);
 
-  const releaseHistoryGuard = useCallback(async (allowNavigation = true) => {
-    if (allowNavigation) allowNavigationRef.current = true;
-    if (!historyGuardActiveRef.current) return;
+  useEffect(() => {
+    if (state.status !== "error") return;
 
-    await new Promise<void>((resolve) => {
-      historyReleaseRef.current = resolve;
-      window.history.back();
-    });
-    if (
-      !allowNavigation &&
-      hasContentRef.current &&
-      !allowNavigationRef.current
-    ) {
-      armHistoryGuard();
-    }
-  }, [armHistoryGuard]);
+    // A rejected action stays on this page, so restore the leave guard that was
+    // released for submission and stop announcing an operation in progress.
+    allowNavigationRef.current = false;
+    if (hasContentRef.current) armHistoryGuard();
+  }, [armHistoryGuard, state.status]);
 
-  const leaveComposer = useCallback(async (href: string) => {
-    if (!(await confirmDiscard())) return;
-    await releaseHistoryGuard();
-    router.push(href);
-  }, [confirmDiscard, releaseHistoryGuard, router]);
+  const releaseHistoryGuard = useCallback(
+    async (allowNavigation = true) => {
+      if (allowNavigation) allowNavigationRef.current = true;
+      if (!historyGuardActiveRef.current) return;
+
+      await new Promise<void>((resolve) => {
+        historyReleaseRef.current = resolve;
+        window.history.back();
+      });
+      if (
+        !allowNavigation &&
+        hasContentRef.current &&
+        !allowNavigationRef.current
+      ) {
+        armHistoryGuard();
+      }
+    },
+    [armHistoryGuard],
+  );
+
+  const leaveComposer = useCallback(
+    async (href: string) => {
+      if (!(await confirmDiscard())) return;
+      await releaseHistoryGuard();
+      router.push(href);
+    },
+    [confirmDiscard, releaseHistoryGuard, router],
+  );
 
   useEffect(() => {
     if (!hasContent) {
@@ -201,10 +308,7 @@ export function OpportunityComposer({
       }
       return;
     }
-    if (
-      allowNavigationRef.current ||
-      historyGuardActiveRef.current
-    ) {
+    if (allowNavigationRef.current || historyGuardActiveRef.current) {
       return;
     }
 
@@ -221,7 +325,12 @@ export function OpportunityComposer({
       if (!hasContent || allowNavigationRef.current || event.defaultPrevented) {
         return;
       }
-      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) {
+      if (
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey
+      ) {
         return;
       }
       const anchor = (event.target as Element).closest<HTMLAnchorElement>(
@@ -334,15 +443,13 @@ export function OpportunityComposer({
 
   return (
     <form
-      action={createOpportunityAction}
+      action={formAction}
       className="min-h-full bg-[color:var(--px-page)]"
       id="create-post-form"
       onSubmit={(event) => {
-        const submitter = event.nativeEvent.submitter as HTMLButtonElement | null;
-        if (
-          historyGuardActiveRef.current &&
-          !allowNavigationRef.current
-        ) {
+        const submitter = event.nativeEvent
+          .submitter as HTMLButtonElement | null;
+        if (historyGuardActiveRef.current && !allowNavigationRef.current) {
           event.preventDefault();
           const form = event.currentTarget;
           void releaseHistoryGuard().then(() =>
@@ -401,34 +508,59 @@ export function OpportunityComposer({
             silently disabled button.
           */}
           <p aria-live="polite" className="sr-only" role="status">
-            {submission === "publishing"
+            {isPending && submission === "publishing"
               ? "Publishing your post."
-              : submission === "saving-draft"
+              : isPending && submission === "saving-draft"
                 ? "Saving your draft."
                 : ""}
           </p>
 
-          {error ? (
+          {failed && state.message ? (
             <div
               className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200"
               role="alert"
             >
-              <p>{error}</p>
+              <p>{state.message}</p>
+              {/*
+                Name the failing fields. A count alone still leaves the user
+                scanning a long form, and the messages are already precise.
+              */}
+              {Object.keys(fieldErrors).length ? (
+                <ul className="mt-2 grid gap-1 font-normal">
+                  {Object.entries(fieldErrors).map(([field, message]) => (
+                    <li key={field}>
+                      <span className="font-semibold">
+                        {FIELD_LABELS[field] ?? field}
+                      </span>{" "}
+                      — {message}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
               {/*
                 A failed publish must always offer a way forward. The entered
                 content is still in the form and in browser recovery, so
                 resubmitting is safe and is the expected retry path.
               */}
               <div className="mt-3 flex flex-wrap gap-2">
-                <PendingSubmitButton
-                  name="intent"
-                  pendingLabel="Retrying..."
-                  size="sm"
-                  type="submit"
-                  value="publish"
-                >
-                  Retry publish
-                </PendingSubmitButton>
+                {/*
+                  No "Retry publish" when specific fields are invalid:
+                  resubmitting unchanged data cannot succeed, and offering it
+                  invites a pointless round trip. Retry stays available when the
+                  failure was not field-specific (a policy block or an
+                  infrastructure error), where a resubmit is meaningful.
+                */}
+                {Object.keys(fieldErrors).length === 0 ? (
+                  <PendingSubmitButton
+                    name="intent"
+                    pendingLabel="Retrying..."
+                    size="sm"
+                    type="submit"
+                    value="publish"
+                  >
+                    Retry publish
+                  </PendingSubmitButton>
+                ) : null}
                 <PendingSubmitButton
                   name="intent"
                   pendingLabel="Saving draft..."
@@ -461,12 +593,15 @@ export function OpportunityComposer({
 
             <div className="grid gap-5">
               <Field
+                error={fieldErrors.title}
                 hint="Use a specific, scannable title."
                 label="Post title"
+                name="title"
               >
                 <Input
                   maxLength={140}
                   minLength={8}
+                  aria-invalid={Boolean(fieldErrors.title)}
                   name="title"
                   onChange={(event) => updateField("title", event.target.value)}
                   placeholder="e.g. Looking for a product designer for a fintech launch"
@@ -475,20 +610,27 @@ export function OpportunityComposer({
                 />
               </Field>
               <Field
+                error={fieldErrors.summary}
+                name="summary"
                 hint={`${fields.summary.length}/260 characters`}
                 label="Short summary"
               >
                 <Input
                   maxLength={260}
                   minLength={20}
+                  aria-invalid={Boolean(fieldErrors.summary)}
                   name="summary"
-                  onChange={(event) => updateField("summary", event.target.value)}
+                  onChange={(event) =>
+                    updateField("summary", event.target.value)
+                  }
                   placeholder="Give people the essential context at a glance"
                   required
                   value={fields.summary}
                 />
               </Field>
               <Field
+                error={fieldErrors.description}
+                name="description"
                 hint={`${fields.description.length}/4000 characters. Include scope, outcomes, timing, and expectations.`}
                 label="Details"
               >
@@ -496,6 +638,7 @@ export function OpportunityComposer({
                   className="min-h-56 resize-y text-base leading-7"
                   maxLength={4000}
                   minLength={80}
+                  aria-invalid={Boolean(fieldErrors.description)}
                   name="description"
                   onChange={(event) =>
                     updateField("description", event.target.value)
@@ -524,7 +667,13 @@ export function OpportunityComposer({
                 <Field label="Category">
                   <Select
                     name="category"
-                    onChange={(event) => updateField("category", event.target.value as OpportunityComposerDraftFields["category"])}
+                    onChange={(event) =>
+                      updateField(
+                        "category",
+                        event.target
+                          .value as OpportunityComposerDraftFields["category"],
+                      )
+                    }
                     required
                     value={fields.category}
                   >
@@ -557,76 +706,106 @@ export function OpportunityComposer({
                   id={optionalSectionId}
                 >
                   <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <Field label="Currency">
-                  <Select
-                    name="currency"
-                    onChange={(event) => updateField("currency", event.target.value as OpportunityComposerDraftFields["currency"])}
-                    required
-                    value={fields.currency}
-                  >
-                    {currencyOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.value}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field
-                  hint="Digits and up to two decimal places; do not include commas."
-                  label={`Budget minimum (${fields.currency})`}
-                >
-                  <MoneyInput
-                    aria-label={`Budget minimum (${fields.currency})`}
-                    currency={fields.currency}
-                    name="budgetMin"
-                    onChange={(event) => updateField("budgetMin", event.target.value)}
-                    placeholder="250000.00"
-                    value={fields.budgetMin}
-                  />
-                </Field>
-                <Field
-                  hint="Digits and up to two decimal places; do not include commas."
-                  label={`Budget maximum (${fields.currency})`}
-                >
-                  <MoneyInput
-                    aria-label={`Budget maximum (${fields.currency})`}
-                    currency={fields.currency}
-                    name="budgetMax"
-                    onChange={(event) => updateField("budgetMax", event.target.value)}
-                    placeholder="1200000.00"
-                    value={fields.budgetMax}
-                  />
-                </Field>
-                <Field label="Location">
-                  <Input
-                    maxLength={120}
-                    name="location"
-                    onChange={(event) => updateField("location", event.target.value)}
-                    placeholder="Lagos, hybrid"
-                    value={fields.location}
-                  />
-                </Field>
-              </div>
+                    <Field label="Currency">
+                      <Select
+                        name="currency"
+                        onChange={(event) =>
+                          updateField(
+                            "currency",
+                            event.target
+                              .value as OpportunityComposerDraftFields["currency"],
+                          )
+                        }
+                        required
+                        value={fields.currency}
+                      >
+                        {currencyOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.value}
+                          </option>
+                        ))}
+                      </Select>
+                    </Field>
+                    <Field
+                      error={fieldErrors.budgetMin}
+                      name="budgetMin"
+                      hint="Digits and up to two decimal places; do not include commas."
+                      label={`Budget minimum (${fields.currency})`}
+                    >
+                      <MoneyInput
+                        aria-label={`Budget minimum (${fields.currency})`}
+                        currency={fields.currency}
+                        aria-invalid={Boolean(fieldErrors.budgetMin)}
+                        name="budgetMin"
+                        onChange={(event) =>
+                          updateField("budgetMin", event.target.value)
+                        }
+                        placeholder="250000.00"
+                        value={fields.budgetMin}
+                      />
+                    </Field>
+                    <Field
+                      error={fieldErrors.budgetMax}
+                      name="budgetMax"
+                      hint="Digits and up to two decimal places; do not include commas."
+                      label={`Budget maximum (${fields.currency})`}
+                    >
+                      <MoneyInput
+                        aria-label={`Budget maximum (${fields.currency})`}
+                        currency={fields.currency}
+                        aria-invalid={Boolean(fieldErrors.budgetMax)}
+                        name="budgetMax"
+                        onChange={(event) =>
+                          updateField("budgetMax", event.target.value)
+                        }
+                        placeholder="1200000.00"
+                        value={fields.budgetMax}
+                      />
+                    </Field>
+                    <Field
+                      error={fieldErrors.location}
+                      name="location"
+                      label="Location"
+                    >
+                      <Input
+                        maxLength={120}
+                        aria-invalid={Boolean(fieldErrors.location)}
+                        name="location"
+                        onChange={(event) =>
+                          updateField("location", event.target.value)
+                        }
+                        placeholder="Lagos, hybrid"
+                        value={fields.location}
+                      />
+                    </Field>
+                  </div>
 
-              <Field
-                hint="Separate skills with commas."
-                label="Skills or expertise"
-              >
-                <Input
-                  maxLength={500}
-                  name="skills"
-                  onChange={(event) => updateField("skills", event.target.value)}
-                  placeholder="Product design, Research, Fintech"
-                  value={fields.skills}
-                />
-              </Field>
+                  <Field
+                    error={fieldErrors.skills}
+                    name="skills"
+                    hint="Separate skills with commas."
+                    label="Skills or expertise"
+                  >
+                    <Input
+                      maxLength={500}
+                      aria-invalid={Boolean(fieldErrors.skills)}
+                      name="skills"
+                      onChange={(event) =>
+                        updateField("skills", event.target.value)
+                      }
+                      placeholder="Product design, Research, Fintech"
+                      value={fields.skills}
+                    />
+                  </Field>
 
                   <label className="flex min-h-11 items-center gap-3 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 text-sm font-semibold text-[color:var(--px-text)]">
                     <input
                       checked={fields.remote}
                       className="size-5 accent-[color:var(--px-primary)]"
                       name="remote"
-                      onChange={(event) => updateField("remote", event.target.checked)}
+                      onChange={(event) =>
+                        updateField("remote", event.target.checked)
+                      }
                       type="checkbox"
                     />
                     Remote participation is supported
@@ -635,9 +814,9 @@ export function OpportunityComposer({
               </section>
 
               <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-3 text-xs leading-5 text-[color:var(--px-text-muted)]">
-                Browser recovery is local to this device and scoped to your
-                PerX account and post type. Do not enter private contact,
-                payment, identity-document, or verification information.
+                Browser recovery is local to this device and scoped to your PerX
+                account and post type. Do not enter private contact, payment,
+                identity-document, or verification information.
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                   {/*
                     Named so it stays addressable now that the composer has a
@@ -672,7 +851,9 @@ export function OpportunityComposer({
             <ul className="mt-4 grid gap-3 text-sm leading-6 text-[color:var(--px-text-muted)]">
               <li>Be specific about the outcome and who should respond.</li>
               <li>Do not include private contact or payment information.</li>
-              <li>Only supported listing images can be uploaded after saving.</li>
+              <li>
+                Only supported listing images can be uploaded after saving.
+              </li>
               <li>Published content remains subject to PerX moderation.</li>
             </ul>
           </section>
@@ -681,7 +862,8 @@ export function OpportunityComposer({
               Not ready yet?
             </h2>
             <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
-              Complete the required details, then save without publishing and continue from Manage Posts.
+              Complete the required details, then save without publishing and
+              continue from Manage Posts.
             </p>
             <PendingSubmitButton
               className="mt-4 w-full"
@@ -735,9 +917,9 @@ function hasBrowserDraftContent(
     type,
     defaultOpportunityCategoryByType[type],
   );
-  return (Object.keys(fields) as Array<keyof OpportunityComposerDraftFields>).some(
-    (key) => fields[key] !== defaults[key],
-  );
+  return (
+    Object.keys(fields) as Array<keyof OpportunityComposerDraftFields>
+  ).some((key) => fields[key] !== defaults[key]);
 }
 
 function hasComposerContent({
@@ -754,8 +936,8 @@ function hasComposerContent({
   const defaults = createComposerFields(defaultType, defaultCategory);
   return Boolean(
     type !== defaultType ||
-      (Object.keys(fields) as Array<keyof OpportunityComposerDraftFields>).some(
-        (key) => fields[key] !== defaults[key],
-      ),
+    (Object.keys(fields) as Array<keyof OpportunityComposerDraftFields>).some(
+      (key) => fields[key] !== defaults[key],
+    ),
   );
 }

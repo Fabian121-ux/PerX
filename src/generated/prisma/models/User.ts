@@ -320,6 +320,7 @@ export type UserWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   sessions?: Prisma.SessionListRelationFilter
   passwordResetTokens?: Prisma.PasswordResetTokenListRelationFilter
+  traderApplication?: Prisma.XOR<Prisma.TraderApplicationNullableScalarRelationFilter, Prisma.TraderApplicationWhereInput> | null
   roles?: Prisma.UserRoleListRelationFilter
   profile?: Prisma.XOR<Prisma.ProfileNullableScalarRelationFilter, Prisma.ProfileWhereInput> | null
   opportunities?: Prisma.OpportunityListRelationFilter
@@ -374,6 +375,7 @@ export type UserOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   sessions?: Prisma.SessionOrderByRelationAggregateInput
   passwordResetTokens?: Prisma.PasswordResetTokenOrderByRelationAggregateInput
+  traderApplication?: Prisma.TraderApplicationOrderByWithRelationInput
   roles?: Prisma.UserRoleOrderByRelationAggregateInput
   profile?: Prisma.ProfileOrderByWithRelationInput
   opportunities?: Prisma.OpportunityOrderByRelationAggregateInput
@@ -431,6 +433,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   sessions?: Prisma.SessionListRelationFilter
   passwordResetTokens?: Prisma.PasswordResetTokenListRelationFilter
+  traderApplication?: Prisma.XOR<Prisma.TraderApplicationNullableScalarRelationFilter, Prisma.TraderApplicationWhereInput> | null
   roles?: Prisma.UserRoleListRelationFilter
   profile?: Prisma.XOR<Prisma.ProfileNullableScalarRelationFilter, Prisma.ProfileWhereInput> | null
   opportunities?: Prisma.OpportunityListRelationFilter
@@ -541,6 +544,7 @@ export type UserCreateInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -595,6 +599,7 @@ export type UserUncheckedCreateInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -649,6 +654,7 @@ export type UserUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -703,6 +709,7 @@ export type UserUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -946,6 +953,20 @@ export type UserUpdateOneRequiredWithoutPasswordResetTokensNestedInput = {
   upsert?: Prisma.UserUpsertWithoutPasswordResetTokensInput
   connect?: Prisma.UserWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPasswordResetTokensInput, Prisma.UserUpdateWithoutPasswordResetTokensInput>, Prisma.UserUncheckedUpdateWithoutPasswordResetTokensInput>
+}
+
+export type UserCreateNestedOneWithoutTraderApplicationInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTraderApplicationInput, Prisma.UserUncheckedCreateWithoutTraderApplicationInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTraderApplicationInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutTraderApplicationNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTraderApplicationInput, Prisma.UserUncheckedCreateWithoutTraderApplicationInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTraderApplicationInput
+  upsert?: Prisma.UserUpsertWithoutTraderApplicationInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTraderApplicationInput, Prisma.UserUpdateWithoutTraderApplicationInput>, Prisma.UserUncheckedUpdateWithoutTraderApplicationInput>
 }
 
 export type UserCreateNestedOneWithoutRolesInput = {
@@ -1352,6 +1373,7 @@ export type UserCreateWithoutSessionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -1405,6 +1427,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -1474,6 +1497,7 @@ export type UserUpdateWithoutSessionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -1527,6 +1551,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -1580,6 +1605,7 @@ export type UserCreateWithoutPasswordResetTokensInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -1633,6 +1659,7 @@ export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -1702,6 +1729,7 @@ export type UserUpdateWithoutPasswordResetTokensInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -1755,6 +1783,239 @@ export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
+  roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
+  profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
+  opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
+  bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
+  reports?: Prisma.OpportunityReportUncheckedUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUncheckedUpdateManyWithoutReporterNestedInput
+  proposals?: Prisma.ProposalUncheckedUpdateManyWithoutSenderNestedInput
+  conversations?: Prisma.ConversationParticipantUncheckedUpdateManyWithoutUserNestedInput
+  messages?: Prisma.MessageUncheckedUpdateManyWithoutSenderNestedInput
+  deals?: Prisma.DealParticipantUncheckedUpdateManyWithoutUserNestedInput
+  deliveries?: Prisma.DeliveryUncheckedUpdateManyWithoutSubmitterNestedInput
+  approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutActorNestedInput
+  releases?: Prisma.ReleaseUncheckedUpdateManyWithoutActorNestedInput
+  refunds?: Prisma.RefundUncheckedUpdateManyWithoutActorNestedInput
+  disputesOpened?: Prisma.DisputeUncheckedUpdateManyWithoutOpenedByNestedInput
+  reviewsGiven?: Prisma.ReviewUncheckedUpdateManyWithoutAuthorNestedInput
+  reviewsReceived?: Prisma.ReviewUncheckedUpdateManyWithoutSubjectNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutActorNestedInput
+  moderationActions?: Prisma.ModerationActionUncheckedUpdateManyWithoutActorNestedInput
+  connectionsSent?: Prisma.ConnectionUncheckedUpdateManyWithoutRequesterNestedInput
+  connectionsReceived?: Prisma.ConnectionUncheckedUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUncheckedUpdateManyWithoutBlockedUserNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedUpdateManyWithoutUserNestedInput
+  supportTickets?: Prisma.SupportTicketUncheckedUpdateManyWithoutAuthorNestedInput
+  ticketMessages?: Prisma.TicketMessageUncheckedUpdateManyWithoutSenderNestedInput
+}
+
+export type UserCreateWithoutTraderApplicationInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name: string
+  username: string
+  accountClassification?: $Enums.AccountClassification
+  imageUrl?: string | null
+  imageStorageKey?: string | null
+  emailVerifiedAt?: Date | string | null
+  verificationStatus?: $Enums.VerificationStatus
+  isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
+  profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
+  opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
+  bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
+  reports?: Prisma.OpportunityReportCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportCreateNestedManyWithoutReporterInput
+  proposals?: Prisma.ProposalCreateNestedManyWithoutSenderInput
+  conversations?: Prisma.ConversationParticipantCreateNestedManyWithoutUserInput
+  messages?: Prisma.MessageCreateNestedManyWithoutSenderInput
+  deals?: Prisma.DealParticipantCreateNestedManyWithoutUserInput
+  deliveries?: Prisma.DeliveryCreateNestedManyWithoutSubmitterInput
+  approvals?: Prisma.ApprovalCreateNestedManyWithoutActorInput
+  releases?: Prisma.ReleaseCreateNestedManyWithoutActorInput
+  refunds?: Prisma.RefundCreateNestedManyWithoutActorInput
+  disputesOpened?: Prisma.DisputeCreateNestedManyWithoutOpenedByInput
+  reviewsGiven?: Prisma.ReviewCreateNestedManyWithoutAuthorInput
+  reviewsReceived?: Prisma.ReviewCreateNestedManyWithoutSubjectInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutActorInput
+  moderationActions?: Prisma.ModerationActionCreateNestedManyWithoutActorInput
+  connectionsSent?: Prisma.ConnectionCreateNestedManyWithoutRequesterInput
+  connectionsReceived?: Prisma.ConnectionCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserCreateNestedManyWithoutBlockedUserInput
+  profileBookmarks?: Prisma.ProfileBookmarkCreateNestedManyWithoutUserInput
+  supportTickets?: Prisma.SupportTicketCreateNestedManyWithoutAuthorInput
+  ticketMessages?: Prisma.TicketMessageCreateNestedManyWithoutSenderInput
+}
+
+export type UserUncheckedCreateWithoutTraderApplicationInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  name: string
+  username: string
+  accountClassification?: $Enums.AccountClassification
+  imageUrl?: string | null
+  imageStorageKey?: string | null
+  emailVerifiedAt?: Date | string | null
+  verificationStatus?: $Enums.VerificationStatus
+  isActive?: boolean
+  messagingRestrictedUntil?: Date | string | null
+  connectionRequestsRestrictedUntil?: Date | string | null
+  publishingRestrictedUntil?: Date | string | null
+  suspendedAt?: Date | string | null
+  suspendedUntil?: Date | string | null
+  deactivatedAt?: Date | string | null
+  bannedAt?: Date | string | null
+  enforcementReasonPublic?: string | null
+  onboardingDismissedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
+  profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
+  opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
+  bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
+  reports?: Prisma.OpportunityReportUncheckedCreateNestedManyWithoutReporterInput
+  userReports?: Prisma.UserReportUncheckedCreateNestedManyWithoutReporterInput
+  proposals?: Prisma.ProposalUncheckedCreateNestedManyWithoutSenderInput
+  conversations?: Prisma.ConversationParticipantUncheckedCreateNestedManyWithoutUserInput
+  messages?: Prisma.MessageUncheckedCreateNestedManyWithoutSenderInput
+  deals?: Prisma.DealParticipantUncheckedCreateNestedManyWithoutUserInput
+  deliveries?: Prisma.DeliveryUncheckedCreateNestedManyWithoutSubmitterInput
+  approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutActorInput
+  releases?: Prisma.ReleaseUncheckedCreateNestedManyWithoutActorInput
+  refunds?: Prisma.RefundUncheckedCreateNestedManyWithoutActorInput
+  disputesOpened?: Prisma.DisputeUncheckedCreateNestedManyWithoutOpenedByInput
+  reviewsGiven?: Prisma.ReviewUncheckedCreateNestedManyWithoutAuthorInput
+  reviewsReceived?: Prisma.ReviewUncheckedCreateNestedManyWithoutSubjectInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutActorInput
+  moderationActions?: Prisma.ModerationActionUncheckedCreateNestedManyWithoutActorInput
+  connectionsSent?: Prisma.ConnectionUncheckedCreateNestedManyWithoutRequesterInput
+  connectionsReceived?: Prisma.ConnectionUncheckedCreateNestedManyWithoutReceiverInput
+  blocksMade?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockerInput
+  blocksReceived?: Prisma.BlockedUserUncheckedCreateNestedManyWithoutBlockedUserInput
+  profileBookmarks?: Prisma.ProfileBookmarkUncheckedCreateNestedManyWithoutUserInput
+  supportTickets?: Prisma.SupportTicketUncheckedCreateNestedManyWithoutAuthorInput
+  ticketMessages?: Prisma.TicketMessageUncheckedCreateNestedManyWithoutSenderInput
+}
+
+export type UserCreateOrConnectWithoutTraderApplicationInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutTraderApplicationInput, Prisma.UserUncheckedCreateWithoutTraderApplicationInput>
+}
+
+export type UserUpsertWithoutTraderApplicationInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutTraderApplicationInput, Prisma.UserUncheckedUpdateWithoutTraderApplicationInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutTraderApplicationInput, Prisma.UserUncheckedCreateWithoutTraderApplicationInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutTraderApplicationInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutTraderApplicationInput, Prisma.UserUncheckedUpdateWithoutTraderApplicationInput>
+}
+
+export type UserUpdateWithoutTraderApplicationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
+  profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
+  opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
+  bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
+  reports?: Prisma.OpportunityReportUpdateManyWithoutReporterNestedInput
+  userReports?: Prisma.UserReportUpdateManyWithoutReporterNestedInput
+  proposals?: Prisma.ProposalUpdateManyWithoutSenderNestedInput
+  conversations?: Prisma.ConversationParticipantUpdateManyWithoutUserNestedInput
+  messages?: Prisma.MessageUpdateManyWithoutSenderNestedInput
+  deals?: Prisma.DealParticipantUpdateManyWithoutUserNestedInput
+  deliveries?: Prisma.DeliveryUpdateManyWithoutSubmitterNestedInput
+  approvals?: Prisma.ApprovalUpdateManyWithoutActorNestedInput
+  releases?: Prisma.ReleaseUpdateManyWithoutActorNestedInput
+  refunds?: Prisma.RefundUpdateManyWithoutActorNestedInput
+  disputesOpened?: Prisma.DisputeUpdateManyWithoutOpenedByNestedInput
+  reviewsGiven?: Prisma.ReviewUpdateManyWithoutAuthorNestedInput
+  reviewsReceived?: Prisma.ReviewUpdateManyWithoutSubjectNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutActorNestedInput
+  moderationActions?: Prisma.ModerationActionUpdateManyWithoutActorNestedInput
+  connectionsSent?: Prisma.ConnectionUpdateManyWithoutRequesterNestedInput
+  connectionsReceived?: Prisma.ConnectionUpdateManyWithoutReceiverNestedInput
+  blocksMade?: Prisma.BlockedUserUpdateManyWithoutBlockerNestedInput
+  blocksReceived?: Prisma.BlockedUserUpdateManyWithoutBlockedUserNestedInput
+  profileBookmarks?: Prisma.ProfileBookmarkUpdateManyWithoutUserNestedInput
+  supportTickets?: Prisma.SupportTicketUpdateManyWithoutAuthorNestedInput
+  ticketMessages?: Prisma.TicketMessageUpdateManyWithoutSenderNestedInput
+}
+
+export type UserUncheckedUpdateWithoutTraderApplicationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  accountClassification?: Prisma.EnumAccountClassificationFieldUpdateOperationsInput | $Enums.AccountClassification
+  imageUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  imageStorageKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  verificationStatus?: Prisma.EnumVerificationStatusFieldUpdateOperationsInput | $Enums.VerificationStatus
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  messagingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  connectionRequestsRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  publishingRestrictedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  suspendedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deactivatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  bannedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  enforcementReasonPublic?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  onboardingDismissedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -1809,6 +2070,7 @@ export type UserCreateWithoutRolesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
@@ -1862,6 +2124,7 @@ export type UserUncheckedCreateWithoutRolesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -1931,6 +2194,7 @@ export type UserUpdateWithoutRolesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
@@ -1984,6 +2248,7 @@ export type UserUncheckedUpdateWithoutRolesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -2037,6 +2302,7 @@ export type UserCreateWithoutProfileInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
@@ -2090,6 +2356,7 @@ export type UserUncheckedCreateWithoutProfileInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -2159,6 +2426,7 @@ export type UserUpdateWithoutProfileInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
@@ -2212,6 +2480,7 @@ export type UserUncheckedUpdateWithoutProfileInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -2265,6 +2534,7 @@ export type UserCreateWithoutOpportunitiesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   bookmarks?: Prisma.OpportunityBookmarkCreateNestedManyWithoutUserInput
@@ -2318,6 +2588,7 @@ export type UserUncheckedCreateWithoutOpportunitiesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedCreateNestedManyWithoutUserInput
@@ -2387,6 +2658,7 @@ export type UserUpdateWithoutOpportunitiesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUpdateManyWithoutUserNestedInput
@@ -2440,6 +2712,7 @@ export type UserUncheckedUpdateWithoutOpportunitiesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   bookmarks?: Prisma.OpportunityBookmarkUncheckedUpdateManyWithoutUserNestedInput
@@ -2493,6 +2766,7 @@ export type UserCreateWithoutBookmarksInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -2546,6 +2820,7 @@ export type UserUncheckedCreateWithoutBookmarksInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -2615,6 +2890,7 @@ export type UserUpdateWithoutBookmarksInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -2668,6 +2944,7 @@ export type UserUncheckedUpdateWithoutBookmarksInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -2721,6 +2998,7 @@ export type UserCreateWithoutReportsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -2774,6 +3052,7 @@ export type UserUncheckedCreateWithoutReportsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -2843,6 +3122,7 @@ export type UserUpdateWithoutReportsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -2896,6 +3176,7 @@ export type UserUncheckedUpdateWithoutReportsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -2949,6 +3230,7 @@ export type UserCreateWithoutUserReportsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -3002,6 +3284,7 @@ export type UserUncheckedCreateWithoutUserReportsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -3071,6 +3354,7 @@ export type UserUpdateWithoutUserReportsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -3124,6 +3408,7 @@ export type UserUncheckedUpdateWithoutUserReportsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -3177,6 +3462,7 @@ export type UserCreateWithoutConversationsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -3230,6 +3516,7 @@ export type UserUncheckedCreateWithoutConversationsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -3299,6 +3586,7 @@ export type UserUpdateWithoutConversationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -3352,6 +3640,7 @@ export type UserUncheckedUpdateWithoutConversationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -3405,6 +3694,7 @@ export type UserCreateWithoutMessagesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -3458,6 +3748,7 @@ export type UserUncheckedCreateWithoutMessagesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -3527,6 +3818,7 @@ export type UserUpdateWithoutMessagesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -3580,6 +3872,7 @@ export type UserUncheckedUpdateWithoutMessagesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -3633,6 +3926,7 @@ export type UserCreateWithoutBlocksMadeInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -3686,6 +3980,7 @@ export type UserUncheckedCreateWithoutBlocksMadeInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -3744,6 +4039,7 @@ export type UserCreateWithoutBlocksReceivedInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -3797,6 +4093,7 @@ export type UserUncheckedCreateWithoutBlocksReceivedInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -3866,6 +4163,7 @@ export type UserUpdateWithoutBlocksMadeInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -3919,6 +4217,7 @@ export type UserUncheckedUpdateWithoutBlocksMadeInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -3983,6 +4282,7 @@ export type UserUpdateWithoutBlocksReceivedInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -4036,6 +4336,7 @@ export type UserUncheckedUpdateWithoutBlocksReceivedInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -4089,6 +4390,7 @@ export type UserCreateWithoutProposalsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -4142,6 +4444,7 @@ export type UserUncheckedCreateWithoutProposalsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -4211,6 +4514,7 @@ export type UserUpdateWithoutProposalsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -4264,6 +4568,7 @@ export type UserUncheckedUpdateWithoutProposalsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -4317,6 +4622,7 @@ export type UserCreateWithoutDealsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -4370,6 +4676,7 @@ export type UserUncheckedCreateWithoutDealsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -4439,6 +4746,7 @@ export type UserUpdateWithoutDealsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -4492,6 +4800,7 @@ export type UserUncheckedUpdateWithoutDealsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -4545,6 +4854,7 @@ export type UserCreateWithoutDeliveriesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -4598,6 +4908,7 @@ export type UserUncheckedCreateWithoutDeliveriesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -4667,6 +4978,7 @@ export type UserUpdateWithoutDeliveriesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -4720,6 +5032,7 @@ export type UserUncheckedUpdateWithoutDeliveriesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -4773,6 +5086,7 @@ export type UserCreateWithoutApprovalsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -4826,6 +5140,7 @@ export type UserUncheckedCreateWithoutApprovalsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -4895,6 +5210,7 @@ export type UserUpdateWithoutApprovalsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -4948,6 +5264,7 @@ export type UserUncheckedUpdateWithoutApprovalsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -5001,6 +5318,7 @@ export type UserCreateWithoutReleasesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -5054,6 +5372,7 @@ export type UserUncheckedCreateWithoutReleasesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -5123,6 +5442,7 @@ export type UserUpdateWithoutReleasesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -5176,6 +5496,7 @@ export type UserUncheckedUpdateWithoutReleasesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -5229,6 +5550,7 @@ export type UserCreateWithoutRefundsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -5282,6 +5604,7 @@ export type UserUncheckedCreateWithoutRefundsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -5351,6 +5674,7 @@ export type UserUpdateWithoutRefundsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -5404,6 +5728,7 @@ export type UserUncheckedUpdateWithoutRefundsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -5457,6 +5782,7 @@ export type UserCreateWithoutDisputesOpenedInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -5510,6 +5836,7 @@ export type UserUncheckedCreateWithoutDisputesOpenedInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -5579,6 +5906,7 @@ export type UserUpdateWithoutDisputesOpenedInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -5632,6 +5960,7 @@ export type UserUncheckedUpdateWithoutDisputesOpenedInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -5685,6 +6014,7 @@ export type UserCreateWithoutReviewsGivenInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -5738,6 +6068,7 @@ export type UserUncheckedCreateWithoutReviewsGivenInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -5796,6 +6127,7 @@ export type UserCreateWithoutReviewsReceivedInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -5849,6 +6181,7 @@ export type UserUncheckedCreateWithoutReviewsReceivedInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -5918,6 +6251,7 @@ export type UserUpdateWithoutReviewsGivenInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -5971,6 +6305,7 @@ export type UserUncheckedUpdateWithoutReviewsGivenInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -6035,6 +6370,7 @@ export type UserUpdateWithoutReviewsReceivedInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -6088,6 +6424,7 @@ export type UserUncheckedUpdateWithoutReviewsReceivedInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -6141,6 +6478,7 @@ export type UserCreateWithoutNotificationsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -6194,6 +6532,7 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -6263,6 +6602,7 @@ export type UserUpdateWithoutNotificationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -6316,6 +6656,7 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -6369,6 +6710,7 @@ export type UserCreateWithoutAuditLogsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -6422,6 +6764,7 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -6491,6 +6834,7 @@ export type UserUpdateWithoutAuditLogsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -6544,6 +6888,7 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -6597,6 +6942,7 @@ export type UserCreateWithoutModerationActionsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -6650,6 +6996,7 @@ export type UserUncheckedCreateWithoutModerationActionsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -6719,6 +7066,7 @@ export type UserUpdateWithoutModerationActionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -6772,6 +7120,7 @@ export type UserUncheckedUpdateWithoutModerationActionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -6825,6 +7174,7 @@ export type UserCreateWithoutConnectionsSentInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -6878,6 +7228,7 @@ export type UserUncheckedCreateWithoutConnectionsSentInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -6936,6 +7287,7 @@ export type UserCreateWithoutConnectionsReceivedInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -6989,6 +7341,7 @@ export type UserUncheckedCreateWithoutConnectionsReceivedInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -7058,6 +7411,7 @@ export type UserUpdateWithoutConnectionsSentInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -7111,6 +7465,7 @@ export type UserUncheckedUpdateWithoutConnectionsSentInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -7175,6 +7530,7 @@ export type UserUpdateWithoutConnectionsReceivedInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -7228,6 +7584,7 @@ export type UserUncheckedUpdateWithoutConnectionsReceivedInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -7281,6 +7638,7 @@ export type UserCreateWithoutProfileBookmarksInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -7334,6 +7692,7 @@ export type UserUncheckedCreateWithoutProfileBookmarksInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -7403,6 +7762,7 @@ export type UserUpdateWithoutProfileBookmarksInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -7456,6 +7816,7 @@ export type UserUncheckedUpdateWithoutProfileBookmarksInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -7509,6 +7870,7 @@ export type UserCreateWithoutSupportTicketsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -7562,6 +7924,7 @@ export type UserUncheckedCreateWithoutSupportTicketsInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -7631,6 +7994,7 @@ export type UserUpdateWithoutSupportTicketsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -7684,6 +8048,7 @@ export type UserUncheckedUpdateWithoutSupportTicketsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -7737,6 +8102,7 @@ export type UserCreateWithoutTicketMessagesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityCreateNestedManyWithoutOwnerInput
@@ -7790,6 +8156,7 @@ export type UserUncheckedCreateWithoutTicketMessagesInput = {
   updatedAt?: Date | string
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  traderApplication?: Prisma.TraderApplicationUncheckedCreateNestedOneWithoutUserInput
   roles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   profile?: Prisma.ProfileUncheckedCreateNestedOneWithoutUserInput
   opportunities?: Prisma.OpportunityUncheckedCreateNestedManyWithoutOwnerInput
@@ -7859,6 +8226,7 @@ export type UserUpdateWithoutTicketMessagesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUpdateManyWithoutOwnerNestedInput
@@ -7912,6 +8280,7 @@ export type UserUncheckedUpdateWithoutTicketMessagesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  traderApplication?: Prisma.TraderApplicationUncheckedUpdateOneWithoutUserNestedInput
   roles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   profile?: Prisma.ProfileUncheckedUpdateOneWithoutUserNestedInput
   opportunities?: Prisma.OpportunityUncheckedUpdateManyWithoutOwnerNestedInput
@@ -8239,6 +8608,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   updatedAt?: boolean
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   passwordResetTokens?: boolean | Prisma.User$passwordResetTokensArgs<ExtArgs>
+  traderApplication?: boolean | Prisma.User$traderApplicationArgs<ExtArgs>
   roles?: boolean | Prisma.User$rolesArgs<ExtArgs>
   profile?: boolean | Prisma.User$profileArgs<ExtArgs>
   opportunities?: boolean | Prisma.User$opportunitiesArgs<ExtArgs>
@@ -8348,6 +8718,7 @@ export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = run
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
   passwordResetTokens?: boolean | Prisma.User$passwordResetTokensArgs<ExtArgs>
+  traderApplication?: boolean | Prisma.User$traderApplicationArgs<ExtArgs>
   roles?: boolean | Prisma.User$rolesArgs<ExtArgs>
   profile?: boolean | Prisma.User$profileArgs<ExtArgs>
   opportunities?: boolean | Prisma.User$opportunitiesArgs<ExtArgs>
@@ -8385,6 +8756,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   objects: {
     sessions: Prisma.$SessionPayload<ExtArgs>[]
     passwordResetTokens: Prisma.$PasswordResetTokenPayload<ExtArgs>[]
+    traderApplication: Prisma.$TraderApplicationPayload<ExtArgs> | null
     roles: Prisma.$UserRolePayload<ExtArgs>[]
     profile: Prisma.$ProfilePayload<ExtArgs> | null
     opportunities: Prisma.$OpportunityPayload<ExtArgs>[]
@@ -8832,6 +9204,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   readonly [Symbol.toStringTag]: "PrismaPromise"
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   passwordResetTokens<T extends Prisma.User$passwordResetTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$passwordResetTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordResetTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  traderApplication<T extends Prisma.User$traderApplicationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$traderApplicationArgs<ExtArgs>>): Prisma.Prisma__TraderApplicationClient<runtime.Types.Result.GetResult<Prisma.$TraderApplicationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   roles<T extends Prisma.User$rolesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rolesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserRolePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   profile<T extends Prisma.User$profileArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$profileArgs<ExtArgs>>): Prisma.Prisma__ProfileClient<runtime.Types.Result.GetResult<Prisma.$ProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   opportunities<T extends Prisma.User$opportunitiesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$opportunitiesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$OpportunityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -9348,6 +9721,25 @@ export type User$passwordResetTokensArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.PasswordResetTokenScalarFieldEnum | Prisma.PasswordResetTokenScalarFieldEnum[]
+}
+
+/**
+ * User.traderApplication
+ */
+export type User$traderApplicationArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TraderApplication
+   */
+  select?: Prisma.TraderApplicationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TraderApplication
+   */
+  omit?: Prisma.TraderApplicationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TraderApplicationInclude<ExtArgs> | null
+  where?: Prisma.TraderApplicationWhereInput
 }
 
 /**

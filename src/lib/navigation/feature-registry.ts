@@ -114,12 +114,18 @@ export const featureRegistry = [
     id: "create-post",
     keywords: ["new", "publish", "listing", "opportunity", "content"],
     label: "Create Post",
-    // Visibility is derived from the capability the destination actually
-    // enforces (`opportunity:create` in
-    // `src/app/app/opportunities/new/page.tsx`) rather than a duplicated role
-    // list. The two had drifted apart, which is why Create was missing from
-    // the mobile bar for every role without that capability.
-    requiredCapability: "opportunity:create",
+    /*
+      Intentionally ungated.
+
+      Create is a product discovery surface: every authenticated user should be
+      able to find it, and the destination decides what they may do - traders
+      get the composer, everyone else gets the Trader access gate.
+
+      Hiding the entry point made the product look like it had no Create at all
+      for a default MEMBER, and hiding a feature is not authorization. The
+      route still enforces `opportunity:create` server-side, and the composer is
+      never rendered for a user without it.
+    */
   },
   {
     description: "Review your drafts and published posts.",
@@ -361,7 +367,11 @@ export const authenticatedMobileNavigation = [
   {
     // Discovery is the natural sibling of connections on mobile, where there
     // is no sidebar to reach it from, so the tab covers both surfaces.
-    activePaths: [getAppRoute("discover"), getAppRoute("network"), "/app/people"],
+    activePaths: [
+      getAppRoute("discover"),
+      getAppRoute("network"),
+      "/app/people",
+    ],
     featureId: "connections",
     label: "Network",
   },

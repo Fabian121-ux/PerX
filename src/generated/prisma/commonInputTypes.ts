@@ -182,6 +182,40 @@ export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedDateTimeFilter<$PrismaModel>
 }
 
+export type EnumTraderApplicationStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.TraderApplicationStatus | Prisma.EnumTraderApplicationStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.TraderApplicationStatus[] | Prisma.ListEnumTraderApplicationStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TraderApplicationStatus[] | Prisma.ListEnumTraderApplicationStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTraderApplicationStatusFilter<$PrismaModel> | $Enums.TraderApplicationStatus
+}
+
+export type EnumTraderApplicantKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.TraderApplicantKind | Prisma.EnumTraderApplicantKindFieldRefInput<$PrismaModel>
+  in?: $Enums.TraderApplicantKind[] | Prisma.ListEnumTraderApplicantKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TraderApplicantKind[] | Prisma.ListEnumTraderApplicantKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTraderApplicantKindFilter<$PrismaModel> | $Enums.TraderApplicantKind
+}
+
+export type EnumTraderApplicationStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TraderApplicationStatus | Prisma.EnumTraderApplicationStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.TraderApplicationStatus[] | Prisma.ListEnumTraderApplicationStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TraderApplicationStatus[] | Prisma.ListEnumTraderApplicationStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTraderApplicationStatusWithAggregatesFilter<$PrismaModel> | $Enums.TraderApplicationStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTraderApplicationStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTraderApplicationStatusFilter<$PrismaModel>
+}
+
+export type EnumTraderApplicantKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TraderApplicantKind | Prisma.EnumTraderApplicantKindFieldRefInput<$PrismaModel>
+  in?: $Enums.TraderApplicantKind[] | Prisma.ListEnumTraderApplicantKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TraderApplicantKind[] | Prisma.ListEnumTraderApplicantKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTraderApplicantKindWithAggregatesFilter<$PrismaModel> | $Enums.TraderApplicantKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTraderApplicantKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTraderApplicantKindFilter<$PrismaModel>
+}
+
 export type EnumRoleNameFilter<$PrismaModel = never> = {
   equals?: $Enums.RoleName | Prisma.EnumRoleNameFieldRefInput<$PrismaModel>
   in?: $Enums.RoleName[] | Prisma.ListEnumRoleNameFieldRefInput<$PrismaModel>
@@ -1115,6 +1149,40 @@ export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedDateTimeFilter<$PrismaModel>
   _max?: Prisma.NestedDateTimeFilter<$PrismaModel>
+}
+
+export type NestedEnumTraderApplicationStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.TraderApplicationStatus | Prisma.EnumTraderApplicationStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.TraderApplicationStatus[] | Prisma.ListEnumTraderApplicationStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TraderApplicationStatus[] | Prisma.ListEnumTraderApplicationStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTraderApplicationStatusFilter<$PrismaModel> | $Enums.TraderApplicationStatus
+}
+
+export type NestedEnumTraderApplicantKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.TraderApplicantKind | Prisma.EnumTraderApplicantKindFieldRefInput<$PrismaModel>
+  in?: $Enums.TraderApplicantKind[] | Prisma.ListEnumTraderApplicantKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TraderApplicantKind[] | Prisma.ListEnumTraderApplicantKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTraderApplicantKindFilter<$PrismaModel> | $Enums.TraderApplicantKind
+}
+
+export type NestedEnumTraderApplicationStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TraderApplicationStatus | Prisma.EnumTraderApplicationStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.TraderApplicationStatus[] | Prisma.ListEnumTraderApplicationStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TraderApplicationStatus[] | Prisma.ListEnumTraderApplicationStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTraderApplicationStatusWithAggregatesFilter<$PrismaModel> | $Enums.TraderApplicationStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTraderApplicationStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTraderApplicationStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumTraderApplicantKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.TraderApplicantKind | Prisma.EnumTraderApplicantKindFieldRefInput<$PrismaModel>
+  in?: $Enums.TraderApplicantKind[] | Prisma.ListEnumTraderApplicantKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.TraderApplicantKind[] | Prisma.ListEnumTraderApplicantKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumTraderApplicantKindWithAggregatesFilter<$PrismaModel> | $Enums.TraderApplicantKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumTraderApplicantKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumTraderApplicantKindFilter<$PrismaModel>
 }
 
 export type NestedEnumRoleNameFilter<$PrismaModel = never> = {

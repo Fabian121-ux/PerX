@@ -8,6 +8,7 @@ import type { CurrentUser } from "@/lib/auth/session";
 const adminLinks = [
   ["/admin", "Dashboard"],
   ["/admin/users", "Users"],
+  ["/admin/trader-applications", "Trader applications"],
   ["/admin/opportunities", "Opportunities"],
   // The Real Estate vertical was retired from the member experience, but
   // existing PROPERTY listings still need moderating, so this admin-only
