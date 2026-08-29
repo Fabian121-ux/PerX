@@ -1608,11 +1608,14 @@ describe("message workspace exact targets", () => {
   });
 
   it("stops fallback polling when the existing stream recovers", async () => {
-    const intervalId = 42 as unknown as ReturnType<typeof window.setInterval>;
-    const setIntervalSpy = vi
-      .spyOn(window, "setInterval")
-      .mockReturnValue(intervalId);
-    const clearIntervalSpy = vi.spyOn(window, "clearInterval");
+    // Degraded polling is scheduled with `setTimeout` rather than a fixed
+    // `setInterval`, because the delay adapts to how long Realtime has been
+    // down and to whether the conversation is active, idle or hidden.
+    const timeoutId = 42 as unknown as ReturnType<typeof window.setTimeout>;
+    const setTimeoutSpy = vi
+      .spyOn(window, "setTimeout")
+      .mockReturnValue(timeoutId);
+    const clearTimeoutSpy = vi.spyOn(window, "clearTimeout");
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -1638,7 +1641,7 @@ describe("message workspace exact targets", () => {
       EventSourceMock.current?.emit("stream-error", {});
       await Promise.resolve();
     });
-    expect(setIntervalSpy).toHaveBeenCalled();
+    expect(setTimeoutSpy).toHaveBeenCalled();
 
     await act(async () => {
       EventSourceMock.current?.emit("conversations", {
@@ -1652,9 +1655,9 @@ describe("message workspace exact targets", () => {
       });
       await Promise.resolve();
     });
-    expect(clearIntervalSpy).toHaveBeenCalledWith(intervalId);
-    setIntervalSpy.mockRestore();
-    clearIntervalSpy.mockRestore();
+    expect(clearTimeoutSpy).toHaveBeenCalledWith(timeoutId);
+    setTimeoutSpy.mockRestore();
+    clearTimeoutSpy.mockRestore();
   });
 
   it("restarts live sync without an expired mutation cursor", async () => {

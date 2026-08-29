@@ -26,7 +26,5 @@ export default function AppError({
   // The previous copy claimed "this is typically due to a temporary connection
   // issue" for every failure, including server errors that had nothing to do
   // with connectivity. The taxonomy now decides what is actually claimed.
-  return (
-    <ErrorState error={error} onRetry={reset} surface="your workspace" />
-  );
+  return <ErrorState error={error} onRetry={reset} surface="your workspace" />;
 }

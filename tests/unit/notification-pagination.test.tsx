@@ -60,7 +60,8 @@ describe("notification cursor pagination", () => {
 
     expect(mocks.notificationFindMany).toHaveBeenCalledWith({
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-      take: 51,
+      // pageSize 20 + 1 lookahead row, matching every other cursor list.
+      take: 21,
       where: {
         AND: [
           {

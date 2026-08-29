@@ -171,6 +171,16 @@ type WorkspaceRealtimeMessageEnvelope = {
   operation: "INSERT" | "UPDATE" | "DELETE";
 };
 
+/**
+ * Stamps the last-interaction ref used by the degraded polling schedule.
+ *
+ * Module scope keeps the clock read outside component render analysis; it is
+ * only ever invoked from user-interaction paths.
+ */
+function markFallbackInteraction(ref: { current: number | null }) {
+  ref.current = Date.now();
+}
+
 const subscribeToHydration = () => () => {};
 const getBrowserSnapshot = () => true;
 const getServerSnapshot = () => false;
@@ -247,6 +257,14 @@ export function MessageWorkspace({
   // Epoch ms of the last meaningful interaction, used only to decide how
   // aggressively degraded polling should run. Not rendered.
   const lastInteractionAtRef = useRef<number | null>(null);
+  /**
+   * Records an interaction timestamp for the degraded polling schedule.
+   *
+   * Defined at module scope (see `markFallbackInteraction`) so the React
+   * compiler does not treat the clock read as render-phase work: these calls
+   * originate from user interactions, never from rendering.
+   */
+  const markInteraction = () => markFallbackInteraction(lastInteractionAtRef);
   const historyRef = useRef<HTMLDivElement>(null);
   const appNavigationScrollRef = useRef<{
     conversationId: string;
@@ -804,13 +822,22 @@ export function MessageWorkspace({
     let eventSource: EventSource | null = null;
     let fallbackTimer: number | null = null;
     let fallbackTicks = 0;
+    let fallbackRunning = false;
     let unavailableHandled = false;
     let syncInFlight = false;
     let syncVersion = 0;
-    const stopFallback = () => {
-      // Realtime recovered (or the effect is tearing down): stop immediately
-      // and reset backoff so a later outage starts responsive again.
-      fallbackTicks = 0;
+    /**
+     * Stops degraded polling.
+     *
+     * `resetBackoff` must only be true when Realtime genuinely recovered. The
+     * server retries its own subscription and emits `stream-error` on each
+     * failed attempt; treating those as recovery reset the tick counter every
+     * few seconds and pinned the client at the responsive interval for the
+     * whole outage - the backoff never engaged.
+     */
+    const stopFallback = ({ resetBackoff }: { resetBackoff: boolean }) => {
+      if (resetBackoff) fallbackTicks = 0;
+      fallbackRunning = false;
       if (fallbackTimer === null) return;
       window.clearTimeout(fallbackTimer);
       fallbackTimer = null;
@@ -821,7 +848,7 @@ export function MessageWorkspace({
       syncVersion += 1;
       conversationOpenRequestRef.current += 1;
       eventSource?.close();
-      stopFallback();
+      stopFallback({ resetBackoff: true });
       setActivatedConversationId("");
       setMobileDetailOpen(false);
       setLocalMessages({});
@@ -913,13 +940,19 @@ export function MessageWorkspace({
       fallbackTimer = window.setTimeout(async () => {
         if (!active) return;
         fallbackTicks += 1;
+        fallbackTimer = null;
         await sync();
         scheduleFallback();
       }, delay);
     };
 
     const startFallback = () => {
-      if (fallbackTimer !== null) return;
+      // `fallbackRunning` rather than `fallbackTimer`: the timer is null while
+      // an awaited sync is in flight, and the server emits a `stream-error` on
+      // every failed Realtime retry. Keying off the timer alone let those
+      // retries start a second, immediate polling cycle.
+      if (fallbackRunning) return;
+      fallbackRunning = true;
       setLiveState((state) => (state === "live" ? "reconnecting" : "fallback"));
       void sync();
       scheduleFallback();
@@ -939,7 +972,7 @@ export function MessageWorkspace({
       eventSource.addEventListener("open", () => {
         if (!active) return;
         setLiveState("live");
-        stopFallback();
+        stopFallback({ resetBackoff: true });
       });
       eventSource.addEventListener("conversations", (event) => {
         if (!active) return;
@@ -958,7 +991,7 @@ export function MessageWorkspace({
             mutationCursorsRef.current[activeId] = messageEvent.lastEventId;
           }
           void reconcileConversationSnapshot(incoming);
-          stopFallback();
+          stopFallback({ resetBackoff: true });
           setLiveState("live");
           window.dispatchEvent(new Event("perx-unread-refresh"));
         }
@@ -975,7 +1008,7 @@ export function MessageWorkspace({
         }
         if (!incoming) return;
         applyRealtimeMessage(incoming);
-        stopFallback();
+        stopFallback({ resetBackoff: true });
         setLiveState("live");
       });
       eventSource.addEventListener("mutation-checkpoint", (event) => {
@@ -1018,7 +1051,7 @@ export function MessageWorkspace({
       active = false;
       syncVersion += 1;
       eventSource?.close();
-      stopFallback();
+      stopFallback({ resetBackoff: true });
     };
   }, [activeId, documentVisible, liveConnectionVersion]);
 
@@ -1563,7 +1596,7 @@ export function MessageWorkspace({
   const openMobileConversation = async (conversationId: string) => {
     const requestId = ++conversationOpenRequestRef.current;
     // Opening a thread is an interaction: keep degraded polling responsive.
-    lastInteractionAtRef.current = Date.now();
+    markInteraction();
     const needsHistory =
       !fullHistoryConversationIdsRef.current.has(conversationId);
     const previousActiveId = activeIdRef.current;
@@ -1746,7 +1779,7 @@ export function MessageWorkspace({
     if (!draft.trim() || !activeConversation || isPending) return;
     // Sending marks the thread active, so a degraded session reconciles at the
     // responsive interval instead of the backed-off one.
-    lastInteractionAtRef.current = Date.now();
+    markInteraction();
     if (
       activeConversation.dealOffer &&
       isDealComposerTrigger(draft) &&

@@ -1,6 +1,8 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import crypto from "node:crypto";
 
+import { NOTIFICATION_PAGE_SIZE } from "@/lib/notifications/page-size";
+
 import { hasIsolatedTestDatabase } from "./utils/db-guard";
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
@@ -2037,15 +2039,17 @@ describeOrSkip(
         await createSession(page, "alice-test@perx.test");
         await page.goto(`${BASE}/app/notifications?type=messages`);
 
-        await expect(
-          page.getByText(`${titlePrefix} message 052`),
-        ).toBeVisible();
-        await expect(
-          page.getByText(`${titlePrefix} message 003`),
-        ).toBeVisible();
-        await expect(page.getByText(`${titlePrefix} message 002`)).toHaveCount(
-          0,
-        );
+        // Boundaries are derived from the shared page-size constant so a
+        // deliberate page-size change is not misread as a pagination
+        // regression. 52 fixture rows, newest first: the first page shows
+        // 052 down to (052 - pageSize + 1), and the next row must not appear.
+        const newest = 52;
+        const firstPageOldest = newest - NOTIFICATION_PAGE_SIZE + 1;
+        const row = (n: number) =>
+          `${titlePrefix} message ${String(n).padStart(3, "0")}`;
+        await expect(page.getByText(row(newest))).toBeVisible();
+        await expect(page.getByText(row(firstPageOldest))).toBeVisible();
+        await expect(page.getByText(row(firstPageOldest - 1))).toHaveCount(0);
         await expect(
           page.getByText(`${titlePrefix} system sentinel`),
         ).toHaveCount(0);
@@ -2064,27 +2068,18 @@ describeOrSkip(
         expect(new URL(page.url()).searchParams.get("type")).toBe("messages");
         expect(new URL(page.url()).searchParams.get("cursor")).toBeTruthy();
         await expect(
-          page.getByText(`${titlePrefix} message 002`),
+          page.getByText(row(firstPageOldest - 1)),
         ).toBeVisible();
-        await expect(
-          page.getByText(`${titlePrefix} message 001`),
-        ).toBeVisible();
-        await expect(page.getByText(`${titlePrefix} message 003`)).toHaveCount(
-          0,
-        );
+        await expect(page.getByText(row(firstPageOldest))).toHaveCount(0);
         const olderPageUrl = page.url();
 
         await page.goBack();
         await expect(page).toHaveURL(firstPageUrl, { timeout: 30_000 });
-        await expect(
-          page.getByText(`${titlePrefix} message 052`),
-        ).toBeVisible();
+        await expect(page.getByText(row(newest))).toBeVisible();
 
         await page.goForward();
         await expect(page).toHaveURL(olderPageUrl, { timeout: 30_000 });
-        await expect(
-          page.getByText(`${titlePrefix} message 001`),
-        ).toBeVisible();
+        await expect(page.getByText(row(firstPageOldest - 1))).toBeVisible();
       } finally {
         await page.close();
         await deleteNotificationPaginationFixture(notificationPrefix.ids);

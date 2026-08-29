@@ -23,7 +23,5 @@ export default function NotificationsError({
 
   // Previously told every user to "check your connection", including when the
   // server had failed. The taxonomy only says that for real transport errors.
-  return (
-    <ErrorState error={error} onRetry={reset} surface="your activity" />
-  );
+  return <ErrorState error={error} onRetry={reset} surface="your activity" />;
 }

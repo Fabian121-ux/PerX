@@ -84,7 +84,7 @@ describe("error taxonomy", () => {
 
   it("never leaks raw infrastructure detail into user copy", () => {
     const leaky = new Error(
-      'Invalid `prisma.user.findMany()` postgresql://user:secret@db:5432/perx',
+      "Invalid `prisma.user.findMany()` postgresql://user:secret@db:5432/perx",
     );
     const presented = presentError(leaky, "your workspace");
     expect(presented.description).not.toContain("postgresql://");

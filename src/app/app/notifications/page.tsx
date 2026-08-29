@@ -24,6 +24,7 @@ import {
 } from "@/features/network/actions";
 import { requireUser } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
+import { NOTIFICATION_PAGE_SIZE } from "@/lib/notifications/page-size";
 import {
   resolveNotificationActions,
   type NotificationActionResolution,
@@ -82,7 +83,7 @@ export default async function NotificationsPage({
       : undefined;
   const cursorScope = `notifications:${user.id}:${activeFilter || "all"}`;
   const { cursor, pageSize, requestedCursor } = normalizeCursorPageParams(
-    { cursor: params.cursor, pageSize: 50 },
+    { cursor: params.cursor, pageSize: NOTIFICATION_PAGE_SIZE },
     cursorScope,
   );
   const viewWhere: Prisma.NotificationWhereInput = {
@@ -287,13 +288,11 @@ function NotificationCard({
   notification,
 }: {
   action: NotificationActionResolution;
-  connectionRequest:
-    | {
-        id: string;
-        profileHref: string | null;
-        status: string;
-      }
-    | null;
+  connectionRequest: {
+    id: string;
+    profileHref: string | null;
+    status: string;
+  } | null;
   notification: {
     actionUrl: string | null;
     actionState: string | null;
