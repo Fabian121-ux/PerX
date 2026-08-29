@@ -52,6 +52,10 @@ import {
 import { blockUserAction } from "@/features/network/actions";
 import { shouldSubmitMessage } from "@/lib/messages/composer-keyboard";
 import { isDealComposerTrigger } from "@/lib/messages/deal-trigger";
+import {
+  getFallbackActivity,
+  getFallbackDelayMs,
+} from "@/lib/messages/fallback-schedule";
 import { MAX_LOADED_CONVERSATIONS } from "@/lib/messages/limits";
 
 type ReplyPreview = {
@@ -240,6 +244,9 @@ export function MessageWorkspace({
     Record<string, HTMLButtonElement | null>
   >({});
   const conversationHeaderRef = useRef<HTMLDivElement>(null);
+  // Epoch ms of the last meaningful interaction, used only to decide how
+  // aggressively degraded polling should run. Not rendered.
+  const lastInteractionAtRef = useRef<number | null>(null);
   const historyRef = useRef<HTMLDivElement>(null);
   const appNavigationScrollRef = useRef<{
     conversationId: string;
@@ -795,14 +802,18 @@ export function MessageWorkspace({
     if (!documentVisible) return;
     let active = true;
     let eventSource: EventSource | null = null;
-    let fallbackInterval: number | null = null;
+    let fallbackTimer: number | null = null;
+    let fallbackTicks = 0;
     let unavailableHandled = false;
     let syncInFlight = false;
     let syncVersion = 0;
     const stopFallback = () => {
-      if (fallbackInterval === null) return;
-      window.clearInterval(fallbackInterval);
-      fallbackInterval = null;
+      // Realtime recovered (or the effect is tearing down): stop immediately
+      // and reset backoff so a later outage starts responsive again.
+      fallbackTicks = 0;
+      if (fallbackTimer === null) return;
+      window.clearTimeout(fallbackTimer);
+      fallbackTimer = null;
     };
     const recoverAuthorizedList = async () => {
       if (unavailableHandled) return;
@@ -880,11 +891,38 @@ export function MessageWorkspace({
       }
     };
 
+    // Degraded polling is adaptive rather than a fixed 5s interval: a sustained
+    // outage on an idle thread backs off toward `FALLBACK_MAX_MS`, a hidden tab
+    // stops entirely, and recent interaction restores the responsive interval.
+    // A fixed interval cost up to ~12 req/min and ~940 KB/min per open
+    // conversation, which is too expensive to sustain while Realtime is down.
+    const scheduleFallback = () => {
+      if (!active) return;
+      const activity = getFallbackActivity({
+        documentVisible:
+          typeof document === "undefined"
+            ? true
+            : document.visibilityState === "visible",
+        lastInteractionAt: lastInteractionAtRef.current,
+      });
+      const delay = getFallbackDelayMs({
+        activity,
+        consecutiveFailures: fallbackTicks,
+      });
+      if (delay === null) return;
+      fallbackTimer = window.setTimeout(async () => {
+        if (!active) return;
+        fallbackTicks += 1;
+        await sync();
+        scheduleFallback();
+      }, delay);
+    };
+
     const startFallback = () => {
-      if (fallbackInterval !== null) return;
+      if (fallbackTimer !== null) return;
       setLiveState((state) => (state === "live" ? "reconnecting" : "fallback"));
       void sync();
-      fallbackInterval = window.setInterval(sync, 5000);
+      scheduleFallback();
     };
 
     if (typeof EventSource === "undefined") {
@@ -1524,7 +1562,53 @@ export function MessageWorkspace({
 
   const openMobileConversation = async (conversationId: string) => {
     const requestId = ++conversationOpenRequestRef.current;
-    if (!fullHistoryConversationIdsRef.current.has(conversationId)) {
+    // Opening a thread is an interaction: keep degraded polling responsive.
+    lastInteractionAtRef.current = Date.now();
+    const needsHistory =
+      !fullHistoryConversationIdsRef.current.has(conversationId);
+    const previousActiveId = activeIdRef.current;
+    const previousActivatedId = activatedConversationId;
+    const previousMobileDetailOpen = mobileDetailOpenRef.current;
+    // Immediate acknowledgement.
+    //
+    // Selecting the conversation used to happen only AFTER the history fetch
+    // resolved, so tapping a conversation whose history was not yet cached
+    // produced no visual response at all for the duration of the round trip:
+    // measured at ~1950ms uncached versus ~149ms cached in production mode.
+    //
+    // Selection is presentation only. The fetch below remains authoritative:
+    // it still removes the conversation when the server does not authorize it,
+    // and the `requestId` guard still discards superseded opens.
+    if (needsHistory) {
+      setActiveId(conversationId);
+      setActivatedConversationId(conversationId);
+      setHistoryPositioned(false);
+      setHistoryAtBottom(false);
+      historyPositionedRef.current = false;
+      historyAtBottomRef.current = false;
+      // On mobile the destination itself is the acknowledgement, so open the
+      // immersive view now and let the awaited history stream into it. The
+      // history entry is still pushed once below, guarded by `mobileDetailOpen`.
+      if (isMobileViewport) {
+        document.documentElement.classList.add(
+          "perx-mobile-conversation-active",
+        );
+        setMobileDetailOpen(true);
+      }
+
+      // Undoes the optimistic acknowledgement when the open does not succeed,
+      // so an unauthorized or failed conversation never remains on screen.
+      const revertAcknowledgement = () => {
+        setActiveId(previousActiveId);
+        setActivatedConversationId(previousActivatedId);
+        if (isMobileViewport && !previousMobileDetailOpen) {
+          document.documentElement.classList.remove(
+            "perx-mobile-conversation-active",
+          );
+          setMobileDetailOpen(false);
+        }
+      };
+
       conversationOpenAbortRef.current?.abort();
       const controller = new AbortController();
       conversationOpenAbortRef.current = controller;
@@ -1535,6 +1619,7 @@ export function MessageWorkspace({
         );
         if (requestId !== conversationOpenRequestRef.current) return;
         if (!response.ok) {
+          revertAcknowledgement();
           setSyncedConversations((current) =>
             current.filter(
               (conversation) => conversation.id !== conversationId,
@@ -1550,6 +1635,7 @@ export function MessageWorkspace({
             (conversation) => conversation.id === conversationId,
           )
         ) {
+          revertAcknowledgement();
           setSyncedConversations((current) =>
             current.filter(
               (conversation) => conversation.id !== conversationId,
@@ -1582,6 +1668,7 @@ export function MessageWorkspace({
         if (error instanceof DOMException && error.name === "AbortError")
           return;
         if (requestId !== conversationOpenRequestRef.current) return;
+        revertAcknowledgement();
         toast({
           description: "Please try again.",
           title: "Unable to open this conversation",
@@ -1657,6 +1744,9 @@ export function MessageWorkspace({
   const sendMessage = (event?: FormEvent) => {
     event?.preventDefault();
     if (!draft.trim() || !activeConversation || isPending) return;
+    // Sending marks the thread active, so a degraded session reconciles at the
+    // responsive interval instead of the backed-off one.
+    lastInteractionAtRef.current = Date.now();
     if (
       activeConversation.dealOffer &&
       isDealComposerTrigger(draft) &&
