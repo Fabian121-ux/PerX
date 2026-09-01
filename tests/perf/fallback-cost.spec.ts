@@ -71,7 +71,7 @@ async function conversationId() {
   }
 }
 
-for (const mode of ["idle", "hidden"] as const) {
+for (const mode of ["active", "idle", "hidden"] as const) {
   test(`fallback cost - ${mode} conversation`, async ({ browser }) => {
     test.setTimeout(OBSERVE_MS + 120_000);
     const page = await browser.newPage({
@@ -82,6 +82,16 @@ for (const mode of ["idle", "hidden"] as const) {
       await signIn(page, "alice-test@perx.test");
       await page.goto(`${BASE}/app/messages/${conv}`);
       await page.getByLabel("Message history").waitFor({ timeout: 30_000 });
+
+      if (mode === "active") {
+        // Recent interaction: opening the thread and sending marks the
+        // conversation active, which keeps the responsive interval.
+        const composer = page.getByRole("textbox").first();
+        await composer.click().catch(() => undefined);
+        await composer
+          .fill(`activity ping ${Date.now()}`)
+          .catch(() => undefined);
+      }
 
       if (mode === "hidden") {
         // Emulate a backgrounded tab: the workspace should stop polling.
@@ -96,10 +106,19 @@ for (const mode of ["idle", "hidden"] as const) {
 
       let requests = 0;
       let bytes = 0;
+      let probes = 0;
+      let probeBytes = 0;
       const at: number[] = [];
       const start = Date.now();
       page.on("response", async (r) => {
-        if (new URL(r.url()).pathname !== "/api/messages/sync") return;
+        const path = new URL(r.url()).pathname;
+        if (path === "/api/messages/check") {
+          probes += 1;
+          probeBytes += (await r.body().catch(() => Buffer.alloc(0))).length;
+          at.push(Date.now() - start);
+          return;
+        }
+        if (path !== "/api/messages/sync") return;
         requests += 1;
         at.push(Date.now() - start);
         bytes += (await r.body().catch(() => Buffer.alloc(0))).length;
@@ -112,11 +131,21 @@ for (const mode of ["idle", "hidden"] as const) {
       // during a sustained outage and reset when Realtime briefly recovers,
       // so an averaged rate alone hides whether backoff engaged at all.
       const gaps = at.slice(1).map((v, i) => v - at[i]!);
+      // Measured per-request query counts (production-mode, isolated):
+      // probe = 9 queries (6 shared session/auth + 3 probe aggregates),
+      // full sync = 44 queries.
+      const PROBE_QUERIES = 9;
+      const SYNC_QUERIES = 44;
+      const queriesPerMin =
+        (probes * PROBE_QUERIES + requests * SYNC_QUERIES) / minutes;
       console.log(
         `\n=== FALLBACK ${mode.toUpperCase()} ===\n` +
           `window_ms=${OBSERVE_MS}\n` +
-          `requests=${requests} (${(requests / minutes).toFixed(1)}/min)\n` +
-          `bytes=${bytes} (${Math.round(bytes / minutes)}/min)\n` +
+          `probes=${probes} (${(probes / minutes).toFixed(1)}/min) bytes=${probeBytes}\n` +
+          `full_syncs=${requests} (${(requests / minutes).toFixed(1)}/min) bytes=${bytes}\n` +
+          `total_requests_per_min=${((probes + requests) / minutes).toFixed(1)}\n` +
+          `queries_per_min=${queriesPerMin.toFixed(1)}\n` +
+          `bytes_per_min=${Math.round((bytes + probeBytes) / minutes)}\n` +
           `gaps_ms=${JSON.stringify(gaps)}\n` +
           `max_gap_ms=${gaps.length ? Math.max(...gaps) : 0}\n` +
           `=== END ===\n`,

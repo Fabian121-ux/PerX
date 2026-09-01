@@ -53,6 +53,7 @@ import { blockUserAction } from "@/features/network/actions";
 import { shouldSubmitMessage } from "@/lib/messages/composer-keyboard";
 import { isDealComposerTrigger } from "@/lib/messages/deal-trigger";
 import {
+  FALLBACK_RECOVERY_GRACE_MS,
   getFallbackActivity,
   getFallbackDelayMs,
 } from "@/lib/messages/fallback-schedule";
@@ -823,6 +824,19 @@ export function MessageWorkspace({
     let fallbackTimer: number | null = null;
     let fallbackTicks = 0;
     let fallbackRunning = false;
+    // Bumped whenever degraded mode is torn down. An in-flight probe or sync
+    // that resolves after Realtime recovered belongs to an older generation and
+    // must not reschedule polling or overwrite newer state.
+    let fallbackGeneration = 0;
+    // Latest server-issued change marker. Opaque to the client; no client clock
+    // participates in change detection.
+    let changeVersion: string | null = null;
+    // Start of the current degraded episode. The server retries its own
+    // Realtime subscription during an outage and emits a reconciliation on each
+    // brief success; treating every one of those as full recovery reset the
+    // backoff and pinned a flapping outage at the responsive interval. Backoff
+    // is only reset once the stream has stayed healthy past this grace window.
+    let degradedSince: number | null = null;
     let unavailableHandled = false;
     let syncInFlight = false;
     let syncVersion = 0;
@@ -836,7 +850,19 @@ export function MessageWorkspace({
      * whole outage - the backoff never engaged.
      */
     const stopFallback = ({ resetBackoff }: { resetBackoff: boolean }) => {
-      if (resetBackoff) fallbackTicks = 0;
+      // Only a sustained healthy period clears the backoff. A recovery that
+      // arrives moments after the outage started is most likely the server's
+      // own retry succeeding briefly, not the outage ending.
+      if (resetBackoff) {
+        const sustained =
+          degradedSince === null ||
+          Date.now() - degradedSince >= FALLBACK_RECOVERY_GRACE_MS;
+        if (sustained) {
+          fallbackTicks = 0;
+          degradedSince = null;
+        }
+      }
+      fallbackGeneration += 1;
       fallbackRunning = false;
       if (fallbackTimer === null) return;
       window.clearTimeout(fallbackTimer);
@@ -923,6 +949,43 @@ export function MessageWorkspace({
     // stops entirely, and recent interaction restores the responsive interval.
     // A fixed interval cost up to ~12 req/min and ~940 KB/min per open
     // conversation, which is too expensive to sustain while Realtime is down.
+    /**
+     * Cheap "did anything change?" check.
+     *
+     * Returns true when reconciliation is required. Any non-OK response (or a
+     * network error) falls back to reconciling, so degraded mode fails safe:
+     * an unreliable probe must never silently suppress real updates.
+     *
+     * Access loss (401/403/404) is delegated to the full sync path, which owns
+     * the authorized-list recovery behaviour.
+     */
+    const probeChanged = async () => {
+      const params = new URLSearchParams();
+      if (activeId) params.set("conversationId", activeId);
+      if (changeVersion) params.set("since", changeVersion);
+      try {
+        const response = await fetch(
+          `/api/messages/check${params.size ? `?${params}` : ""}`,
+          { cache: "no-store" },
+        );
+        if (!response.ok) return true;
+        const payload: unknown = await response.json();
+        if (
+          typeof payload !== "object" ||
+          payload === null ||
+          typeof (payload as { changed?: unknown }).changed !== "boolean"
+        ) {
+          return true;
+        }
+        const next = (payload as { version?: unknown }).version;
+        const changed = (payload as { changed: boolean }).changed;
+        if (typeof next === "string" && next) changeVersion = next;
+        return changed;
+      } catch {
+        return true;
+      }
+    };
+
     const scheduleFallback = () => {
       if (!active) return;
       const activity = getFallbackActivity({
@@ -941,7 +1004,13 @@ export function MessageWorkspace({
         if (!active) return;
         fallbackTicks += 1;
         fallbackTimer = null;
-        await sync();
+        // Only pay for a full snapshot when the cheap probe says something
+        // actually changed.
+        const generation = fallbackGeneration;
+        const changed = await probeChanged();
+        if (!active || generation !== fallbackGeneration) return;
+        if (changed) await sync();
+        if (!active || generation !== fallbackGeneration) return;
         scheduleFallback();
       }, delay);
     };
@@ -953,6 +1022,7 @@ export function MessageWorkspace({
       // retries start a second, immediate polling cycle.
       if (fallbackRunning) return;
       fallbackRunning = true;
+      if (degradedSince === null) degradedSince = Date.now();
       setLiveState((state) => (state === "live" ? "reconnecting" : "fallback"));
       void sync();
       scheduleFallback();

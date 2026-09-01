@@ -2,7 +2,9 @@ import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FormNotice } from "@/components/ui/form-notice";
 import { TraderApplicationForm } from "@/components/trader/trader-application-form";
+import { TraderStatusRetry } from "@/components/trader/trader-status-retry";
 import { requireUser } from "@/lib/auth/session";
+import { maybeInjectFault } from "@/lib/testing/fault-injection";
 import { opportunityCategoryOptions } from "@/lib/options";
 import { getOwnTraderApplication, isTrader } from "@/lib/trader/access";
 
@@ -15,7 +17,31 @@ export default async function TraderPage({
 }) {
   const user = await requireUser();
   const params = await searchParams;
-  const application = await getOwnTraderApplication(user.id).catch(() => null);
+
+  /**
+   * CRITICAL dependency: the application status is this route's entire subject.
+   *
+   * "Lookup failed" and "no application exists" must stay distinct. Collapsing
+   * both to `null` previously rendered the blank onboarding form during an
+   * outage, which would invite a user who already has a PENDING_REVIEW
+   * application to apply again. The status is unknown in that case, so the page
+   * says so rather than asserting a product state it could not verify.
+   */
+  let application: Awaited<ReturnType<typeof getOwnTraderApplication>> = null;
+  let applicationUnavailable = false;
+  try {
+    await maybeInjectFault("trader-application");
+    application = await getOwnTraderApplication(user.id);
+  } catch (error) {
+    applicationUnavailable = true;
+    // Route/operation/timestamp only: no Prisma text or connection detail.
+    console.error("[perx:trader-application]", {
+      operation: "getOwnTraderApplication",
+      route: "/app/trader",
+      timestamp: new Date().toISOString(),
+    });
+    void error;
+  }
   const alreadyTrader = isTrader(user.roles);
 
   const categories = opportunityCategoryOptions.map((option) => ({
@@ -30,11 +56,26 @@ export default async function TraderPage({
           Trader access
         </p>
         <h1 className="mt-2 text-2xl font-bold text-[color:var(--px-text)]">
-          {alreadyTrader ? "You can create on PerX" : "Become a Trader"}
+          {alreadyTrader
+            ? "You can create on PerX"
+            : applicationUnavailable
+              ? "Trader access"
+              : "Become a Trader"}
         </h1>
       </div>
 
-      {alreadyTrader ? (
+      {applicationUnavailable && !alreadyTrader ? (
+        <Card className="grid gap-3">
+          <FormNotice tone="warning">
+            Trader status is temporarily unavailable.
+          </FormNotice>
+          <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">
+            We couldn&apos;t load your application status. Your existing
+            application, if any, has not changed.
+          </p>
+          <TraderStatusRetry />
+        </Card>
+      ) : alreadyTrader ? (
         <Card className="grid gap-4">
           <FormNotice tone="success">
             Trading access is active on this account.

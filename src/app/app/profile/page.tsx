@@ -1,4 +1,7 @@
 import { Suspense } from "react";
+
+import { SectionBoundary } from "@/components/system/section-boundary";
+import { maybeInjectFault } from "@/lib/testing/fault-injection";
 import Image from "next/image";
 import { UserRound, MapPin, Calendar, CheckCircle2 } from "lucide-react";
 import { AppSection } from "@/components/app-section";
@@ -34,7 +37,9 @@ export default async function ProfilePage() {
           </div>
           <h2 className="mb-2 text-2xl font-bold">Complete your profile</h2>
           <p className="mb-6 max-w-md text-[color:var(--px-text-muted)]">
-            You haven&apos;t completed your profile setup yet. A complete profile improves discovery, trust, and your ability to connect with others on PerX.
+            You haven&apos;t completed your profile setup yet. A complete
+            profile improves discovery, trust, and your ability to connect with
+            others on PerX.
           </p>
           <ButtonLink href="/app/profile/setup">Complete profile</ButtonLink>
         </Card>
@@ -44,7 +49,12 @@ export default async function ProfilePage() {
 
   const recordEvidence = await getTrustRecordEvidence(user.id);
 
-  const joinDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : 'Unknown';
+  const joinDate = user.createdAt
+    ? new Date(user.createdAt).toLocaleDateString(undefined, {
+        month: "long",
+        year: "numeric",
+      })
+    : "Unknown";
   const trust = calculateTrustSummary({
     averageRating: recordEvidence.averageRating,
     completedDeals: recordEvidence.completedAgreements,
@@ -90,32 +100,55 @@ export default async function ProfilePage() {
                       src={user.imageUrl}
                     />
                   ) : (
-                    <UserRound size={48} className="text-[color:var(--px-text-muted)]" />
+                    <UserRound
+                      size={48}
+                      className="text-[color:var(--px-text-muted)]"
+                    />
                   )}
                 </div>
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                   {user.profile.isDiscoverable ? (
-                    <ButtonLink className="w-full sm:w-auto" variant="ghost" href={`/u/${user.username}`}>View public profile</ButtonLink>
+                    <ButtonLink
+                      className="w-full sm:w-auto"
+                      variant="ghost"
+                      href={`/u/${user.username}`}
+                    >
+                      View public profile
+                    </ButtonLink>
                   ) : null}
-                  <ButtonLink className="w-full sm:w-auto" variant="outline" href="/app/profile/edit">Edit profile</ButtonLink>
+                  <ButtonLink
+                    className="w-full sm:w-auto"
+                    variant="outline"
+                    href="/app/profile/edit"
+                  >
+                    Edit profile
+                  </ButtonLink>
                 </div>
               </div>
-              
+
               <div className="mb-1 flex flex-wrap items-center gap-2">
                 <h1 className="min-w-0 break-words text-2xl font-bold text-[color:var(--px-text)]">
                   {user.name}
                 </h1>
                 {user.verificationStatus === "VERIFIED" && (
-                  <CheckCircle2 size={20} className="text-blue-500" aria-label="Verified User" />
+                  <CheckCircle2
+                    size={20}
+                    className="text-blue-500"
+                    aria-label="Verified User"
+                  />
                 )}
                 {user.accountClassification === "INTERNAL_ADMIN" && (
-                  <Badge className="bg-[color:var(--px-error)] text-white">Admin</Badge>
+                  <Badge className="bg-[color:var(--px-error)] text-white">
+                    Admin
+                  </Badge>
                 )}
               </div>
-              <p className="mb-4 break-all text-lg text-[color:var(--px-text-muted)]">@{user.username}</p>
-              
+              <p className="mb-4 break-all text-lg text-[color:var(--px-text-muted)]">
+                @{user.username}
+              </p>
+
               <p className="mb-6 font-medium">{user.profile.headline}</p>
-              
+
               <div className="flex flex-wrap gap-3 text-sm text-[color:var(--px-text-muted)]">
                 {user.profile.location && (
                   <div className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[color:var(--px-surface-soft)] px-3 py-1.5">
@@ -131,11 +164,13 @@ export default async function ProfilePage() {
               </div>
             </div>
           </Card>
-          
+
           {user.profile.biography && (
             <Card>
               <h2 className="mb-4 text-lg font-bold">About</h2>
-              <p className="whitespace-pre-wrap break-words text-[color:var(--px-text)]">{user.profile.biography}</p>
+              <p className="whitespace-pre-wrap break-words text-[color:var(--px-text)]">
+                {user.profile.biography}
+              </p>
             </Card>
           )}
 
@@ -146,34 +181,57 @@ export default async function ProfilePage() {
             scoped to this one section, so it cannot flush an incorrect HTTP
             status for the route the way a segment-wide loading.tsx would.
           */}
-          <Suspense fallback={<ProfileActivitySkeleton />}>
-            <ProfileActivitySection userId={user.id} />
-          </Suspense>
+          {/*
+            Suspense streams this section; it does not contain failures.
+            SectionBoundary is what keeps an activity outage local, so the
+            identity header above stays rendered instead of the whole profile
+            route falling to the segment error boundary.
+          */}
+          <SectionBoundary label="Activity" testId="profile-activity-error">
+            <Suspense fallback={<ProfileActivitySkeleton />}>
+              <ProfileActivitySection userId={user.id} />
+            </Suspense>
+          </SectionBoundary>
         </div>
-        
+
         <div className="flex flex-col gap-6">
           <TrustPresentationCard presentation={trustPresentation} />
           <Card>
             <h2 className="mb-4 text-lg font-bold">Details</h2>
             <div className="grid gap-4 text-sm">
               <div>
-                <span className="block text-[color:var(--px-text-muted)]">Email</span>
+                <span className="block text-[color:var(--px-text-muted)]">
+                  Email
+                </span>
                 <span className="break-all font-medium">{user.email}</span>
               </div>
               <div>
-                <span className="block text-[color:var(--px-text-muted)]">Account Classification</span>
-                <span className="font-medium">{user.accountClassification?.replace(/_/g, ' ')}</span>
+                <span className="block text-[color:var(--px-text-muted)]">
+                  Account Classification
+                </span>
+                <span className="font-medium">
+                  {user.accountClassification?.replace(/_/g, " ")}
+                </span>
               </div>
               <div>
-                <span className="block text-[color:var(--px-text-muted)]">Roles</span>
+                <span className="block text-[color:var(--px-text-muted)]">
+                  Roles
+                </span>
                 <div className="mt-1 flex flex-wrap gap-1">
-                  {user.roles.map(role => (
-                    <Badge key={role} className="bg-[color:var(--px-muted)] text-[color:var(--px-text-muted)]">{role}</Badge>
+                  {user.roles.map((role) => (
+                    <Badge
+                      key={role}
+                      className="bg-[color:var(--px-muted)] text-[color:var(--px-text-muted)]"
+                    >
+                      {role}
+                    </Badge>
                   ))}
                 </div>
               </div>
               <div>
-                <span className="block text-[color:var(--px-text-muted)]">Profile Completeness</span>
+                <span className="block text-[color:var(--px-text-muted)]">
+                  Profile Completeness
+                </span>
                 <div
                   aria-label="Profile completeness"
                   aria-valuemax={100}
@@ -182,8 +240,8 @@ export default async function ProfilePage() {
                   className="mt-2 h-2 overflow-hidden rounded-full bg-[color:var(--px-surface-soft)]"
                   role="progressbar"
                 >
-                  <div 
-                    className="h-full bg-[color:var(--px-primary)]" 
+                  <div
+                    className="h-full bg-[color:var(--px-primary)]"
                     style={{ width: `${user.profile.profileCompleteness}%` }}
                   />
                 </div>
@@ -197,6 +255,7 @@ export default async function ProfilePage() {
 }
 
 async function ProfileActivitySection({ userId }: { userId: string }) {
+  await maybeInjectFault("profile-activity");
   const activity = await getProfileActivity(userId);
   return <ProfileActivitySummary activity={activity} />;
 }

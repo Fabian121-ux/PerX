@@ -78,3 +78,13 @@ export function getFallbackActivity({
   }
   return "idle";
 }
+
+/**
+ * How long the stream must stay healthy before degraded backoff is reset.
+ *
+ * The SSE route retries its own Realtime subscription during an outage and
+ * emits a reconciliation whenever an attempt briefly succeeds. Without this
+ * grace window each of those looked like full recovery, cleared the backoff,
+ * and kept a flapping outage polling at the responsive interval.
+ */
+export const FALLBACK_RECOVERY_GRACE_MS = 20_000;

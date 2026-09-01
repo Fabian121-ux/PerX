@@ -88,19 +88,29 @@ describeOrSkip("healthy Realtime", () => {
       });
 
       const syncCalls: number[] = [];
+      const probeCalls: number[] = [];
       const start = Date.now();
       page.on("response", (r) => {
-        if (new URL(r.url()).pathname === "/api/messages/sync") {
-          syncCalls.push(Date.now() - start);
-        }
+        const path = new URL(r.url()).pathname;
+        if (path === "/api/messages/sync") syncCalls.push(Date.now() - start);
+        if (path === "/api/messages/check") probeCalls.push(Date.now() - start);
       });
 
       await page.waitForTimeout(OBSERVE_MS);
 
       const perMinute = syncCalls.length / (OBSERVE_MS / 60_000);
       console.log(
-        `\n=== HEALTHY REALTIME POLLING ===\nsync_requests=${syncCalls.length} in ${OBSERVE_MS}ms (${perMinute.toFixed(1)}/min)\n=== END ===\n`,
+        `\n=== HEALTHY REALTIME POLLING ===\n` +
+          `sync_requests=${syncCalls.length} (${perMinute.toFixed(1)}/min)\n` +
+          `probe_requests=${probeCalls.length}\n` +
+          `window_ms=${OBSERVE_MS}\n=== END ===\n`,
       );
+
+      // Healthy mode must not run the degraded probe either.
+      expect(
+        probeCalls.length,
+        `expected no fallback probes while Realtime is live, saw ${probeCalls.length}`,
+      ).toBe(0);
 
       // Healthy Realtime is event driven. A steady 5s poll would be ~9 calls
       // in this window; anything at or above that means fallback is running
