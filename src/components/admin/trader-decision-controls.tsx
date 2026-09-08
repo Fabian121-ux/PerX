@@ -37,11 +37,13 @@ export function TraderDecisionControls({
   const toast = useToast();
   const [pending, startTransition] = useTransition();
   const [active, setActive] = useState<Decision | null>(null);
+  const [failedDecision, setFailedDecision] = useState<Decision | null>(null);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const decide = (decision: Decision) => {
     setError(null);
+    setFailedDecision(null);
     setActive(decision);
     startTransition(async () => {
       try {
@@ -59,6 +61,9 @@ export function TraderDecisionControls({
           tone: "success",
         });
       } catch {
+        // `active` is cleared in finally so keeping the failed decision in its
+        // own state is what makes Retry a real action rather than a dead button.
+        setFailedDecision(decision);
         setError("That decision could not be recorded. Nothing was changed.");
       } finally {
         setActive(null);
@@ -97,13 +102,16 @@ export function TraderDecisionControls({
         <FormNotice tone="error">
           <span className="flex flex-wrap items-center gap-3">
             {error}
-            <button
-              className="underline underline-offset-2"
-              onClick={() => active && decide(active)}
-              type="button"
-            >
-              Retry
-            </button>
+            {failedDecision ? (
+              <button
+                className="underline underline-offset-2"
+                disabled={pending}
+                onClick={() => decide(failedDecision)}
+                type="button"
+              >
+                Retry
+              </button>
+            ) : null}
           </span>
         </FormNotice>
       ) : null}
