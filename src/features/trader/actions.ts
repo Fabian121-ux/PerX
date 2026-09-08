@@ -116,6 +116,15 @@ export async function submitTraderApplicationAction(
       status: "error",
     };
   }
+  // The pending page does not render the form, but a stale browser tab or
+  // crafted request must not overwrite an application while an admin reviews it.
+  if (existing?.status === "PENDING_REVIEW") {
+    return {
+      message:
+        "This application is already under review. Refresh to see its latest status.",
+      status: "error",
+    };
+  }
 
   const now = new Date();
   await getPrisma().traderApplication.upsert({
@@ -160,6 +169,10 @@ const decisionSchema = z.object({
  * administrative changes. Everything happens in one transaction so an approval
  * can never be recorded without the role that makes it meaningful, and the audit
  * row is written alongside rather than through the lossy `writeAuditLog`.
+ *
+ * The application row is also guarded by the status the reviewer actually saw.
+ * Two admins deciding the same application concurrently therefore cannot let the
+ * later request silently overwrite the earlier decision.
  */
 export async function decideTraderApplicationAction(formData: FormData) {
   const admin = await requireCapabilityOrNotFound("users:manage");
@@ -176,17 +189,34 @@ export async function decideTraderApplicationAction(formData: FormData) {
     where: { id: parsed.data.applicationId },
   });
   if (!application) throw new Error("That application is unavailable.");
+  if (
+    application.status !== "PENDING_REVIEW" &&
+    application.status !== "NEEDS_CHANGES"
+  ) {
+    throw new Error(
+      "This application has already been decided. Refresh to see the latest status.",
+    );
+  }
+
+  const expectedStatus = application.status;
 
   await getPrisma().$transaction(async (tx) => {
-    await tx.traderApplication.update({
+    const updated = await tx.traderApplication.updateMany({
       data: {
         decidedAt: new Date(),
         reviewerId: admin.id,
         reviewerNote: parsed.data.reviewerNote || null,
         status: parsed.data.decision,
       },
-      where: { id: application.id },
+      where: {
+        id: application.id,
+        status: expectedStatus,
+      },
     });
+
+    if (updated.count !== 1) {
+      throw new Error("Trader application changed during review. Review it again.");
+    }
 
     if (parsed.data.decision === "APPROVED") {
       const role = await tx.role.upsert({
@@ -198,7 +228,8 @@ export async function decideTraderApplicationAction(formData: FormData) {
         update: {},
         where: { name: TRADER_GRANT_ROLE },
       });
-      // Idempotent: approving twice must not violate the composite unique.
+      // Idempotent at the role-assignment layer; the guarded application state
+      // still ensures only one reviewer decision can win.
       await tx.userRole.createMany({
         data: [{ roleId: role.id, userId: application.userId }],
         skipDuplicates: true,
