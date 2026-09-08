@@ -77,6 +77,9 @@ export function TraderApplicationForm({
    * A server error can belong to a field on a previous hidden step. Move back
    * to the earliest failing step and focus the first invalid control so the
    * user never gets a generic error while the actual problem is invisible.
+   * The state change is scheduled on the next frame rather than synchronously
+   * inside the effect, keeping the effect as DOM synchronization instead of a
+   * cascading render trigger.
    */
   useEffect(() => {
     if (state.status !== "error" || !errorSignature) return;
@@ -85,20 +88,27 @@ export function TraderApplicationForm({
     const earliestStep = Math.min(
       ...failingFields.map((field) => FIELD_STEP[field] ?? STEPS.length - 1),
     );
-    setStep(earliestStep);
-
     const firstField = failingFields.find(
       (field) => (FIELD_STEP[field] ?? STEPS.length - 1) === earliestStep,
     );
     if (!firstField) return;
 
-    requestAnimationFrame(() => {
-      const control = formRef.current?.querySelector<HTMLElement>(
-        `[name="${firstField}"]`,
-      );
-      control?.scrollIntoView({ behavior: "smooth", block: "center" });
-      control?.focus({ preventScroll: true });
+    let focusFrame = 0;
+    const stepFrame = requestAnimationFrame(() => {
+      setStep(earliestStep);
+      focusFrame = requestAnimationFrame(() => {
+        const control = formRef.current?.querySelector<HTMLElement>(
+          `[name="${firstField}"]`,
+        );
+        control?.scrollIntoView({ behavior: "smooth", block: "center" });
+        control?.focus({ preventScroll: true });
+      });
     });
+
+    return () => {
+      cancelAnimationFrame(stepFrame);
+      if (focusFrame) cancelAnimationFrame(focusFrame);
+    };
   }, [errorSignature, state.status]);
 
   const continueFromStep = () => {
