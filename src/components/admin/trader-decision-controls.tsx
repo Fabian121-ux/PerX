@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 
 import { decideTraderApplicationAction } from "@/features/trader/actions";
 import { Button } from "@/components/ui/button";
@@ -25,8 +25,9 @@ const LABELS: Record<Decision, string> = {
  * to regret firing by accident - the destructive control should not look and
  * behave identically to the routine one.
  *
- * Per-decision pending state so the reviewer can see which button they pressed,
- * and a recoverable error with Retry rather than a toast that disappears.
+ * Explicit per-decision pending state is used instead of a React transition:
+ * this is an imperative server mutation, and Retry must remain deterministic
+ * after a failed request rather than depending on transition scheduling.
  */
 export function TraderDecisionControls({
   applicationId,
@@ -35,43 +36,43 @@ export function TraderDecisionControls({
 }) {
   const confirm = useConfirm();
   const toast = useToast();
-  const [pending, startTransition] = useTransition();
   const [active, setActive] = useState<Decision | null>(null);
   const [failedDecision, setFailedDecision] = useState<Decision | null>(null);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const pending = active !== null;
 
-  const decide = (decision: Decision) => {
+  const decide = async (decision: Decision) => {
+    if (pending) return;
+
     setError(null);
     setFailedDecision(null);
     setActive(decision);
-    startTransition(async () => {
-      try {
-        const formData = new FormData();
-        formData.set("applicationId", applicationId);
-        formData.set("decision", decision);
-        if (note.trim()) formData.set("reviewerNote", note.trim());
-        await decideTraderApplicationAction(formData);
-        toast({
-          description:
-            decision === "APPROVED"
-              ? "Trading access is now active for this account."
-              : "The applicant has been notified of the decision.",
-          title: LABELS[decision],
-          tone: "success",
-        });
-      } catch {
-        // `active` is cleared in finally so keeping the failed decision in its
-        // own state is what makes Retry a real action rather than a dead button.
-        setFailedDecision(decision);
-        setError("That decision could not be recorded. Nothing was changed.");
-      } finally {
-        setActive(null);
-      }
-    });
+    try {
+      const formData = new FormData();
+      formData.set("applicationId", applicationId);
+      formData.set("decision", decision);
+      if (note.trim()) formData.set("reviewerNote", note.trim());
+      await decideTraderApplicationAction(formData);
+      toast({
+        description:
+          decision === "APPROVED"
+            ? "Trading access is now active for this account."
+            : "The applicant has been notified of the decision.",
+        title: LABELS[decision],
+        tone: "success",
+      });
+    } catch {
+      setFailedDecision(decision);
+      setError("That decision could not be recorded. Nothing was changed.");
+    } finally {
+      setActive(null);
+    }
   };
 
   const run = async (decision: Decision) => {
+    if (pending) return;
+
     if (decision === "REJECTED") {
       const approved = await confirm({
         confirmLabel: "Reject application",
@@ -82,7 +83,7 @@ export function TraderDecisionControls({
       });
       if (!approved) return;
     }
-    decide(decision);
+    await decide(decision);
   };
 
   return (
@@ -104,9 +105,9 @@ export function TraderDecisionControls({
             {error}
             {failedDecision ? (
               <button
-                className="underline underline-offset-2"
+                className="underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={pending}
-                onClick={() => decide(failedDecision)}
+                onClick={() => void decide(failedDecision)}
                 type="button"
               >
                 Retry
