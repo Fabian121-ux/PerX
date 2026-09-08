@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { TraderStatusRetry } from "@/components/trader/trader-status-retry";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FormNotice } from "@/components/ui/form-notice";
@@ -19,10 +20,27 @@ import type { TraderApplicationView } from "@/lib/trader/access";
  */
 export function TraderAccessGate({
   application,
+  unavailable = false,
 }: {
   application: TraderApplicationView | null;
+  unavailable?: boolean;
 }) {
   const status = application?.status ?? null;
+
+  if (unavailable) {
+    return (
+      <GateShell title="Trader status is temporarily unavailable">
+        <FormNotice tone="warning">
+          We couldn&apos;t load your Trader application status.
+        </FormNotice>
+        <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">
+          Your existing application, if any, has not changed. Try again before
+          starting a new application.
+        </p>
+        <TraderStatusRetry />
+      </GateShell>
+    );
+  }
 
   if (status === "PENDING_REVIEW") {
     return (
