@@ -10,8 +10,9 @@ import {
 } from "lucide-react";
 
 import { AppSection } from "@/components/app-section";
-import { Button, ButtonLink } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { NotificationActionLink } from "@/components/notifications/notification-action-link";
 import {
   markAllNotificationsAsReadAction,
@@ -149,9 +150,14 @@ export default async function NotificationsPage({
       actions={
         totalUnreadCount > 0 ? (
           <form action={markAllNotificationsAsReadAction}>
-            <Button size="sm" type="submit" variant="secondary">
+            <PendingSubmitButton
+              pendingLabel="Marking all read..."
+              size="sm"
+              type="submit"
+              variant="secondary"
+            >
               Mark all account activity read
-            </Button>
+            </PendingSubmitButton>
           </form>
         ) : null
       }
@@ -392,16 +398,25 @@ function NotificationCard({
             <form
               action={acceptConnectionAction.bind(null, connectionRequest.id)}
             >
-              <Button size="sm" type="submit">
+              <PendingSubmitButton
+                pendingLabel="Accepting..."
+                size="sm"
+                type="submit"
+              >
                 Accept Connection
-              </Button>
+              </PendingSubmitButton>
             </form>
             <form
               action={rejectConnectionAction.bind(null, connectionRequest.id)}
             >
-              <Button size="sm" type="submit" variant="secondary">
+              <PendingSubmitButton
+                pendingLabel="Declining..."
+                size="sm"
+                type="submit"
+                variant="secondary"
+              >
                 Decline
-              </Button>
+              </PendingSubmitButton>
             </form>
           </>
         ) : null}
@@ -426,15 +441,25 @@ function NotificationCard({
         ) : null}
         {isUnread ? (
           <form action={markReadAction}>
-            <Button size="sm" type="submit" variant="secondary">
+            <PendingSubmitButton
+              pendingLabel="Marking read..."
+              size="sm"
+              type="submit"
+              variant="secondary"
+            >
               Mark read
-            </Button>
+            </PendingSubmitButton>
           </form>
         ) : (
           <form action={markUnreadAction}>
-            <Button size="sm" type="submit" variant="secondary">
+            <PendingSubmitButton
+              pendingLabel="Marking unread..."
+              size="sm"
+              type="submit"
+              variant="secondary"
+            >
               Mark unread
-            </Button>
+            </PendingSubmitButton>
           </form>
         )}
       </div>
