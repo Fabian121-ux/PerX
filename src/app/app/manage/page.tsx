@@ -8,6 +8,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { Card, EmptyState } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/form";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { RouteFeedback } from "@/components/ui/route-feedback";
 import {
   archiveOpportunityAction,
@@ -41,315 +42,48 @@ const statusOptions = [
 export default async function ManageContentPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    created?: string;
-    createdType?: string;
-    error?: string;
-    q?: string;
-    status?: string;
-    submitted?: string;
-    type?: string;
-    updated?: string;
-  }>;
+  searchParams: Promise<{ created?: string; createdType?: string; error?: string; q?: string; status?: string; submitted?: string; type?: string; updated?: string }>;
 }) {
   const user = await requireUser();
   const canCreate = hasCapability(user.roles, "opportunity:create");
   const canUpdate = hasCapability(user.roles, "opportunity:update:own");
   const params = await searchParams;
   const q = params.q?.trim();
-  const status = statusOptions.some((option) => option.value === params.status)
-    ? (params.status as OpportunityStatus | "")
-    : "";
-  const type = opportunityTypeOptions.some((option) => option.value === params.type)
-    ? (params.type as OpportunityType)
-    : "";
-  const createdType = creatableOpportunityTypeOptions.some(
-    (option) => option.value === params.createdType,
-  )
-    ? params.createdType
-    : null;
-  const feedback = params.updated
-      ? { title: "Changes saved", tone: "success" as const }
-      : params.submitted
-        ? {
-            description: "The listing is now awaiting review.",
-            title: "Submitted for review",
-            tone: "success" as const,
-          }
-        : params.error
-          ? {
-              description:
-                params.error === "publishing-restricted"
-                  ? "Publishing is currently restricted for this account. Your existing drafts remain available."
-                  : "The requested change could not be completed.",
-              duration: null,
-              title: "Action not completed",
-              tone: "error" as const,
-            }
-          : null;
+  const status = statusOptions.some((option) => option.value === params.status) ? (params.status as OpportunityStatus | "") : "";
+  const type = opportunityTypeOptions.some((option) => option.value === params.type) ? (params.type as OpportunityType) : "";
+  const createdType = creatableOpportunityTypeOptions.some((option) => option.value === params.createdType) ? params.createdType : null;
+  const feedback = params.updated ? { title: "Changes saved", tone: "success" as const } : params.submitted ? { description: "The listing is now awaiting review.", title: "Submitted for review", tone: "success" as const } : params.error ? { description: params.error === "publishing-restricted" ? "Publishing is currently restricted for this account. Your existing drafts remain available." : "The requested change could not be completed.", duration: null, title: "Action not completed", tone: "error" as const } : null;
 
   const opportunities = (await getPrisma().opportunity.findMany({
-    include: {
-      _count: { select: { bookmarks: true, proposals: true, reports: true } },
-      category: true,
-      images: { orderBy: [{ isCover: "desc" }, { createdAt: "asc" }], take: 1 },
-    },
-    orderBy: { updatedAt: "desc" },
-    take: 50,
-    where: {
-      ownerId: user.id,
-      ...(status ? { status } : {}),
-      ...(type ? { type } : {}),
-      ...(q
-        ? {
-            OR: [
-              { title: { contains: q, mode: "insensitive" } },
-              { summary: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-  })) as unknown as Array<{
-    _count: { bookmarks: number; proposals: number; reports: number };
-    archivedAt: Date | null;
-    category: { name: string; slug: string } | null;
-    createdAt: Date;
-    id: string;
-    moderationStatus: string;
-    propertyVerificationState: string | null;
-    slug: string;
-    status: string;
-    summary: string;
-    title: string;
-    type: string;
-    updatedAt: Date;
-    verificationNotes: string | null;
-  }>;
-  const createdOpportunity = params.created
-    ? opportunities.find((opportunity) => opportunity.id === params.created)
-    : null;
-  const confirmedCreatedType =
-    createdOpportunity && createdType === createdOpportunity.type
-      ? createdType
-      : null;
-  const routeFeedback = createdOpportunity
-    ? {
-        description: "You can edit, pause, duplicate, or archive it from here.",
-        title: "Post created",
-        tone: "success" as const,
-      }
-    : feedback;
+    include: { _count: { select: { bookmarks: true, proposals: true, reports: true } }, category: true, images: { orderBy: [{ isCover: "desc" }, { createdAt: "asc" }], take: 1 } },
+    orderBy: { updatedAt: "desc" }, take: 50,
+    where: { ownerId: user.id, ...(status ? { status } : {}), ...(type ? { type } : {}), ...(q ? { OR: [{ title: { contains: q, mode: "insensitive" } }, { summary: { contains: q, mode: "insensitive" } }] } : {}) },
+  })) as unknown as Array<{ _count: { bookmarks: number; proposals: number; reports: number }; archivedAt: Date | null; category: { name: string; slug: string } | null; createdAt: Date; id: string; moderationStatus: string; propertyVerificationState: string | null; slug: string; status: string; summary: string; title: string; type: string; updatedAt: Date; verificationNotes: string | null }>;
+  const createdOpportunity = params.created ? opportunities.find((opportunity) => opportunity.id === params.created) : null;
+  const confirmedCreatedType = createdOpportunity && createdType === createdOpportunity.type ? createdType : null;
+  const routeFeedback = createdOpportunity ? { description: "You can edit, pause, duplicate, or archive it from here.", title: "Post created", tone: "success" as const } : feedback;
 
   return (
-    <AppSection
-      actions={
-        canCreate ? (
-          <ButtonLink href="/app/opportunities/new">Create</ButtonLink>
-        ) : undefined
-      }
-      description="Manage every opportunity, service, property, partnership, and startup listing you own."
-      title="Manage my content"
-    >
+    <AppSection actions={canCreate ? <ButtonLink href="/app/opportunities/new">Create</ButtonLink> : undefined} description="Manage every opportunity, service, property, partnership, and startup listing you own." title="Manage my content">
       <div className="grid gap-5">
-        {confirmedCreatedType ? (
-          <OpportunityDraftCleanup type={confirmedCreatedType} userId={user.id} />
-        ) : null}
+        {confirmedCreatedType ? <OpportunityDraftCleanup type={confirmedCreatedType} userId={user.id} /> : null}
         <RouteFeedback feedback={routeFeedback} />
         <Card>
           <form className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_180px_auto]">
-            <label className="relative">
-              <span className="sr-only">Search managed content</span>
-              <Search
-                aria-hidden
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--px-text-muted)]"
-                size={17}
-              />
-              <Input
-                className="pl-10"
-                defaultValue={q}
-                name="q"
-                placeholder="Search your content"
-              />
-            </label>
-            <label>
-              <span className="sr-only">Status</span>
-              <Select defaultValue={status} name="status">
-                {statusOptions.map((option) => (
-                  <option key={option.label} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </label>
-            <label>
-              <span className="sr-only">Content type</span>
-              {/*
-                Retired types are not offered as filters. Any legacy record the
-                user still owns remains listed under "All content types", so
-                nothing becomes unreachable.
-              */}
-              <Select defaultValue={type} name="type">
-                <option value="">All content types</option>
-                {editableOpportunityTypeOptions(type).map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </Select>
-            </label>
-            <Button type="submit" variant="secondary">
-              Filter
-            </Button>
+            <label className="relative"><span className="sr-only">Search managed content</span><Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--px-text-muted)]" size={17} /><Input className="pl-10" defaultValue={q} name="q" placeholder="Search your content" /></label>
+            <label><span className="sr-only">Status</span><Select defaultValue={status} name="status">{statusOptions.map((option) => <option key={option.label} value={option.value}>{option.label}</option>)}</Select></label>
+            <label><span className="sr-only">Content type</span><Select defaultValue={type} name="type"><option value="">All content types</option>{editableOpportunityTypeOptions(type).map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</Select></label>
+            <Button type="submit" variant="secondary">Filter</Button>
           </form>
         </Card>
-
-        {opportunities.length ? (
-          <div className="grid gap-4">
-            {opportunities.map((opportunity) => (
-              <Card key={opportunity.id}>
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge>{opportunity.type.replaceAll("_", " ")}</Badge>
-                      <Badge className={statusBadgeClass(opportunity.status)}>
-                        {opportunity.status.replaceAll("_", " ")}
-                      </Badge>
-                      <Badge className="bg-[color:var(--px-surface-soft)] text-[color:var(--px-text-muted)]">
-                        {opportunity.moderationStatus.replaceAll("_", " ")}
-                      </Badge>
-                      {opportunity.propertyVerificationState ? (
-                        <Badge className="bg-purple-50 text-purple-800">
-                          {opportunity.propertyVerificationState.replaceAll("_", " ")}
-                        </Badge>
-                      ) : null}
-                    </div>
-                    <h2 className="mt-2 truncate text-lg font-black text-[color:var(--px-text)]">
-                      {opportunity.title}
-                    </h2>
-                    <p className="mt-1 line-clamp-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
-                      {opportunity.summary}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold text-[color:var(--px-text-muted)]">
-                      <span>Created {opportunity.createdAt.toLocaleDateString()}</span>
-                      <span>Updated {opportunity.updatedAt.toLocaleDateString()}</span>
-                      <span>{opportunity._count.proposals} proposal(s)</span>
-                      <span>{opportunity._count.bookmarks} save(s)</span>
-                      <span>{opportunity._count.reports} report(s)</span>
-                    </div>
-                    {opportunity.verificationNotes ? (
-                      <p className="mt-3 rounded-[var(--px-radius-sm)] bg-amber-50 p-3 text-xs font-semibold text-amber-800">
-                        Review note: {opportunity.verificationNotes}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="flex flex-wrap gap-2 lg:justify-end">
-                    <ButtonLink
-                      href={`/app/opportunities/${opportunity.id}`}
-                      size="sm"
-                      variant="secondary"
-                    >
-                      <Eye aria-hidden className="mr-1.5" size={14} />
-                      Preview
-                    </ButtonLink>
-                    {canUpdate ? (
-                      <ButtonLink
-                        href={`/app/opportunities/${opportunity.id}/edit`}
-                        size="sm"
-                        variant="secondary"
-                      >
-                        <Pencil aria-hidden className="mr-1.5" size={14} />
-                        Edit
-                      </ButtonLink>
-                    ) : null}
-                    {canUpdate ? (
-                      <StateActions
-                        canDuplicate={canCreate}
-                        id={opportunity.id}
-                        status={opportunity.status}
-                      />
-                    ) : null}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            action={
-              canCreate ? (
-                <ButtonLink href="/app/opportunities/new">
-                  Create opportunity
-                </ButtonLink>
-              ) : undefined
-            }
-            body="Drafts, published listings, paused items, and archived records you own will appear here."
-            title="No managed content found"
-          />
-        )}
+        {opportunities.length ? <div className="grid gap-4">{opportunities.map((opportunity) => <Card key={opportunity.id}><div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><Badge>{opportunity.type.replaceAll("_", " ")}</Badge><Badge className={statusBadgeClass(opportunity.status)}>{opportunity.status.replaceAll("_", " ")}</Badge><Badge className="bg-[color:var(--px-surface-soft)] text-[color:var(--px-text-muted)]">{opportunity.moderationStatus.replaceAll("_", " ")}</Badge>{opportunity.propertyVerificationState ? <Badge className="bg-purple-50 text-purple-800">{opportunity.propertyVerificationState.replaceAll("_", " ")}</Badge> : null}</div><h2 className="mt-2 truncate text-lg font-black text-[color:var(--px-text)]">{opportunity.title}</h2><p className="mt-1 line-clamp-2 text-sm leading-6 text-[color:var(--px-text-muted)]">{opportunity.summary}</p><div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold text-[color:var(--px-text-muted)]"><span>Created {opportunity.createdAt.toLocaleDateString()}</span><span>Updated {opportunity.updatedAt.toLocaleDateString()}</span><span>{opportunity._count.proposals} proposal(s)</span><span>{opportunity._count.bookmarks} save(s)</span><span>{opportunity._count.reports} report(s)</span></div>{opportunity.verificationNotes ? <p className="mt-3 rounded-[var(--px-radius-sm)] bg-amber-50 p-3 text-xs font-semibold text-amber-800">Review note: {opportunity.verificationNotes}</p> : null}</div><div className="flex flex-wrap gap-2 lg:justify-end"><ButtonLink href={`/app/opportunities/${opportunity.id}`} size="sm" variant="secondary"><Eye aria-hidden className="mr-1.5" size={14} />Preview</ButtonLink>{canUpdate ? <ButtonLink href={`/app/opportunities/${opportunity.id}/edit`} size="sm" variant="secondary"><Pencil aria-hidden className="mr-1.5" size={14} />Edit</ButtonLink> : null}{canUpdate ? <StateActions canDuplicate={canCreate} id={opportunity.id} status={opportunity.status} /> : null}</div></div></Card>)}</div> : <EmptyState action={canCreate ? <ButtonLink href="/app/opportunities/new">Create opportunity</ButtonLink> : undefined} body="Drafts, published listings, paused items, and archived records you own will appear here." title="No managed content found" />}
       </div>
     </AppSection>
   );
 }
 
-function StateActions({
-  canDuplicate,
-  id,
-  status,
-}: {
-  canDuplicate: boolean;
-  id: string;
-  status: string;
-}) {
-  return (
-    <>
-      {status !== "PUBLISHED" ? (
-        <form action={async () => { "use server"; await publishOpportunityAction(id); }}>
-          <Button size="sm" type="submit">
-            <Play aria-hidden className="mr-1.5" size={14} />
-            Publish
-          </Button>
-        </form>
-      ) : (
-        <form action={async () => { "use server"; await pauseOpportunityAction(id); }}>
-          <Button size="sm" type="submit" variant="secondary">
-            <Pause aria-hidden className="mr-1.5" size={14} />
-            Pause
-          </Button>
-        </form>
-      )}
-      {status === "ARCHIVED" ? (
-        <form action={async () => { "use server"; await restoreOpportunityAction(id); }}>
-          <Button size="sm" type="submit" variant="secondary">
-            <RotateCcw aria-hidden className="mr-1.5" size={14} />
-            Restore
-          </Button>
-        </form>
-      ) : (
-        <form action={async () => { "use server"; await archiveOpportunityAction(id); }}>
-          <Button size="sm" type="submit" variant="secondary">
-            <Archive aria-hidden className="mr-1.5" size={14} />
-            Archive
-          </Button>
-        </form>
-      )}
-      {canDuplicate ? (
-        <form action={async () => { "use server"; await duplicateOpportunityAction(id); }}>
-          <Button size="sm" type="submit" variant="secondary">
-            <Copy aria-hidden className="mr-1.5" size={14} />
-            Duplicate
-          </Button>
-        </form>
-      ) : null}
-      {["DRAFT", "ARCHIVED"].includes(status) ? (
-        <form action={async () => { "use server"; await deleteOpportunityAction(id); }}>
-          <ConfirmSubmitButton message="Delete this item? This cannot be undone.">
-            <Trash2 aria-hidden className="mr-1.5" size={14} />
-            Delete
-          </ConfirmSubmitButton>
-        </form>
-      ) : null}
-    </>
-  );
+function StateActions({ canDuplicate, id, status }: { canDuplicate: boolean; id: string; status: string }) {
+  return <>{status !== "PUBLISHED" ? <form action={async () => { "use server"; await publishOpportunityAction(id); }}><PendingSubmitButton pendingLabel="Publishing..." size="sm" type="submit"><Play aria-hidden className="mr-1.5" size={14} />Publish</PendingSubmitButton></form> : <form action={async () => { "use server"; await pauseOpportunityAction(id); }}><PendingSubmitButton pendingLabel="Pausing..." size="sm" type="submit" variant="secondary"><Pause aria-hidden className="mr-1.5" size={14} />Pause</PendingSubmitButton></form>}{status === "ARCHIVED" ? <form action={async () => { "use server"; await restoreOpportunityAction(id); }}><PendingSubmitButton pendingLabel="Restoring..." size="sm" type="submit" variant="secondary"><RotateCcw aria-hidden className="mr-1.5" size={14} />Restore</PendingSubmitButton></form> : <form action={async () => { "use server"; await archiveOpportunityAction(id); }}><PendingSubmitButton pendingLabel="Archiving..." size="sm" type="submit" variant="secondary"><Archive aria-hidden className="mr-1.5" size={14} />Archive</PendingSubmitButton></form>}{canDuplicate ? <form action={async () => { "use server"; await duplicateOpportunityAction(id); }}><PendingSubmitButton pendingLabel="Duplicating..." size="sm" type="submit" variant="secondary"><Copy aria-hidden className="mr-1.5" size={14} />Duplicate</PendingSubmitButton></form> : null}{["DRAFT", "ARCHIVED"].includes(status) ? <form action={async () => { "use server"; await deleteOpportunityAction(id); }}><ConfirmSubmitButton message="Delete this item? This cannot be undone."><Trash2 aria-hidden className="mr-1.5" size={14} />Delete</ConfirmSubmitButton></form> : null}</>;
 }
 
 function statusBadgeClass(status: string) {
