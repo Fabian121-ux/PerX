@@ -46,10 +46,30 @@ export default async function NewOpportunityPage({
   */
   const user = await requireUser();
   if (!isTrader(user.roles)) {
-    const application = await getOwnTraderApplication(user.id).catch(
-      () => null,
+    let application: Awaited<ReturnType<typeof getOwnTraderApplication>> = null;
+    let applicationUnavailable = false;
+
+    try {
+      application = await getOwnTraderApplication(user.id);
+    } catch (error) {
+      applicationUnavailable = true;
+      // Do not collapse a dependency failure into "no application". A user
+      // could already be pending review, and inviting them to apply again would
+      // misrepresent their state. Keep logs opaque: no Prisma/connection text.
+      console.error("[perx:create-trader-application]", {
+        operation: "getOwnTraderApplication",
+        route: "/app/opportunities/new",
+        timestamp: new Date().toISOString(),
+      });
+      void error;
+    }
+
+    return (
+      <TraderAccessGate
+        application={application}
+        unavailable={applicationUnavailable}
+      />
     );
-    return <TraderAccessGate application={application} />;
   }
 
   const params = await searchParams;
