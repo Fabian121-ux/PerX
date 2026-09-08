@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import {
@@ -15,6 +15,12 @@ import { FormNotice } from "@/components/ui/form-notice";
 type CategoryOption = { label: string; value: string };
 
 const STEPS = ["What you trade", "About you", "Review"] as const;
+const FIELD_STEP: Record<string, number> = {
+  applicantKind: 1,
+  experience: 1,
+  headline: 0,
+  tradeCategory: 0,
+};
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -41,8 +47,9 @@ function SubmitButton() {
  * single submit carries the whole payload - stepping is a presentation concern,
  * not a multi-request wizard with server state to reconcile.
  *
- * Server-side validation still owns correctness; the step buttons never claim
- * an answer is acceptable.
+ * Server-side validation still owns correctness. Continue uses native browser
+ * constraints only to avoid advancing past an obviously incomplete visible
+ * step; the server remains authoritative for every submitted value.
  */
 export function TraderApplicationForm({
   categories,
@@ -56,6 +63,7 @@ export function TraderApplicationForm({
     tradeCategory?: string;
   };
 }) {
+  const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction] = useActionState(submitTraderApplicationAction, {
     status: "idle",
   } satisfies TraderApplicationFormState);
@@ -63,9 +71,64 @@ export function TraderApplicationForm({
   const [step, setStep] = useState(0);
   const fieldErrors = state.fieldErrors ?? {};
   const isLast = step === STEPS.length - 1;
+  const errorSignature = Object.keys(fieldErrors).sort().join(",");
+
+  /*
+   * A server error can belong to a field on a previous hidden step. Move back
+   * to the earliest failing step and focus the first invalid control so the
+   * user never gets a generic error while the actual problem is invisible.
+   * The state change is scheduled on the next frame rather than synchronously
+   * inside the effect, keeping the effect as DOM synchronization instead of a
+   * cascading render trigger.
+   */
+  useEffect(() => {
+    if (state.status !== "error" || !errorSignature) return;
+
+    const failingFields = errorSignature.split(",");
+    const earliestStep = Math.min(
+      ...failingFields.map((field) => FIELD_STEP[field] ?? STEPS.length - 1),
+    );
+    const firstField = failingFields.find(
+      (field) => (FIELD_STEP[field] ?? STEPS.length - 1) === earliestStep,
+    );
+    if (!firstField) return;
+
+    let focusFrame = 0;
+    const stepFrame = requestAnimationFrame(() => {
+      setStep(earliestStep);
+      focusFrame = requestAnimationFrame(() => {
+        const control = formRef.current?.querySelector<HTMLElement>(
+          `[name="${firstField}"]`,
+        );
+        control?.scrollIntoView({ behavior: "smooth", block: "center" });
+        control?.focus({ preventScroll: true });
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(stepFrame);
+      if (focusFrame) cancelAnimationFrame(focusFrame);
+    };
+  }, [errorSignature, state.status]);
+
+  const continueFromStep = () => {
+    const controls = formRef.current?.querySelectorAll<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >(`[data-trader-step="${step}"] input, [data-trader-step="${step}"] select, [data-trader-step="${step}"] textarea`);
+
+    for (const control of controls ?? []) {
+      if (!control.checkValidity()) {
+        control.reportValidity();
+        control.focus();
+        return;
+      }
+    }
+
+    setStep((current) => Math.min(current + 1, STEPS.length - 1));
+  };
 
   return (
-    <form action={formAction} className="grid gap-5">
+    <form action={formAction} className="grid gap-5" ref={formRef}>
       <div>
         <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--px-text-muted)]">
           Step {step + 1} of {STEPS.length}
@@ -87,7 +150,10 @@ export function TraderApplicationForm({
         Hidden rather than unmounted: unmounting would drop the answer from the
         submitted FormData, so going back a step would silently erase work.
       */}
-      <div className={step === 0 ? "grid gap-4" : "hidden"}>
+      <div
+        className={step === 0 ? "grid gap-4" : "hidden"}
+        data-trader-step="0"
+      >
         <Field
           error={fieldErrors.tradeCategory}
           hint="Pick the closest match. You can publish in others later."
@@ -118,6 +184,7 @@ export function TraderApplicationForm({
             aria-invalid={Boolean(fieldErrors.headline)}
             defaultValue={defaults?.headline}
             maxLength={140}
+            minLength={10}
             name="headline"
             placeholder="e.g. Product design services for early-stage fintech"
             required
@@ -125,7 +192,10 @@ export function TraderApplicationForm({
         </Field>
       </div>
 
-      <div className={step === 1 ? "grid gap-4" : "hidden"}>
+      <div
+        className={step === 1 ? "grid gap-4" : "hidden"}
+        data-trader-step="1"
+      >
         <Field
           error={fieldErrors.applicantKind}
           label="Are you trading as an individual or a business?"
@@ -152,6 +222,7 @@ export function TraderApplicationForm({
             aria-invalid={Boolean(fieldErrors.experience)}
             defaultValue={defaults?.experience}
             maxLength={600}
+            minLength={30}
             name="experience"
             placeholder="Tell us what you have done before, and who you usually work with."
             required
@@ -159,7 +230,10 @@ export function TraderApplicationForm({
         </Field>
       </div>
 
-      <div className={isLast ? "grid gap-3" : "hidden"}>
+      <div
+        className={isLast ? "grid gap-3" : "hidden"}
+        data-trader-step="2"
+      >
         <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">
           A reviewer checks that listings match what PerX allows. We do not ask
           for identity documents.
@@ -185,10 +259,7 @@ export function TraderApplicationForm({
         {isLast ? (
           <SubmitButton />
         ) : (
-          <Button
-            onClick={() => setStep((current) => current + 1)}
-            type="button"
-          >
+          <Button onClick={continueFromStep} type="button">
             Continue
           </Button>
         )}
