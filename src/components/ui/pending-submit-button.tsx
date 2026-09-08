@@ -15,7 +15,11 @@ export function PendingSubmitButton({
   const { pending } = useFormStatus();
 
   return (
-    <Button {...props} disabled={pending || props.disabled}>
+    <Button
+      {...props}
+      aria-busy={pending || undefined}
+      disabled={pending || props.disabled}
+    >
       {pending ? (
         <>
           <Loader2 aria-hidden className="mr-2 animate-spin" size={15} />
