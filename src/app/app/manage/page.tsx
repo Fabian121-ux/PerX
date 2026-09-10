@@ -8,6 +8,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { Card, EmptyState } from "@/components/ui/card";
 import { Input, Select } from "@/components/ui/form";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { RouteFeedback } from "@/components/ui/route-feedback";
 import {
   archiveOpportunityAction,
@@ -304,40 +305,40 @@ function StateActions({
     <>
       {status !== "PUBLISHED" ? (
         <form action={async () => { "use server"; await publishOpportunityAction(id); }}>
-          <Button size="sm" type="submit">
+          <PendingSubmitButton pendingLabel="Publishing..." size="sm" type="submit">
             <Play aria-hidden className="mr-1.5" size={14} />
             Publish
-          </Button>
+          </PendingSubmitButton>
         </form>
       ) : (
         <form action={async () => { "use server"; await pauseOpportunityAction(id); }}>
-          <Button size="sm" type="submit" variant="secondary">
+          <PendingSubmitButton pendingLabel="Pausing..." size="sm" type="submit" variant="secondary">
             <Pause aria-hidden className="mr-1.5" size={14} />
             Pause
-          </Button>
+          </PendingSubmitButton>
         </form>
       )}
       {status === "ARCHIVED" ? (
         <form action={async () => { "use server"; await restoreOpportunityAction(id); }}>
-          <Button size="sm" type="submit" variant="secondary">
+          <PendingSubmitButton pendingLabel="Restoring..." size="sm" type="submit" variant="secondary">
             <RotateCcw aria-hidden className="mr-1.5" size={14} />
             Restore
-          </Button>
+          </PendingSubmitButton>
         </form>
       ) : (
         <form action={async () => { "use server"; await archiveOpportunityAction(id); }}>
-          <Button size="sm" type="submit" variant="secondary">
+          <PendingSubmitButton pendingLabel="Archiving..." size="sm" type="submit" variant="secondary">
             <Archive aria-hidden className="mr-1.5" size={14} />
             Archive
-          </Button>
+          </PendingSubmitButton>
         </form>
       )}
       {canDuplicate ? (
         <form action={async () => { "use server"; await duplicateOpportunityAction(id); }}>
-          <Button size="sm" type="submit" variant="secondary">
+          <PendingSubmitButton pendingLabel="Duplicating..." size="sm" type="submit" variant="secondary">
             <Copy aria-hidden className="mr-1.5" size={14} />
             Duplicate
-          </Button>
+          </PendingSubmitButton>
         </form>
       ) : null}
       {["DRAFT", "ARCHIVED"].includes(status) ? (
