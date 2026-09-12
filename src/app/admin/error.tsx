@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
-import { AlertCircle } from "lucide-react";
+
+import { ErrorState } from "@/components/system/error-state";
+import { classifyError } from "@/lib/errors/taxonomy";
 
 export default function AdminError({
   error,
@@ -12,34 +13,38 @@ export default function AdminError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("Admin Error Boundary caught:", error);
+    // Structured, safe: route/kind/digest only. Previously the whole error
+    // object was logged here, which is both inconsistent with the app segment
+    // and a way for connection strings and raw SQL to reach a browser console.
+    console.error("[perx:error-boundary]", {
+      digest: error.digest,
+      kind: classifyError(error),
+      route: "/admin",
+      timestamp: new Date().toISOString(),
+    });
   }, [error]);
 
+  /**
+   * The previous copy said "Secure administration tools are currently offline.
+   * Check connection logs." for every failure. The outage it was shown during
+   * was a missing table - a schema fault with no connectivity component - so it
+   * pointed operators at the wrong system for 15 days.
+   *
+   * The taxonomy now decides what is claimed, and `ErrorState` renders retry
+   * only when `canRetry` holds. That is what ends the retry loop: reset()
+   * re-runs the same failing render, so a SERVER_ERROR or DEPENDENCY_FAILURE
+   * no longer offers a button that cannot change the outcome.
+   *
+   * `homeHref="/admin"` keeps a signed-in operator inside the portal rather
+   * than ejecting them to the public root.
+   */
   return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center bg-[color:var(--px-page)] px-4 py-16 text-center">
-      <div className="rounded-full bg-red-100 p-4 text-red-600">
-        <AlertCircle size={32} />
-      </div>
-      <h1 className="mt-6 text-2xl font-black text-[color:var(--px-text)]">
-        Admin Portal Unavailable
-      </h1>
-      <p className="mt-4 max-w-md text-sm leading-6 text-[color:var(--px-text-muted)]">
-        Secure administration tools are currently offline. Check connection logs.
-      </p>
-      <div className="mt-8 flex gap-4">
-        <button
-          onClick={() => reset()}
-          className="rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[color:var(--px-primary-strong)]"
-        >
-          Retry connection
-        </button>
-        <Link
-          href="/"
-          className="rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-5 py-2.5 text-sm font-bold text-[color:var(--px-text)] transition hover:bg-[color:var(--px-surface-soft)]"
-        >
-          Exit portal
-        </Link>
-      </div>
-    </div>
+    <ErrorState
+      error={error}
+      homeHref="/admin"
+      homeLabel="Back to admin"
+      onRetry={reset}
+      surface="the admin portal"
+    />
   );
 }
