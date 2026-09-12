@@ -73,6 +73,14 @@ export default async function ServiceCenterPage({
                 <p className="mt-2 text-xs text-[color:var(--px-text-muted)]">
                   Last updated {new Date(ticket.updatedAt).toLocaleDateString()}
                 </p>
+                <ButtonLink
+                  className="mt-3"
+                  href={`/app/service-center/${ticket.id}`}
+                  size="sm"
+                  variant="secondary"
+                >
+                  View request
+                </ButtonLink>
               </div>
             </Card>
           ))}
