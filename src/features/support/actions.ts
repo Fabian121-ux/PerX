@@ -7,7 +7,27 @@ import { redirect } from "next/navigation";
 import { supportTicketSchema } from "@/lib/validation/support";
 import { writeAuditLog } from "@/lib/logging/audit";
 
-export async function createSupportTicketAction(formData: FormData) {
+export type SupportTicketFormState = {
+  fieldErrors?: Record<string, string>;
+  message?: string;
+  status: "error" | "idle";
+};
+
+function fieldErrorsFromIssues(error: {
+  issues: { message: string; path: PropertyKey[] }[];
+}) {
+  return error.issues.reduce<Record<string, string>>((errors, issue) => {
+    const field = issue.path[0];
+    if (typeof field === "string" && !errors[field])
+      errors[field] = issue.message;
+    return errors;
+  }, {});
+}
+
+export async function createSupportTicketAction(
+  _previous: SupportTicketFormState,
+  formData: FormData,
+): Promise<SupportTicketFormState> {
   const user = await requireUser();
 
   const parsed = supportTicketSchema.safeParse({
@@ -17,23 +37,39 @@ export async function createSupportTicketAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    throw new Error("Please check the support ticket fields and try again.");
+    const fieldErrors = fieldErrorsFromIssues(parsed.error);
+    return {
+      fieldErrors,
+      message:
+        "We could not send this request yet. Check the highlighted fields.",
+      status: "error",
+    };
   }
 
-  const ticket = await getPrisma().supportTicket.create({
-    data: {
-      authorId: user.id,
-      subject: parsed.data.subject,
-      category: parsed.data.category,
-      status: "OPEN",
-      messages: {
-        create: {
-          senderId: user.id,
-          body: parsed.data.message
-        }
-      }
-    }
-  });
+  let ticket: { id: string };
+  try {
+    ticket = await getPrisma().supportTicket.create({
+      data: {
+        authorId: user.id,
+        subject: parsed.data.subject,
+        category: parsed.data.category,
+        status: "OPEN",
+        messages: {
+          create: {
+            senderId: user.id,
+            body: parsed.data.message,
+          },
+        },
+      },
+      select: { id: true },
+    });
+  } catch {
+    return {
+      message:
+        "Support is temporarily unavailable. Your request was not sent; please try again.",
+      status: "error",
+    };
+  }
 
   await writeAuditLog({
     actorId: user.id,
@@ -43,5 +79,5 @@ export async function createSupportTicketAction(formData: FormData) {
   });
 
   revalidatePath("/app/service-center");
-  redirect("/app/service-center");
+  redirect(`/app/service-center?created=${ticket.id}`);
 }
