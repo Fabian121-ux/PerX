@@ -22,6 +22,7 @@ const adminLinks = [
   ["/admin/deals", "Deals"],
   ["/admin/audit", "Audit"],
   ["/admin/policies", "Policies"],
+  ["/admin/schema", "Schema status"],
   ["/admin/settings", "Settings"],
 ];
 

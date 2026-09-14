@@ -15,6 +15,20 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # The migration manifest is the repo's half of the runtime drift check.
+      # Regenerate it and fail on any diff: a migration added without
+      # regenerating would otherwise leave the check silently blind to it.
+      # This needs no database and no credentials - it only reads directory
+      # names under prisma/migrations/.
+      - name: Verify migration manifest is up to date
+        run: |
+          # `git diff` ignores untracked files, so an uncommitted manifest would
+          # pass silently. Assert it is tracked before diffing it.
+          git ls-files --error-unmatch src/generated/migration-manifest.ts > /dev/null \
+            || { echo "::error::src/generated/migration-manifest.ts is not committed. Run 'npm run migrations:manifest' and commit the result."; exit 1; }
+          npm run migrations:manifest
+          git diff --exit-code -- src/generated/migration-manifest.ts \
+            || { echo "::error::src/generated/migration-manifest.ts is stale. Run 'npm run migrations:manifest' and commit the result."; exit 1; }
       - run: npm run lint
       - run: npm run type-check
       - run: npm run test
