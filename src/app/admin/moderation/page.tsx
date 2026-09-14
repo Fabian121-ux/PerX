@@ -48,17 +48,9 @@ export default async function AdminModerationPage() {
       value: listingCases + openReports,
     },
     {
-      /*
-       * Deliberately links to the opportunities console rather than
-       * /admin/reports or /admin/messages. Neither of those lists these cases:
-       * /admin/reports lists report rows, not moderation cases, and the message
-       * queue filters on `conversationId: { not: null }`, which a listing case
-       * never has. The case detail page works when opened by id, but nothing
-       * links to it - a dedicated policy-flag list is a follow-up.
-       */
       detail:
         "Listings withheld from public feeds by an automatic policy flag. Nobody reported these, and the author is waiting on a review.",
-      href: "/admin/opportunities",
+      href: "/admin/moderation/policy-flags",
       label: "Policy-flagged listings",
       value: policyFlagCases,
     },
