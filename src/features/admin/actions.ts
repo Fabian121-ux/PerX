@@ -918,6 +918,148 @@ export async function sendAdminBroadcastAction(formData: FormData) {
   revalidatePath("/app/news");
 }
 
+/**
+ * Decide a policy-flag case: release the listing, or uphold the flag.
+ *
+ * P0-4 stopped the silent shadowban by opening a POLICY_FLAG case and telling
+ * the author their listing was "under review". Nothing could perform that
+ * review, so the listing stayed withheld forever and the author waited on
+ * something that could not happen. This is that review.
+ *
+ * The listing write and the case write are one transaction for the same reason
+ * they were in P0-4: a cleared listing with an open case, or a closed case over
+ * a still-withheld listing, is exactly the inconsistency that made the original
+ * bug invisible.
+ *
+ * Both writes use `updateMany` guarded by the state the admin actually saw, so
+ * two admins deciding the same case concurrently cannot both win - the second
+ * matches zero rows and the transaction aborts.
+ */
+export async function reviewPolicyFlagCaseAction(formData: FormData) {
+  const admin = await requireCapabilityOrNotFound("admin:moderate");
+  const caseId = textValue(formData, "caseId");
+  const decision = textValue(formData, "decision");
+  const reason = textValue(formData, "reason");
+
+  const parsedDecision = z.enum(["clear", "uphold"]).safeParse(decision);
+  if (!caseId || !parsedDecision.success || reason.length < 8) {
+    throw new Error("A case, decision, and reason are required.");
+  }
+
+  const moderationCase = await getPrisma().moderationCase.findUnique({
+    select: {
+      id: true,
+      reportedUserId: true,
+      source: true,
+      status: true,
+      targetId: true,
+      targetType: true,
+    },
+    where: { id: caseId },
+  });
+  if (!moderationCase) throw new Error("Case not found.");
+  // This action releases content from moderation. It must not be reachable for
+  // a case of another kind, whose target may not be an opportunity at all.
+  if (
+    moderationCase.source !== "POLICY_FLAG" ||
+    moderationCase.targetType !== "opportunity"
+  ) {
+    throw new Error("That case is not a policy flag on a listing.");
+  }
+
+  const clearing = parsedDecision.data === "clear";
+  const ownerId = moderationCase.reportedUserId;
+
+  const reviewed = await getPrisma().$transaction(async (tx) => {
+    /*
+     * Guarded by FLAGGED: if the listing already moved - the owner archived it,
+     * another admin decided - this matches nothing and nothing is released.
+     */
+    const listingResult = await tx.opportunity.updateMany({
+      data: {
+        moderationStatus: clearing
+          ? ("APPROVED" as const)
+          : ("REJECTED" as const),
+      },
+      where: { id: moderationCase.targetId, moderationStatus: "FLAGGED" },
+    });
+    if (listingResult.count !== 1) return false;
+
+    const caseResult = await tx.moderationCase.updateMany({
+      data: { status: "RESOLVED" as const },
+      where: { id: moderationCase.id, status: moderationCase.status },
+    });
+    if (caseResult.count !== 1) return false;
+
+    await tx.moderationCaseEvent.create({
+      data: {
+        actorId: admin.id,
+        caseId: moderationCase.id,
+        nextStatus: "RESOLVED",
+        previousStatus: moderationCase.status,
+        reason,
+        type: clearing ? "policy_flag.cleared" : "policy_flag.upheld",
+      },
+    });
+    await tx.moderationAction.create({
+      data: {
+        action: `policy_flag.${parsedDecision.data}`,
+        actorId: admin.id,
+        entityId: moderationCase.targetId,
+        entityType: "opportunity",
+        reason,
+      },
+    });
+    await tx.auditLog.create({
+      data: {
+        action: "admin.policy_flag.reviewed",
+        actorId: admin.id,
+        entityId: moderationCase.targetId,
+        entityType: "opportunity",
+        metadata: {
+          caseId: moderationCase.id,
+          decision: parsedDecision.data,
+          reasonProvided: true,
+          toModerationStatus: clearing ? "APPROVED" : "REJECTED",
+        },
+      },
+    });
+
+    if (ownerId) {
+      /*
+       * The author was promised a review, so they are told the outcome either
+       * way. Neither message names the matched rule, the detector id or the
+       * pattern: that boundary is the whole point of P0-4, and it does not stop
+       * applying once a human has looked at the listing.
+       */
+      await tx.notification.create({
+        data: {
+          actionUrl: `/app/opportunities/${moderationCase.targetId}/edit`,
+          body: clearing
+            ? "Your listing has been reviewed and is now live. It appears in search and feeds as normal."
+            : "Your listing was reviewed and cannot be published as written. You can edit it and submit again, or contact support if you think this is wrong.",
+          metadata: { opportunityId: moderationCase.targetId },
+          title: clearing ? "Listing approved" : "Listing not approved",
+          type: "MODERATION_UPDATE",
+          userId: ownerId,
+        },
+      });
+    }
+
+    return true;
+  });
+
+  if (!reviewed) {
+    throw new Error("This case changed during review. Review it again.");
+  }
+
+  revalidatePath("/admin/moderation");
+  revalidatePath("/admin/moderation/policy-flags");
+  revalidatePath(`/admin/moderation/cases/${caseId}`);
+  revalidatePath("/app/manage");
+  revalidatePath("/discover");
+}
+
 export async function reviewPropertyListingAction(formData: FormData) {
   const admin = await requireCapabilityOrNotFound("opportunity:moderate");
   const opportunityId = textValue(formData, "opportunityId");

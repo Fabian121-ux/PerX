@@ -8,6 +8,7 @@ import {
   applyEnforcementAction,
   initiateUserPasswordResetAction,
   recordMessageScopeRevealAction,
+  reviewPolicyFlagCaseAction,
   updateModerationCaseStatusAction,
 } from "@/features/admin/actions";
 import {
@@ -33,6 +34,13 @@ export default async function AdminModerationCasePage({
   const { caseId } = await params;
   const moderationCase = await getAdminModerationCase(caseId);
   if (!moderationCase) notFound();
+
+  // Only an open policy flag on a listing is decidable here; a resolved case
+  // has already released or withheld the listing.
+  const isDecidablePolicyFlag =
+    moderationCase.source === "POLICY_FLAG" &&
+    moderationCase.targetType === "opportunity" &&
+    !["RESOLVED", "DISMISSED", "CLOSED"].includes(moderationCase.status);
 
   const messages =
     canReadMessages &&
@@ -210,6 +218,52 @@ export default async function AdminModerationCasePage({
         </div>
 
         <div className="grid gap-4 self-start">
+          {isDecidablePolicyFlag ? (
+            /*
+             * The decision that releases or withholds the listing. Separate
+             * from the generic status form below because moving a policy-flag
+             * case to RESOLVED without also writing the listing's
+             * moderationStatus would leave the author withheld forever with a
+             * closed case - the exact inconsistency P0-4 fixed.
+             */
+            <form
+              action={reviewPolicyFlagCaseAction}
+              className="grid gap-3 rounded-[var(--px-radius)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4"
+            >
+              <input name="caseId" type="hidden" value={moderationCase.id} />
+              <h2 className="text-sm font-bold text-[color:var(--px-text)]">
+                Decide this policy flag
+              </h2>
+              <p className="text-xs leading-5 text-[color:var(--px-text-muted)]">
+                This listing is withheld from every public feed and its author
+                was told a review is coming. Clearing publishes it; upholding
+                keeps it withheld. Either way the author is notified, and never
+                told which rule matched.
+              </p>
+              <label className="grid gap-1 text-sm font-semibold text-[color:var(--px-text)]">
+                Decision
+                <select
+                  className="rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)]"
+                  defaultValue="clear"
+                  name="decision"
+                >
+                  <option value="clear">Clear - publish the listing</option>
+                  <option value="uphold">Uphold - keep it withheld</option>
+                </select>
+              </label>
+              <label className="grid gap-1 text-sm font-semibold text-[color:var(--px-text)]">
+                Reason
+                <textarea
+                  className="min-h-20 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)]"
+                  minLength={8}
+                  name="reason"
+                  required
+                />
+              </label>
+              <Button type="submit">Record decision</Button>
+            </form>
+          ) : null}
+
           <form
             action={updateModerationCaseStatusAction}
             className="grid gap-3 rounded-[var(--px-radius)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4"
