@@ -14,6 +14,7 @@ export default async function AdminModerationPage() {
     verificationRequests,
     openReports,
     appealedCases,
+    policyFlagCases,
   ] = await Promise.all([
     getPrisma().moderationCase.count({
       where: { conversationId: { not: null }, status: { notIn: ["RESOLVED", "DISMISSED", "CLOSED"] } },
@@ -25,6 +26,12 @@ export default async function AdminModerationPage() {
     getPrisma().verificationRequest.count({ where: { status: "PENDING" } }),
     getPrisma().userReport.count({ where: { status: { in: ["SUBMITTED", "IN_REVIEW"] } } }),
     getPrisma().moderationCase.count({ where: { status: "APPEALED" } }),
+    // Counted separately from listing reports on purpose: a policy flag is
+    // machine-raised and has no reporter, and these listings are already
+    // withheld from every public feed while they wait.
+    getPrisma().moderationCase.count({
+      where: { source: "POLICY_FLAG", status: { notIn: ["RESOLVED", "DISMISSED", "CLOSED"] } },
+    }),
   ]);
 
   const queues = [
@@ -39,6 +46,21 @@ export default async function AdminModerationPage() {
       href: "/admin/reports",
       label: "Listing and content reports",
       value: listingCases + openReports,
+    },
+    {
+      /*
+       * Deliberately links to the opportunities console rather than
+       * /admin/reports or /admin/messages. Neither of those lists these cases:
+       * /admin/reports lists report rows, not moderation cases, and the message
+       * queue filters on `conversationId: { not: null }`, which a listing case
+       * never has. The case detail page works when opened by id, but nothing
+       * links to it - a dedicated policy-flag list is a follow-up.
+       */
+      detail:
+        "Listings withheld from public feeds by an automatic policy flag. Nobody reported these, and the author is waiting on a review.",
+      href: "/admin/opportunities",
+      label: "Policy-flagged listings",
+      value: policyFlagCases,
     },
     {
       detail: "Open deal disputes and simulated deal workflow concerns.",

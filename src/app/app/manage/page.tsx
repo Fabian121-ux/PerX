@@ -47,6 +47,7 @@ export default async function ManageContentPage({
     createdType?: string;
     error?: string;
     q?: string;
+    review?: string;
     status?: string;
     submitted?: string;
     type?: string;
@@ -133,13 +134,33 @@ export default async function ManageContentPage({
     createdOpportunity && createdType === createdOpportunity.type
       ? createdType
       : null;
-  const routeFeedback = createdOpportunity
+  /*
+   * A policy-flagged listing is created but NOT published, so reporting "Post
+   * created" over it was a false success: the listing was withheld from every
+   * feed and the author was never told.
+   *
+   * The copy names no rule and no matched phrase - that would be a roadmap for
+   * evading moderation - and states what actually happened plus how long a
+   * review usually takes.
+   */
+  const reviewOpportunity = params.review
+    ? opportunities.find((opportunity) => opportunity.id === params.review)
+    : null;
+  const routeFeedback = reviewOpportunity
     ? {
-        description: "You can edit, pause, duplicate, or archive it from here.",
-        title: "Post created",
-        tone: "success" as const,
+        description:
+          "It is not visible to others yet. A reviewer checks listings like this before they go live, usually within one business day. You can keep editing it in the meantime.",
+        title: "Submitted - awaiting review",
+        tone: "info" as const,
       }
-    : feedback;
+    : createdOpportunity
+      ? {
+          description:
+            "You can edit, pause, duplicate, or archive it from here.",
+          title: "Post created",
+          tone: "success" as const,
+        }
+      : feedback;
 
   return (
     <AppSection
@@ -215,8 +236,19 @@ export default async function ManageContentPage({
                       <Badge className={statusBadgeClass(opportunity.status)}>
                         {opportunity.status.replaceAll("_", " ")}
                       </Badge>
-                      <Badge className="bg-[color:var(--px-surface-soft)] text-[color:var(--px-text-muted)]">
-                        {opportunity.moderationStatus.replaceAll("_", " ")}
+                      {/*
+                        FLAGGED means the listing is withheld from every public
+                        feed. Rendering that in the same muted grey as APPROVED
+                        made an invisible listing look identical to a live one.
+                      */}
+                      <Badge
+                        className={moderationBadgeClass(
+                          opportunity.moderationStatus,
+                        )}
+                      >
+                        {opportunity.moderationStatus === "FLAGGED"
+                          ? "UNDER REVIEW"
+                          : opportunity.moderationStatus.replaceAll("_", " ")}
                       </Badge>
                       {opportunity.propertyVerificationState ? (
                         <Badge className="bg-purple-50 text-purple-800">
@@ -237,6 +269,18 @@ export default async function ManageContentPage({
                       <span>{opportunity._count.bookmarks} save(s)</span>
                       <span>{opportunity._count.reports} report(s)</span>
                     </div>
+                    {opportunity.moderationStatus === "FLAGGED" ? (
+                      /*
+                        States the consequence the author actually cares about -
+                        that nobody can see it - without naming the rule that
+                        matched, which would be a guide to evading it.
+                      */
+                      <p className="mt-3 rounded-[var(--px-radius-sm)] bg-amber-50 p-3 text-xs font-semibold text-amber-800">
+                        Awaiting review, so this is not visible to others yet.
+                        Reviews usually finish within one business day. You can
+                        edit and resubmit it at any time.
+                      </p>
+                    ) : null}
                     {opportunity.verificationNotes ? (
                       <p className="mt-3 rounded-[var(--px-radius-sm)] bg-amber-50 p-3 text-xs font-semibold text-amber-800">
                         Review note: {opportunity.verificationNotes}
@@ -351,6 +395,19 @@ function StateActions({
       ) : null}
     </>
   );
+}
+
+/**
+ * A withheld listing must not look like a live one.
+ *
+ * FLAGGED previously rendered in the same muted grey as APPROVED, so an author
+ * whose listing was invisible everywhere saw no difference from one that was
+ * published and working.
+ */
+function moderationBadgeClass(moderationStatus: string) {
+  if (moderationStatus === "FLAGGED") return "bg-amber-100 text-amber-900";
+  if (moderationStatus === "APPROVED") return "bg-emerald-50 text-emerald-800";
+  return "bg-[color:var(--px-surface-soft)] text-[color:var(--px-text-muted)]";
 }
 
 function statusBadgeClass(status: string) {
