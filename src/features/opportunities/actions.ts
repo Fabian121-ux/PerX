@@ -31,6 +31,10 @@ import {
   opportunityReportSchema,
 } from "@/lib/validation/opportunity";
 import { evaluatePolicy, isPolicyBlocking } from "@/lib/policy/enforcement";
+import {
+  buildPolicyFlagCaseData,
+  policyFlagAuditMetadata,
+} from "@/lib/policy/moderation-case";
 import { buildPublicOpportunityWhere } from "@/lib/data/public-opportunities";
 
 /**
@@ -309,7 +313,18 @@ export async function createOpportunityAction(
       : "PENDING";
   const slug = `${slugify(parsed.data.title)}-${Date.now().toString(36)}`;
 
-  const opportunity = await getPrisma().opportunity.create({
+  /*
+   * Both writes or neither.
+   *
+   * A FLAGGED listing with no moderation case is exactly the bug being fixed:
+   * the listing is withheld from every feed, the author is not told, and no
+   * admin queue knows it exists. The create was previously a bare
+   * `opportunity.create`, so there was no way to add the case without allowing
+   * a half-succeeded pair.
+   */
+  const flagged = moderationStatus === "FLAGGED";
+  const opportunity = await getPrisma().$transaction(async (tx) => {
+  const created = await tx.opportunity.create({
     data: {
       budgetMaxMinor: budgetMax?.amountMinor,
       budgetMinMinor: budgetMin?.amountMinor,
@@ -367,6 +382,32 @@ export async function createOpportunityAction(
     },
   });
 
+    if (flagged) {
+      await tx.moderationCase.create({
+        data: buildPolicyFlagCaseData({
+          ownerId: user.id,
+          policy,
+          targetId: created.id,
+          targetType: "opportunity",
+        }),
+      });
+      // Written on the transaction client rather than via `writeAuditLog`,
+      // which uses its own connection and swallows failures - neither is
+      // acceptable for the record that a listing was withheld from the public.
+      await tx.auditLog.create({
+        data: {
+          action: "moderation.policy_flag_case_opened",
+          actorId: user.id,
+          entityId: created.id,
+          entityType: "opportunity",
+          metadata: policyFlagAuditMetadata(policy),
+        },
+      });
+    }
+
+    return created;
+  });
+
   await writeAuditLog({
     actorId: user.id,
     action: "opportunity.create",
@@ -377,10 +418,21 @@ export async function createOpportunityAction(
   revalidatePath(`/u/${user.username}`);
   if (category.slug) revalidatePath(`/categories/${category.slug}`);
 
+  /*
+   * A flagged listing is NOT published, so it must not be reported as created.
+   * The previous `?created=` redirect rendered "Post created" over a listing
+   * that would never appear in a feed.
+   *
+   * The destination carries no rule name, detector id or matched phrase: the
+   * author is told the listing is under review, and nothing that would help
+   * them iterate around the rule.
+   */
   redirect(
-    parsed.data.type === "PROPERTY"
-      ? `/app/opportunities/${opportunity.id}/edit?created=${opportunity.id}&createdType=${parsed.data.type}`
-      : `/app/manage?created=${opportunity.id}&createdType=${parsed.data.type}`,
+    flagged
+      ? `/app/manage?review=${opportunity.id}`
+      : parsed.data.type === "PROPERTY"
+        ? `/app/opportunities/${opportunity.id}/edit?created=${opportunity.id}&createdType=${parsed.data.type}`
+        : `/app/manage?created=${opportunity.id}&createdType=${parsed.data.type}`,
   );
 }
 

@@ -14,6 +14,7 @@ export default async function AdminModerationPage() {
     verificationRequests,
     openReports,
     appealedCases,
+    policyFlagCases,
   ] = await Promise.all([
     getPrisma().moderationCase.count({
       where: { conversationId: { not: null }, status: { notIn: ["RESOLVED", "DISMISSED", "CLOSED"] } },
@@ -25,6 +26,12 @@ export default async function AdminModerationPage() {
     getPrisma().verificationRequest.count({ where: { status: "PENDING" } }),
     getPrisma().userReport.count({ where: { status: { in: ["SUBMITTED", "IN_REVIEW"] } } }),
     getPrisma().moderationCase.count({ where: { status: "APPEALED" } }),
+    // Counted separately from listing reports on purpose: a policy flag is
+    // machine-raised and has no reporter, and these listings are already
+    // withheld from every public feed while they wait.
+    getPrisma().moderationCase.count({
+      where: { source: "POLICY_FLAG", status: { notIn: ["RESOLVED", "DISMISSED", "CLOSED"] } },
+    }),
   ]);
 
   const queues = [
@@ -39,6 +46,13 @@ export default async function AdminModerationPage() {
       href: "/admin/reports",
       label: "Listing and content reports",
       value: listingCases + openReports,
+    },
+    {
+      detail:
+        "Listings withheld from public feeds by an automatic policy flag. Nobody reported these, and the author is waiting on a review.",
+      href: "/admin/moderation/policy-flags",
+      label: "Policy-flagged listings",
+      value: policyFlagCases,
     },
     {
       detail: "Open deal disputes and simulated deal workflow concerns.",

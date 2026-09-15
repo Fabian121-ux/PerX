@@ -1,11 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 
 import { requireCapabilityOrNotFound, requireUser } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
+import { classifyError } from "@/lib/errors/taxonomy";
 import { hasDatabaseUrl } from "@/lib/env";
 import { opportunityCategoryOptions } from "@/lib/options";
 import { TRADER_GRANT_ROLE } from "@/lib/trader/access";
@@ -58,6 +59,46 @@ function fieldErrorsFromIssues(error: {
 }
 
 /**
+ * Convert a failed database call into the form state the action already returns.
+ *
+ * `unstable_rethrow` runs first and is load-bearing. `redirect()` and
+ * `notFound()` are implemented as thrown errors, so a catch that did not
+ * re-throw them would convert a redirect into a rendered error message - which
+ * for the APPROVED branch means an approved applicant silently stays on the
+ * form. The framework's own predicate is used rather than a hand-rolled digest
+ * check, because those go stale: Next 16 changed the `notFound()` digest, and
+ * one such check in this repo had been dead ever since.
+ *
+ * The copy mirrors the admin decision path: it says what did NOT happen, and
+ * claims no cause it has not established.
+ */
+function unavailable(
+  error: unknown,
+  operation: "findUnique" | "upsert",
+): TraderApplicationFormState {
+  unstable_rethrow(error);
+
+  // Redacted by construction: a classification and a route, never the message,
+  // stack or Prisma metadata.
+  console.error("[perx:trader-application-submit]", {
+    digest:
+      typeof error === "object" && error !== null && "digest" in error
+        ? String((error as { digest?: unknown }).digest ?? "")
+        : undefined,
+    kind: classifyError(error),
+    route: "/app/trader",
+    timestamp: new Date().toISOString(),
+  });
+  void operation;
+
+  return {
+    message:
+      "Your application could not be sent. Nothing was changed, so you can try again.",
+    status: "error",
+  };
+}
+
+/**
  * Submit or re-submit a trading access application.
  *
  * Upserts on `userId`: re-applying after `NEEDS_CHANGES` updates the existing
@@ -99,10 +140,26 @@ export async function submitTraderApplicationAction(
     };
   }
 
-  const existing = await getPrisma().traderApplication.findUnique({
-    select: { status: true },
-    where: { userId: user.id },
-  });
+  /*
+   * `hasDatabaseUrl()` above covers a missing environment variable. It does not
+   * cover a database that is present and cannot answer - a missing relation, a
+   * pool timeout, a dropped connection. Those threw uncaught out of the action,
+   * so the user got an unhandled error instead of the typed error state this
+   * action is already shaped to return.
+   *
+   * Only the query is inside the try. The branches that follow - including the
+   * APPROVED redirect - are deliberately outside it, because `redirect()` works
+   * by throwing: wrapping it would mean catching it.
+   */
+  let existing: { status: string } | null;
+  try {
+    existing = await getPrisma().traderApplication.findUnique({
+      select: { status: true },
+      where: { userId: user.id },
+    });
+  } catch (error) {
+    return unavailable(error, "findUnique");
+  }
 
   // An approved account re-submitting would otherwise silently revoke its own
   // access by moving the row back to PENDING_REVIEW.
@@ -127,32 +184,37 @@ export async function submitTraderApplicationAction(
   }
 
   const now = new Date();
-  await getPrisma().traderApplication.upsert({
-    create: {
-      applicantKind: parsed.data.applicantKind,
-      experience: parsed.data.experience,
-      headline: parsed.data.headline,
-      status: "PENDING_REVIEW",
-      submittedAt: now,
-      tradeCategory: parsed.data.tradeCategory,
-      userId: user.id,
-    },
-    update: {
-      applicantKind: parsed.data.applicantKind,
-      decidedAt: null,
-      experience: parsed.data.experience,
-      headline: parsed.data.headline,
-      // Cleared so a returned application does not keep showing the previous
-      // reviewer's note as if it were a fresh decision.
-      reviewerNote: null,
-      status: "PENDING_REVIEW",
-      submittedAt: now,
-      tradeCategory: parsed.data.tradeCategory,
-    },
-    where: { userId: user.id },
-  });
+  try {
+    await getPrisma().traderApplication.upsert({
+      create: {
+        applicantKind: parsed.data.applicantKind,
+        experience: parsed.data.experience,
+        headline: parsed.data.headline,
+        status: "PENDING_REVIEW",
+        submittedAt: now,
+        tradeCategory: parsed.data.tradeCategory,
+        userId: user.id,
+      },
+      update: {
+        applicantKind: parsed.data.applicantKind,
+        decidedAt: null,
+        experience: parsed.data.experience,
+        headline: parsed.data.headline,
+        // Cleared so a returned application does not keep showing the previous
+        // reviewer's note as if it were a fresh decision.
+        reviewerNote: null,
+        status: "PENDING_REVIEW",
+        submittedAt: now,
+        tradeCategory: parsed.data.tradeCategory,
+      },
+      where: { userId: user.id },
+    });
+  } catch (error) {
+    return unavailable(error, "upsert");
+  }
 
   revalidatePath("/app/trader");
+  // Outside any try: this throws by design and must reach the framework.
   redirect("/app/trader?status=submitted");
 }
 

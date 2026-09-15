@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @next/next/no-img-element */
-import { notFound } from "next/navigation";
+import { notFound, unstable_rethrow } from "next/navigation";
 
 import {
   BadgeCheck,
@@ -524,22 +524,21 @@ function ProfileReportAction({ targetUserId }: { targetUserId: string }) {
 /**
  * Network actions throw on failure. The client boundary needs a result value so
  * it can roll back optimistic state, so failures are converted to `{ error }`.
- * Next.js control-flow errors (redirect / notFound) carry a `digest` and must
- * propagate untouched.
+ * Next.js control-flow errors (redirect / notFound) must propagate untouched.
+ *
+ * This previously hand-rolled the digest comparison and tested
+ * `digest === "NEXT_NOT_FOUND"`. Next 16 throws `NEXT_HTTP_ERROR_FALLBACK;404`
+ * for `notFound()`, so that half of the check had been dead since the upgrade -
+ * a `notFound()` would have been swallowed and rendered as an error string
+ * instead of a 404. `unstable_rethrow` is the framework's own predicate, so it
+ * cannot drift out of step with the framework again, and it additionally covers
+ * the dynamic-rendering and postpone signals a digest check never saw.
  */
-function isFrameworkControlFlowError(error: unknown) {
-  const digest = (error as { digest?: unknown } | null)?.digest;
-  return (
-    typeof digest === "string" &&
-    (digest.startsWith("NEXT_REDIRECT") || digest === "NEXT_NOT_FOUND")
-  );
-}
-
 async function runRelationshipAction(operation: () => Promise<unknown>) {
   try {
     await operation();
   } catch (error) {
-    if (isFrameworkControlFlowError(error)) throw error;
+    unstable_rethrow(error);
     return {
       error:
         error instanceof Error && error.message
