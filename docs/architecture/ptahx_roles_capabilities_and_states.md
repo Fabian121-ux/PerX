@@ -1,4 +1,4 @@
-# PerX Roles, Capabilities, and States Reference
+# PtahX Roles, Capabilities, and States Reference
 
 Status: Phase 1B, 2026-08-11. Matches `src/lib/permissions/capabilities.ts` and runtime enforcement code.
 

@@ -13,7 +13,7 @@ import crypto from "node:crypto";
 
 const BASE = process.env.PERF_BASE_URL ?? "http://127.0.0.1:3200";
 const TEST_DB = process.env.TEST_DATABASE_URL!;
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 
 async function signIn(page: Page, email: string) {
   const { Pool } = await import("pg");
@@ -91,7 +91,7 @@ test("degraded unchanged ticks use the probe, not the full snapshot", async ({
     viewport: { height: 800, width: 1280 },
   });
   try {
-    const userId = await signIn(page, "alice-test@perx.test");
+    const userId = await signIn(page, "alice-test@ptahx.test");
     const conversationId = await activeConversation(userId);
     await page.goto(`${BASE}/app/messages/${conversationId}`);
     await page.getByLabel("Message history").waitFor({ timeout: 30_000 });
@@ -132,7 +132,7 @@ test("a real change triggers exactly one reconciliation", async ({
   });
   let insertedId: string | null = null;
   try {
-    const userId = await signIn(page, "alice-test@perx.test");
+    const userId = await signIn(page, "alice-test@ptahx.test");
     const conversationId = await activeConversation(userId);
     await page.goto(`${BASE}/app/messages/${conversationId}`);
     await page.getByLabel("Message history").waitFor({ timeout: 30_000 });
@@ -188,7 +188,7 @@ test("hidden tab performs no probe and no sync", async ({ browser }) => {
     viewport: { height: 800, width: 1280 },
   });
   try {
-    const userId = await signIn(page, "alice-test@perx.test");
+    const userId = await signIn(page, "alice-test@ptahx.test");
     const conversationId = await activeConversation(userId);
     await page.goto(`${BASE}/app/messages/${conversationId}`);
     await page.getByLabel("Message history").waitFor({ timeout: 30_000 });

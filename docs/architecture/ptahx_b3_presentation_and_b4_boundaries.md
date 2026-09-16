@@ -1,4 +1,4 @@
-# PerX B3 Presentation and B4 Boundaries
+# PtahX B3 Presentation and B4 Boundaries
 
 Status: B3 contract, 2026-08-10.
 
@@ -50,7 +50,7 @@ These summaries do not add admin detail pages, role assignment, enforcement hist
 
 ## Create Post Browser Recovery
 
-Create Post browser recovery is best-effort local storage, not a persisted PerX Opportunity draft. Keys are scoped to the authenticated user ID and currently creatable opportunity type, are versioned, and expire after 30 days. Storage is read only after hydration, malformed or stale payloads are ignored, and successful server persistence clears only the confirmed user/type key from the authenticated success destination.
+Create Post browser recovery is best-effort local storage, not a persisted PtahX Opportunity draft. Keys are scoped to the authenticated user ID and currently creatable opportunity type, are versioned, and expire after 30 days. Storage is read only after hydration, malformed or stale payloads are ignored, and successful server persistence clears only the confirmed user/type key from the authenticated success destination.
 
 Only an explicit allowlist of composer fields is stored. Submission intent, account/session data, object IDs, files, and the Property ownership or authority declaration are excluded. Users are warned not to enter private contact, payment, identity-document, or verification information. Local recovery is not encrypted and is not a confidentiality boundary on a shared browser.
 

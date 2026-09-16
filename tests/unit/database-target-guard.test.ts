@@ -80,7 +80,7 @@ describe("database target guard", () => {
     });
 
     it("rejects a non-PostgreSQL protocol", () => {
-      expect(isLocalDatabaseUrl("mysql://root@127.0.0.1:3306/perx")).toBe(false);
+      expect(isLocalDatabaseUrl("mysql://root@127.0.0.1:3306/ptahx")).toBe(false);
     });
 
     it("rejects hostnames that merely resemble loopback", () => {

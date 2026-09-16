@@ -212,7 +212,7 @@ export function describeError(
       return {
         canRetry: true,
         description:
-          "A service PerX depends on is not responding. Try again shortly.",
+          "A service PtahX depends on is not responding. Try again shortly.",
         kind,
         title: "A dependency is unavailable",
       };

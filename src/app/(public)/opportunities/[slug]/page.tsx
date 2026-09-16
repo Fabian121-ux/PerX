@@ -55,7 +55,7 @@ export default async function OpportunityDetailPage({
   if (!opportunity) notFound();
 
   const image = getTemporaryOpportunityImage(opportunity.slug);
-  const ownerName = opportunity.owner?.name ?? "perX member";
+  const ownerName = opportunity.owner?.name ?? "PtahX member";
   const trust = calculateTrustSummary({
     averageRating: opportunity.owner?.trustRecordEvidence?.averageRating ?? 0,
     completedDeals:
@@ -199,7 +199,7 @@ export default async function OpportunityDetailPage({
             </h2>
             <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
               Submit scope, amount, delivery period and acceptance details.
-              perX beta does not collect or hold real funds.
+              PtahX beta does not collect or hold real funds.
             </p>
             <form action={submitProposalAction} className="mt-4 grid gap-4">
               <input
@@ -324,7 +324,7 @@ function FactCard({
   return (
     <Card>
       <div className="flex items-center gap-3">
-        <span className="perx-soft-tile grid h-10 w-10 place-items-center rounded-[var(--px-radius-sm)]">
+        <span className="ptahx-soft-tile grid h-10 w-10 place-items-center rounded-[var(--px-radius-sm)]">
           {icon}
         </span>
         <div className="min-w-0">

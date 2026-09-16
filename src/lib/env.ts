@@ -10,6 +10,8 @@ const optionalPositiveIntegerEnv = z.preprocess(
   z.coerce.number().int().positive().optional(),
 );
 
+// The legacy PERX_* prefix is intentionally retained for deployment compatibility;
+// renaming these externally configured variables could silently select defaults.
 const signupEnvSchema = z.object({
   PERX_BETA_MAX_USERS: optionalPositiveIntegerEnv,
   PERX_SIGNUP_MODE: z.enum(["closed", "open_beta", "public"]).default("closed"),
@@ -25,7 +27,7 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   SUPABASE_AVATAR_BUCKET: z.string().min(1).default("profile-images"),
   SUPABASE_LISTING_BUCKET: z.string().min(1).default("listing-images"),
-  SESSION_COOKIE_NAME: z.string().min(1).default("perx_session"),
+  SESSION_COOKIE_NAME: z.string().min(1).default("ptahx_session"),
   AUTH_SESSION_DAYS: z.coerce.number().int().min(1).max(120).default(30),
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   UPLOAD_MAX_BYTES: z.coerce

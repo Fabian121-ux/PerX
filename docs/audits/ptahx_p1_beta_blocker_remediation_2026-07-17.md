@@ -1,4 +1,4 @@
-# perX P1 Beta-Blocker Remediation Report
+# PtahX P1 Beta-Blocker Remediation Report
 
 Date: 2026-07-17
 Branch: `main`
@@ -118,7 +118,7 @@ Updated active and preview surfaces:
 Result:
 
 - Active UI now states payment and escrow are not active during beta.
-- Active UI states no real funds are collected, held, transferred, or released by perX.
+- Active UI states no real funds are collected, held, transferred, or released by PtahX.
 - Approval button now reads as a simulated release-state action.
 - Remaining finance-related state is labelled simulated or unavailable.
 
@@ -161,8 +161,8 @@ Changed:
 
 Created:
 
-- `docs/architecture/PERX_ACTIVITY_BASED_ROLE_AND_COMMERCE_TAXONOMY.md`
-- `docs/architecture/PERX_UNIFIED_UI_UX_REFERENCE_ARCHITECTURE.md`
+- `docs/architecture/ptahx_activity_based_role_and_commerce_taxonomy.md`
+- `docs/architecture/ptahx_unified_ui_ux_reference_architecture.md`
 
 Scope:
 

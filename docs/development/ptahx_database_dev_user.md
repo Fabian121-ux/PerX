@@ -1,6 +1,6 @@
 # Database Development User
 
-When testing PerX in `database` mode (`PERX_DATA_MODE=database`), public "Test Account" buttons and "Demo Preview" pathways are strictly disabled. The system requires real authentication flow and database validation.
+When testing PtahX in `database` mode (`PERX_DATA_MODE=database`), public "Test Account" buttons and "Demo Preview" pathways are strictly disabled. The system requires real authentication flow and database validation.
 
 To test the application locally in database mode, you must seed a **development test user**.
 
@@ -11,7 +11,7 @@ Open your local `.env` file and define the development user credentials:
 ```env
 PERX_ALLOW_DEV_SEED=true
 PERX_DEPLOY_ENV=development
-DEV_TEST_USER_EMAIL="devtest@perx.local"
+DEV_TEST_USER_EMAIL="devtest@ptahx.local"
 DEV_TEST_USER_USERNAME="devtest"
 DEV_TEST_USER_PASSWORD="a-secure-local-password"
 ```
@@ -51,7 +51,7 @@ Add the following to your `.env`:
 ```env
 PERX_ALLOW_DEV_SEED=true
 PERX_DEPLOY_ENV=development
-DEV_ADMIN_EMAIL="admin@perx.local"
+DEV_ADMIN_EMAIL="admin@ptahx.local"
 DEV_ADMIN_USERNAME="admin"
 DEV_ADMIN_PASSWORD="a-secure-admin-password"
 ```

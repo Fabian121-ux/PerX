@@ -1,4 +1,4 @@
-# PerX Governance Principles
+# PtahX Governance Principles
 
 These governance principles translate our core values into operational standards. They are strict operational requirements that guide platform behavior, not marketing language.
 

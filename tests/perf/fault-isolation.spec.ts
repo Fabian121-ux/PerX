@@ -5,7 +5,7 @@ import crypto from "node:crypto";
  * Feature-local failure isolation, proven by real fault injection.
  *
  * Each case makes a specific server dependency actually throw inside a real
- * request (via the `x-perx-fault` header, which only works when fault
+ * request (via the `x-ptahx-fault` header, which only works when fault
  * injection is explicitly enabled on a non-production server) and then asserts
  * that the surrounding route survives.
  *
@@ -15,7 +15,7 @@ import crypto from "node:crypto";
 
 const BASE = process.env.PERF_FAULT_BASE_URL ?? "";
 const TEST_DB = process.env.TEST_DATABASE_URL!;
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 
 const describeOrSkip = BASE ? test.describe : test.describe.skip;
 
@@ -55,14 +55,14 @@ async function signIn(page: Page, email: string) {
 
 /** Applies the fault header to every request this page makes. */
 async function injectFault(page: Page, surface: string) {
-  await page.setExtraHTTPHeaders({ "x-perx-fault": surface });
+  await page.setExtraHTTPHeaders({ "x-ptahx-fault": surface });
 }
 
 describeOrSkip("feature fault isolation", () => {
   test("Home survives a notification badge failure", async ({ browser }) => {
     const page = await browser.newPage();
     try {
-      await signIn(page, "alice-test@perx.test");
+      await signIn(page, "alice-test@ptahx.test");
       await injectFault(page, "unread-counts");
       const response = await page.goto(`${BASE}/app`);
 
@@ -82,7 +82,7 @@ describeOrSkip("feature fault isolation", () => {
   }) => {
     const page = await browser.newPage();
     try {
-      await signIn(page, "alice-test@perx.test");
+      await signIn(page, "alice-test@ptahx.test");
       await injectFault(page, "profile-activity");
       const response = await page.goto(`${BASE}/app/profile`);
 
@@ -104,7 +104,7 @@ describeOrSkip("feature fault isolation", () => {
   }) => {
     const page = await browser.newPage();
     try {
-      await signIn(page, "alice-test@perx.test");
+      await signIn(page, "alice-test@ptahx.test");
       await injectFault(page, "profile-activity");
       await page.goto(`${BASE}/app/profile`);
       const localError = page.getByTestId("profile-activity-error");
@@ -126,7 +126,7 @@ describeOrSkip("feature fault isolation", () => {
   }) => {
     const page = await browser.newPage();
     try {
-      await signIn(page, "carol-test@perx.test");
+      await signIn(page, "carol-test@ptahx.test");
 
       // A. Query succeeds, no application: legitimate onboarding gate.
       const healthy = await page.goto(`${BASE}/app/trader`);
@@ -173,7 +173,7 @@ describeOrSkip("feature fault isolation", () => {
   }) => {
     const page = await browser.newPage();
     try {
-      await signIn(page, "carol-test@perx.test");
+      await signIn(page, "carol-test@ptahx.test");
       await injectFault(page, "trader-application");
       await page.goto(`${BASE}/app/trader`);
       await expect(page.getByTestId("trader-status-retry")).toBeVisible();
@@ -195,7 +195,7 @@ describeOrSkip("feature fault isolation", () => {
   test("messages remain usable when badge data fails", async ({ browser }) => {
     const page = await browser.newPage();
     try {
-      await signIn(page, "alice-test@perx.test");
+      await signIn(page, "alice-test@ptahx.test");
       await injectFault(page, "unread-counts");
       const response = await page.goto(`${BASE}/app/messages`);
 
@@ -210,7 +210,7 @@ describeOrSkip("feature fault isolation", () => {
   test("fault injection is inert without the header", async ({ browser }) => {
     const page = await browser.newPage();
     try {
-      await signIn(page, "alice-test@perx.test");
+      await signIn(page, "alice-test@ptahx.test");
       const response = await page.goto(`${BASE}/app/profile`);
       expect(response?.status()).toBe(200);
       await expect(page.getByTestId("profile-activity-error")).toHaveCount(0);

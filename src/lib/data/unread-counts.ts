@@ -118,7 +118,7 @@ async function loadUnreadCountsSafely(userId: string): Promise<UnreadCounts> {
     await maybeInjectFault("unread-counts");
     return await loadUnreadCounts(userId);
   } catch (error) {
-    console.error("[perx:unread-counts]", {
+    console.error("[ptahx:unread-counts]", {
       operation: "loadUnreadCounts",
       timestamp: new Date().toISOString(),
     });

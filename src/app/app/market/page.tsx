@@ -10,7 +10,7 @@ export default async function MarketPage() {
   return (
     <AppSection
       title="Global Market"
-      description="Browse all published opportunities across the PerX ecosystem."
+      description="Browse all published opportunities across the PtahX ecosystem."
       actions={<ButtonLink href="/app/opportunities/new">Post an opportunity</ButtonLink>}
     >
       {opportunities.length > 0 ? (

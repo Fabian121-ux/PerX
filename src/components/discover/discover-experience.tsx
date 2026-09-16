@@ -107,7 +107,7 @@ export function DiscoverExperience({
               Find trusted people, work and business opportunities.
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-[color:var(--px-text-muted)]">
-              Search across active perX listings with simple filters, clear
+              Search across active PtahX listings with simple filters, clear
               trust indicators and enquiry-first marketplace behavior during
               beta.
             </p>
@@ -544,7 +544,7 @@ function UnavailableDiscoveryState({ view }: { view: string }) {
         </h2>
         <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[color:var(--px-text-muted)]">
           {marketplace
-            ? "PerX commercial listings remain enquiry-based during beta. Checkout, payment, escrow and settlement are not active."
+            ? "PtahX commercial listings remain enquiry-based during beta. Checkout, payment, escrow and settlement are not active."
             : "Business discovery is being prepared as a dedicated beta surface. No fixture businesses were substituted for live data."}
         </p>
       </div>

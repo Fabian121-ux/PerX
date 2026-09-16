@@ -20,7 +20,7 @@ async function newPage(browser, { viewport = desktop, theme = "light", sidebarCo
   await context.addInitScript(({ selectedTheme, collapsed }) => {
     window.localStorage.setItem("theme", selectedTheme);
     if (typeof collapsed === "boolean") {
-      window.localStorage.setItem("perx-sidebar-collapsed", String(collapsed));
+      window.localStorage.setItem("ptahx-sidebar-collapsed", String(collapsed));
     }
     const applyTheme = () => document.documentElement?.classList.toggle("dark", selectedTheme === "dark");
     applyTheme();

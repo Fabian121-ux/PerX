@@ -1,10 +1,10 @@
-# perX Activity-Based Role and Commerce Taxonomy
+# PtahX Activity-Based Role and Commerce Taxonomy
 
 Date: 2026-07-17
 
 ## 1. Purpose
 
-This document records the required audit before changing the current role, onboarding, and commerce architecture. It aligns perX with the Founding Office direction:
+This document records the required audit before changing the current role, onboarding, and commerce architecture. It aligns PtahX with the Founding Office direction:
 
 `Identity -> Activity -> Ecosystem Role -> Connection -> Agreement -> Delivery or Exchange -> Trust Signal -> Reputation`
 

@@ -8,7 +8,7 @@
  * ids the user actively chose to hide.
  */
 
-const STORAGE_KEY = "perx:sponsored-dismissed";
+const STORAGE_KEY = "ptahx:sponsored-dismissed";
 
 function getStorage(): Storage | null {
   if (typeof window === "undefined") return null;

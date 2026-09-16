@@ -244,7 +244,7 @@ export function OpportunityComposer({
       const approved = await confirm({
         confirmLabel: "Leave and keep draft",
         description:
-          "Your local browser draft will remain available on this device. It has not been saved to your PerX account.",
+          "Your local browser draft will remain available on this device. It has not been saved to your PtahX account.",
         title: "Leave Create Post?",
       });
       if (!approved) return false;
@@ -256,7 +256,7 @@ export function OpportunityComposer({
     if (historyGuardActiveRef.current || allowNavigationRef.current) return;
     composerUrlRef.current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
     window.history.pushState(
-      { ...window.history.state, perxOpportunityComposerGuard: true },
+      { ...window.history.state, ptahxOpportunityComposerGuard: true },
       "",
       composerUrlRef.current,
     );
@@ -369,7 +369,7 @@ export function OpportunityComposer({
       }
 
       window.history.pushState(
-        { ...window.history.state, perxOpportunityComposerGuard: true },
+        { ...window.history.state, ptahxOpportunityComposerGuard: true },
         "",
         composerUrlRef.current,
       );
@@ -427,7 +427,7 @@ export function OpportunityComposer({
     const approved = await confirm({
       confirmLabel: "Clear local draft",
       description:
-        "This removes only this post type's browser recovery for your current PerX account. It does not delete any saved PerX post.",
+        "This removes only this post type's browser recovery for your current PtahX account. It does not delete any saved PtahX post.",
       title: "Clear this local draft?",
       tone: "danger",
     });
@@ -486,7 +486,7 @@ export function OpportunityComposer({
             Create Post
           </p>
           <p className="hidden text-xs text-[color:var(--px-text-muted)] sm:block">
-            Share a structured opportunity with the PerX network
+            Share a structured opportunity with the PtahX network
           </p>
         </div>
         <PendingSubmitButton
@@ -585,7 +585,7 @@ export function OpportunityComposer({
                   What would you like to share?
                 </h1>
                 <p className="mt-1 text-sm leading-6 text-[color:var(--px-text-muted)]">
-                  PerX posts are structured opportunities that can progress into
+                  PtahX posts are structured opportunities that can progress into
                   proposals, agreements, and trust-backed records.
                 </p>
               </div>
@@ -814,7 +814,7 @@ export function OpportunityComposer({
               </section>
 
               <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-3 text-xs leading-5 text-[color:var(--px-text-muted)]">
-                Browser recovery is local to this device and scoped to your PerX
+                Browser recovery is local to this device and scoped to your PtahX
                 account and post type. Do not enter private contact, payment,
                 identity-document, or verification information.
                 <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
@@ -854,7 +854,7 @@ export function OpportunityComposer({
               <li>
                 Only supported listing images can be uploaded after saving.
               </li>
-              <li>Published content remains subject to PerX moderation.</li>
+              <li>Published content remains subject to PtahX moderation.</li>
             </ul>
           </section>
           <section className="rounded-[22px] border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] p-5">

@@ -36,7 +36,7 @@ const counts: UnreadCounts = {
 const user = {
   accountClassification: "PUBLIC_BETA_USER",
   createdAt: new Date("2026-01-01"),
-  email: "viewer@perx.test",
+  email: "viewer@ptahx.test",
   emailVerifiedAt: null,
   id: "viewer-1",
   imageUrl: null,

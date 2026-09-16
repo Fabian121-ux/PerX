@@ -16,20 +16,42 @@ describe("sign-out client state cleanup", () => {
     markAuthenticatedSessionActive();
   });
 
-  it("removes the cached home feed so it cannot bleed into the next account", () => {
-    window.sessionStorage.setItem("perx:home-feed:v1", '{"items":[]}');
+  it("purges authenticated caches from both brand generations on shared devices", () => {
+    const keys = [
+      "perx:home-feed:v1",
+      "perx:messages:user-1:drafts",
+      "perx:opportunity-composer:v1:user-1:SERVICE",
+      "ptahx:home-feed:v1",
+      "ptahx:messages:user-1:drafts",
+      "ptahx:opportunity-composer:v1:user-1:SERVICE",
+    ];
+    for (const storage of [window.localStorage, window.sessionStorage]) {
+      for (const key of keys) storage.setItem(key, "private");
+      storage.setItem("theme", "dark");
+    }
 
     clearAuthenticatedClientState();
 
-    expect(window.sessionStorage.getItem("perx:home-feed:v1")).toBeNull();
+    for (const storage of [window.localStorage, window.sessionStorage]) {
+      for (const key of keys) expect(storage.getItem(key)).toBeNull();
+      expect(storage.getItem("theme")).toBe("dark");
+    }
+  });
+
+  it("removes the cached home feed so it cannot bleed into the next account", () => {
+    window.sessionStorage.setItem("ptahx:home-feed:v1", '{"items":[]}');
+
+    clearAuthenticatedClientState();
+
+    expect(window.sessionStorage.getItem("ptahx:home-feed:v1")).toBeNull();
   });
 
   it("removes per-user message drafts, filters, and scroll state", () => {
     for (const key of [
-      "perx:messages:user-1:drafts",
-      "perx:messages:user-1:filter",
-      "perx:messages:user-1:list-scroll",
-      "perx:messages:user-1:query",
+      "ptahx:messages:user-1:drafts",
+      "ptahx:messages:user-1:filter",
+      "ptahx:messages:user-1:list-scroll",
+      "ptahx:messages:user-1:query",
     ]) {
       window.sessionStorage.setItem(key, "private");
       window.localStorage.setItem(key, "private");
@@ -38,10 +60,10 @@ describe("sign-out client state cleanup", () => {
     clearAuthenticatedClientState();
 
     for (const key of [
-      "perx:messages:user-1:drafts",
-      "perx:messages:user-1:filter",
-      "perx:messages:user-1:list-scroll",
-      "perx:messages:user-1:query",
+      "ptahx:messages:user-1:drafts",
+      "ptahx:messages:user-1:filter",
+      "ptahx:messages:user-1:list-scroll",
+      "ptahx:messages:user-1:query",
     ]) {
       expect(window.sessionStorage.getItem(key)).toBeNull();
       expect(window.localStorage.getItem(key)).toBeNull();
@@ -50,7 +72,7 @@ describe("sign-out client state cleanup", () => {
 
   it("removes opportunity composer drafts", () => {
     window.localStorage.setItem(
-      "perx:opportunity-composer:v1:user-1:SERVICE",
+      "ptahx:opportunity-composer:v1:user-1:SERVICE",
       "draft body",
     );
 
@@ -58,14 +80,14 @@ describe("sign-out client state cleanup", () => {
 
     expect(
       window.localStorage.getItem(
-        "perx:opportunity-composer:v1:user-1:SERVICE",
+        "ptahx:opportunity-composer:v1:user-1:SERVICE",
       ),
     ).toBeNull();
   });
 
   it("clears every user's cached keys, not only the active one", () => {
-    window.sessionStorage.setItem("perx:messages:user-1:drafts", "a");
-    window.sessionStorage.setItem("perx:messages:user-2:drafts", "b");
+    window.sessionStorage.setItem("ptahx:messages:user-1:drafts", "a");
+    window.sessionStorage.setItem("ptahx:messages:user-2:drafts", "b");
 
     clearAuthenticatedClientState();
 
@@ -74,13 +96,13 @@ describe("sign-out client state cleanup", () => {
 
   it("leaves device preferences that are not account data alone", () => {
     window.localStorage.setItem("theme", "dark");
-    window.localStorage.setItem("perx:sponsored-dismissed", "[1]");
+    window.localStorage.setItem("ptahx:sponsored-dismissed", "[1]");
 
     clearAuthenticatedClientState();
 
     // Wiping the theme would be a surprising side effect of signing out.
     expect(window.localStorage.getItem("theme")).toBe("dark");
-    expect(window.localStorage.getItem("perx:sponsored-dismissed")).toBe("[1]");
+    expect(window.localStorage.getItem("ptahx:sponsored-dismissed")).toBe("[1]");
   });
 
   it("stops the feed cache being rewritten after sign-out purges it", () => {

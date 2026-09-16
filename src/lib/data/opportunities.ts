@@ -1,4 +1,4 @@
-import { getPerXDataProvider } from "./provider";
+import { getPtahXDataProvider } from "./provider";
 import { isProductionMockModeError } from "@/lib/env";
 import { logServerDataError } from "@/lib/logging/runtime";
 import type { CursorPageParams } from "@/lib/data/cursor";
@@ -21,7 +21,7 @@ export async function getOpportunityFeedResult(filters?: {
   type?: string;
 }) {
   try {
-    const provider = await getPerXDataProvider();
+    const provider = await getPtahXDataProvider();
     const opportunities =
       await provider.opportunities.getOpportunityFeed(filters);
     return { opportunities, unavailable: false };
@@ -46,7 +46,7 @@ export async function getPublicDiscoveryData(filters?: {
   type?: string;
 }) {
   try {
-    const provider = await getPerXDataProvider();
+    const provider = await getPtahXDataProvider();
     const [opportunities, categories] = await Promise.all([
       provider.opportunities.getOpportunityFeed(filters),
       provider.opportunities.getCategories(),
@@ -60,7 +60,7 @@ export async function getPublicDiscoveryData(filters?: {
 
 export async function getOpportunityBySlugResult(slug: string) {
   try {
-    const provider = await getPerXDataProvider();
+    const provider = await getPtahXDataProvider();
     const opportunity = await provider.opportunities.getOpportunityBySlug(slug);
     return { opportunity, unavailable: false };
   } catch (error) {
@@ -76,7 +76,7 @@ export async function getOpportunityBySlug(slug: string) {
 
 export async function getCategoriesResult() {
   try {
-    const provider = await getPerXDataProvider();
+    const provider = await getPtahXDataProvider();
     const categories = await provider.opportunities.getCategories();
     return { categories, unavailable: false };
   } catch (error) {
@@ -91,7 +91,7 @@ export async function getCategories() {
 }
 
 export async function getMyOpportunities(userId: string) {
-  const provider = await getPerXDataProvider();
+  const provider = await getPtahXDataProvider();
   return provider.opportunities.getMyOpportunities(userId);
 }
 
@@ -99,6 +99,6 @@ export async function getMyOpportunitiesPage(
   userId: string,
   params?: CursorPageParams,
 ) {
-  const provider = await getPerXDataProvider();
+  const provider = await getPtahXDataProvider();
   return provider.opportunities.getMyOpportunitiesPage(userId, params);
 }

@@ -54,7 +54,7 @@ bare `ArrowDown`. A sighted user cannot tell one new message from twelve.
 ## 4. Keyboard inset is computed but never applied to the composer
 
 `SoftwareKeyboardProvider` measures the keyboard and publishes
-`data-perx-keyboard="open"` plus `--px-keyboard-inset` on `<html>`. Only
+`data-ptahx-keyboard="open"` plus `--px-keyboard-inset` on `<html>`. Only
 `authenticated-mobile-nav.tsx` consumes it. No rule in `globals.css` targets
 `.message-workspace` or `.message-composer`.
 

@@ -16,7 +16,7 @@ import crypto from "node:crypto";
 
 const BASE = process.env.PERF_REALTIME_BASE_URL ?? "";
 const DB = process.env.PERF_REALTIME_DATABASE_URL ?? "";
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 const OBSERVE_MS = 45_000;
 
 const describeOrSkip = BASE && DB ? test.describe : test.describe.skip;
@@ -72,12 +72,12 @@ describeOrSkip("healthy Realtime", () => {
            JOIN "ConversationParticipant" p
              ON p."conversationId" = c.id
            JOIN "User" u ON u.id = p."userId"
-          WHERE u.email = 'alice-test@perx.test'
+          WHERE u.email = 'alice-test@ptahx.test'
           LIMIT 1`,
       );
       const conversationId = conv.rows[0]!.id;
 
-      await signIn(page, "alice-test@perx.test");
+      await signIn(page, "alice-test@ptahx.test");
       await page.goto(`${BASE}/app/messages/${conversationId}`);
       await page.getByLabel("Message history").waitFor({ timeout: 30_000 });
 

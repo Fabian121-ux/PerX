@@ -109,7 +109,7 @@ function RailCard({
       className="flex min-h-11 items-center gap-3 rounded-[var(--px-radius)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 transition hover:border-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
       href={href}
     >
-      <span className="perx-soft-tile grid h-10 w-10 shrink-0 place-items-center rounded-[var(--px-radius-sm)]">
+      <span className="ptahx-soft-tile grid h-10 w-10 shrink-0 place-items-center rounded-[var(--px-radius-sm)]">
         {icon}
       </span>
       <span className="min-w-0 flex-1">

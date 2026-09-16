@@ -73,7 +73,7 @@ export type FeatureDefinition = {
 
 export const featureRegistry = [
   {
-    description: "Your authenticated PerX overview and activity hub.",
+    description: "Your authenticated PtahX overview and activity hub.",
     exact: true,
     group: "main",
     href: getAppRoute("home"),
@@ -265,7 +265,7 @@ export const featureRegistry = [
     showInSidebar: true,
   },
   {
-    description: "Read official announcements and platform updates from PerX.",
+    description: "Read official announcements and platform updates from PtahX.",
     group: "support",
     href: getAppRoute("news"),
     icon: Newspaper,
@@ -315,7 +315,7 @@ export const featureRegistry = [
     showInSidebar: true,
   },
   {
-    description: "View and manage your PerX identity.",
+    description: "View and manage your PtahX identity.",
     group: "account",
     href: getAppRoute("profile"),
     icon: UserCircle,

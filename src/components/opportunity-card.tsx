@@ -65,8 +65,8 @@ export function OpportunityCard({ href, opportunity }: OpportunityCardProps) {
     opportunity.images?.find((image) => image.isCover) ?? opportunity.images?.[0];
   const imageSrc = opportunity.imageUrl ?? coverImage?.url ?? temporaryImage.src;
   const imageAlt = opportunity.imageAlt ?? temporaryImage.alt;
-  const ownerName = opportunity.owner?.name ?? "perX member";
-  const ownerInitials = (opportunity.owner?.name ?? "perX")
+  const ownerName = opportunity.owner?.name ?? "PtahX member";
+  const ownerInitials = (opportunity.owner?.name ?? "PtahX")
     .split(" ")
     .map((part) => part[0])
     .join("")

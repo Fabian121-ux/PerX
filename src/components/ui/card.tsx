@@ -11,7 +11,7 @@ export function Card({
   children: ReactNode;
   className?: string;
 }) {
-  return <Component className={cn("perx-card p-5", className)}>{children}</Component>;
+  return <Component className={cn("ptahx-card p-5", className)}>{children}</Component>;
 }
 
 export function EmptyState({ action, body, title }: { action?: ReactNode; body: string; title: string }) {

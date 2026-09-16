@@ -49,10 +49,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-perx-navy: var(--px-navy);
-  --color-perx-primary: var(--px-primary);
-  --color-perx-purple: var(--px-purple);
-  --color-perx-gold: var(--px-gold);
+  --color-ptahx-navy: var(--px-navy);
+  --color-ptahx-primary: var(--px-primary);
+  --color-ptahx-purple: var(--px-purple);
+  --color-ptahx-gold: var(--px-gold);
   --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
 
@@ -135,7 +135,7 @@ body {
   overflow-x: hidden;
 }
 
-.perx-skip-link {
+.ptahx-skip-link {
   position: fixed;
   left: 1rem;
   top: 1rem;
@@ -143,18 +143,18 @@ body {
   transform: translateY(-160%);
 }
 
-.perx-skip-link:focus {
+.ptahx-skip-link:focus {
   transform: translateY(0);
 }
 
-.perx-toast-viewport {
+.ptahx-toast-viewport {
   bottom: calc(
     var(--mobile-nav-height) + env(safe-area-inset-bottom) + 0.75rem
   );
 }
 
 @media (min-width: 64rem) {
-  .perx-toast-viewport {
+  .ptahx-toast-viewport {
     bottom: auto;
     top: 5rem;
   }
@@ -185,7 +185,7 @@ a {
     background-size: 24px 24px;
   }
 
-  .perx-shell {
+  .ptahx-shell {
     background:
       radial-gradient(
         circle at 15% 0%,
@@ -200,7 +200,7 @@ a {
       linear-gradient(180deg, #f8fbff 0%, var(--px-page) 100%);
   }
 
-  .perx-sidebar {
+  .ptahx-sidebar {
     background: linear-gradient(180deg, var(--px-sidebar) 0%, #031126 100%);
     --px-surface: rgba(255, 255, 255, 0.1);
     --px-surface-soft: rgba(255, 255, 255, 0.08);
@@ -224,23 +224,23 @@ a {
     --px-border: #e0e7f1;
   }
 
-  .perx-distraction-free .dashboard-topbar,
-  .perx-distraction-free .authenticated-mobile-nav,
-  .perx-distraction-free > .perx-sidebar,
-  .perx-distraction-free-active .dashboard-topbar,
-  .perx-distraction-free-active .authenticated-mobile-nav,
-  .perx-distraction-free-active .perx-shell > .perx-sidebar {
+  .ptahx-distraction-free .dashboard-topbar,
+  .ptahx-distraction-free .authenticated-mobile-nav,
+  .ptahx-distraction-free > .ptahx-sidebar,
+  .ptahx-distraction-free-active .dashboard-topbar,
+  .ptahx-distraction-free-active .authenticated-mobile-nav,
+  .ptahx-distraction-free-active .ptahx-shell > .ptahx-sidebar {
     display: none;
   }
 
-  .perx-distraction-free .dashboard-main,
-  .perx-distraction-free-active .dashboard-main {
+  .ptahx-distraction-free .dashboard-main,
+  .ptahx-distraction-free-active .dashboard-main {
     padding: 0;
     scroll-padding-bottom: 0;
   }
 
-  .perx-distraction-free .dashboard-content,
-  .perx-distraction-free-active .dashboard-content {
+  .ptahx-distraction-free .dashboard-content,
+  .ptahx-distraction-free-active .dashboard-content {
     max-width: none;
   }
 
@@ -278,34 +278,34 @@ a {
       padding-right: env(safe-area-inset-right);
     }
 
-    .perx-mobile-conversation-active .dashboard-topbar,
-    .perx-mobile-conversation-active .authenticated-mobile-nav,
-    .perx-distraction-free .dashboard-topbar,
-    .perx-distraction-free .authenticated-mobile-nav {
+    .ptahx-mobile-conversation-active .dashboard-topbar,
+    .ptahx-mobile-conversation-active .authenticated-mobile-nav,
+    .ptahx-distraction-free .dashboard-topbar,
+    .ptahx-distraction-free .authenticated-mobile-nav {
       display: none;
     }
 
-    .perx-mobile-conversation-active .dashboard-main {
+    .ptahx-mobile-conversation-active .dashboard-main {
       overflow: hidden;
       padding: 0;
       scroll-padding-bottom: 0;
     }
 
-    .perx-distraction-free .dashboard-main {
+    .ptahx-distraction-free .dashboard-main {
       padding: 0;
       scroll-padding-bottom: 0;
     }
 
-    .perx-distraction-free .dashboard-content {
+    .ptahx-distraction-free .dashboard-content {
       max-width: none;
     }
 
-    .perx-mobile-conversation-active .perx-toast-viewport,
-    .perx-distraction-free-active .perx-toast-viewport {
+    .ptahx-mobile-conversation-active .ptahx-toast-viewport,
+    .ptahx-distraction-free-active .ptahx-toast-viewport {
       bottom: calc(env(safe-area-inset-bottom) + 0.75rem);
     }
 
-    .perx-mobile-conversation-active .dashboard-content {
+    .ptahx-mobile-conversation-active .dashboard-content {
       height: 100%;
       max-width: none;
     }
@@ -327,33 +327,33 @@ a {
       padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
     }
 
-    :root[data-perx-keyboard="open"]
-      .perx-mobile-conversation-active
+    :root[data-ptahx-keyboard="open"]
+      .ptahx-mobile-conversation-active
       .dashboard-main {
       padding-bottom: 0;
       scroll-padding-bottom: 0;
     }
 
-    :root[data-perx-keyboard="open"]
+    :root[data-ptahx-keyboard="open"]
       .message-workspace[data-mobile-view="conversation"] {
       height: calc(100dvh - var(--px-keyboard-inset, 0px));
     }
 
-    :root[data-perx-keyboard="open"]
+    :root[data-ptahx-keyboard="open"]
       .message-workspace[data-mobile-view="conversation"]
       .message-composer {
       padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
     }
   }
 
-  .perx-card {
+  .ptahx-card {
     background: var(--px-surface);
     border: 1px solid var(--px-border);
     border-radius: var(--px-radius);
     box-shadow: var(--px-shadow);
   }
 
-  .perx-card-dark {
+  .ptahx-card-dark {
     background: linear-gradient(
       155deg,
       var(--px-surface-soft) 0%,
@@ -364,7 +364,7 @@ a {
     box-shadow: var(--px-shadow-strong);
   }
 
-  .perx-hero {
+  .ptahx-hero {
     background:
       radial-gradient(
         circle at 82% 16%,
@@ -380,12 +380,12 @@ a {
     color: #ffffff;
   }
 
-  .perx-gradient-panel {
+  .ptahx-gradient-panel {
     background: linear-gradient(135deg, #061936 0%, #173a78 100%);
     color: #ffffff;
   }
 
-  .perx-hero-card {
+  .ptahx-hero-card {
     background:
       radial-gradient(
         circle at 78% 18%,
@@ -401,7 +401,7 @@ a {
     color: #ffffff;
   }
 
-  .perx-opportunity-band {
+  .ptahx-opportunity-band {
     background:
       radial-gradient(
         circle at 22% 20%,
@@ -412,57 +412,57 @@ a {
     color: #ffffff;
   }
 
-  .perx-icon-tile {
+  .ptahx-icon-tile {
     background: var(--px-primary-soft);
     color: var(--px-primary);
     border-radius: 16px;
   }
 
-  .perx-soft-tile {
+  .ptahx-soft-tile {
     background: var(--px-surface-soft);
     color: var(--px-primary);
   }
 
-  .perx-gold-soft {
+  .ptahx-gold-soft {
     background: var(--px-gold-soft);
     color: var(--px-navy);
   }
 
-  .perx-btn-primary {
+  .ptahx-btn-primary {
     background: var(--px-primary);
     color: #ffffff;
     box-shadow: 0 10px 24px rgba(37, 99, 235, 0.2);
   }
 
-  .perx-btn-primary:hover {
+  .ptahx-btn-primary:hover {
     background: var(--px-primary-strong);
   }
 
-  .perx-btn-secondary {
+  .ptahx-btn-secondary {
     background: var(--px-surface-elevated);
     border: 1px solid var(--px-border);
     color: var(--px-text);
   }
 
-  .perx-btn-secondary:hover {
+  .ptahx-btn-secondary:hover {
     background: var(--px-hover);
   }
 
-  .perx-btn-ghost {
+  .ptahx-btn-ghost {
     color: var(--px-text-muted);
   }
 
-  .perx-btn-ghost:hover {
+  .ptahx-btn-ghost:hover {
     background: var(--px-hover);
   }
 
-  .perx-btn-warm {
+  .ptahx-btn-warm {
     background: var(--px-gold);
     color: #070707;
     box-shadow: 0 10px 24px rgba(212, 160, 23, 0.24);
   }
 
-  .perx-btn-warm:hover {
+  .ptahx-btn-warm:hover {
     background: var(--px-gold-bright);
   }
 
@@ -490,7 +490,7 @@ a {
       `resizes-content` platforms the layout viewport already excludes the
       keyboard, so the inset is 0 and no double padding is applied.
     */
-    :root[data-perx-keyboard="open"] .dashboard-main {
+    :root[data-ptahx-keyboard="open"] .dashboard-main {
       padding-bottom: calc(var(--px-keyboard-inset, 0px) + 1rem);
       scroll-padding-bottom: calc(var(--px-keyboard-inset, 0px) + 1rem);
     }
@@ -500,7 +500,7 @@ a {
     Toasts are anchored above the bottom navigation; when the nav is gone they
     must drop with it, and must never sit behind the keyboard.
   */
-  :root[data-perx-keyboard="open"] .perx-toast-viewport {
+  :root[data-ptahx-keyboard="open"] .ptahx-toast-viewport {
     bottom: calc(
       var(--px-keyboard-inset, 0px) + env(safe-area-inset-bottom) + 0.75rem
     );
@@ -553,7 +553,7 @@ a {
     background-color: var(--px-navy) !important;
   }
 
-  .dark .perx-shell {
+  .dark .ptahx-shell {
     background:
       radial-gradient(
         circle at top left,
@@ -568,7 +568,7 @@ a {
       linear-gradient(180deg, #0f1726 0%, var(--px-page) 100%);
   }
 
-  .dark .perx-sidebar {
+  .dark .ptahx-sidebar {
     background: linear-gradient(180deg, #071226 0%, #060d1a 100%);
   }
 
@@ -583,7 +583,7 @@ a {
     --px-border: #2a3a55;
   }
 
-  .dark .perx-card-dark {
+  .dark .ptahx-card-dark {
     background: linear-gradient(155deg, #1c2a40 0%, #111c2f 100%);
   }
 
@@ -632,10 +632,10 @@ input[type="password"]::-ms-clear {
 }
 
 .sponsored-enter {
-  animation: perx-sponsored-fade 240ms ease-out;
+  animation: ptahx-sponsored-fade 240ms ease-out;
 }
 
-@keyframes perx-sponsored-fade {
+@keyframes ptahx-sponsored-fade {
   from {
     opacity: 0;
     transform: translateY(6px);

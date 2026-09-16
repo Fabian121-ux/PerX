@@ -212,7 +212,7 @@ function formatMessageSnapshot(
               id: linkedDeal.id,
               settlementMode: linkedDeal.settlementMode,
               status: linkedDeal.status,
-              title: conversation.opportunity?.title ?? "PerX Deal",
+              title: conversation.opportunity?.title ?? "PtahX Deal",
               versionLabel: linkedDeal.proposalVersion
                 ? `v${linkedDeal.proposalVersion.versionNumber}`
                 : undefined,

@@ -147,7 +147,7 @@ export function toWorkspaceConversation(
           id: linkedDeal.id,
           settlementMode: linkedDeal.settlementMode,
           status: linkedDeal.status,
-          title: dbConversation.opportunity?.title ?? "PerX Deal",
+          title: dbConversation.opportunity?.title ?? "PtahX Deal",
           versionLabel: linkedDeal.proposalVersion
             ? `v${linkedDeal.proposalVersion.versionNumber}`
             : undefined,
@@ -241,7 +241,7 @@ export function toParticipantProfilePreview(profile?: {
   if (!profile) return undefined;
   return {
     biography: profile.biography?.trim() || "This member has not completed a biography.",
-    headline: profile.headline?.trim() || "PerX member",
+    headline: profile.headline?.trim() || "PtahX member",
     location: profile.showLocation === false ? null : profile.location,
     skills:
       profile.showSkills === false

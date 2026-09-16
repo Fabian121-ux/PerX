@@ -25,7 +25,7 @@ export default async function DealsPage({
 
   return (
     <AppSection
-      description="Track accepted proposals, milestones, deliveries, approvals, and simulated agreement states. No real funds are collected or held by perX during beta."
+      description="Track accepted proposals, milestones, deliveries, approvals, and simulated agreement states. No real funds are collected or held by PtahX during beta."
       title="Agreements"
     >
       {deals.length ? (

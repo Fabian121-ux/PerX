@@ -1,7 +1,7 @@
 # Deployment and Architecture 
 
 ## Overview
-This document outlines the deployment strategy for PerX on Vercel.
+This document outlines the deployment strategy for PtahX on Vercel.
 
 ## Vercel Deployment
 

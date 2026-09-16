@@ -26,7 +26,7 @@ export default async function WalletPage() {
       <div className="mb-8 rounded-2xl bg-[color:var(--px-primary-soft)] border border-[color:var(--px-primary)]/20 p-5">
         <h3 className="font-bold text-[color:var(--px-text)]">Beta Information</h3>
         <p className="mt-2 text-sm text-[color:var(--px-text-muted)]">
-          Financial custody and wallet functionality are inactive during this beta. No real funds are collected, held, transferred, or released by perX. Wallet records will stay unavailable until compliant payment infrastructure is connected.
+          Financial custody and wallet functionality are inactive during this beta. No real funds are collected, held, transferred, or released by PtahX. Wallet records will stay unavailable until compliant payment infrastructure is connected.
         </p>
       </div>
 

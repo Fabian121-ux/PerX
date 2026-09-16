@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getPerXDataProvider } from "@/lib/data/provider";
+import { getPtahXDataProvider } from "@/lib/data/provider";
 import {
   getCategories,
   getOpportunityBySlug,
@@ -10,7 +10,7 @@ import {
 import { getPublicProfileResult } from "@/lib/data/profiles";
 
 vi.mock("@/lib/data/provider", () => ({
-  getPerXDataProvider: vi.fn(),
+  getPtahXDataProvider: vi.fn(),
 }));
 
 const throwingProvider = {
@@ -30,7 +30,7 @@ const throwingProvider = {
 describe("public discovery outage handling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getPerXDataProvider).mockResolvedValue(throwingProvider as never);
+    vi.mocked(getPtahXDataProvider).mockResolvedValue(throwingProvider as never);
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
@@ -52,7 +52,7 @@ describe("public discovery outage handling", () => {
   });
 
   it("handles provider resolution failures before a query runs", async () => {
-    vi.mocked(getPerXDataProvider).mockRejectedValueOnce(
+    vi.mocked(getPtahXDataProvider).mockRejectedValueOnce(
       new Error("Missing required environment variable(s): PERX_DATA_MODE."),
     );
 
@@ -63,7 +63,7 @@ describe("public discovery outage handling", () => {
   });
 
   it("keeps public profile lookup controlled when provider resolution fails", async () => {
-    vi.mocked(getPerXDataProvider).mockRejectedValueOnce(
+    vi.mocked(getPtahXDataProvider).mockRejectedValueOnce(
       new Error("database unavailable"),
     );
 

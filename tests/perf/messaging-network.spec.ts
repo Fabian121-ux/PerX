@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 /**
  * Observes the real client request pattern on an open conversation.
  *
- * Purpose: prove whether the Batch 4 improvement still holds, i.e. that PerX
+ * Purpose: prove whether the Batch 4 improvement still holds, i.e. that PtahX
  * does NOT refetch a full conversation snapshot every 2 seconds. Records every
  * request the page issues over a fixed observation window, with payload sizes.
  *
@@ -14,7 +14,7 @@ import crypto from "node:crypto";
 
 const BASE = process.env.PERF_BASE_URL ?? "http://127.0.0.1:3200";
 const TEST_DB = process.env.TEST_DATABASE_URL!;
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 const CONVERSATION = "cb58b9e9e460dcbf7b5450cba";
 const OBSERVE_MS = 60_000;
 
@@ -61,7 +61,7 @@ test(`request pattern on an open conversation over ${OBSERVE_MS}ms`, async ({
   });
   const seen: { url: string; bytes: number; at: number }[] = [];
   try {
-    await signIn(page, "alice-test@perx.test");
+    await signIn(page, "alice-test@ptahx.test");
     await page.goto(`${BASE}/app/messages/${CONVERSATION}`);
     await page.getByLabel("Message history").waitFor({ timeout: 30_000 });
 

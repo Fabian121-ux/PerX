@@ -61,7 +61,7 @@ export default async function BlockedUsersPage() {
                     @{block.blockedUser.username}
                   </p>
                   <p className="truncate text-xs text-[color:var(--px-text-muted)]">
-                    {block.blockedUser.profile?.headline ?? "PerX member"}
+                    {block.blockedUser.profile?.headline ?? "PtahX member"}
                   </p>
                 </div>
               </div>

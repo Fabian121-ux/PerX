@@ -89,7 +89,7 @@ describe("opportunity composer", () => {
     });
     await waitFor(() =>
       expect(window.history.state).toEqual(
-        expect.objectContaining({ perxOpportunityComposerGuard: true }),
+        expect.objectContaining({ ptahxOpportunityComposerGuard: true }),
       ),
     );
 
@@ -114,7 +114,7 @@ describe("opportunity composer", () => {
     });
     await waitFor(() =>
       expect(window.history.state).toEqual(
-        expect.objectContaining({ perxOpportunityComposerGuard: true }),
+        expect.objectContaining({ ptahxOpportunityComposerGuard: true }),
       ),
     );
 
@@ -122,7 +122,7 @@ describe("opportunity composer", () => {
 
     await waitFor(() =>
       expect(window.history.state).not.toEqual(
-        expect.objectContaining({ perxOpportunityComposerGuard: true }),
+        expect.objectContaining({ ptahxOpportunityComposerGuard: true }),
       ),
     );
   });
@@ -221,7 +221,7 @@ describe("opportunity composer", () => {
 
   it("restores only the authenticated user and type draft after hydration", async () => {
     window.localStorage.setItem(
-      "perx:opportunity-composer:v1:user-1:SERVICE",
+      "ptahx:opportunity-composer:v1:user-1:SERVICE",
       JSON.stringify({
         fields: {
           budgetMax: "1200",
@@ -270,7 +270,7 @@ describe("opportunity composer", () => {
     });
     expect(
       window.localStorage.getItem(
-        "perx:opportunity-composer:v1:user-1:SERVICE",
+        "ptahx:opportunity-composer:v1:user-1:SERVICE",
       ),
     ).toContain("Service type draft");
 
@@ -286,7 +286,7 @@ describe("opportunity composer", () => {
     await waitFor(() =>
       expect(
         window.localStorage.getItem(
-          "perx:opportunity-composer:v1:user-1:PARTNERSHIP",
+          "ptahx:opportunity-composer:v1:user-1:PARTNERSHIP",
         ),
       ).toContain("Partnership type draft"),
     );

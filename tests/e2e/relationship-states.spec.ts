@@ -5,15 +5,15 @@ import { hasIsolatedTestDatabase } from "./utils/db-guard";
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
 const TEST_DB = process.env.TEST_DATABASE_URL ?? "";
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 
 const describeOrSkip = hasIsolatedTestDatabase()
   ? test.describe
   : test.describe.skip;
 
-const CAROL = "carol-test@perx.test";
-const BOB = "bob-test@perx.test";
-const ALICE = "alice-test@perx.test";
+const CAROL = "carol-test@ptahx.test";
+const BOB = "bob-test@ptahx.test";
+const ALICE = "alice-test@ptahx.test";
 
 describeOrSkip("Profile relationship states (isolated test DB)", () => {
   const createdSessionIds = new Set<string>();

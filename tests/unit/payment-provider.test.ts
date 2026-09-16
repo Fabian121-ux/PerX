@@ -27,7 +27,7 @@ describe("payment provider readiness", () => {
         dealId: "deal-1",
         idempotencyKey: "checkout:deal-1",
         payerEmail: "payer@example.test",
-        returnUrl: "https://perx.test/app/deals/deal-1",
+        returnUrl: "https://ptahx.test/app/deals/deal-1",
       }),
     ).rejects.toBeInstanceOf(PaymentProviderUnavailableError);
     await expect(

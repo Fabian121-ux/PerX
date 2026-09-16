@@ -26,7 +26,7 @@ export default async function EscrowPage() {
       <div className="mb-8 rounded-2xl bg-[color:var(--px-warning)]/10 border border-[color:var(--px-warning)]/20 p-5">
         <h3 className="font-bold text-[color:var(--px-warning)]">Beta Simulation Notice</h3>
         <p className="mt-2 text-sm text-[color:var(--px-text-muted)]">
-          Payment and escrow functionality is not active during this beta. No real funds are collected or held by perX. The records shown below reflect simulated deal states for workflow testing only.
+          Payment and escrow functionality is not active during this beta. No real funds are collected or held by PtahX. The records shown below reflect simulated deal states for workflow testing only.
         </p>
       </div>
 

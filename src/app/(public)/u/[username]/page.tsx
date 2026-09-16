@@ -90,7 +90,7 @@ export default async function PublicProfilePage({
       <main className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:px-8">
         <section className="min-w-0">
           <Card className="overflow-hidden p-0">
-            <div className="perx-hero-card h-28" />
+            <div className="ptahx-hero-card h-28" />
             <div className="px-5 pb-6 sm:px-6">
               <div className="-mt-12 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
@@ -360,7 +360,7 @@ export default async function PublicProfilePage({
                         {review.body}
                       </p>
                       <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-[color:var(--px-text-muted)]">
-                        <span>{review.author?.name ?? "PerX participant"}</span>
+                        <span>{review.author?.name ?? "PtahX participant"}</span>
                         {review.createdAt ? (
                           <>
                             <span aria-hidden>·</span>

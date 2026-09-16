@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { getPerXDataProvider } from "../../src/lib/data/provider";
+import { getPtahXDataProvider } from "../../src/lib/data/provider";
 import { setCachedDataModeForTest } from "../../src/lib/env";
 
 const originalEnv = { ...process.env };
@@ -19,7 +19,7 @@ describe("Data Provider Resolution", () => {
 
   it("resolves to mock provider when mode is mock", async () => {
     process.env.PERX_DATA_MODE = "mock";
-    const provider = await getPerXDataProvider();
+    const provider = await getPtahXDataProvider();
     // Since mock provider methods resolve statically, we can just test if the app provider returns mock data
     const metrics = await provider.app.getDashboardMetrics("test-user");
     expect(metrics).toBeDefined();
@@ -30,7 +30,7 @@ describe("Data Provider Resolution", () => {
     Reflect.set(process.env, "NODE_ENV", "production");
     process.env.PERX_DATA_MODE = "mock";
 
-    await expect(getPerXDataProvider({ mode: "mock" })).rejects.toThrow(
+    await expect(getPtahXDataProvider({ mode: "mock" })).rejects.toThrow(
       "Mock data providers are prohibited in production.",
     );
   });

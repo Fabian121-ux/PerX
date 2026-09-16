@@ -359,7 +359,7 @@ describe("home feed client", () => {
   });
 
   describe("session cache", () => {
-    const CACHE_KEY = "perx:home-feed:v1";
+    const CACHE_KEY = "ptahx:home-feed:v1";
 
     it("restores additional pages loaded before navigating away", async () => {
       window.sessionStorage.setItem(

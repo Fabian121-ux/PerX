@@ -32,7 +32,7 @@ const defaultDimensions: Record<BrandVariant, { width: number; height: number; c
 };
 
 export function BrandLogo({
-  ariaLabel = "perX",
+  ariaLabel = "PtahX",
   className,
   compact = false,
   dark,
@@ -72,7 +72,7 @@ export function BrandLogo({
 }
 
 export function BrandSymbol({
-  ariaLabel = "perX infinity symbol",
+  ariaLabel = "PtahX infinity symbol",
   className,
   decorative = false,
   dark,

@@ -45,8 +45,8 @@ export default async function UnifiedSearchPage({
   return (
     <AppSection
       actions={<CategoryAction category={filters.category} />}
-      description="Find discoverable members, real product and service listings, and available PerX destinations from one authenticated search."
-      title="Search PerX"
+      description="Find discoverable members, real product and service listings, and available PtahX destinations from one authenticated search."
+      title="Search PtahX"
     >
       <div className="grid gap-6">
         <Card className="grid gap-5">
@@ -267,7 +267,7 @@ function AllResults({
       </ResultSection>
 
       <ResultSection
-        description="Eligible published product listings from PerX members."
+        description="Eligible published product listings from PtahX members."
         title="Products"
         viewAllHref={buildSearchHref(filters, {
           category: "products",
@@ -288,7 +288,7 @@ function AllResults({
       </ResultSection>
 
       <ResultSection
-        description="Eligible published service listings from PerX members."
+        description="Eligible published service listings from PtahX members."
         title="Services"
         viewAllHref={buildSearchHref(filters, {
           category: "services",
@@ -309,7 +309,7 @@ function AllResults({
       </ResultSection>
 
       <ResultSection
-        description="Destinations from the central PerX feature registry."
+        description="Destinations from the central PtahX feature registry."
         title="Features"
         viewAllHref={buildSearchHref(filters, {
           category: "features",

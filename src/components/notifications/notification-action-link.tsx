@@ -44,7 +44,7 @@ export function NotificationActionLink({
     router.push(href);
     void markNotificationAsReadAction(notificationId)
       .then(() => {
-        window.dispatchEvent(new Event("perx-unread-refresh"));
+        window.dispatchEvent(new Event("ptahx-unread-refresh"));
       })
       .catch(() => {
         toast({

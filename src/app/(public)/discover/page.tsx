@@ -32,7 +32,7 @@ export default async function DiscoverPage({
     headline: person.headline,
     imageUrl: person.imageUrl,
     name: person.name,
-    role: person.roles[0] ?? "PerX member",
+    role: person.roles[0] ?? "PtahX member",
     trust: person.trust,
     username: person.username,
   }));

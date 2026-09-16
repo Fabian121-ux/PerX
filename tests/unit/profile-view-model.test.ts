@@ -32,7 +32,7 @@ describe("public profile view model", () => {
         websiteUrl: "https://example.com",
         workHistory: [
           {
-            company: "PerX",
+            company: "PtahX",
             id: "work-1",
             startedAt: new Date("2023-01-01T00:00:00.000Z"),
             title: "Engineer",

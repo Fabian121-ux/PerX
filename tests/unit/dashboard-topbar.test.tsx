@@ -48,7 +48,7 @@ describe("dashboard topbar destinations", () => {
         }}
         user={
           {
-            email: "member@perx.test",
+            email: "member@ptahx.test",
             id: "user-1",
             name: "Member",
             roles: [],

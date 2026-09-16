@@ -79,10 +79,10 @@ async function main() {
     await prisma.opportunityCategory.upsert({ create: { description: desc, name, slug }, update: {}, where: { slug } });
   }
 
-  const userA = await upsertUser("alice-test@perx.test", "alice_test", "Alice Test", "PUBLIC_BETA_USER", ["FREELANCER", "CLIENT"]);
-  const userB = await upsertUser("bob-test@perx.test", "bob_test", "Bob Test", "PUBLIC_BETA_USER", ["FOUNDER", "CLIENT"]);
-  const userC = await upsertUser("carol-test@perx.test", "carol_test", "Carol Test", "PUBLIC_BETA_USER", ["MEMBER"]);
-  const masterAdmin = await upsertUser("admin-test@perx.test", "admin_test", "Admin Test", "PUBLIC_BETA_USER", ["MASTER_ADMIN"]);
+  const userA = await upsertUser("alice-test@ptahx.test", "alice_test", "Alice Test", "PUBLIC_BETA_USER", ["FREELANCER", "CLIENT"]);
+  const userB = await upsertUser("bob-test@ptahx.test", "bob_test", "Bob Test", "PUBLIC_BETA_USER", ["FOUNDER", "CLIENT"]);
+  const userC = await upsertUser("carol-test@ptahx.test", "carol_test", "Carol Test", "PUBLIC_BETA_USER", ["MEMBER"]);
+  const masterAdmin = await upsertUser("admin-test@ptahx.test", "admin_test", "Admin Test", "PUBLIC_BETA_USER", ["MASTER_ADMIN"]);
 
   console.log("Users seeded:", { alice: userA.id, bob: userB.id, carol: userC.id, admin: masterAdmin.id });
 
@@ -298,7 +298,7 @@ async function main() {
   }
 
   console.log("Test data seeded successfully.");
-  console.log("Credentials: email=alice-test@perx.test, bob-test@perx.test, carol-test@perx.test, admin-test@perx.test");
+  console.log("Credentials: email=alice-test@ptahx.test, bob-test@ptahx.test, carol-test@ptahx.test, admin-test@ptahx.test");
   console.log("Password:", PASSWORD);
   console.log({ modCaseId: modCase.id, conversationId: conversation.id, dealId: deal.id });
 }

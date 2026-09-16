@@ -16,7 +16,7 @@ export default function AdminError({
     // Structured, safe: route/kind/digest only. Previously the whole error
     // object was logged here, which is both inconsistent with the app segment
     // and a way for connection strings and raw SQL to reach a browser console.
-    console.error("[perx:error-boundary]", {
+    console.error("[ptahx:error-boundary]", {
       digest: error.digest,
       kind: classifyError(error),
       route: "/admin",

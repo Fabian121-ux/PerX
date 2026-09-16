@@ -82,7 +82,7 @@ export const demoOpportunities: DemoOpportunity[] = [
 export const demoProfiles = [
   {
     biography:
-      "Building practical software products and using perX to structure high-trust delivery relationships.",
+      "Building practical software products and using PtahX to structure high-trust delivery relationships.",
     completedDeals: 8,
     headline: "Founder hiring trusted product teams",
     location: "Lagos, Nigeria",

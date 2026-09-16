@@ -140,7 +140,7 @@ export default async function EditOpportunityPage({
                   Property verification
                 </h2>
                 <p className="mt-1 text-sm text-[color:var(--px-text-muted)]">
-                  Property listings remain private until images, declaration, policy checks, and PerX review are complete.
+                  Property listings remain private until images, declaration, policy checks, and PtahX review are complete.
                 </p>
               </div>
               <div className="grid gap-4 md:grid-cols-3">
@@ -203,7 +203,7 @@ export default async function EditOpportunityPage({
                   type="checkbox"
                 />
                 <span>
-                  I confirm this listing is accurate and understand PerX review does not replace legal property due diligence.
+                  I confirm this listing is accurate and understand PtahX review does not replace legal property due diligence.
                 </span>
               </label>
             </div>

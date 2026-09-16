@@ -11,7 +11,7 @@ import { headers } from "next/headers";
  *
  *   1. `PERX_ENABLE_FAULT_INJECTION` is explicitly "true"
  *   2. `NODE_ENV` is not "production", OR `PERX_DEPLOY_ENV` is development/staging
- *   3. the request carries an `x-perx-fault` header naming the surface
+ *   3. the request carries an `x-ptahx-fault` header naming the surface
  *
  * A production deployment satisfies none of them, and the environment variable
  * is absent from every committed env file. The header is per-request, so an
@@ -39,7 +39,7 @@ export async function maybeInjectFault(surface: string) {
   if (!faultInjectionAllowed()) return;
   let requested: string | null = null;
   try {
-    requested = (await headers()).get("x-perx-fault");
+    requested = (await headers()).get("x-ptahx-fault");
   } catch {
     // Outside a request scope (e.g. build-time evaluation): never inject.
     return;

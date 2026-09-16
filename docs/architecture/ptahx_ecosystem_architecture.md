@@ -1,4 +1,4 @@
-# PerX Ecosystem Architecture
+# PtahX Ecosystem Architecture
 
 ## Architecture Alignment
 

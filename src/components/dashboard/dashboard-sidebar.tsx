@@ -179,12 +179,12 @@ export function DashboardSidebar({
   }
 
   return (
-    <aside className="perx-sidebar relative z-20 flex h-dvh w-[224px] shrink-0 flex-col border-r border-white/10 text-white shadow-[18px_0_44px_rgba(2,10,26,0.22)]">
+    <aside className="ptahx-sidebar relative z-20 flex h-dvh w-[224px] shrink-0 flex-col border-r border-white/10 text-white shadow-[18px_0_44px_rgba(2,10,26,0.22)]">
       <div className="flex h-[86px] shrink-0 items-center px-5">
         {featureDirectory ? (
           <FeatureDirectory userRoles={userRoles}>
             <button
-              aria-label="Open PerX feature directory"
+              aria-label="Open PtahX feature directory"
               className="flex min-h-11 min-w-11 items-center rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
               type="button"
             >
@@ -196,7 +196,7 @@ export function DashboardSidebar({
             </button>
           </FeatureDirectory>
         ) : (
-          <Link aria-label="PerX Home" href="/app">
+          <Link aria-label="PtahX Home" href="/app">
             <BrandLogo
               className="h-10 max-w-[152px] drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]"
               dark

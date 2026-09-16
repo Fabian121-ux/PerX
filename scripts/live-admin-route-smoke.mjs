@@ -3,10 +3,14 @@ import "dotenv/config";
 import crypto from "node:crypto";
 import { Client } from "pg";
 
-const baseUrl = process.env.PERX_LIVE_BASE_URL ?? "https://per-x-ashen.vercel.app";
+const baseUrl = process.env.PERX_LIVE_BASE_URL ?? process.env.PERX_BASE_URL;
 const adminId = process.env.PERX_LIVE_ADMIN_USER_ID ?? "cmrw0tjql000004lb02rg24d0";
-const cookieName = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const cookieName = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 const confirmation = process.env.PERX_LIVE_ADMIN_SMOKE_CONFIRM;
+
+if (!baseUrl) {
+  throw new Error("Set PERX_LIVE_BASE_URL or PERX_BASE_URL to the intended application URL.");
+}
 
 if (confirmation !== "CREATE_SHORT_LIVED_ADMIN_SMOKE_SESSION") {
   throw new Error(

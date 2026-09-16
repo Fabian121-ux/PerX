@@ -105,9 +105,9 @@ export function createTrustPresentation({
         {
           detail:
             verificationStatus === "VERIFIED"
-              ? "PerX verification has been approved."
+              ? "PtahX verification has been approved."
               : viewer === "owner"
-                ? "PerX verification has not been approved yet."
+                ? "PtahX verification has not been approved yet."
                 : "Additional verification is not publicly disclosed.",
           key: "verification",
           label: "Account verification",
@@ -178,7 +178,7 @@ function verificationPresentation(
 ): TrustPresentation["verification"] {
   if (status === "VERIFIED") {
     return {
-      detail: "PerX verification has been approved for this account.",
+      detail: "PtahX verification has been approved for this account.",
       label: "Verified",
       state: "verified",
     };
@@ -208,7 +208,7 @@ function guidanceForFactor(key: TrustPresentationFactor["key"]) {
   if (key === "profile") return "Complete the remaining public profile fields.";
   if (key === "email") return "Verify the account email when verification becomes available.";
   if (key === "verification") return "Follow the verification guidance shown on your account.";
-  if (key === "agreements") return "Complete eligible agreements through PerX records.";
+  if (key === "agreements") return "Complete eligible agreements through PtahX records.";
   return "Build record-backed feedback through eligible completed agreements.";
 }
 

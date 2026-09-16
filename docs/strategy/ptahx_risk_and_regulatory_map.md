@@ -1,4 +1,4 @@
-# PerX Risk and Regulatory Map
+# PtahX Risk and Regulatory Map
 
 This document classifies features by their inherent risk and regulatory dependency. The platform must implement appropriate controls and seek necessary compliance clearance before activating elevated or regulated features.
 

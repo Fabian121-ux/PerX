@@ -1,4 +1,4 @@
-# PerX Production Admin Bootstrap
+# PtahX Production Admin Bootstrap
 
 This document describes how to safely bootstrap the first real Production Administrator on the live platform.
 
@@ -11,7 +11,7 @@ To bootstrap the production environment, the following sequence is strictly enfo
 
 1. Fix Supabase connectivity (if applicable).
 2. Apply migration `0002_open_beta_registration`.
-3. Redeploy PerX.
+3. Redeploy PtahX.
 4. Confirm `/api/health` is healthy.
 5. Confirm open-beta registration is enabled.
 6. Register the intended owner/admin account normally through the UI (preferred route).

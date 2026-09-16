@@ -1,4 +1,4 @@
-# perX UI/UX Reference Analysis
+# PtahX UI/UX Reference Analysis
 
 The complete per-file map is maintained in `docs/UI_REFERENCE_PAGE_MAP.md`.
 
@@ -17,4 +17,4 @@ The complete per-file map is maintained in `docs/UI_REFERENCE_PAGE_MAP.md`.
 - The current black-and-gold theme was overridden because the approved references use navy, off-white, blue, purple and charcoal as the dominant system.
 - Gold remains for the official logo, trust/verification details and occasional badges.
 - UI screenshots are used only as visual references, not as content imagery.
-- perX ecosystem content remains broader than freelance or property-only workflows.
+- PtahX ecosystem content remains broader than freelance or property-only workflows.

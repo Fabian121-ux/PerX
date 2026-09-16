@@ -1,4 +1,4 @@
-# perX Image Asset Map
+# PtahX Image Asset Map
 
 ## Reference Images
 

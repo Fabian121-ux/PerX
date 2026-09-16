@@ -1,6 +1,6 @@
-# PerX Document Authority
+# PtahX Document Authority
 
-This document defines the hierarchy and authority of all strategic, policy, and technical documentation within the PerX ecosystem.
+This document defines the hierarchy and authority of all strategic, policy, and technical documentation within the PtahX ecosystem.
 
 ## Document Hierarchy
 

@@ -40,7 +40,7 @@ const validProduct = {
   intent: "publish",
   location: "Lagos",
   remote: false,
-  summary: "A real product available from a PerX member in Lagos.",
+  summary: "A real product available from a PtahX member in Lagos.",
   title: "Professional production equipment",
   type: "PRODUCT",
 };

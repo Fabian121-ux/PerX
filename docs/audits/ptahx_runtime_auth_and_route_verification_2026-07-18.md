@@ -1,4 +1,4 @@
-# PerX Runtime Auth and Route Verification
+# PtahX Runtime Auth and Route Verification
 Date: 2026-07-21
 
 ## Audit Report

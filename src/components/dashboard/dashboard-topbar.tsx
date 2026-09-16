@@ -87,7 +87,7 @@ export function DashboardTopbar({
           {featureDirectory ? (
             <FeatureDirectory userRoles={user.roles}>
               <button
-                aria-label="Open PerX feature directory"
+                aria-label="Open PtahX feature directory"
                 className="flex h-11 min-w-11 items-center rounded-xl pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
                 type="button"
               >
@@ -101,7 +101,7 @@ export function DashboardTopbar({
             </FeatureDirectory>
           ) : (
             <Link
-              aria-label="PerX Home"
+              aria-label="PtahX Home"
               className="flex h-11 min-w-11 items-center rounded-xl pr-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
               href={homeHref}
             >
@@ -126,7 +126,7 @@ export function DashboardTopbar({
             size={18}
           />
           <label className="sr-only" htmlFor="workspace-search">
-            Search PerX
+            Search PtahX
           </label>
           <input
             className="min-w-0 flex-1 bg-transparent text-sm text-[color:var(--px-text)] outline-none placeholder:text-[color:var(--px-text-muted)]"
@@ -140,7 +140,7 @@ export function DashboardTopbar({
       <div className="flex shrink-0 items-center">
         <div className="flex items-center gap-1.5 lg:hidden">
           <Link
-            aria-label="Search PerX"
+            aria-label="Search PtahX"
             className="grid h-11 w-11 place-items-center rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text)] transition hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={searchHref}
           >

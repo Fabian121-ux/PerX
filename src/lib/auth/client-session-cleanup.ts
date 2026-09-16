@@ -1,18 +1,22 @@
 /**
  * Clear browser state that belongs to the signed-in account.
  *
- * PreX caches authenticated UI in the browser (home feed snapshot, message
+ * PtahX caches authenticated UI in the browser (home feed snapshot, message
  * drafts, conversation filters, composer drafts). On a shared device those are
  * private to the account that produced them, so signing out must remove them -
  * otherwise the next person to sign in on the same browser can read the
  * previous user's cached feed and drafts.
  *
- * Deliberately scoped: only the `perx:` namespace used by authenticated
- * features is removed. Device preferences that are not account data - theme,
- * for example - are left alone, because wiping them would be a surprising
+ * Deliberately scoped: only authenticated feature namespaces, including
+ * pre-rebrand caches, are removed. Device preferences that are not account data
+ * - theme, for example - are left alone, because wiping them would be a surprising
  * side effect of signing out.
  */
 const AUTHENTICATED_KEY_PREFIXES = [
+  "ptahx:home-feed",
+  "ptahx:messages:",
+  "ptahx:opportunity-composer:",
+  // Remove private caches left by installations from before the rebrand.
   "perx:home-feed",
   "perx:messages:",
   "perx:opportunity-composer:",

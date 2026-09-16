@@ -18,7 +18,7 @@ export function FeatureDirectory({
   closeLabel = "Close feature directory",
   description = "Search all available app destinations from one place.",
   onOpenChange,
-  title = "Explore PerX",
+  title = "Explore PtahX",
   userRoles,
 }: {
   children: ReactElement;
@@ -122,7 +122,7 @@ export function FeatureDirectory({
                 size={19}
               />
               <label className="sr-only" htmlFor="feature-directory-search">
-                Search PerX features
+                Search PtahX features
               </label>
               <input
                 className="h-12 w-full rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] pl-11 pr-12 text-sm text-[color:var(--px-text)] outline-none placeholder:text-[color:var(--px-text-muted)] focus:border-[color:var(--px-primary)] focus:ring-2 focus:ring-[color:var(--px-focus)]/25"

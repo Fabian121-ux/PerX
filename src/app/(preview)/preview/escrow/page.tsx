@@ -4,7 +4,7 @@ export default function PreviewEscrowPage() {
   return (
     <WorkspaceEmptyPage
       description="Preview Mode: simulated deal-state records only. Payment and escrow functionality is not active."
-      emptyBody="No real funds are collected or held by perX. Simulated state records appear only inside demo deal workflows."
+      emptyBody="No real funds are collected or held by PtahX. Simulated state records appear only inside demo deal workflows."
       emptyTitle="No simulated state records"
       title="Simulated escrow"
     />

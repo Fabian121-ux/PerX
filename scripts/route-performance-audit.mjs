@@ -111,8 +111,8 @@ const ROUTES = [
   { label: "Search", path: "/app/search" },
 ];
 
-const session = await createSession("alice-test@perx.test");
-const cookie = `${process.env.SESSION_COOKIE_NAME ?? "perx_session"}=${session.token}`;
+const session = await createSession("alice-test@ptahx.test");
+const cookie = `${process.env.SESSION_COOKIE_NAME ?? "ptahx_session"}=${session.token}`;
 
 async function measure(route) {
   // Warm once so compilation/JIT cost is excluded from the sample.

@@ -18,11 +18,11 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "perX",
+    title: "PtahX",
   },
-  applicationName: "perX",
+  applicationName: "PtahX",
   description:
-    "Discover trusted people, businesses and opportunities through perX.",
+    "Discover trusted people, businesses and opportunities through PtahX.",
   icons: {
     apple: "/icons/apple-touch-icon.png",
     icon: [
@@ -40,14 +40,14 @@ export const metadata: Metadata = {
   ),
   openGraph: {
     description:
-      "Discover trusted people, businesses and opportunities through perX.",
-    siteName: "perX",
-    title: "perX",
+      "Discover trusted people, businesses and opportunities through PtahX.",
+    siteName: "PtahX",
+    title: "PtahX",
     type: "website",
   },
   title: {
-    default: "perX",
-    template: "%s | perX",
+    default: "PtahX",
+    template: "%s | PtahX",
   },
 };
 

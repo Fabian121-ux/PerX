@@ -8,7 +8,7 @@ import { hasIsolatedTestDatabase } from "./utils/db-guard";
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
 const TEST_DB = process.env.TEST_DATABASE_URL ?? "";
 
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 
 const isIsolatedDb = hasIsolatedTestDatabase();
 
@@ -103,7 +103,7 @@ describeOrSkip(
             AND seed_message.body = 'Hello from Alice!'
           ORDER BY c."createdAt", c.id
          LIMIT 1`,
-          ["alice-test@perx.test", "bob-test@perx.test"],
+          ["alice-test@ptahx.test", "bob-test@ptahx.test"],
         );
         if (!result.rows[0]?.id) throw new Error("Seed conversation not found");
         return result.rows[0].id;
@@ -128,17 +128,17 @@ describeOrSkip(
         const users = await pool.query<{ email: string; id: string }>(
           `SELECT id, email
            FROM "User"
-           WHERE email = 'alice-test@perx.test'
+           WHERE email = 'alice-test@ptahx.test'
               OR id = $1
-              OR ($1::text IS NULL AND email = 'bob-test@perx.test')`,
+              OR ($1::text IS NULL AND email = 'bob-test@ptahx.test')`,
           [otherUserId ?? null],
         );
         const aliceId = users.rows.find(
-          (row) => row.email === "alice-test@perx.test",
+          (row) => row.email === "alice-test@ptahx.test",
         )?.id;
         const participantId = otherUserId
           ? users.rows.find((row) => row.id === otherUserId)?.id
-          : users.rows.find((row) => row.email === "bob-test@perx.test")?.id;
+          : users.rows.find((row) => row.email === "bob-test@ptahx.test")?.id;
         if (!aliceId || !participantId)
           throw new Error("Test participants not found");
 
@@ -190,17 +190,17 @@ describeOrSkip(
         }>(
           `SELECT email, id, name
            FROM "User"
-           WHERE email = 'alice-test@perx.test'
+           WHERE email = 'alice-test@ptahx.test'
               OR id = $1
-              OR ($1::text IS NULL AND email = 'bob-test@perx.test')`,
+              OR ($1::text IS NULL AND email = 'bob-test@ptahx.test')`,
           [otherUserId ?? null],
         );
         const alice = users.rows.find(
-          (user) => user.email === "alice-test@perx.test",
+          (user) => user.email === "alice-test@ptahx.test",
         );
         const other = otherUserId
           ? users.rows.find((user) => user.id === otherUserId)
-          : users.rows.find((user) => user.email === "bob-test@perx.test");
+          : users.rows.find((user) => user.email === "bob-test@ptahx.test");
         if (!alice || !other)
           throw new Error("Message fixture users not found");
 
@@ -310,7 +310,7 @@ describeOrSkip(
              AND opportunity.slug = $3
              AND opportunity.status = 'PUBLISHED'
              AND opportunity."moderationStatus" = 'APPROVED'`,
-          ["alice-test@perx.test", "bob-test@perx.test", "bob-mech-keyboard"],
+          ["alice-test@ptahx.test", "bob-test@ptahx.test", "bob-mech-keyboard"],
         );
         const fixture = result.rows[0];
         if (!fixture) throw new Error("Deal-entry fixture context not found");
@@ -586,7 +586,7 @@ describeOrSkip(
              VALUES ($1,$2,'x',$3,$4,'PUBLIC_BETA_USER',NOW(),'VERIFIED',true,NOW(),NOW())`,
             [
               authorId,
-              `${authorId}@perx.test`,
+              `${authorId}@ptahx.test`,
               `Feed Author ${index}`,
               authorId,
             ],
@@ -644,7 +644,7 @@ describeOrSkip(
         await pool.query(
           `INSERT INTO "User" (id,email,"passwordHash",name,username,"accountClassification","emailVerifiedAt","verificationStatus","isActive","createdAt","updatedAt")
            VALUES ($1,$2,'x','Blocked Author',$3,'PUBLIC_BETA_USER',NOW(),'VERIFIED',true,NOW(),NOW())`,
-          [blockedAuthorId, `${blockedAuthorId}@perx.test`, blockedAuthorId],
+          [blockedAuthorId, `${blockedAuthorId}@ptahx.test`, blockedAuthorId],
         );
         await pool.query(
           `INSERT INTO "Profile" (id,"userId",headline,biography,location,"isDiscoverable","createdAt","updatedAt")
@@ -720,7 +720,7 @@ describeOrSkip(
     }
 
     function opportunityDraftKey(userId: string, type: "PRODUCT" | "SERVICE") {
-      return `perx:opportunity-composer:v1:${encodeURIComponent(userId)}:${type}`;
+      return `ptahx:opportunity-composer:v1:${encodeURIComponent(userId)}:${type}`;
     }
 
     function browserDraftFields(type: "PRODUCT" | "SERVICE", title: string) {
@@ -801,7 +801,7 @@ describeOrSkip(
              AND message.body = 'Hello from Alice!'
            ORDER BY conversation."createdAt", conversation.id
            LIMIT 1`,
-          ["alice-test@perx.test"],
+          ["alice-test@ptahx.test"],
         );
         const row = context.rows[0];
         if (!row) throw new Error("Admin browser fixture context not found");
@@ -823,7 +823,7 @@ describeOrSkip(
              )`,
             [
               id,
-              `admin-fixture-${suffix}-${prefix}@perx.test`,
+              `admin-fixture-${suffix}-${prefix}@ptahx.test`,
               passwordHash,
               restricted
                 ? restrictedName
@@ -920,13 +920,13 @@ describeOrSkip(
       try {
         const users = await pool.query<{ email: string; id: string }>(
           `SELECT id, email FROM "User"
-           WHERE email IN ('alice-test@perx.test', 'bob-test@perx.test')`,
+           WHERE email IN ('alice-test@ptahx.test', 'bob-test@ptahx.test')`,
         );
         const aliceId = users.rows.find(
-          (row) => row.email === "alice-test@perx.test",
+          (row) => row.email === "alice-test@ptahx.test",
         )?.id;
         const bobId = users.rows.find(
-          (row) => row.email === "bob-test@perx.test",
+          (row) => row.email === "bob-test@ptahx.test",
         )?.id;
         if (!aliceId || !bobId) throw new Error("Admin deal users not found");
 
@@ -1038,7 +1038,7 @@ describeOrSkip(
       try {
         const user = await pool.query<{ id: string }>(
           `SELECT id FROM "User" WHERE email = $1`,
-          ["alice-test@perx.test"],
+          ["alice-test@ptahx.test"],
         );
         const userId = user.rows[0]?.id as string | undefined;
         if (!userId) throw new Error("Notification fixture user not found");
@@ -1120,7 +1120,7 @@ describeOrSkip(
            ) VALUES ($1, $2, 'x', $3, $4, 'PUBLIC_BETA_USER', NOW(), 'VERIFIED', TRUE, NOW(), NOW())`,
           [
             userId,
-            `${fixturePrefix}@perx.test`,
+            `${fixturePrefix}@ptahx.test`,
             `Profile Fixture ${runId.slice(0, 8)}`,
             username,
           ],
@@ -1218,7 +1218,7 @@ describeOrSkip(
       try {
         const actor = await pool.query(
           `SELECT id FROM "User" WHERE email = $1`,
-          ["alice-test@perx.test"],
+          ["alice-test@ptahx.test"],
         );
         await pool.query(
           `INSERT INTO "ConversationEvent" (
@@ -1252,7 +1252,7 @@ describeOrSkip(
 
     test("Alice authenticates and sees Home feed", async ({ browser }) => {
       const page = await browser.newPage();
-      await createSession(page, "alice-test@perx.test");
+      await createSession(page, "alice-test@ptahx.test");
       await page.goto(`${BASE}/app`);
       await expect(page).not.toHaveURL(/.*sign-in/);
       const bodyText = await page.innerText("body");
@@ -1264,13 +1264,13 @@ describeOrSkip(
     test("Home feed is post-first, paginates, and hides ineligible content", async ({
       browser,
     }) => {
-      const fixture = await createHomeFeedFixture("alice-test@perx.test");
+      const fixture = await createHomeFeedFixture("alice-test@ptahx.test");
       const page = await browser.newPage({
         viewport: { width: 1280, height: 900 },
       });
 
       try {
-        await createSession(page, "alice-test@perx.test");
+        await createSession(page, "alice-test@ptahx.test");
         await page.goto(`${BASE}/app`);
         await page.waitForLoadState("networkidle");
 
@@ -1328,13 +1328,13 @@ describeOrSkip(
     });
 
     test("Home feed survives navigation away and back", async ({ browser }) => {
-      const fixture = await createHomeFeedFixture("alice-test@perx.test");
+      const fixture = await createHomeFeedFixture("alice-test@ptahx.test");
       const page = await browser.newPage({
         viewport: { width: 1280, height: 900 },
       });
 
       try {
-        await createSession(page, "alice-test@perx.test");
+        await createSession(page, "alice-test@ptahx.test");
         await page.goto(`${BASE}/app`);
         await page.waitForLoadState("networkidle");
 
@@ -1369,13 +1369,13 @@ describeOrSkip(
     test("Home feed is usable at 320px without horizontal overflow", async ({
       browser,
     }) => {
-      const fixture = await createHomeFeedFixture("alice-test@perx.test");
+      const fixture = await createHomeFeedFixture("alice-test@ptahx.test");
       const page = await browser.newPage({
         viewport: { width: 320, height: 568 },
       });
 
       try {
-        await createSession(page, "alice-test@perx.test");
+        await createSession(page, "alice-test@ptahx.test");
         await page.goto(`${BASE}/app`);
         await page.waitForLoadState("networkidle");
 
@@ -1418,7 +1418,7 @@ describeOrSkip(
       const page = await browser.newPage({
         viewport: { width: 320, height: 568 },
       });
-      await createSession(page, "alice-test@perx.test");
+      await createSession(page, "alice-test@ptahx.test");
       await page.goto(`${BASE}/app`);
       await page.waitForLoadState("networkidle");
 
@@ -1466,7 +1466,7 @@ describeOrSkip(
       const page = await browser.newPage({
         viewport: { width: 390, height: 844 },
       });
-      await createSession(page, "carol-test@perx.test");
+      await createSession(page, "carol-test@ptahx.test");
       await page.goto(`${BASE}/app`);
 
       const bottomNav = page.getByRole("navigation", {
@@ -1483,11 +1483,11 @@ describeOrSkip(
         bottomNav.getByRole("link", { name: "Create", exact: true }),
       ).toHaveCount(1);
       await page
-        .getByRole("button", { name: "Open PerX feature directory" })
+        .getByRole("button", { name: "Open PtahX feature directory" })
         .click();
       await expect(
         page
-          .getByRole("dialog", { name: "Explore PerX" })
+          .getByRole("dialog", { name: "Explore PtahX" })
           .getByText("Create Post", { exact: true }),
       ).toHaveCount(1);
 
@@ -1507,7 +1507,7 @@ describeOrSkip(
       const page = await browser.newPage({
         viewport: { width: 390, height: 844 },
       });
-      await createSession(page, "alice-test@perx.test");
+      await createSession(page, "alice-test@ptahx.test");
       await page.goto(
         `${BASE}/app/opportunities/new?type=SERVICE&category=services`,
       );
@@ -1562,7 +1562,7 @@ describeOrSkip(
       const page = await browser.newPage({
         viewport: { width: 375, height: 812 },
       });
-      await createSession(page, "alice-test@perx.test");
+      await createSession(page, "alice-test@ptahx.test");
       try {
         await page.goto(
           `${BASE}/app/opportunities/new?type=SERVICE&category=services`,
@@ -1628,7 +1628,7 @@ describeOrSkip(
       const page = await browser.newPage({
         viewport: { width: 390, height: 844 },
       });
-      const aliceId = await createSession(page, "alice-test@perx.test");
+      const aliceId = await createSession(page, "alice-test@ptahx.test");
       const serviceKey = opportunityDraftKey(aliceId, "SERVICE");
       const productKey = opportunityDraftKey(aliceId, "PRODUCT");
       const serviceTitle = `Restored service ${crypto.randomUUID()}`;
@@ -1742,7 +1742,7 @@ describeOrSkip(
           { key: serviceKey, value: serviceDraft },
         );
         await page.context().clearCookies();
-        await createSession(page, "bob-test@perx.test");
+        await createSession(page, "bob-test@ptahx.test");
         await page.goto(
           `${BASE}/app/opportunities/new?type=SERVICE&category=services`,
         );
@@ -1758,7 +1758,7 @@ describeOrSkip(
       const page = await browser.newPage({
         viewport: { width: 390, height: 844 },
       });
-      const userId = await createSession(page, "alice-test@perx.test");
+      const userId = await createSession(page, "alice-test@ptahx.test");
       const storageKey = opportunityDraftKey(userId, "SERVICE");
       try {
         await page.goto(
@@ -1829,7 +1829,7 @@ describeOrSkip(
       const title = `Scoped browser draft ${crypto.randomUUID()}`;
       const page = await browser.newPage();
       try {
-        const userId = await createSession(page, "alice-test@perx.test");
+        const userId = await createSession(page, "alice-test@ptahx.test");
         const storageKey = opportunityDraftKey(userId, "SERVICE");
         const unrelatedKey = opportunityDraftKey(userId, "PRODUCT");
         await page.goto(
@@ -1922,13 +1922,13 @@ describeOrSkip(
       const page = await browser.newPage({
         viewport: { width: 390, height: 844 },
       });
-      await createSession(page, "alice-test@perx.test");
+      await createSession(page, "alice-test@ptahx.test");
       await page.goto(`${BASE}/app`);
       await page
-        .getByRole("button", { name: "Open PerX feature directory" })
+        .getByRole("button", { name: "Open PtahX feature directory" })
         .click();
 
-      const search = page.getByLabel("Search PerX features");
+      const search = page.getByLabel("Search PtahX features");
       const close = page.getByRole("button", {
         name: "Close feature directory",
       });
@@ -1944,7 +1944,7 @@ describeOrSkip(
       const page = await browser.newPage({
         viewport: { width: 320, height: 568 },
       });
-      await createSession(page, "alice-test@perx.test");
+      await createSession(page, "alice-test@ptahx.test");
       await page.goto(`${BASE}/app/profile`);
       await page.waitForLoadState("networkidle");
 
@@ -2007,7 +2007,7 @@ describeOrSkip(
       const page = await browser.newPage({
         viewport: { width: 390, height: 844 },
       });
-      await createSession(page, "alice-test@perx.test");
+      await createSession(page, "alice-test@ptahx.test");
 
       await page.goto(`${BASE}/u/bob_test`);
       await expect(page.getByText("Numeric score not published")).toBeVisible();
@@ -2036,7 +2036,7 @@ describeOrSkip(
       const { titlePrefix } = notificationPrefix;
       const page = await browser.newPage();
       try {
-        await createSession(page, "alice-test@perx.test");
+        await createSession(page, "alice-test@ptahx.test");
         await page.goto(`${BASE}/app/notifications?type=messages`);
 
         // Boundaries are derived from the shared page-size constant so a
@@ -2088,7 +2088,7 @@ describeOrSkip(
 
     test("search page loads and shows results", async ({ browser }) => {
       const page = await browser.newPage();
-      await createSession(page, "alice-test@perx.test");
+      await createSession(page, "alice-test@ptahx.test");
       await page.goto(`${BASE}/app/search`);
       await page.waitForLoadState("networkidle");
 
@@ -2100,7 +2100,7 @@ describeOrSkip(
 
     test("connections page loads with tabs", async ({ browser }) => {
       const page = await browser.newPage();
-      await createSession(page, "alice-test@perx.test");
+      await createSession(page, "alice-test@ptahx.test");
       await page.goto(`${BASE}/app/connections`);
       await page.waitForLoadState("networkidle");
 
@@ -2118,7 +2118,7 @@ describeOrSkip(
       });
       const pageErrors: string[] = [];
       page.on("pageerror", (error) => pageErrors.push(error.message));
-      await createSession(page, "alice-test@perx.test");
+      await createSession(page, "alice-test@ptahx.test");
       await page.goto(`${BASE}/app/messages`);
       await expect(page.getByLabel("Message workspace")).toBeVisible();
 
@@ -2181,7 +2181,7 @@ describeOrSkip(
           `SELECT "updatedAt" FROM "Conversation" WHERE id = $1`,
           [fixture.conversationId],
         );
-        await createSession(page, "alice-test@perx.test");
+        await createSession(page, "alice-test@ptahx.test");
         await page.goto(`${BASE}/app/messages/${fixture.conversationId}`);
 
         await expect(page.getByLabel("Message workspace")).toBeVisible();
@@ -2371,7 +2371,7 @@ describeOrSkip(
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: TEST_DB, ssl: false });
       try {
-        await createSession(page, "alice-test@perx.test");
+        await createSession(page, "alice-test@ptahx.test");
         await page.goto(`${BASE}/app/messages/${fixture.conversationId}`);
         const composer = page.locator("#message-draft");
 
@@ -2471,7 +2471,7 @@ describeOrSkip(
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: TEST_DB, ssl: false });
       try {
-        await createSession(unauthorizedPage, "carol-test@perx.test");
+        await createSession(unauthorizedPage, "carol-test@ptahx.test");
         const unauthorizedResponse = await unauthorizedPage.goto(
           `${BASE}/app/messages/${unauthorizedFixture.conversationId}`,
         );
@@ -2489,7 +2489,7 @@ describeOrSkip(
           blockedFixture.bobId,
           blockedFixture.aliceId,
         );
-        await createSession(blockedPage, "alice-test@perx.test");
+        await createSession(blockedPage, "alice-test@ptahx.test");
         const blockedResponse = await blockedPage.goto(
           `${BASE}/app/messages/${blockedFixture.conversationId}`,
         );
@@ -2535,7 +2535,7 @@ describeOrSkip(
       const page = await browser.newPage();
       const pageErrors: string[] = [];
       page.on("pageerror", (error) => pageErrors.push(error.message));
-      await createSession(page, "alice-test@perx.test");
+      await createSession(page, "alice-test@ptahx.test");
 
       try {
         const response = await page.goto(
@@ -2582,7 +2582,7 @@ describeOrSkip(
         messageFixture = await createMessageInteractionFixture(
           profileFixture.userId,
         );
-        await createSession(page, "alice-test@perx.test");
+        await createSession(page, "alice-test@ptahx.test");
         await page.goto(
           `${BASE}/app/messages/${messageFixture.conversationId}`,
         );
@@ -2700,7 +2700,7 @@ describeOrSkip(
       });
       const page = await context.newPage();
       try {
-        await createSession(page, "alice-test@perx.test");
+        await createSession(page, "alice-test@ptahx.test");
         await page.goto(`${BASE}/app/messages/${fixture.conversationId}`);
         const incoming = page.locator(
           `[data-message-id="${fixture.incomingId}"]`,
@@ -2799,7 +2799,7 @@ describeOrSkip(
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: TEST_DB, ssl: false });
       try {
-        await createSession(page, "alice-test@perx.test");
+        await createSession(page, "alice-test@ptahx.test");
         await page.goto(`${BASE}/app/messages/${fixture.conversationId}`);
         const incoming = page.locator(
           `[data-message-id="${fixture.incomingId}"]`,
@@ -2900,7 +2900,7 @@ describeOrSkip(
       const pageErrors: string[] = [];
       page.on("pageerror", (error) => pageErrors.push(error.message));
       try {
-        await createSession(page, "alice-test@perx.test");
+        await createSession(page, "alice-test@ptahx.test");
         await page.goto(`${BASE}/app/messages`);
 
         const primaryNavigation = page.getByRole("navigation", {
@@ -3106,7 +3106,7 @@ describeOrSkip(
       const alicePage = await browser.newPage({
         viewport: { width: 390, height: 844 },
       });
-      await createSession(alicePage, "alice-test@perx.test");
+      await createSession(alicePage, "alice-test@ptahx.test");
 
       try {
         await alicePage.goto(`${BASE}/app/messages/${conversationId}`);
@@ -3192,7 +3192,7 @@ describeOrSkip(
         ]) {
           const page = await browser.newPage({ viewport });
           try {
-            await createSession(page, "alice-test@perx.test");
+            await createSession(page, "alice-test@ptahx.test");
             const response = await page.goto(
               `${BASE}/app/messages/${conversationId}`,
             );
@@ -3228,7 +3228,7 @@ describeOrSkip(
             const defaultComposerHeight = await composer.evaluate(
               (element) => element.getBoundingClientRect().height,
             );
-            const longUrl = `https://perx.test/${"unbroken".repeat(40)}`;
+            const longUrl = `https://ptahx.test/${"unbroken".repeat(40)}`;
             await composer.fill(
               `A long message that must wrap within the mobile composer ${longUrl}`,
             );
@@ -3372,7 +3372,7 @@ describeOrSkip(
         const page = await browser.newPage({
           viewport: { width, height: 900 },
         });
-        await createSession(page, "alice-test@perx.test");
+        await createSession(page, "alice-test@ptahx.test");
         await page.goto(`${BASE}/app/messages/${conversationId}`);
 
         await expect(
@@ -3401,7 +3401,7 @@ describeOrSkip(
       test.setTimeout(180_000);
       const scope = `Acceptance flow ${testInfo.project.name} ${crypto.randomUUID()} with locked scope, delivery criteria, and a numbered revision history.`;
       const alicePage = await browser.newPage();
-      await createSession(alicePage, "alice-test@perx.test");
+      await createSession(alicePage, "alice-test@ptahx.test");
       await alicePage.goto(`${BASE}/opportunities/bob-mech-keyboard`);
       await alicePage.getByLabel("Proposed amount").fill("250000.00");
       await alicePage.getByLabel("Delivery period").fill("10");
@@ -3485,7 +3485,7 @@ describeOrSkip(
       await alicePage.close();
 
       const bobPage = await browser.newPage();
-      await createSession(bobPage, "bob-test@perx.test");
+      await createSession(bobPage, "bob-test@ptahx.test");
       await bobPage.goto(`${BASE}/app/proposals/received`);
       await bobPage.waitForLoadState("networkidle");
       await expect(bobPage.getByText(scope, { exact: true })).toHaveCount(1);
@@ -3543,7 +3543,7 @@ describeOrSkip(
       ).toBeVisible();
 
       const aliceDeliveryPage = await browser.newPage();
-      await createSession(aliceDeliveryPage, "alice-test@perx.test");
+      await createSession(aliceDeliveryPage, "alice-test@ptahx.test");
       await aliceDeliveryPage.goto(`${dealUrl}/deliveries`);
       await aliceDeliveryPage.waitForLoadState("networkidle");
       await aliceDeliveryPage.getByLabel("Title").fill("Acceptance delivery");
@@ -3619,7 +3619,7 @@ describeOrSkip(
 
     test("news page loads for authenticated user", async ({ browser }) => {
       const page = await browser.newPage();
-      await createSession(page, "alice-test@perx.test");
+      await createSession(page, "alice-test@ptahx.test");
       await page.goto(`${BASE}/app/news`);
       await page.waitForLoadState("networkidle");
 
@@ -3633,7 +3633,7 @@ describeOrSkip(
       browser,
     }) => {
       const page = await browser.newPage();
-      await createSession(page, "bob-test@perx.test");
+      await createSession(page, "bob-test@ptahx.test");
       await page.goto(`${BASE}/app/services`);
       await page.waitForLoadState("networkidle");
 
@@ -3644,7 +3644,7 @@ describeOrSkip(
 
     test("carol cannot access admin moderation route", async ({ browser }) => {
       const page = await browser.newPage();
-      await createSession(page, "carol-test@perx.test");
+      await createSession(page, "carol-test@ptahx.test");
       const response = await page.goto(`${BASE}/admin`);
       expect(response?.status()).toBe(404);
       await page.close();
@@ -3656,7 +3656,7 @@ describeOrSkip(
       const fixture = await createAdminUsersBrowserFixture();
       const dealFixture = await createAdminDealFixture();
       const page = await browser.newPage();
-      await createSession(page, "admin-test@perx.test");
+      await createSession(page, "admin-test@ptahx.test");
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: TEST_DB, ssl: false });
 
@@ -3720,7 +3720,7 @@ describeOrSkip(
           .getByRole("heading", { level: 2, name: "Admin Test" })
           .locator("xpath=ancestor::article[1]");
         await expect(adminUser).toContainText(
-          "@admin_test · admin-test@perx.test",
+          "@admin_test · admin-test@ptahx.test",
         );
         await expect(
           adminUser.getByText("active", { exact: true }),
@@ -3795,7 +3795,7 @@ describeOrSkip(
     }) => {
       const page = await browser.newPage();
       try {
-        await createSession(page, "carol-test@perx.test");
+        await createSession(page, "carol-test@ptahx.test");
         for (const path of ["/admin/users", "/admin/deals"]) {
           const response = await page.goto(`${BASE}${path}`);
           expect(response?.status()).toBe(404);
@@ -3812,7 +3812,7 @@ describeOrSkip(
       browser,
     }) => {
       const page = await browser.newPage();
-      await createSession(page, "admin-test@perx.test");
+      await createSession(page, "admin-test@ptahx.test");
       const response = await page.goto(`${BASE}/admin/messages`);
       expect(response?.status()).toBe(200);
 
@@ -3828,7 +3828,7 @@ describeOrSkip(
       browser,
     }) => {
       const page = await browser.newPage();
-      await createSession(page, "admin-test@perx.test");
+      await createSession(page, "admin-test@ptahx.test");
       const response = await page.goto(`${BASE}/admin/reports`);
       expect(response?.status()).toBe(200);
 
@@ -3855,7 +3855,7 @@ describeOrSkip(
       }
 
       const page = await browser.newPage();
-      await createSession(page, "admin-test@perx.test");
+      await createSession(page, "admin-test@ptahx.test");
       const response = await page.goto(
         `${BASE}/admin/moderation/cases/${caseId}`,
       );

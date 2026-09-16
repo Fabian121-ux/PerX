@@ -1,10 +1,10 @@
-# perX MVP Architecture
+# PtahX MVP Architecture
 
 This file documents the official product architecture.
 
 ## Product Backbone
 
-perX is a global trust-based commerce ecosystem structured around:
+PtahX is a global trust-based commerce ecosystem structured around:
 
 Identity -> Opportunity -> Connection -> Proposal -> Agreement -> Deal -> Transaction -> Delivery -> Review -> Reputation -> New Opportunity
 
@@ -32,7 +32,7 @@ Each major route should reinforce this workflow rather than becoming a disconnec
 - UI reference source: all screenshots in `public/image_ux_ux`, mapped in `docs/UI_REFERENCE_PAGE_MAP.md`.
 - Semantic tokens live in `src/app/globals.css`.
 - Reusable shell and brand rendering live in `src/components/layout` and `src/components/brand-logo.tsx`.
-- Public, app, preview and admin routes must share the same perX visual language while preserving route-appropriate layouts.
+- Public, app, preview and admin routes must share the same PtahX visual language while preserving route-appropriate layouts.
 - Sidebar navigation is centralized in `src/lib/navigation/sidebar-items.ts` and must remain limited to the approved workspace links.
 
 ## PWA

@@ -171,7 +171,7 @@ describe("Auth Actions", () => {
       } as never);
       vi.mocked(session.createSessionRecord).mockResolvedValue({
         maxAge: 60,
-        name: "perx_session",
+        name: "ptahx_session",
         value: "session-token",
       });
 
@@ -191,7 +191,7 @@ describe("Auth Actions", () => {
       expect(session.createSessionRecord).toHaveBeenCalledWith("user_1", tx);
       expect(session.setSessionCookie).toHaveBeenCalledWith({
         maxAge: 60,
-        name: "perx_session",
+        name: "ptahx_session",
         value: "session-token",
       });
       expect(tx.role.upsert).toHaveBeenCalledWith(
@@ -251,7 +251,7 @@ describe("Auth Actions", () => {
 
       await expect(signUpAction(idleState, formData)).resolves.toMatchObject({
         message:
-          "The current PerX beta group is full. Registration will reopen when more spaces become available.",
+          "The current PtahX beta group is full. Registration will reopen when more spaces become available.",
         status: "error",
       });
     });
@@ -281,7 +281,7 @@ describe("Auth Actions", () => {
       } as never);
       vi.mocked(session.createSessionRecord).mockResolvedValue({
         maxAge: 60,
-        name: "perx_session",
+        name: "ptahx_session",
         value: "session-token",
       });
 

@@ -17,7 +17,7 @@ export default function PreviewEscrowPage() {
           Back to Deal
         </Link>
       }
-      description="Preview Mode: simulated deal-state records only. No real funds are collected, held, transferred, or released by perX."
+      description="Preview Mode: simulated deal-state records only. No real funds are collected, held, transferred, or released by PtahX."
       title="Simulated deal-state status"
     >
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">

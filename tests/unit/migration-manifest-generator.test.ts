@@ -24,7 +24,7 @@ import {
 const created: string[] = [];
 
 function migrationsFixture(names: string[], extras: string[] = []) {
-  const dir = mkdtempSync(path.join(tmpdir(), "perx-migrations-"));
+  const dir = mkdtempSync(path.join(tmpdir(), "ptahx-migrations-"));
   created.push(dir);
   for (const name of names) mkdirSync(path.join(dir, name));
   for (const file of extras) writeFileSync(path.join(dir, file), "x");

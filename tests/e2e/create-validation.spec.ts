@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
 const TEST_DB = process.env.TEST_DATABASE_URL!;
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 
 /** alice holds CLIENT, which carries `opportunity:create`. */
 async function signIn(page: Page, email: string) {
@@ -67,7 +67,7 @@ test("an invalid budget names the exact field instead of a generic message", asy
 }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 780 } });
   try {
-    await signIn(page, "alice-test@perx.test");
+    await signIn(page, "alice-test@ptahx.test");
     await page.goto(`${BASE}/app/opportunities/new`);
     await fillValidBase(page);
 
@@ -100,7 +100,7 @@ test("the invalid field keeps its value and receives focus", async ({
 }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 780 } });
   try {
-    await signIn(page, "alice-test@perx.test");
+    await signIn(page, "alice-test@ptahx.test");
     await page.goto(`${BASE}/app/opportunities/new`);
     await fillValidBase(page);
 
@@ -142,7 +142,7 @@ test("a minimum above the maximum is reported on the maximum field", async ({
 }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 780 } });
   try {
-    await signIn(page, "alice-test@perx.test");
+    await signIn(page, "alice-test@ptahx.test");
     await page.goto(`${BASE}/app/opportunities/new`);
     await fillValidBase(page);
 
@@ -177,7 +177,7 @@ test("no horizontal overflow while the error summary is shown", async ({
   for (const width of [320, 360, 375, 390, 412, 430]) {
     const page = await browser.newPage({ viewport: { width, height: 780 } });
     try {
-      await signIn(page, "alice-test@perx.test");
+      await signIn(page, "alice-test@ptahx.test");
       await page.goto(`${BASE}/app/opportunities/new`);
       await fillValidBase(page);
 

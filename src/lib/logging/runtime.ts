@@ -77,7 +77,7 @@ export function logServerDataError({
       })
     | undefined;
 
-  console.error("[perx:server-data-error]", {
+  console.error("[ptahx:server-data-error]", {
     digest: err?.digest,
     errorType: err?.name ?? typeof error,
     message: safeErrorMessage(err),

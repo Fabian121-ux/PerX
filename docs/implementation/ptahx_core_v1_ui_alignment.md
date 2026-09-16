@@ -1,8 +1,8 @@
-# PerX Core V1 UI/UX Alignment
+# PtahX Core V1 UI/UX Alignment
 
 ## Overview
 
-This document summarizes the UI/UX changes implemented to align the PerX web application with the official PerX Master Blueprint. The core objective of this alignment was to reinforce the identity of PerX as "A global trust-based commerce ecosystem."
+This document summarizes the UI/UX changes implemented to align the PtahX web application with the official PtahX Master Blueprint. The core objective of this alignment was to reinforce the identity of PtahX as "A global trust-based commerce ecosystem."
 
 ## Key Alignment Changes
 

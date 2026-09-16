@@ -19,7 +19,7 @@ export async function SiteHeader() {
   return (
     <header className="site-header sticky top-0 z-30 border-b border-[color:var(--px-border)] bg-[color:var(--px-surface)]/95 backdrop-blur">
       <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
-        <Link className="inline-flex items-center" href="/" aria-label="perX home">
+        <Link className="inline-flex items-center" href="/" aria-label="PtahX home">
           <BrandLogo className="h-11" />
         </Link>
         <nav className="hidden items-center gap-6 md:flex">

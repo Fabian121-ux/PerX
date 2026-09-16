@@ -3,9 +3,9 @@ import crypto from "node:crypto";
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
 const TEST_DB = process.env.TEST_DATABASE_URL!;
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 
-/** Widths from the PreX mobile brief, plus tablet. */
+/** Widths from the PtahX mobile brief, plus tablet. */
 const WIDTHS = [320, 360, 375, 390, 412, 430, 768] as const;
 
 const ROUTES = [
@@ -56,7 +56,7 @@ for (const width of WIDTHS) {
   }) => {
     const page = await browser.newPage({ viewport: { width, height: 780 } });
     try {
-      await signIn(page, "alice-test@perx.test");
+      await signIn(page, "alice-test@ptahx.test");
 
       const offenders: string[] = [];
       for (const route of ROUTES) {
@@ -110,7 +110,7 @@ test("primary mobile navigation actions meet the touch-target minimum", async ({
 }) => {
   const page = await browser.newPage({ viewport: { width: 320, height: 780 } });
   try {
-    await signIn(page, "alice-test@perx.test");
+    await signIn(page, "alice-test@ptahx.test");
     await page.goto(`${BASE}/app`);
     await page.waitForLoadState("domcontentloaded");
     await page.locator("main").first().waitFor({ state: "visible" });

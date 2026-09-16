@@ -44,7 +44,7 @@ describe("admin-initiated password reset", () => {
     vi.clearAllMocks();
     mocks.requireCapabilityOrNotFound.mockResolvedValue({ id: "admin-1" });
     mocks.userFindUnique.mockResolvedValue({
-      email: "target@perx.test",
+      email: "target@ptahx.test",
       id: "user-9",
       isActive: true,
     });
@@ -96,7 +96,7 @@ describe("admin-initiated password reset", () => {
 
   it("refuses an inactive account with the same message", async () => {
     mocks.userFindUnique.mockResolvedValue({
-      email: "target@perx.test",
+      email: "target@ptahx.test",
       id: "user-9",
       isActive: false,
     });

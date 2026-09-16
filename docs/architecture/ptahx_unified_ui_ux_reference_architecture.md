@@ -1,10 +1,10 @@
-# perX Unified UI/UX Reference Architecture
+# PtahX Unified UI/UX Reference Architecture
 
 Date: 2026-07-17
 
 ## 1. Scope
 
-This document is the Stage 1 audit and architecture proposal for a unified perX UX. It uses the requested public platforms only as interaction references:
+This document is the Stage 1 audit and architecture proposal for a unified PtahX UX. It uses the requested public platforms only as interaction references:
 
 - Contra: visual simplicity, discovery, profile and opportunity card patterns.
 - Wellfound: startup, job, company, compensation, and search structure.
@@ -210,10 +210,10 @@ Public:
 - Marketplace
 - Opportunities
 - People
-- How perX Works
+- How PtahX Works
 - Trust & Safety
 - Sign In
-- Join perX
+- Join PtahX
 
 Controlled-beta visible primary navigation:
 
@@ -273,13 +273,13 @@ Secondary menu:
 - Opportunities
 - People
 - Marketplace, labelled "Not available during beta" where needed
-- How perX Works
+- How PtahX Works
 - Trust & Safety
 
 Authentication:
 
 - Sign In -> `/sign-in`
-- Join perX -> `/sign-up`
+- Join PtahX -> `/sign-up`
 
 ## 5. Signed-In Navigation Map
 
@@ -315,7 +315,7 @@ Visitor:
 2. Searches or opens Discover.
 3. Reviews opportunity/person/business cards.
 4. Opens detail page.
-5. Joins perX or signs in to save, propose, message, or post.
+5. Joins PtahX or signs in to save, propose, message, or post.
 
 New user:
 
@@ -349,7 +349,7 @@ Home:
 - Main action cards.
 - Active beta categories.
 - Featured opportunities/workers/businesses only when backed by real or clearly demo data.
-- How perX works.
+- How PtahX works.
 - Trust and verification.
 - Beta boundary disclosure for unavailable finance.
 
@@ -597,7 +597,7 @@ Phase 5:
 - Removing role selection can break capability checks unless temporary default capabilities or server-owned grants are designed.
 - Discovery unification can overcomplicate filters; keep beta categories simple.
 - Marketplace expansion can produce false promises; unavailable modules must be visibly disabled.
-- Public references can over-influence the UI; perX must retain its own identity, colors, logo, and broader trust-commerce vision.
+- Public references can over-influence the UI; PtahX must retain its own identity, colors, logo, and broader trust-commerce vision.
 
 ## 17. Implementation Status in This Pass
 
@@ -617,7 +617,7 @@ Not implemented pending review:
 
 ## 18. 2026-07-18 Enhancement Status
 
-This follow-up pass implemented the approved reference-led enhancement without replacing the existing perX architecture.
+This follow-up pass implemented the approved reference-led enhancement without replacing the existing PtahX architecture.
 
 Implemented:
 
@@ -633,7 +633,7 @@ Implemented:
 - Workspace search now submits to signed-in or preview discovery instead of opening a placeholder dialog.
 - Mobile public and workspace navigation drawers now use dialog focus handling.
 - Public profile rendering supports profile photographs while preserving initials fallback.
-- Agreement detail styling is consolidated under PerX tokens.
+- Agreement detail styling is consolidated under PtahX tokens.
 - App icons and favicon are regenerated from `public/main_app_logo.png` after visible-artwork cropping.
 - `favicon.ico` now includes 16px, 32px and 48px entries.
 - Manifest normal icons use `purpose: "any"` and maskable icons use `purpose: "maskable"`.

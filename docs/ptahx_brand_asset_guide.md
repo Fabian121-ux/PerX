@@ -1,10 +1,10 @@
-# perX Brand Asset Guide
+# PtahX Brand Asset Guide
 
 ## Official Spelling
 
-Visible product copy must use `perX`.
+Visible product copy must use `PtahX`.
 
-Do not display `preX`, `PreX`, `PerX`, `PERX`, `PER`, `Prime Nest` or `PrimeNest` in the UI.
+Use the exact spelling and capitalization above. Do not display legacy center lettering or unrelated product names in the UI.
 
 ## Source Files
 
@@ -25,7 +25,7 @@ The logo source contains a metallic infinity ribbon:
 - Central crossing structure.
 - Strong symmetry and continuity symbolism.
 
-The source JPEG contains legacy center text. Derivatives mask that text and pair the mark with a correct `perX` wordmark. The result remains derived from the approved source and is not a generic infinity replacement.
+The source JPEG contains legacy center text. Derivatives mask that text and pair the mark with a correct `PtahX` wordmark. The result remains derived from the approved source and is not a generic infinity replacement.
 
 ## Generated Assets
 
@@ -103,7 +103,7 @@ Semantic variables live in `src/app/globals.css`.
 - Showing `PER` as the product name.
 - Using the white-background JPEG directly in the interface.
 - Creating a favicon with unreadable full wordmark text.
-- Using any old `preX` SVG or temporary icon.
+- Using any obsolete SVG or temporary icon.
 
 ## Known Limitation
 

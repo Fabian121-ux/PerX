@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
 const TEST_DB = process.env.TEST_DATABASE_URL!;
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 
 /**
  * Loading UI must not cost correct HTTP status codes.
@@ -56,7 +56,7 @@ test("an unknown conversation answers 404, not a streamed skeleton", async ({
 }) => {
   const page = await browser.newPage();
   try {
-    await signIn(page, "alice-test@perx.test");
+    await signIn(page, "alice-test@ptahx.test");
     const response = await page.goto(
       `${BASE}/app/messages/conversation-that-does-not-exist`,
     );
@@ -72,7 +72,7 @@ test("an unknown admin user answers 404 for an authorized admin", async ({
 }) => {
   const page = await browser.newPage();
   try {
-    await signIn(page, "admin-test@perx.test");
+    await signIn(page, "admin-test@ptahx.test");
     const response = await page.goto(`${BASE}/admin/users/no-such-user-id`);
 
     expect(response?.status()).toBe(404);
@@ -85,7 +85,7 @@ test("admin user detail stays hidden from a non-admin", async ({ browser }) => {
   const page = await browser.newPage();
   try {
     // carol is a MEMBER: no users:read, so the record must not exist for her.
-    await signIn(page, "carol-test@perx.test");
+    await signIn(page, "carol-test@ptahx.test");
     const response = await page.goto(`${BASE}/admin/users/any-id`);
 
     expect(response?.status()).toBe(404);

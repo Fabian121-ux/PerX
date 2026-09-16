@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   conversationFindMany: vi.fn(),
   createClient: vi.fn(),
   env: {
-    NEXT_PUBLIC_SUPABASE_URL: "https://realtime.perx.test",
+    NEXT_PUBLIC_SUPABASE_URL: "https://realtime.ptahx.test",
     SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
   },
   removeChannel: vi.fn(),

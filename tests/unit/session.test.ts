@@ -19,7 +19,7 @@ vi.mock("next/headers", () => ({
 
 vi.mock("@/lib/env", () => ({
   hasDatabaseUrl: vi.fn(),
-  getServerEnv: vi.fn(() => ({ SESSION_COOKIE_NAME: "perx_session" })),
+  getServerEnv: vi.fn(() => ({ SESSION_COOKIE_NAME: "ptahx_session" })),
 }));
 
 vi.mock("@/lib/db/prisma", () => ({

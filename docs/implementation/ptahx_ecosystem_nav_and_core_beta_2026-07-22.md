@@ -1,4 +1,4 @@
-# Implementation Report: PerX Ecosystem Navigation & Core Beta
+# Implementation Report: PtahX Ecosystem Navigation & Core Beta
 
 Date: 2026-07-22
 

@@ -16,7 +16,7 @@ export function NewsReadMarker({
     startTransition(async () => {
       try {
         await markVisibleNewsAsReadAction(notificationIds);
-        window.dispatchEvent(new Event("perx-unread-refresh"));
+        window.dispatchEvent(new Event("ptahx-unread-refresh"));
         router.refresh();
       } catch {
         // Polling leaves the current indicator intact until a later successful read.

@@ -35,7 +35,7 @@ export default async function TraderPage({
   } catch (error) {
     applicationUnavailable = true;
     // Route/operation/timestamp only: no Prisma text or connection detail.
-    console.error("[perx:trader-application]", {
+    console.error("[ptahx:trader-application]", {
       operation: "getOwnTraderApplication",
       route: "/app/trader",
       timestamp: new Date().toISOString(),
@@ -57,7 +57,7 @@ export default async function TraderPage({
         </p>
         <h1 className="mt-2 text-2xl font-bold text-[color:var(--px-text)]">
           {alreadyTrader
-            ? "You can create on PerX"
+            ? "You can create on PtahX"
             : applicationUnavailable
               ? "Trader access"
               : "Become a Trader"}

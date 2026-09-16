@@ -1,4 +1,4 @@
-# PerX Schema Deploy and Drift Detection
+# PtahX Schema Deploy and Drift Detection
 
 How database migrations reach Production, in what order relative to code, and how
 the running application reports when the two have diverged.

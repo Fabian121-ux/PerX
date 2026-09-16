@@ -51,14 +51,14 @@ export function normalizePublicProfile(profile: ProfileRecord) {
     completedDeals,
     createdAt: profile.createdAt ?? null,
     emailVerified: Boolean(profile.emailVerifiedAt),
-    headline: details.headline ?? profile.headline ?? "perX member",
+    headline: details.headline ?? profile.headline ?? "PtahX member",
     id: profile.id,
     isVerified: profile.verificationStatus === "VERIFIED",
     location:
       details.showLocation === false
         ? null
         : (details.location ?? profile.location ?? null),
-    name: profile.name ?? "perX member",
+    name: profile.name ?? "PtahX member",
     opportunities: Array.isArray(profile.opportunities)
       ? profile.opportunities
       : [],

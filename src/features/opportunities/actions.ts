@@ -274,7 +274,7 @@ export async function createOpportunityAction(
     return {
       message:
         policy.userMessage ??
-        "This content cannot be published because it breaches the PerX content policy.",
+        "This content cannot be published because it breaches the PtahX content policy.",
       status: "error",
     };
   }

@@ -1,10 +1,10 @@
-# PerX UI/UX Implementation Report
+# PtahX UI/UX Implementation Report
 
 Date: 2026-07-18
 
 ## Scope
 
-This was an enhancement and consolidation pass. It preserved existing authentication, authorization, protected routes, server actions, data-provider boundaries, database models and PerX branding. The reference sites were used for interaction patterns only: Contra for discovery simplicity, Wellfound for opportunity/business listing hierarchy, Malt for profile hierarchy, Faire for enquiry-based marketplace structure and Airbnb for mobile filters.
+This was an enhancement and consolidation pass. It preserved existing authentication, authorization, protected routes, server actions, data-provider boundaries, database models and PtahX branding. The reference sites were used for interaction patterns only: Contra for discovery simplicity, Wellfound for opportunity/business listing hierarchy, Malt for profile hierarchy, Faire for enquiry-based marketplace structure and Airbnb for mobile filters.
 
 ## Page Classification
 
@@ -189,7 +189,7 @@ Fixes:
 | `NEXT_PUBLIC_APP_URL` | Optional locally, defaults localhost | Required, non-localhost | Required, production URL | Public | Build-time metadata and runtime |
 | `PERX_ENABLE_PREVIEW` | Optional, defaults `false`; set `true` only for local/demo review | Set `false` unless deliberately reviewing preview routes | Set `false` | Server-only | Build-time and runtime |
 | `ERROR_MONITORING_DSN` | Optional; empty disables monitoring | Optional until provider configured | Optional until provider configured | Server-only unless provider documents otherwise | Build-time validation and runtime |
-| `SESSION_COOKIE_NAME` | Optional default `perx_session` | Optional/default | Optional/default | Server-only | Runtime |
+| `SESSION_COOKIE_NAME` | Optional default `ptahx_session` | Optional/default | Optional/default | Server-only | Runtime |
 | `AUTH_SESSION_DAYS` | Optional default `30` | Optional/default | Optional/default | Server-only | Runtime |
 | `UPLOAD_MAX_BYTES` | Optional default `5242880` | Optional/default | Optional/default | Server-only | Build-time and runtime |
 | `LOG_LEVEL` | Optional default `info` | Optional/default | Optional/default | Server-only | Runtime |
@@ -271,8 +271,8 @@ Key code and asset paths changed:
 - `tests/unit/env.test.ts`
 - `tests/unit/auth-actions.test.ts`
 - `tests/e2e/primary-flow.spec.ts`
-- `docs/architecture/PERX_UNIFIED_UI_UX_REFERENCE_ARCHITECTURE.md`
-- `docs/implementation/PERX_UI_UX_IMPLEMENTATION_2026-07-18.md`
+- `docs/architecture/ptahx_unified_ui_ux_reference_architecture.md`
+- `docs/implementation/ptahx_ui_ux_implementation_2026-07-18.md`
 - `docs/DEPLOYMENT.md`
 
 ## Work Intentionally Deferred

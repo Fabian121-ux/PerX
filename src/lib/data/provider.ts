@@ -1,8 +1,8 @@
 import { getResolvedDataMode, isProductionRuntime } from "@/lib/env";
-import { PerXDataProvider } from "./providers/interfaces";
+import { PtahXDataProvider } from "./providers/interfaces";
 
-let prismaProviderInstance: PerXDataProvider | null = null;
-let mockProviderInstance: PerXDataProvider | null = null;
+let prismaProviderInstance: PtahXDataProvider | null = null;
+let mockProviderInstance: PtahXDataProvider | null = null;
 
 async function getNonProductionMockProvider() {
   if (isProductionRuntime()) {
@@ -17,7 +17,7 @@ async function getNonProductionMockProvider() {
   return mockProviderInstance;
 }
 
-export async function getPerXDataProvider(context?: { mode?: "preview" | "mock" | "database" | "auto" }): Promise<PerXDataProvider> {
+export async function getPtahXDataProvider(context?: { mode?: "preview" | "mock" | "database" | "auto" }): Promise<PtahXDataProvider> {
   if (context?.mode === "preview") {
     return getNonProductionMockProvider();
   }

@@ -71,7 +71,7 @@ export default async function ProfileEditPage({
           <ProfileImageUploader
             initialImageUrl={profile?.profileImageUrl}
             maxBytes={env.UPLOAD_MAX_BYTES}
-            name={profile?.name ?? user?.name ?? "PerX member"}
+            name={profile?.name ?? user?.name ?? "PtahX member"}
             storageEnabled={storageEnabled}
           />
 

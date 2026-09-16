@@ -1,8 +1,8 @@
-# PerX Local Mock Mode
+# PtahX Local Mock Mode
 
 ## Overview
 
-PerX supports a **local mock mode** designed for rapid UI prototyping, offline development, and completely static deployments.
+PtahX supports a **local mock mode** designed for rapid UI prototyping, offline development, and completely static deployments.
 
 In mock mode, the application runs entirely without a database. It bypasses Prisma initialization and instead relies on static data generators defined in `src/lib/data/providers/mock-provider.ts`.
 
@@ -37,7 +37,7 @@ npm run build:mock
 
 ## Why Demo/Test Buttons Were Removed
 
-Previously, PerX exposed "Test Account" and "Demo Preview" buttons directly on the public landing and sign-in pages. While useful for early prototypes, this bypassed authentication entirely and created a severe security vulnerability in production (Database Mode).
+Previously, PtahX exposed "Test Account" and "Demo Preview" buttons directly on the public landing and sign-in pages. While useful for early prototypes, this bypassed authentication entirely and created a severe security vulnerability in production (Database Mode).
 
 Now, test features are correctly isolated.
 

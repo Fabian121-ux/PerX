@@ -144,7 +144,7 @@ export function ProfileImageUploader({
             Profile image
           </label>
           <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">
-            JPEG, PNG, or WebP. Stored as your PerX profile avatar.
+            JPEG, PNG, or WebP. Stored as your PtahX profile avatar.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <input

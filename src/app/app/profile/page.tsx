@@ -29,7 +29,7 @@ export default async function ProfilePage() {
     return (
       <AppSection
         title="Your Profile"
-        description="Manage your identity on PerX."
+        description="Manage your identity on PtahX."
       >
         <Card className="flex flex-col items-center justify-center p-12 text-center">
           <div className="mb-4 rounded-full bg-[color:var(--px-primary-soft)] p-4 text-[color:var(--px-primary)]">
@@ -39,7 +39,7 @@ export default async function ProfilePage() {
           <p className="mb-6 max-w-md text-[color:var(--px-text-muted)]">
             You haven&apos;t completed your profile setup yet. A complete
             profile improves discovery, trust, and your ability to connect with
-            others on PerX.
+            others on PtahX.
           </p>
           <ButtonLink href="/app/profile/setup">Complete profile</ButtonLink>
         </Card>

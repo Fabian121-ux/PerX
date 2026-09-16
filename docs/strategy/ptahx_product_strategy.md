@@ -1,4 +1,4 @@
-# PerX Product Strategy
+# PtahX Product Strategy
 
 ## Strategic Pillars
 

@@ -1,6 +1,8 @@
-# perX
+# PtahX
 
-perX is a global trust-based commerce ecosystem built around:
+Public brand domain: `ptahx.com`.
+
+PtahX is a global trust-based commerce ecosystem built around:
 
 Identity -> Opportunity -> Connection -> Proposal -> Agreement -> Deal -> Transaction -> Delivery -> Review -> Reputation -> New Opportunity
 
@@ -50,7 +52,7 @@ npm run test:e2e
 ## Docs
 
 - `docs/CURRENT_STATE_AUDIT.md`
-- `docs/PERX_MVP_ARCHITECTURE.md`
+- `docs/ptahx_mvp_architecture.md`
 - `docs/IMPLEMENTATION_PLAN.md`
 - `docs/IMAGE_ASSET_MAP.md`
 - `docs/DEPLOYMENT.md`

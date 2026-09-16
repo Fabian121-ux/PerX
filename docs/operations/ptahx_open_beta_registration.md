@@ -1,4 +1,4 @@
-# PerX Open Beta Registration Operations
+# PtahX Open Beta Registration Operations
 
 Date: 2026-07-20
 
@@ -166,7 +166,7 @@ Do not count `INTERNAL_TEST_USER`, `INTERNAL_ADMIN` or `SYSTEM_ACCOUNT` users to
 Use Vercel Runtime Logs and search for:
 
 ```text
-[perx:server-data-error]
+[ptahx:server-data-error]
 auth.sign_up
 registration.status
 ```
@@ -196,7 +196,7 @@ Only the normal test user:
 ```bash
 PERX_ALLOW_DEV_SEED=true \
 PERX_DEPLOY_ENV=staging \
-PERX_SEED_DATABASE_LABEL=perx-beta-staging \
+PERX_SEED_DATABASE_LABEL=ptahx-beta-staging \
 DEV_TEST_USER_EMAIL=<test-email> \
 DEV_TEST_USER_USERNAME=<test-username> \
 DEV_TEST_USER_PASSWORD=<test-password> \
@@ -208,7 +208,7 @@ Only the admin user:
 ```bash
 PERX_ALLOW_DEV_SEED=true \
 PERX_DEPLOY_ENV=staging \
-PERX_SEED_DATABASE_LABEL=perx-beta-staging \
+PERX_SEED_DATABASE_LABEL=ptahx-beta-staging \
 DEV_ADMIN_EMAIL=<admin-email> \
 DEV_ADMIN_USERNAME=<admin-username> \
 DEV_ADMIN_PASSWORD=<admin-password> \
@@ -220,7 +220,7 @@ Both internal accounts:
 ```bash
 PERX_ALLOW_DEV_SEED=true \
 PERX_DEPLOY_ENV=staging \
-PERX_SEED_DATABASE_LABEL=perx-beta-staging \
+PERX_SEED_DATABASE_LABEL=ptahx-beta-staging \
 DEV_TEST_USER_EMAIL=<test-email> \
 DEV_TEST_USER_USERNAME=<test-username> \
 DEV_TEST_USER_PASSWORD=<test-password> \

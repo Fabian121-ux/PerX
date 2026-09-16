@@ -1,6 +1,6 @@
 # Real Estate retirement
 
-The Real Estate vertical has been removed from the normal PerX member
+The Real Estate vertical has been removed from the normal PtahX member
 experience. No user-facing entry point remains.
 
 **No data was deleted.** Existing `PROPERTY` opportunities, their images,

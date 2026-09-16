@@ -1,4 +1,4 @@
-# PerX Full-System Beta-Readiness Audit - 2026-07-17
+# PtahX Full-System Beta-Readiness Audit - 2026-07-17
 
 ## 1. Executive Summary
 
@@ -196,7 +196,7 @@ Security gaps:
 - Schema validates.
 - Prisma generate passes in isolated copy.
 - Migration status failed; applied migration state not verified.
-- Connection pooling uses `pg.Pool` singleton behind `globalThis.__perxPrisma`, appropriate for avoiding repeated client creation in a single runtime instance.
+- Connection pooling uses `pg.Pool` singleton behind `globalThis.__ptahxPrisma`, appropriate for avoiding repeated client creation in a single runtime instance.
 - Supabase pooler/direct host/port consistency could not be verified beyond local URL classification because the URLs are not printed and auth fails.
 
 ## 13. Reliability and Error Handling Findings
@@ -370,7 +370,7 @@ None proven.
 
 5. **Misleading money/escrow wording without provider**
    - Evidence: root escrow says "protected funds" (`src/app/(workspace)/escrow/page.tsx:5-8`); metadata says "transacting securely" (`src/app/layout.tsx:27-28`).
-   - Impact: users may believe PerX holds or protects real funds.
+   - Impact: users may believe PtahX holds or protects real funds.
    - Remediation: label all wallet/escrow surfaces as simulated/unavailable until provider integration.
    - Effort: 0.5 day.
    - Blocks 10-user pilot: yes.

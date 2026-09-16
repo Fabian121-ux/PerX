@@ -97,7 +97,7 @@ export default async function ProfileSetupPage({
             <ProfileImageUploader
               initialImageUrl={profile?.profileImageUrl}
               maxBytes={env.UPLOAD_MAX_BYTES}
-              name={profile?.name ?? user?.name ?? "PerX member"}
+              name={profile?.name ?? user?.name ?? "PtahX member"}
               storageEnabled={storageEnabled}
             />
             <Field label="Location">
@@ -170,7 +170,7 @@ export default async function ProfileSetupPage({
               />
               <CheckboxRow
                 defaultChecked={profile?.allowMessagesFromMembers ?? false}
-                label="Allow message requests from approved PerX members"
+                label="Allow message requests from approved PtahX members"
                 name="allowMessagesFromMembers"
               />
               <CheckboxRow
