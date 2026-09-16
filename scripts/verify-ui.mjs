@@ -32,8 +32,8 @@ async function validateManifest(page) {
     "/icons/maskable-icon-512.png",
   ];
 
-  if (manifest.name !== "perX" || manifest.short_name !== "perX") {
-    throw new Error("Manifest name/short_name must be perX");
+  if (manifest.name !== "PtahX" || manifest.short_name !== "PtahX") {
+    throw new Error("Manifest name/short_name must be PtahX");
   }
 
   for (const src of requiredIcons) {

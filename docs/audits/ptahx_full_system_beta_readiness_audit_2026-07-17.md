@@ -238,7 +238,7 @@ Positive:
 
 Gaps:
 
-- Service worker pre-caches `/brand/perx-logo-horizontal-light.png` and dark wordmarks; acceptable as brand assets, but full PWA installed-icon verification was not manually performed.
+- Service worker pre-caches `/brand/ptahx-logo-horizontal-light.png` and dark wordmarks; acceptable as brand assets, but full PWA installed-icon verification was not manually performed.
 - PWA install was not verified in a real staging browser session.
 
 ## 16. Performance Assessment for 10 Users

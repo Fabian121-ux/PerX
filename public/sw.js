@@ -1,4 +1,4 @@
-const CACHE_NAME = "perx-public-shell-v9";
+const CACHE_NAME = "ptahx-public-shell-v9";
 const OFFLINE_URL = "/offline";
 
 const PRECACHE_ASSETS = [
@@ -8,8 +8,8 @@ const PRECACHE_ASSETS = [
   "/icons/favicon-32x32.png",
   "/icons/favicon-48x48.png",
   "/icons/apple-touch-icon.png",
-  "/brand/perx-logo-horizontal-light.png",
-  "/brand/perx-logo-horizontal-dark.png",
+  "/brand/ptahx-logo-horizontal-light.png",
+  "/brand/ptahx-logo-horizontal-dark.png",
   "/main_app_logo.png",
   "/icons/icon-192.png",
   "/icons/icon-512.png",

@@ -67,8 +67,8 @@ async function validateManifest() {
   const response = await fetch(`${baseUrl}/manifest.webmanifest`);
   if (!response.ok) throw new Error(`Manifest returned HTTP ${response.status}`);
   const manifest = await response.json();
-  if (manifest.name !== "perX" || manifest.short_name !== "perX") {
-    throw new Error("Manifest name and short_name must be perX");
+  if (manifest.name !== "PtahX" || manifest.short_name !== "PtahX") {
+    throw new Error("Manifest name and short_name must be PtahX");
   }
   const requiredIcons = new Set([
     "/icons/icon-192.png",
@@ -137,23 +137,23 @@ await captureClip(browser, "fixed-header-scroll-state.png", "/preview", { x: 0, 
 await captureStatic(
   browser,
   "logo-on-white.png",
-  `<!doctype html><html><body style="margin:0;min-height:360px;display:grid;place-items:center;background:#f8fafc"><img src="${baseUrl}/brand/perx-logo-horizontal-light.png" alt="perX logo" style="width:360px;height:auto"/></body></html>`,
+  `<!doctype html><html><body style="margin:0;min-height:360px;display:grid;place-items:center;background:#f8fafc"><img src="${baseUrl}/brand/ptahx-logo-horizontal-light.png" alt="PtahX logo" style="width:360px;height:auto"/></body></html>`,
 );
 await captureStatic(
   browser,
   "logo-on-black.png",
-  `<!doctype html><html><body style="margin:0;min-height:360px;display:grid;place-items:center;background:#061936"><img src="${baseUrl}/brand/perx-logo-horizontal-dark.png" alt="perX logo" style="width:360px;height:auto"/></body></html>`,
+  `<!doctype html><html><body style="margin:0;min-height:360px;display:grid;place-items:center;background:#061936"><img src="${baseUrl}/brand/ptahx-logo-horizontal-dark.png" alt="PtahX logo" style="width:360px;height:auto"/></body></html>`,
 );
 await captureStatic(
   browser,
   "favicon-browser-tab.png",
-  `<!doctype html><html><body style="margin:0;background:#111318;font-family:Arial,sans-serif"><div style="height:220px;display:grid;place-items:center"><div style="display:flex;align-items:center;gap:12px;width:360px;border-radius:18px 18px 0 0;background:#f8fafc;padding:14px 18px;box-shadow:0 20px 60px rgba(0,0,0,.35)"><img src="${baseUrl}/icons/favicon-32x32.png" alt="" width="24" height="24"/><span style="color:#111318;font-weight:700">perX</span></div></div></body></html>`,
+  `<!doctype html><html><body style="margin:0;background:#111318;font-family:Arial,sans-serif"><div style="height:220px;display:grid;place-items:center"><div style="display:flex;align-items:center;gap:12px;width:360px;border-radius:18px 18px 0 0;background:#f8fafc;padding:14px 18px;box-shadow:0 20px 60px rgba(0,0,0,.35)"><img src="${baseUrl}/icons/favicon-32x32.png" alt="" width="24" height="24"/><span style="color:#111318;font-weight:700">PtahX</span></div></div></body></html>`,
   { width: 520, height: 260 },
 );
 await captureStatic(
   browser,
   "pwa-icon-preview.png",
-  `<!doctype html><html><body style="margin:0;background:#f3f6fb;font-family:Arial,sans-serif"><div style="min-height:420px;display:grid;place-items:center"><div style="display:flex;align-items:center;gap:28px"><img src="${baseUrl}/icons/icon-192.png" alt="perX 192 icon" width="144" height="144"/><img src="${baseUrl}/icons/maskable-icon-192.png" alt="perX maskable icon" width="144" height="144" style="border-radius:50%"/><img src="${baseUrl}/icons/icon-512.png" alt="perX 512 icon" width="144" height="144"/></div></div></body></html>`,
+  `<!doctype html><html><body style="margin:0;background:#f3f6fb;font-family:Arial,sans-serif"><div style="min-height:420px;display:grid;place-items:center"><div style="display:flex;align-items:center;gap:28px"><img src="${baseUrl}/icons/icon-192.png" alt="PtahX 192 icon" width="144" height="144"/><img src="${baseUrl}/icons/maskable-icon-192.png" alt="PtahX maskable icon" width="144" height="144" style="border-radius:50%"/><img src="${baseUrl}/icons/icon-512.png" alt="PtahX 512 icon" width="144" height="144"/></div></div></body></html>`,
 );
 
 await assertNoHorizontalOverflow(browser);

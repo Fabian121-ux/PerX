@@ -10,7 +10,7 @@ Use the exact spelling and capitalization above. Do not display legacy center le
 
 - Official brand/wordmark source: `public/image_ux_ux/MAIN_LOGO.jpg`
 - Official app icon/favicon source: `public/main_app_logo.png`
-- Source archive copy: `public/brand/source/perx-original-reference.jpg`
+- Source archive copy: `public/brand/source/ptahx-original-reference.jpg`
 - Desktop UI reference: `public/image_ux_ux/IMG-20260423-WA0067.jpg`
 - Mobile/light reference: `public/image_ux_ux/IMG-20260502-WA0073.jpg`
 - Dark reference: `public/image_ux_ux/IMG-20260502-WA0074.jpg`
@@ -37,19 +37,19 @@ npm run brand:generate
 
 Generated brand files:
 
-- `public/brand/perx-logo.png`
-- `public/brand/perx-logo-light.png`
-- `public/brand/perx-logo-dark.png`
-- `public/brand/perx-logo-horizontal.png`
-- `public/brand/perx-logo-horizontal-light.png`
-- `public/brand/perx-logo-horizontal-dark.png`
-- `public/brand/perx-symbol.png`
-- `public/brand/perx-symbol-light.png`
-- `public/brand/perx-symbol-dark.png`
-- `public/brand/perx-symbol-monochrome.png`
-- `public/brand/perx-wordmark.png`
-- `public/brand/perx-wordmark-light.png`
-- `public/brand/perx-wordmark-dark.png`
+- `public/brand/ptahx-logo.png`
+- `public/brand/ptahx-logo-light.png`
+- `public/brand/ptahx-logo-dark.png`
+- `public/brand/ptahx-logo-horizontal.png`
+- `public/brand/ptahx-logo-horizontal-light.png`
+- `public/brand/ptahx-logo-horizontal-dark.png`
+- `public/brand/ptahx-symbol.png`
+- `public/brand/ptahx-symbol-light.png`
+- `public/brand/ptahx-symbol-dark.png`
+- `public/brand/ptahx-symbol-monochrome.png`
+- `public/brand/ptahx-wordmark.png`
+- `public/brand/ptahx-wordmark-light.png`
+- `public/brand/ptahx-wordmark-dark.png`
 
 Generated icons:
 
