@@ -34,6 +34,7 @@ import { evaluatePolicy, isPolicyBlocking } from "@/lib/policy/enforcement";
 import {
   buildPolicyFlagCaseData,
   policyFlagAuditMetadata,
+  recordPolicyFlagCase,
 } from "@/lib/policy/moderation-case";
 import { buildPublicOpportunityWhere } from "@/lib/data/public-opportunities";
 
@@ -552,6 +553,23 @@ export async function updateOpportunityAction(
     });
   }
 
+  /*
+   * An edit can withhold a listing just as a create can, and until now it did
+   * so silently: FLAGGED was written, no case was opened, and the author was
+   * redirected to "?updated=1" as though the edit had gone live. That is the
+   * same silent shadowban P0-4 fixed on the create path, on the route people
+   * use far more often.
+   */
+  const nextModerationStatus =
+    nextStatus === "PUBLISHED" && parsed.data.type !== "PROPERTY"
+      ? policy.outcome === "ALLOW"
+        ? ("APPROVED" as const)
+        : ("FLAGGED" as const)
+      : parsed.data.type === "PROPERTY" && publishing
+        ? ("PENDING" as const)
+        : opportunity.moderationStatus;
+  const flagged = nextModerationStatus === "FLAGGED";
+
   await getPrisma().$transaction(async (tx) => {
     await tx.opportunity.update({
       data: {
@@ -561,14 +579,7 @@ export async function updateOpportunityAction(
         currency,
         description: parsed.data.description,
         location: parsed.data.location,
-        moderationStatus:
-          nextStatus === "PUBLISHED" && parsed.data.type !== "PROPERTY"
-            ? policy.outcome === "ALLOW"
-              ? "APPROVED"
-              : "FLAGGED"
-            : parsed.data.type === "PROPERTY" && publishing
-              ? "PENDING"
-              : opportunity.moderationStatus,
+        moderationStatus: nextModerationStatus,
         authorityDeclaration:
           parsed.data.type === "PROPERTY"
             ? parsed.data.authorityDeclaration || null
@@ -637,15 +648,33 @@ export async function updateOpportunityAction(
         },
       },
     });
+    if (flagged) {
+      await recordPolicyFlagCase({
+        actorId: user.id,
+        ownerId: opportunity.ownerId,
+        policy,
+        targetId: opportunityId,
+        trigger: "an edit",
+        tx,
+      });
+    }
   });
 
   revalidateOpportunityViews(opportunity.slug);
   revalidatePath(`/u/${user.username}`);
   revalidatePath(`/categories/${category.slug}`);
+  /*
+   * A withheld listing is not a successful edit. "?updated=1" over a listing
+   * that no longer appears in any feed is the lie this fixes; `?review=` is the
+   * same destination the create path uses, and carries no rule name, detector
+   * id or matched phrase.
+   */
   redirect(
-    parsed.data.type === "PROPERTY" && publishing
-      ? "/app/manage?submitted=verification"
-      : "/app/manage?updated=1",
+    flagged
+      ? `/app/manage?review=${opportunityId}`
+      : parsed.data.type === "PROPERTY" && publishing
+        ? "/app/manage?submitted=verification"
+        : "/app/manage?updated=1",
   );
 }
 
@@ -745,17 +774,25 @@ async function transitionOpportunity(
     }
   }
 
+  /*
+   * Publishing through a transition can withhold the listing exactly as an
+   * edit can, and did so with the same silence: FLAGGED written, no case, and
+   * a redirect to the ordinary manage page.
+   */
+  const nextModerationStatus =
+    toStatus === "PUBLISHED"
+      ? policy?.outcome === "ALLOW"
+        ? ("APPROVED" as const)
+        : ("FLAGGED" as const)
+      : opportunity.moderationStatus;
+  const flagged = nextModerationStatus === "FLAGGED";
+
   const transitioned = await getPrisma().$transaction(async (tx) => {
     const result = await tx.opportunity.updateMany({
       data: {
         archivedAt: toStatus === "ARCHIVED" ? new Date() : null,
         closedAt: null,
-        moderationStatus:
-          toStatus === "PUBLISHED"
-            ? policy?.outcome === "ALLOW"
-              ? "APPROVED"
-              : "FLAGGED"
-            : opportunity.moderationStatus,
+        moderationStatus: nextModerationStatus,
         propertyVerificationState:
           opportunity.type === "PROPERTY"
             ? toStatus === "PUBLISHED"
@@ -824,6 +861,20 @@ async function transitionOpportunity(
         metadata: { fromStatus: opportunity.status, toStatus },
       },
     });
+    /*
+     * After the `count !== 1` guard above, so a lost race aborts without
+     * opening a case for a listing that was never withheld.
+     */
+    if (flagged && policy) {
+      await recordPolicyFlagCase({
+        actorId: user.id,
+        ownerId: opportunity.ownerId,
+        policy,
+        targetId: opportunityId,
+        trigger: `a ${toStatus.toLowerCase()} transition`,
+        tx,
+      });
+    }
     return true;
   });
   if (!transitioned) redirect("/app/manage?error=state-changed");
@@ -833,7 +884,7 @@ async function transitionOpportunity(
   if (opportunity.category?.slug) {
     revalidatePath(`/categories/${opportunity.category.slug}`);
   }
-  redirect("/app/manage");
+  redirect(flagged ? `/app/manage?review=${opportunityId}` : "/app/manage");
 }
 
 export async function deleteOpportunityAction(opportunityId: string) {

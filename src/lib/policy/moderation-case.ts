@@ -1,3 +1,5 @@
+import type { Prisma } from "@/generated/prisma/client";
+import type { ModerationCaseStatus } from "@/generated/prisma/enums";
 import type { PolicyResult } from "@/lib/policy/enforcement";
 
 /**
@@ -47,6 +49,108 @@ export function buildPolicyFlagCaseData({
       },
     },
   };
+}
+
+/** Case statuses that mean an admin has already decided; not reopened. */
+export const decidedPolicyFlagCaseStatuses: ModerationCaseStatus[] = [
+  "RESOLVED",
+  "DISMISSED",
+  "CLOSED",
+];
+
+/**
+ * The transaction client the caller is already inside.
+ *
+ * Narrowed to the three delegates this helper touches so callers keep their
+ * real Prisma types and the compiler still checks every payload.
+ */
+type PolicyFlagCaseTx = Pick<
+  Prisma.TransactionClient,
+  "auditLog" | "moderationCase" | "moderationCaseEvent"
+>;
+
+/**
+ * Open a policy-flag case for a withheld listing, or record a re-flag against
+ * the one that is already open.
+ *
+ * RE-FLAG POLICY: one open case per withheld listing.
+ *
+ * A listing edited three times must not become three queue items. The decisive
+ * constraint is in `reviewPolicyFlagCaseAction`: it releases the listing with
+ * `updateMany ... where: { moderationStatus: "FLAGGED" }` and then requires
+ * `count === 1`. The moment an admin decides the first of several duplicate
+ * cases the listing leaves FLAGGED, so every remaining duplicate would fail
+ * that guard forever - permanently undecidable rows sitting in the queue.
+ * Reusing the open case keeps the one-case-per-withheld-listing invariant the
+ * review surface was built against.
+ *
+ * A case that was already DECIDED is never reopened. The admin's decision
+ * stands, and a later edit is new content that deserves a fresh case.
+ *
+ * Must be called inside the same transaction as the listing write: a FLAGGED
+ * listing with no case is the silent shadowban this exists to prevent.
+ */
+export async function recordPolicyFlagCase({
+  actorId,
+  ownerId,
+  policy,
+  targetId,
+  targetType = "opportunity",
+  trigger,
+  tx,
+}: {
+  actorId: string;
+  ownerId: string;
+  policy: PolicyResult;
+  targetId: string;
+  targetType?: string;
+  trigger: string;
+  tx: PolicyFlagCaseTx;
+}) {
+  const existing = await tx.moderationCase.findFirst({
+    select: { id: true, status: true },
+    where: {
+      source: "POLICY_FLAG",
+      status: { notIn: decidedPolicyFlagCaseStatuses },
+      targetId,
+      targetType,
+    },
+  });
+
+  if (existing) {
+    // Re-flag on an already-open case: record it on the timeline so the
+    // reviewing admin sees the listing was changed again while waiting, rather
+    // than silently discarding that fact.
+    await tx.moderationCaseEvent.create({
+      data: {
+        actorId,
+        caseId: existing.id,
+        note: `Content re-flagged by the policy engine after ${trigger}. The listing remains withheld.`,
+        type: "CASE_REFLAGGED",
+      },
+    });
+  } else {
+    await tx.moderationCase.create({
+      data: buildPolicyFlagCaseData({ ownerId, policy, targetId, targetType }),
+    });
+  }
+
+  // Written on the transaction client rather than via `writeAuditLog`, which
+  // uses its own connection and swallows failures - neither is acceptable for
+  // the record that a listing was withheld from the public.
+  await tx.auditLog.create({
+    data: {
+      action: "moderation.policy_flag_case_opened",
+      actorId,
+      entityId: targetId,
+      entityType: targetType,
+      metadata: {
+        ...policyFlagAuditMetadata(policy),
+        reflagged: Boolean(existing),
+        trigger,
+      },
+    },
+  });
 }
 
 /** Audit metadata for the case, admin-side only. */
