@@ -79,7 +79,7 @@ const rules: Rule[] = [
     detectorId: "platform-bypass-contact-v1",
     internalReason: "Content asks the recipient to move protected work or payment off platform.",
     outcome: "FLAG",
-    pattern: /\b(pay|message|contact|deal)\s+(me|us)?\s*(outside|off)\s+(perx|platform)\b/i,
+    pattern: /\b(pay|message|contact|deal)\s+(me|us)?\s*(outside|off)\s+(perx|ptahx|platform)\b/i,
     severity: "medium",
   },
   {
