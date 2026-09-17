@@ -19,7 +19,7 @@ vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
 vi.mock("@/lib/env", () => ({
-  getServerEnv: vi.fn(() => ({ SESSION_COOKIE_NAME: "perx_session" })),
+  getServerEnv: vi.fn(() => ({ SESSION_COOKIE_NAME: "ptahx_session" })),
   hasDatabaseUrl: vi.fn(() => true),
 }));
 vi.mock("@/lib/db/prisma", () => ({

@@ -6,7 +6,7 @@ import { hasIsolatedTestDatabase } from "./utils/db-guard";
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
 const TEST_DB = process.env.TEST_DATABASE_URL ?? "";
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 
 const describeOrSkip = hasIsolatedTestDatabase()
   ? test.describe
@@ -56,9 +56,9 @@ describeOrSkip("Gated /app route status and loading proof", () => {
     const ownerId = testCuid();
     const providerId = testCuid();
     const outsiderId = testCuid();
-    const ownerEmail = `route-owner-${suffix}@perx.test`;
-    const providerEmail = `route-provider-${suffix}@perx.test`;
-    const outsiderEmail = `route-outsider-${suffix}@perx.test`;
+    const ownerEmail = `route-owner-${suffix}@ptahx.test`;
+    const providerEmail = `route-provider-${suffix}@ptahx.test`;
+    const outsiderEmail = `route-outsider-${suffix}@ptahx.test`;
     const opportunityId = testCuid();
     const conversationId = testCuid();
     const proposalId = testCuid();

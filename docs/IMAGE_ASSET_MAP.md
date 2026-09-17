@@ -1,4 +1,4 @@
-# perX Image Asset Map
+# PtahX Image Asset Map
 
 ## Reference Images
 
@@ -15,24 +15,24 @@ Current sidebar reference:
 ## Official Logo Source
 
 - Source: `public/image_ux_ux/MAIN_LOGO.jpg`
-- Archived source copy: `public/brand/source/perx-original-reference.jpg`
+- Archived source copy: `public/brand/source/ptahx-original-reference.jpg`
 - Role: sole visual source for all logo, favicon, PWA and app icon derivatives.
 
 ## Generated Brand Derivatives
 
-- `public/brand/perx-logo.png`
-- `public/brand/perx-logo-light.png`
-- `public/brand/perx-logo-dark.png`
-- `public/brand/perx-logo-horizontal.png`
-- `public/brand/perx-logo-horizontal-light.png`
-- `public/brand/perx-logo-horizontal-dark.png`
-- `public/brand/perx-symbol.png`
-- `public/brand/perx-symbol-light.png`
-- `public/brand/perx-symbol-dark.png`
-- `public/brand/perx-symbol-monochrome.png`
-- `public/brand/perx-wordmark.png`
-- `public/brand/perx-wordmark-light.png`
-- `public/brand/perx-wordmark-dark.png`
+- `public/brand/ptahx-logo.png`
+- `public/brand/ptahx-logo-light.png`
+- `public/brand/ptahx-logo-dark.png`
+- `public/brand/ptahx-logo-horizontal.png`
+- `public/brand/ptahx-logo-horizontal-light.png`
+- `public/brand/ptahx-logo-horizontal-dark.png`
+- `public/brand/ptahx-symbol.png`
+- `public/brand/ptahx-symbol-light.png`
+- `public/brand/ptahx-symbol-dark.png`
+- `public/brand/ptahx-symbol-monochrome.png`
+- `public/brand/ptahx-wordmark.png`
+- `public/brand/ptahx-wordmark-light.png`
+- `public/brand/ptahx-wordmark-dark.png`
 
 ## Generated Browser and PWA Icons
 

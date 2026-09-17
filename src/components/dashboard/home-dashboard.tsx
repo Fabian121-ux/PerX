@@ -74,7 +74,7 @@ export function HomeDashboard({
               Welcome, {data.user.name.split(" ")[0]}
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--px-text-muted)]">
-              Your PerX home shows what needs attention and gives you fast
+              Your PtahX home shows what needs attention and gives you fast
               paths to discovery, services, people, messages, and posts.
             </p>
           </div>
@@ -95,7 +95,7 @@ export function HomeDashboard({
                   First steps
                 </p>
                 <h2 className="mt-1 text-lg font-black text-[color:var(--px-text)]">
-                  Set up your PerX presence
+                  Set up your PtahX presence
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-[color:var(--px-text-muted)]">
                   Complete these when you are ready. Dismissing the checklist
@@ -237,7 +237,7 @@ export function HomeDashboard({
         />
         {canCreate ? (
           <WorkspaceQueueCard
-            body="Create opportunities, services, property listings, and other implemented PerX posts."
+            body="Create opportunities, services, property listings, and other implemented PtahX posts."
             href="/app/opportunities/new"
             icon={<PlusCircle aria-hidden size={18} />}
             title="Create content"
@@ -260,7 +260,7 @@ function ProfileCompletionCard({ value }: { value: number }) {
   return (
     <Card>
       <div className="flex items-start gap-3">
-        <span className="perx-soft-tile grid h-10 w-10 place-items-center rounded-[var(--px-radius-sm)]">
+        <span className="ptahx-soft-tile grid h-10 w-10 place-items-center rounded-[var(--px-radius-sm)]">
           <CheckCircle2 aria-hidden size={18} />
         </span>
         <div className="min-w-0">
@@ -311,7 +311,7 @@ function WorkspaceQueueCard({
   return (
     <Card>
       <div className="flex items-start gap-3">
-        <span className="perx-soft-tile grid h-10 w-10 place-items-center rounded-[var(--px-radius-sm)]">
+        <span className="ptahx-soft-tile grid h-10 w-10 place-items-center rounded-[var(--px-radius-sm)]">
           {icon}
         </span>
         <div>

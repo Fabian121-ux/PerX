@@ -84,13 +84,13 @@ describe("password recovery request", () => {
 
   it("issues a reset link for an existing active account", async () => {
     mocks.userFindUnique.mockResolvedValue({
-      email: "user@perx.test",
+      email: "user@ptahx.test",
       id: "user-1",
       isActive: true,
     });
 
     const redirected = await captureRedirect(() =>
-      passwordRecoveryAction(form({ email: "user@perx.test" })),
+      passwordRecoveryAction(form({ email: "user@ptahx.test" })),
     );
 
     expect(mocks.issuePasswordResetToken).toHaveBeenCalledWith({
@@ -104,7 +104,7 @@ describe("password recovery request", () => {
     mocks.userFindUnique.mockResolvedValue(null);
 
     const redirected = await captureRedirect(() =>
-      passwordRecoveryAction(form({ email: "nobody@perx.test" })),
+      passwordRecoveryAction(form({ email: "nobody@ptahx.test" })),
     );
 
     // Same destination as the existing-account case: no enumeration signal.
@@ -115,13 +115,13 @@ describe("password recovery request", () => {
 
   it("does not issue a link for a deactivated account", async () => {
     mocks.userFindUnique.mockResolvedValue({
-      email: "user@perx.test",
+      email: "user@ptahx.test",
       id: "user-1",
       isActive: false,
     });
 
     const redirected = await captureRedirect(() =>
-      passwordRecoveryAction(form({ email: "user@perx.test" })),
+      passwordRecoveryAction(form({ email: "user@ptahx.test" })),
     );
 
     expect(redirected).toContain("/password-recovery?status=requested");
@@ -139,14 +139,14 @@ describe("password recovery request", () => {
 
   it("suppresses issuing when the request limit is exceeded", async () => {
     mocks.userFindUnique.mockResolvedValue({
-      email: "user@perx.test",
+      email: "user@ptahx.test",
       id: "user-1",
       isActive: true,
     });
     mocks.hasExceededResetRequestLimit.mockResolvedValue(true);
 
     const redirected = await captureRedirect(() =>
-      passwordRecoveryAction(form({ email: "user@perx.test" })),
+      passwordRecoveryAction(form({ email: "user@ptahx.test" })),
     );
 
     expect(redirected).toContain("/password-recovery?status=requested");

@@ -1,4 +1,4 @@
-# perX UI/UX Implementation Report
+# PtahX UI/UX Implementation Report
 
 Last updated: 2026-06-25
 
@@ -35,7 +35,7 @@ Tokens live in `src/app/globals.css`.
 
 ## Pages Updated
 
-- Public landing page: rebuilt as an original perX opportunity-ecosystem landing page with search, intent paths, categories, process, trust/deal layer and lightweight CSS network animation.
+- Public landing page: rebuilt as an original PtahX opportunity-ecosystem landing page with search, intent paths, categories, process, trust/deal layer and lightweight CSS network animation.
 - Dashboard: adjusted to the reference shell, hierarchy, card system, mobile order and desktop width usage.
 - Discover: redesigned with search, type tabs, filters, result cards, right rail and pagination.
 - Messages: rebuilt as a professional conversation workspace with list/detail/detail-panel patterns and mobile list/detail behavior.

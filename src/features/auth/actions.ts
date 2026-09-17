@@ -50,7 +50,7 @@ export type AuthFormState = {
 
 const minimumMembershipRole = {
   MEMBER: {
-    description: "Basic PerX account membership.",
+    description: "Basic PtahX account membership.",
     label: "Member",
   },
 } as const;
@@ -233,7 +233,7 @@ export async function signUpAction(
           profile: {
             create: {
               biography: "Profile setup is in progress.",
-              headline: "New perX member",
+              headline: "New PtahX member",
               location: "Remote",
               profileCompleteness: 30,
             },

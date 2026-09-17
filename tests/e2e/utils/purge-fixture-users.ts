@@ -7,11 +7,11 @@ import { getIsolatedTestDatabaseUrl } from "./db-guard";
  * `_` and `%` are LIKE wildcards, so every literal underscore is escaped.
  */
 const FIXTURE_EMAIL_PATTERNS = [
-  "profile\\_%@perx.test",
-  "reset\\_%@perx.test",
+  "profile\\_%@ptahx.test",
+  "reset\\_%@ptahx.test",
   "audit-%@example.com",
   "audit\\_norm\\_%@example.com",
-  "msgfixture\\_%@perx.test",
+  "msgfixture\\_%@ptahx.test",
 ] as const;
 
 /**

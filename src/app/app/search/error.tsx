@@ -25,7 +25,7 @@ export default function SearchError({
           Search is temporarily unavailable
         </h1>
         <p className="mt-3 text-sm leading-6 text-[color:var(--px-text-muted)]">
-          PerX could not load the real directory or listing data. No mock
+          PtahX could not load the real directory or listing data. No mock
           results were substituted.
         </p>
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">

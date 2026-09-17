@@ -15,7 +15,7 @@ export default function AppError({
   useEffect(() => {
     // Structured, safe: route/kind/digest only. The underlying message stays
     // server side, so no database URL, token or raw SQL can reach a browser.
-    console.error("[perx:error-boundary]", {
+    console.error("[ptahx:error-boundary]", {
       digest: error.digest,
       kind: classifyError(error),
       route: "/app",

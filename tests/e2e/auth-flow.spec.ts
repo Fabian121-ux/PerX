@@ -11,7 +11,7 @@ async function getSessionCookieName(baseURL?: string) {
     if (cookieName) return cookieName;
   }
 
-  return "perx_session";
+  return "ptahx_session";
 }
 
 test.describe("auth flow routing and sign-out", () => {

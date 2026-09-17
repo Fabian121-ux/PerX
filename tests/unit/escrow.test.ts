@@ -75,7 +75,7 @@ describe("deal delivery approval authorization", () => {
   it("requires simulated release wording to deny real payment custody", () => {
     expect(
       describesSimulatedReleaseOnly(
-        "Simulated release state only. No real funds are collected, held, transferred, or released by perX.",
+        "Simulated release state only. No real funds are collected, held, transferred, or released by PtahX.",
       ),
     ).toBe(true);
   });

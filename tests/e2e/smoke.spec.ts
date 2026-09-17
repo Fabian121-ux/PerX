@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("PerX Application Smoke Tests", () => {
+test.describe("PtahX Application Smoke Tests", () => {
   test("application renders landing page without errors", async ({ page }) => {
     const response = await page.goto("/");
     expect(response?.status()).toBe(200);
@@ -11,7 +11,7 @@ test.describe("PerX Application Smoke Tests", () => {
     expect(bodyText).not.toContain("DATABASE_URL");
     
     // Ensure Demo Preview button is NOT visible
-    await expect(page.getByRole("link", { name: /Explore perX/i })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /Explore PtahX/i })).toHaveCount(0);
     await expect(page.getByRole("link", { name: /Enter Demo Preview/i })).toHaveCount(0);
   });
 

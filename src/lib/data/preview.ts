@@ -92,9 +92,9 @@ export const previewUser: PreviewUser = {
   id: "alex-demo",
   name: "Alex Morgan",
   username: "alex-demo",
-  email: "alex-demo@demo.perx.local",
+  email: "alex-demo@demo.ptahx.local",
   headline: "Product Designer and Startup Collaborator",
-  biography: "Alex is a product designer and startup collaborator using perX to discover serious opportunities, negotiate structured work, and build a visible trust record.",
+  biography: "Alex is a product designer and startup collaborator using PtahX to discover serious opportunities, negotiate structured work, and build a visible trust record.",
   location: "Toronto, Canada",
   roles: ["Freelancer", "Founder", "Client"],
   skills: ["Product design", "Marketplace UX", "Startup collaboration", "Design systems"],
@@ -105,7 +105,7 @@ export const previewUser: PreviewUser = {
 export const previewTrustBreakdown = [
   { key: "verification", label: "Verification", reason: "Verified professional profile.", value: 100, weight: 20 },
   { key: "profile", label: "Profile completeness", reason: "Profile includes headline, biography, skills, and roles.", value: 100, weight: 15 },
-  { key: "deals", label: "Completed deals", reason: "11 completed deals on perX.", value: 90, weight: 20 },
+  { key: "deals", label: "Completed deals", reason: "11 completed deals on PtahX.", value: 90, weight: 20 },
   { key: "ratings", label: "Ratings", reason: "Fictional reviews average 5.0 stars.", value: 96, weight: 15 },
   { key: "risk", label: "Risk adjustments", reason: "No historical disputes or moderation flags.", value: 100, weight: 10 },
 ];
@@ -205,7 +205,7 @@ export const previewProposals: PreviewProposal[] = [
     amountMinor: 64000000,
     currency: "NGN",
     deliveryDays: 28,
-    description: "Discovery, UX structure, high-fidelity product screens, and design-system handoff for the fictional perX-style onboarding journey.",
+    description: "Discovery, UX structure, high-fidelity product screens, and design-system handoff for the fictional PtahX-style onboarding journey.",
     status: "ACCEPTED",
     revisions: 2,
     createdAt: "2026-06-23T14:00:00Z",
@@ -272,7 +272,7 @@ export const previewActiveDeal: PreviewDeal = {
     { id: "del-1", title: "Discovery delivery", notes: "Uploaded fictional onboarding flow map and trust surface notes.", status: "APPROVED", submitterId: "alex-demo" },
   ],
   ledgerEntries: [
-    { id: "led-1", amountMinor: 64000000, currency: "NGN", note: "Fictional simulated funding state. No real funds are collected or held by perX.", type: "FUNDING_HELD", createdAt: "2026-06-23T15:00:00Z" },
+    { id: "led-1", amountMinor: 64000000, currency: "NGN", note: "Fictional simulated funding state. No real funds are collected or held by PtahX.", type: "FUNDING_HELD", createdAt: "2026-06-23T15:00:00Z" },
     { id: "led-2", amountMinor: 44000000, currency: "NGN", note: "Fictional simulated release state after approval. No real funds were released.", type: "RELEASE", createdAt: "2026-06-24T10:00:00Z" },
   ],
   statusHistory: [

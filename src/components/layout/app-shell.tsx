@@ -46,11 +46,11 @@ export function AppShell({
 
   useEffect(() => {
     document.documentElement.classList.toggle(
-      "perx-distraction-free-active",
+      "ptahx-distraction-free-active",
       distractionFreeCreate,
     );
     return () =>
-      document.documentElement.classList.remove("perx-distraction-free-active");
+      document.documentElement.classList.remove("ptahx-distraction-free-active");
   }, [distractionFreeCreate]);
 
   useEffect(() => {
@@ -58,7 +58,7 @@ export function AppShell({
     let refreshSequence = 0;
     const channel =
       typeof BroadcastChannel !== "undefined"
-        ? new BroadcastChannel("perx-unread-counts")
+        ? new BroadcastChannel("ptahx-unread-counts")
         : null;
 
     const refresh = async () => {
@@ -90,7 +90,7 @@ export function AppShell({
       },
     );
     window.addEventListener("focus", refresh);
-    window.addEventListener("perx-unread-refresh", refresh);
+    window.addEventListener("ptahx-unread-refresh", refresh);
     const interval = window.setInterval(refresh, 15_000);
 
     return () => {
@@ -98,7 +98,7 @@ export function AppShell({
       refreshSequence += 1;
       channel?.close();
       window.removeEventListener("focus", refresh);
-      window.removeEventListener("perx-unread-refresh", refresh);
+      window.removeEventListener("ptahx-unread-refresh", refresh);
       window.clearInterval(interval);
     };
   }, [serverUnreadKey]);
@@ -106,10 +106,10 @@ export function AppShell({
   return (
     <SoftwareKeyboardProvider>
       <div
-        className={`perx-shell relative flex h-dvh overflow-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200 ${directMessageConversation ? "perx-mobile-conversation-active" : ""} ${distractionFreeCreate ? "perx-distraction-free" : ""}`}
+        className={`ptahx-shell relative flex h-dvh overflow-hidden bg-[color:var(--px-page)] text-[color:var(--px-text)] transition-colors duration-200 ${directMessageConversation ? "ptahx-mobile-conversation-active" : ""} ${distractionFreeCreate ? "ptahx-distraction-free" : ""}`}
       >
         <a
-          className="perx-skip-link rounded-lg bg-[color:var(--px-primary)] px-4 py-2 text-sm font-bold text-white shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          className="ptahx-skip-link rounded-lg bg-[color:var(--px-primary)] px-4 py-2 text-sm font-bold text-white shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
           href="#main-content"
         >
           Skip to main content
@@ -170,11 +170,11 @@ export function MobileDashboardDrawer({
     >
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70 lg:hidden" />
-        <Dialog.Content className="perx-sidebar fixed inset-y-0 left-0 z-50 flex h-full w-[min(20rem,calc(100vw-2rem))] flex-col border-r border-white/10 p-4 shadow-2xl focus:outline-none lg:hidden">
+        <Dialog.Content className="ptahx-sidebar fixed inset-y-0 left-0 z-50 flex h-full w-[min(20rem,calc(100vw-2rem))] flex-col border-r border-white/10 p-4 shadow-2xl focus:outline-none lg:hidden">
           <Dialog.Title className="sr-only">Navigation menu</Dialog.Title>
           <div className="flex h-14 shrink-0 items-center justify-between">
             <Dialog.Close asChild>
-              <Link aria-label="PerX Home" href="/app">
+              <Link aria-label="PtahX Home" href="/app">
                 <BrandLogo
                   className="h-9 drop-shadow-[0_2px_8px_rgba(255,255,255,0.12)]"
                   dark

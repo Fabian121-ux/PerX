@@ -39,7 +39,7 @@ describe("admin error boundary", () => {
 
   it("logs only the redacted shape, never the raw error", () => {
     const error = Object.assign(
-      new Error("prisma postgresql://user:secret@db:5432/perx"),
+      new Error("prisma postgresql://user:secret@db:5432/ptahx"),
       { digest: "ref-987" },
     );
     render(<AdminError error={error} reset={vi.fn()} />);
@@ -50,7 +50,7 @@ describe("admin error boundary", () => {
       Record<string, unknown>,
     ];
 
-    expect(label).toBe("[perx:error-boundary]");
+    expect(label).toBe("[ptahx:error-boundary]");
     expect(Object.keys(payload).sort()).toEqual([
       "digest",
       "kind",

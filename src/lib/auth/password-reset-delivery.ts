@@ -3,7 +3,7 @@ import { getServerEnv } from "@/lib/env";
 /**
  * Password reset link delivery.
  *
- * PreX has no email provider configured (audited: no resend/nodemailer/
+ * PtahX has no email provider configured (audited: no resend/nodemailer/
  * sendgrid/postmark integration exists anywhere in the repository). Rather
  * than invent Production credentials or add a provider nobody asked for, this
  * is a narrow seam with one server-side implementation today.

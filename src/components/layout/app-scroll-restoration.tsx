@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-const storagePrefix = "perx-scroll:";
+const storagePrefix = "ptahx-scroll:";
 
 export function AppScrollRestoration() {
   const pathname = usePathname();

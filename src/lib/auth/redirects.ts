@@ -9,8 +9,8 @@ export function getSafeAuthRedirect(
   if (candidate.includes("://")) return fallback;
 
   try {
-    const parsed = new URL(candidate, "https://perx.local");
-    if (parsed.origin !== "https://perx.local") return fallback;
+    const parsed = new URL(candidate, "https://ptahx.local");
+    if (parsed.origin !== "https://ptahx.local") return fallback;
     if (authRoutes.has(parsed.pathname)) return fallback;
     return `${parsed.pathname}${parsed.search}${parsed.hash}`;
   } catch {

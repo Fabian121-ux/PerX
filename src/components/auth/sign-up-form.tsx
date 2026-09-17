@@ -105,7 +105,7 @@ export function SignUpForm({ initialState }: SignUpFormProps) {
           type="checkbox"
         />
         <span>
-          I agree to the PerX{" "}
+          I agree to the PtahX{" "}
           <a
             className="font-semibold text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"
             href="/terms"

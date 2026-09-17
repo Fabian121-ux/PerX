@@ -247,10 +247,10 @@ export function MessageWorkspace({
   const [isEditPending, startEditTransition] = useTransition();
   const [openActionMenuMessageId, setOpenActionMenuMessageId] = useState("");
   const [dealOfferOpen, setDealOfferOpen] = useState(false);
-  const draftStorageKey = `perx:messages:${currentUserId}:drafts`;
-  const filterStorageKey = `perx:messages:${currentUserId}:filter`;
-  const listScrollStorageKey = `perx:messages:${currentUserId}:list-scroll`;
-  const queryStorageKey = `perx:messages:${currentUserId}:query`;
+  const draftStorageKey = `ptahx:messages:${currentUserId}:drafts`;
+  const filterStorageKey = `ptahx:messages:${currentUserId}:filter`;
+  const listScrollStorageKey = `ptahx:messages:${currentUserId}:list-scroll`;
+  const queryStorageKey = `ptahx:messages:${currentUserId}:query`;
   const conversationButtonRefs = useRef<
     Record<string, HTMLButtonElement | null>
   >({});
@@ -433,7 +433,7 @@ export function MessageWorkspace({
   }, [draftStorageKey, filterStorageKey, queryStorageKey]);
 
   useEffect(() => {
-    const className = "perx-mobile-conversation-active";
+    const className = "ptahx-mobile-conversation-active";
     document.documentElement.classList.toggle(className, mobileDetailOpen);
     return () => document.documentElement.classList.remove(className);
   }, [mobileDetailOpen]);
@@ -684,7 +684,7 @@ export function MessageWorkspace({
           ]),
         );
       }
-      window.dispatchEvent(new Event("perx-unread-refresh"));
+      window.dispatchEvent(new Event("ptahx-unread-refresh"));
     },
   );
 
@@ -751,7 +751,7 @@ export function MessageWorkspace({
         setActiveId(conversationId);
         setMobileDetailOpen(true);
         document.documentElement.classList.add(
-          "perx-mobile-conversation-active",
+          "ptahx-mobile-conversation-active",
         );
       } catch {
         if (requestId !== conversationOpenRequestRef.current) return;
@@ -764,9 +764,9 @@ export function MessageWorkspace({
     const handlePopState = (event: PopStateEvent) => {
       const conversationId = (
         event.state as {
-          perxMessagesConversationId?: unknown;
+          ptahxMessagesConversationId?: unknown;
         } | null
-      )?.perxMessagesConversationId;
+      )?.ptahxMessagesConversationId;
       if (
         typeof conversationId === "string" &&
         syncedConversationsRef.current.some(
@@ -794,9 +794,9 @@ export function MessageWorkspace({
     if (backHref) return;
     const conversationId = (
       window.history.state as {
-        perxMessagesConversationId?: unknown;
+        ptahxMessagesConversationId?: unknown;
       } | null
-    )?.perxMessagesConversationId;
+    )?.ptahxMessagesConversationId;
     if (
       typeof conversationId === "string" &&
       !mobileDetailOpenRef.current &&
@@ -1063,7 +1063,7 @@ export function MessageWorkspace({
           void reconcileConversationSnapshot(incoming);
           stopFallback({ resetBackoff: true });
           setLiveState("live");
-          window.dispatchEvent(new Event("perx-unread-refresh"));
+          window.dispatchEvent(new Event("ptahx-unread-refresh"));
         }
       });
       eventSource.addEventListener("conversation-message", (event) => {
@@ -1635,7 +1635,7 @@ export function MessageWorkspace({
               : conversation,
           ),
         );
-        window.dispatchEvent(new Event("perx-unread-refresh"));
+        window.dispatchEvent(new Event("ptahx-unread-refresh"));
       } catch {
         if (!stopped && retryCount < 3) {
           const retryDelay = 5000 * 2 ** retryCount;
@@ -1694,7 +1694,7 @@ export function MessageWorkspace({
       // history entry is still pushed once below, guarded by `mobileDetailOpen`.
       if (isMobileViewport) {
         document.documentElement.classList.add(
-          "perx-mobile-conversation-active",
+          "ptahx-mobile-conversation-active",
         );
         setMobileDetailOpen(true);
       }
@@ -1706,7 +1706,7 @@ export function MessageWorkspace({
         setActivatedConversationId(previousActivatedId);
         if (isMobileViewport && !previousMobileDetailOpen) {
           document.documentElement.classList.remove(
-            "perx-mobile-conversation-active",
+            "ptahx-mobile-conversation-active",
           );
           setMobileDetailOpen(false);
         }
@@ -1813,7 +1813,7 @@ export function MessageWorkspace({
       window.history.pushState(
         {
           ...window.history.state,
-          perxMessagesConversationId: conversationId,
+          ptahxMessagesConversationId: conversationId,
         },
         "",
         window.location.href,
@@ -1822,7 +1822,7 @@ export function MessageWorkspace({
     }
     setActiveId(conversationId);
     if (mobile) {
-      document.documentElement.classList.add("perx-mobile-conversation-active");
+      document.documentElement.classList.add("ptahx-mobile-conversation-active");
       setMobileDetailOpen(true);
     }
   };
@@ -1970,7 +1970,7 @@ export function MessageWorkspace({
               : entry,
           ),
         }));
-        window.dispatchEvent(new Event("perx-unread-refresh"));
+        window.dispatchEvent(new Event("ptahx-unread-refresh"));
       }
     });
   };
@@ -2220,7 +2220,7 @@ export function MessageWorkspace({
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/55">
-                PerX workspace
+                PtahX workspace
               </p>
               <h1 className="mt-1 text-xl font-black">Messages</h1>
               <p className="truncate text-xs text-white/65">
@@ -2440,7 +2440,7 @@ export function MessageWorkspace({
                     {presenceLabel(activeConversation.participantPresence) ??
                       activeConversation.participantRole ??
                       activeConversation.opportunityTitle ??
-                      "PerX conversation"}
+                      "PtahX conversation"}
                   </span>
                 </span>
               </button>
@@ -2449,7 +2449,7 @@ export function MessageWorkspace({
               {userRoles !== undefined ? (
                 <FeatureDirectory
                   closeLabel="Hide app navigation"
-                  description="Move around PerX without leaving or reloading this conversation."
+                  description="Move around PtahX without leaving or reloading this conversation."
                   onOpenChange={preserveHistoryAcrossAppNavigation}
                   title="App navigation"
                   userRoles={userRoles}
@@ -2516,7 +2516,7 @@ export function MessageWorkspace({
                       "Professional conversation"}
                   </p>
                   <p className="mt-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
-                    Keep important conversations and agreements on PerX. This
+                    Keep important conversations and agreements on PtahX. This
                     helps preserve records that may support dispute resolution,
                     safety reviews and account protection.{" "}
                     <Link
@@ -3260,7 +3260,7 @@ function ConversationEventCard({
             </span>
             <div className="min-w-0">
               <p className="text-[10px] font-black uppercase tracking-[0.14em] opacity-65">
-                PerX system record
+                PtahX system record
               </p>
               <h3 className="truncate text-sm font-black">{title}</h3>
             </div>
@@ -3291,7 +3291,7 @@ function ConversationEventCard({
               : accepted
                 ? "Acceptance applies only to this exact locked version and is retained in the Deal history."
                 : dealEvent
-                  ? "This is an agreement record. Online payment is not active, and PerX has not collected or held funds."
+                  ? "This is an agreement record. Online payment is not active, and PtahX has not collected or held funds."
                   : objection
                     ? "The submitted terms remain unchanged. The proposal creator can prepare a separate revision."
                     : rejected
@@ -3302,7 +3302,7 @@ function ConversationEventCard({
             <p className="text-[10px] font-bold text-[color:var(--px-text-muted)]">
               {event.actorName
                 ? `Recorded by ${event.actorName}`
-                : "Recorded by PerX"}
+                : "Recorded by PtahX"}
             </p>
             {event.dealHref ? (
               <Link
@@ -3366,7 +3366,7 @@ function DealSummaryCard({
           </p>
           <p className="mt-1 max-w-xl text-xs leading-5 text-[color:var(--px-text-muted)]">
             {simulated
-              ? "Simulated agreement-state tracking only. PerX has not collected, held, transferred, or released funds."
+              ? "Simulated agreement-state tracking only. PtahX has not collected, held, transferred, or released funds."
               : "Online payment is not active. This card records agreed terms only; no funds have been collected or held."}
           </p>
         </div>
@@ -3628,12 +3628,12 @@ function ConversationDetailsContent({
               {conversation.participantName}
             </h3>
             <p className="break-all text-xs text-[color:var(--px-text-muted)]">
-              @{conversation.participantUsername ?? "perx-member"}
+              @{conversation.participantUsername ?? "ptahx-member"}
             </p>
             <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
               {presenceLabel(conversation.participantPresence) ??
                 conversation.participantRole ??
-                "PerX member"}
+                "PtahX member"}
             </p>
             {profileHref ? (
               <Link

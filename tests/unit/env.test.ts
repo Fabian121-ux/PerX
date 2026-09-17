@@ -45,8 +45,8 @@ function setDatabaseEnvironment() {
 
 function setStrictEnvironment() {
   setDatabaseEnvironment();
-  process.env.NEXT_PUBLIC_APP_URL = "https://staging.perx.example";
-  process.env.SESSION_COOKIE_NAME = "perx_session";
+  process.env.NEXT_PUBLIC_APP_URL = "https://staging.ptahx.example";
+  process.env.SESSION_COOKIE_NAME = "ptahx_session";
   process.env.AUTH_SESSION_DAYS = "30";
   process.env.UPLOAD_MAX_BYTES = "5242880";
   process.env.LOG_LEVEL = "info";
@@ -112,7 +112,7 @@ describe("Data Mode Resolution", () => {
   it("allows production without an error monitoring DSN", () => {
     setDatabaseEnvironment();
     process.env.VERCEL_ENV = "production";
-    process.env.NEXT_PUBLIC_APP_URL = "https://perx.example";
+    process.env.NEXT_PUBLIC_APP_URL = "https://ptahx.example";
 
     expect(getServerEnv().ERROR_MONITORING_DSN).toBeUndefined();
   });
@@ -120,7 +120,7 @@ describe("Data Mode Resolution", () => {
   it("validates a configured error monitoring DSN", () => {
     setDatabaseEnvironment();
     process.env.VERCEL_ENV = "production";
-    process.env.NEXT_PUBLIC_APP_URL = "https://perx.example";
+    process.env.NEXT_PUBLIC_APP_URL = "https://ptahx.example";
     process.env.ERROR_MONITORING_DSN = "not-a-url";
 
     expect(() => getServerEnv()).toThrow();
@@ -129,7 +129,7 @@ describe("Data Mode Resolution", () => {
   it("still requires PERX_DATA_MODE for strict deployments", () => {
     setDatabaseEnvironment();
     process.env.VERCEL_ENV = "production";
-    process.env.NEXT_PUBLIC_APP_URL = "https://perx.example";
+    process.env.NEXT_PUBLIC_APP_URL = "https://ptahx.example";
     delete process.env.PERX_DATA_MODE;
 
     expect(() => getServerEnv()).toThrow(

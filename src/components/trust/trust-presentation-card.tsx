@@ -96,7 +96,7 @@ export function TrustPresentationCard({
               Numeric score not published
             </p>
             <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">
-              PerX shows explainable evidence levels until an authoritative,
+              PtahX shows explainable evidence levels until an authoritative,
               audited scoring methodology is available.
             </p>
           </div>

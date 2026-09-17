@@ -65,7 +65,7 @@ export type AdminDealSummary = {
   valueMinor: bigint;
 };
 
-export interface PerXOpportunityProvider {
+export interface PtahXOpportunityProvider {
   getOpportunityFeed(filters?: { category?: string; q?: string; type?: string }): Promise<any[]>;
   getOpportunityBySlug(slug: string): Promise<any>;
   getCategories(): Promise<any[]>;
@@ -73,7 +73,7 @@ export interface PerXOpportunityProvider {
   getMyOpportunitiesPage(userId: string, params?: CursorPageParams): Promise<CursorPage<any>>;
 }
 
-export interface PerXAppProvider {
+export interface PtahXAppProvider {
   getDashboardMetrics(userId: string): Promise<any>;
   getUserProposals(userId: string, direction: "sent" | "received"): Promise<any[]>;
   getUserProposalsPage(
@@ -95,11 +95,11 @@ export interface PerXAppProvider {
   ): Promise<CursorPage<any>>;
 }
 
-export interface PerXProfileProvider {
+export interface PtahXProfileProvider {
   getPublicProfile(username: string): Promise<any>;
 }
 
-export interface PerXAdminProvider {
+export interface PtahXAdminProvider {
   getAdminDealsPage(params?: CursorPageParams): Promise<CursorPage<AdminDealSummary>>;
   getAdminMetrics(): Promise<any>;
   getAdminList(kind: AdminListKind): Promise<any[]>;
@@ -107,9 +107,9 @@ export interface PerXAdminProvider {
   getAdminUsersPage(params?: CursorPageParams): Promise<CursorPage<AdminUserSummary>>;
 }
 
-export interface PerXDataProvider {
-  opportunities: PerXOpportunityProvider;
-  app: PerXAppProvider;
-  profiles: PerXProfileProvider;
-  admin: PerXAdminProvider;
+export interface PtahXDataProvider {
+  opportunities: PtahXOpportunityProvider;
+  app: PtahXAppProvider;
+  profiles: PtahXProfileProvider;
+  admin: PtahXAdminProvider;
 }

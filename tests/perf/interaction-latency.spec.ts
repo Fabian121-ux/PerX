@@ -18,7 +18,7 @@ import crypto from "node:crypto";
 
 const BASE = process.env.PERF_BASE_URL ?? "http://127.0.0.1:3200";
 const TEST_DB = process.env.TEST_DATABASE_URL!;
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 
 const results: Record<string, Record<string, number>> = {};
 
@@ -73,7 +73,7 @@ for (const width of [375, 390, 430, 1280]) {
   }) => {
     const page = await browser.newPage({ viewport: { width, height: 800 } });
     try {
-      await signIn(page, "alice-test@perx.test");
+      await signIn(page, "alice-test@ptahx.test");
 
       // --- Messages route open ---
       let t = performance.now();
@@ -152,8 +152,8 @@ test("Create gate (non-Trader) and Create form (Trader)", async ({
   browser,
 }) => {
   for (const [label, email] of [
-    ["non-trader", "carol-test@perx.test"],
-    ["trader", "alice-test@perx.test"],
+    ["non-trader", "carol-test@ptahx.test"],
+    ["trader", "alice-test@ptahx.test"],
   ] as const) {
     const page = await browser.newPage({
       viewport: { height: 800, width: 390 },
@@ -188,7 +188,7 @@ test("Create invalid publish shows field errors (local vs round trip)", async ({
 }) => {
   const page = await browser.newPage({ viewport: { height: 800, width: 390 } });
   try {
-    await signIn(page, "alice-test@perx.test");
+    await signIn(page, "alice-test@ptahx.test");
     await page.goto(
       `${BASE}/app/opportunities/new?type=SERVICE&category=services`,
     );
@@ -246,7 +246,7 @@ test("relationship action optimistic ack vs server persistence", async ({
   const page = await browser.newPage({ viewport: { height: 800, width: 390 } });
   try {
     const ids = await pool.query<{ id: string; email: string }>(
-      `SELECT id, email FROM "User" WHERE email IN ('carol-test@perx.test','bob-test@perx.test')`,
+      `SELECT id, email FROM "User" WHERE email IN ('carol-test@ptahx.test','bob-test@ptahx.test')`,
     );
     const carol = ids.rows.find((r) => r.email.startsWith("carol"))!.id;
     const bob = ids.rows.find((r) => r.email.startsWith("bob"))!.id;
@@ -257,7 +257,7 @@ test("relationship action optimistic ack vs server persistence", async ({
       [carol, bob],
     );
 
-    await signIn(page, "carol-test@perx.test");
+    await signIn(page, "carol-test@ptahx.test");
     await page.goto(`${BASE}/u/bob_test`);
     const root = page.locator("[data-relationship-state]").first();
     await expect(root).toHaveAttribute("data-relationship-state", "UNKNOWN");

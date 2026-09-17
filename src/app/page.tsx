@@ -144,7 +144,7 @@ export default async function Home() {
                 Discover trusted people, businesses and opportunities.
               </h1>
               <p className="mt-5 max-w-2xl text-lg leading-8 text-[color:var(--px-text-muted)]">
-                PerX helps people find work, collaborators, services, businesses
+                PtahX helps people find work, collaborators, services, businesses
                 and opportunity relationships with clearer trust signals and
                 beta-safe agreement workflows.
               </p>
@@ -162,7 +162,7 @@ export default async function Home() {
                   placeholder="Search opportunities, people and startups..."
                 />
                 <button
-                  className="perx-btn-primary inline-flex min-h-11 items-center justify-center rounded-[var(--px-radius-sm)] px-5 py-2 text-sm font-semibold"
+                  className="ptahx-btn-primary inline-flex min-h-11 items-center justify-center rounded-[var(--px-radius-sm)] px-5 py-2 text-sm font-semibold"
                   type="submit"
                 >
                   <Search aria-hidden className="mr-2" size={17} />
@@ -193,8 +193,8 @@ export default async function Home() {
               </div>
             </div>
 
-            <div className="perx-card relative grid gap-4 overflow-hidden p-4">
-              <div className="perx-hero-card rounded-[var(--px-radius)] p-5">
+            <div className="ptahx-card relative grid gap-4 overflow-hidden p-4">
+              <div className="ptahx-hero-card rounded-[var(--px-radius)] p-5">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wide text-blue-100">
@@ -261,7 +261,7 @@ export default async function Home() {
                       <span className="text-xs font-semibold text-[color:var(--px-text-muted)]">
                         {item.label}
                       </span>
-                      <span className="perx-soft-tile grid h-9 w-9 place-items-center rounded-[var(--px-radius-sm)]">
+                      <span className="ptahx-soft-tile grid h-9 w-9 place-items-center rounded-[var(--px-radius-sm)]">
                         <item.icon aria-hidden size={17} />
                       </span>
                     </div>
@@ -296,11 +296,11 @@ export default async function Home() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {activityCards.map((item) => (
               <a
-                className="perx-card group grid min-h-[180px] gap-4 p-5 transition hover:border-[color:var(--px-primary)] hover:shadow-[var(--px-shadow-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                className="ptahx-card group grid min-h-[180px] gap-4 p-5 transition hover:border-[color:var(--px-primary)] hover:shadow-[var(--px-shadow-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                 href={item.href.replace("/discover", discoveryHref)}
                 key={item.label}
               >
-                <span className="perx-soft-tile grid h-11 w-11 place-items-center rounded-[var(--px-radius-sm)]">
+                <span className="ptahx-soft-tile grid h-11 w-11 place-items-center rounded-[var(--px-radius-sm)]">
                   <item.icon aria-hidden size={21} />
                 </span>
                 <span>
@@ -319,7 +319,7 @@ export default async function Home() {
         <section className="mx-auto grid max-w-7xl gap-4 px-4 py-12 sm:px-6 lg:grid-cols-4 lg:px-8">
           {pillars.map((pillar) => (
             <Card key={pillar.label}>
-              <span className="perx-soft-tile grid h-11 w-11 place-items-center rounded-[var(--px-radius-sm)]">
+              <span className="ptahx-soft-tile grid h-11 w-11 place-items-center rounded-[var(--px-radius-sm)]">
                 <pillar.icon aria-hidden size={22} />
               </span>
               <h2 className="mt-4 font-semibold text-[color:var(--px-text)]">
@@ -336,13 +336,13 @@ export default async function Home() {
           <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--px-primary)]">
-                How perX works
+                How PtahX works
               </p>
               <h2 className="mt-3 text-3xl font-black text-[color:var(--px-text)]">
                 Built around the real workflow
               </h2>
               <p className="mt-3 text-sm leading-6 text-[color:var(--px-text-muted)]">
-                perX keeps communication, proposal terms, deal milestones,
+                PtahX keeps communication, proposal terms, deal milestones,
                 simulated release states and reputation connected instead of
                 scattering them across disconnected tools.
               </p>
@@ -373,7 +373,7 @@ export default async function Home() {
         <PartnershipAndMarketplacePreview discoveryHref={discoveryHref} />
 
         <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-          <div className="perx-hero-card grid gap-6 rounded-[28px] p-8 sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="ptahx-hero-card grid gap-6 rounded-[28px] p-8 sm:p-10 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <p className="text-sm font-bold uppercase tracking-wide text-blue-100">
                 Trust and deal workflow layer
@@ -386,7 +386,7 @@ export default async function Home() {
                 Start with discovery, then use structured proposals, deal
                 workspaces, milestone tracking and simulated release states.
                 Payment and escrow functionality is not active during this beta,
-                and no real funds are collected or held by perX.
+                and no real funds are collected or held by PtahX.
               </p>
             </div>
             <ButtonLink href="/how-it-works" variant="secondary">
@@ -398,7 +398,7 @@ export default async function Home() {
       <footer className="border-t border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 text-sm text-[color:var(--px-text-muted)] sm:flex-row sm:items-center sm:justify-between">
           <p>
-            perX connects opportunities, people, trust and structured deals.
+            PtahX connects opportunities, people, trust and structured deals.
           </p>
           <div className="flex gap-4">
             <a className="hover:text-[color:var(--px-primary)]" href="/privacy">
@@ -520,7 +520,7 @@ async function FeaturedPeople({ discoveryHref }: { discoveryHref: string }) {
                   </Badge>
                 </div>
                 <p className="mt-1 text-sm font-semibold text-[color:var(--px-text-muted)]">
-                  {profile.roles[0] ?? "PerX member"}
+                  {profile.roles[0] ?? "PtahX member"}
                 </p>
                 <p className="mt-3 line-clamp-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
                   {profile.headline}
@@ -531,7 +531,7 @@ async function FeaturedPeople({ discoveryHref }: { discoveryHref: string }) {
           ) : (
             <div className="md:col-span-2">
               <EmptyState
-                body="No new people to recommend yet. More members will appear here as the PerX community grows."
+                body="No new people to recommend yet. More members will appear here as the PtahX community grows."
                 title="No featured people yet"
               />
             </div>
@@ -550,7 +550,7 @@ function PartnershipAndMarketplacePreview({
   return (
     <section className="mx-auto grid max-w-7xl gap-5 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:px-8">
       <Card>
-        <span className="perx-soft-tile grid h-11 w-11 place-items-center rounded-[var(--px-radius-sm)]">
+        <span className="ptahx-soft-tile grid h-11 w-11 place-items-center rounded-[var(--px-radius-sm)]">
           <Handshake aria-hidden size={21} />
         </span>
         <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-[color:var(--px-primary)]">
@@ -572,7 +572,7 @@ function PartnershipAndMarketplacePreview({
         </ButtonLink>
       </Card>
       <Card>
-        <span className="perx-soft-tile grid h-11 w-11 place-items-center rounded-[var(--px-radius-sm)]">
+        <span className="ptahx-soft-tile grid h-11 w-11 place-items-center rounded-[var(--px-radius-sm)]">
           <Building2 aria-hidden size={21} />
         </span>
         <p className="mt-4 text-sm font-semibold uppercase tracking-wide text-[color:var(--px-primary)]">

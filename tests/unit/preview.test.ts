@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-import { getPerXDataProvider } from "@/lib/data/provider";
+import { getPtahXDataProvider } from "@/lib/data/provider";
 import { assertDatabaseConfiguration } from "@/lib/env";
 import { mockProvider } from "@/lib/data/providers/mock-provider";
 import { setCachedDataModeForTest } from "@/lib/env";
@@ -20,18 +20,18 @@ describe("Preview Isolation & Provider Context", () => {
   });
 
   it("should return the static mockProvider when context mode is 'preview'", async () => {
-    const provider = await getPerXDataProvider({ mode: "preview" });
+    const provider = await getPtahXDataProvider({ mode: "preview" });
     expect(provider).toBe(mockProvider);
   });
 
   it("should not invoke assertDatabaseConfiguration when in preview mode", async () => {
-    await getPerXDataProvider({ mode: "preview" });
+    await getPtahXDataProvider({ mode: "preview" });
     expect(assertDatabaseConfiguration).not.toHaveBeenCalled();
   });
 
   it("should return mockProvider when environment is mock", async () => {
     setCachedDataModeForTest("mock");
-    const provider = await getPerXDataProvider();
+    const provider = await getPtahXDataProvider();
     expect(provider).toBe(mockProvider);
   });
 

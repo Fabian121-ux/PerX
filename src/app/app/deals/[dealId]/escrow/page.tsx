@@ -15,7 +15,7 @@ export default async function EscrowPage({ params }: { params: Promise<{ dealId:
   if (!deal) notFound();
 
   return (
-    <AppSection description="Payment and escrow functionality is not active during this beta. No real funds are collected or held by perX; this page only shows simulated deal-state records." title="Simulated escrow status">
+    <AppSection description="Payment and escrow functionality is not active during this beta. No real funds are collected or held by PtahX; this page only shows simulated deal-state records." title="Simulated escrow status">
       <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
         <Card>
           <p className="text-sm font-medium text-slate-500">Current state</p>

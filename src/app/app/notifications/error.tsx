@@ -13,7 +13,7 @@ export default function NotificationsError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[perx:error-boundary]", {
+    console.error("[ptahx:error-boundary]", {
       digest: error.digest,
       kind: classifyError(error),
       route: "/app/notifications",

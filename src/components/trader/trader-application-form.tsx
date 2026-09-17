@@ -235,13 +235,13 @@ export function TraderApplicationForm({
         data-trader-step="2"
       >
         <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">
-          A reviewer checks that listings match what PerX allows. We do not ask
+          A reviewer checks that listings match what PtahX allows. We do not ask
           for identity documents.
         </p>
         <ul className="grid gap-2 text-sm text-[color:var(--px-text-muted)]">
           <li>• Publish only opportunities you can genuinely deliver.</li>
           <li>• Keep terms accurate and honour what you agree.</li>
-          <li>• Published content remains subject to PerX moderation.</li>
+          <li>• Published content remains subject to PtahX moderation.</li>
         </ul>
       </div>
 

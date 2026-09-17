@@ -259,7 +259,7 @@ export async function approveDeliveryAction(formData: FormData) {
         dealId,
         milestoneId: milestone.id,
         note: simulatedSettlement
-          ? "Approved in simulated release flow. No real funds are collected or held by PerX."
+          ? "Approved in simulated release flow. No real funds are collected or held by PtahX."
           : "Delivery approved. Online payment is not active; no release was recorded.",
       },
     });
@@ -280,7 +280,7 @@ export async function approveDeliveryAction(formData: FormData) {
           currency: deal.currency,
           dealId,
           idempotencyKey: `ledger:release:${dealId}:milestone:${milestone.id}`,
-          note: "Simulated release state only. No real funds are collected, held, transferred, or released by PerX.",
+          note: "Simulated release state only. No real funds are collected, held, transferred, or released by PtahX.",
           type: "RELEASE",
         },
       });

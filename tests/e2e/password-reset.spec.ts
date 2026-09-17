@@ -14,7 +14,7 @@ async function createResetUser() {
   const pool = new Pool({ connectionString: TEST_DB, ssl: false });
   const runId = crypto.randomUUID().replaceAll("-", "");
   const id = testCuid();
-  const email = `reset_${runId}@perx.test`;
+  const email = `reset_${runId}@ptahx.test`;
   try {
     // bcrypt hash of "OriginalPass1" at cost 10.
     const originalHash = await import("bcryptjs").then((m) =>
@@ -88,7 +88,7 @@ test("forgot password returns a neutral response for unknown emails", async ({
   const page = await browser.newPage();
   try {
     await page.goto(`${BASE}/password-recovery`);
-    await page.getByLabel("Email").fill("definitely-not-a-user@perx.test");
+    await page.getByLabel("Email").fill("definitely-not-a-user@ptahx.test");
     await page.getByRole("button", { name: /send reset link/i }).click();
 
     // Must not disclose whether the account exists.

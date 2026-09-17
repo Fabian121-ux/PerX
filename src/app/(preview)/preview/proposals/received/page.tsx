@@ -9,7 +9,7 @@ export default function PreviewProposalsReceivedPage() {
   const receivedProposals = previewProposals.filter((p) => p.senderId !== "alex-demo");
 
   return (
-    <AppSection description="Preview Mode: Proposals received from other perX members for your opportunities." title="Proposals">
+    <AppSection description="Preview Mode: Proposals received from other PtahX members for your opportunities." title="Proposals">
       {/* Tabs */}
       <div className="flex gap-4 border-b border-slate-100 pb-3 mb-6">
         <Link className="text-sm font-semibold text-[color:var(--px-text-muted)] hover:text-[color:var(--px-text)] pb-3" href="/preview/proposals/sent">

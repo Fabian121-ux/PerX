@@ -1,4 +1,4 @@
-# PerX UI/UX Page Classification
+# PtahX UI/UX Page Classification
 
 Date: 2026-07-17
 
@@ -8,7 +8,7 @@ This classification supports the reference-led enhancement pass. It does not rem
 
 | Route | Classification | Notes |
 | --- | --- | --- |
-| `/` | ENHANCE | Keep PerX brand and search-led homepage; reduce fake metrics and visual noise. |
+| `/` | ENHANCE | Keep PtahX brand and search-led homepage; reduce fake metrics and visual noise. |
 | `/discover` | ENHANCE | Primary public discovery surface; align with Contra-style people/work discovery and mobile filters. |
 | `/opportunities/[slug]` | ENHANCE | Use Wellfound-style listing hierarchy with owner, compensation, location and response action. |
 | `/categories/[slug]` | CONSOLIDATE | Fold into discovery category filtering over time. |

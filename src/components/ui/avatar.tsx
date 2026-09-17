@@ -3,7 +3,7 @@ import Image from "next/image";
 /**
  * Shared avatar.
  *
- * Avatars are the most repeated image in PerX - feed cards, profiles, message
+ * Avatars are the most repeated image in PtahX - feed cards, profiles, message
  * lists, network results, settings. They were previously rendered by a mix of
  * raw `<img>` tags (bypassing optimization entirely) and ad-hoc `next/image`
  * calls with inconsistent sizing, so a 48px avatar could download a 5 MB

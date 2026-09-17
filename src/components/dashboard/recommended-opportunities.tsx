@@ -33,7 +33,7 @@ export function RecommendedOpportunities({
       <div className="flex items-end justify-between gap-4 px-1 sm:px-0">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.14em] text-[color:var(--px-primary)]">
-            Across PerX
+            Across PtahX
           </p>
           <h2
             className="mt-1 text-xl font-black tracking-tight text-[color:var(--px-text)]"

@@ -19,7 +19,7 @@ const viewports = [
 
 async function openDashboard(page, collapsed = false) {
   await page.addInitScript((isCollapsed) => {
-    window.localStorage.setItem("perx-sidebar-collapsed", String(isCollapsed));
+    window.localStorage.setItem("ptahx-sidebar-collapsed", String(isCollapsed));
   }, collapsed);
   const response = await page.goto(url, { waitUntil: "networkidle" });
   if (!response?.ok()) {

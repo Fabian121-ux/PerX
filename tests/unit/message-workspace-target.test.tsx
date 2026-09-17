@@ -576,7 +576,7 @@ describe("message workspace exact targets", () => {
     expect(composer.className).toContain("overflow-x-hidden");
     expect(composer.className).toContain("[overflow-wrap:anywhere]");
 
-    const longUrl = `https://perx.test/${"unbroken".repeat(30)}`;
+    const longUrl = `https://ptahx.test/${"unbroken".repeat(30)}`;
     contentHeight = 92;
     fireEvent.input(composer, {
       target: { value: `A long paragraph that wraps naturally ${longUrl}` },
@@ -1473,7 +1473,7 @@ describe("message workspace exact targets", () => {
       target: { value: "First user's private draft" },
     });
     expect(
-      window.sessionStorage.getItem("perx:messages:user-1:drafts"),
+      window.sessionStorage.getItem("ptahx:messages:user-1:drafts"),
     ).toContain("First user's private draft");
     firstUser.unmount();
 
@@ -1786,7 +1786,7 @@ describe("message workspace exact targets", () => {
     await act(async () => {
       window.dispatchEvent(
         new PopStateEvent("popstate", {
-          state: { perxMessagesConversationId: "conversation-history" },
+          state: { ptahxMessagesConversationId: "conversation-history" },
         }),
       );
       await Promise.resolve();
@@ -1804,7 +1804,7 @@ describe("message workspace exact targets", () => {
 
   it("restores a same-URL history conversation after a workspace remount", async () => {
     window.history.replaceState(
-      { perxMessagesConversationId: "conversation-history" },
+      { ptahxMessagesConversationId: "conversation-history" },
       "",
       "/app/messages",
     );

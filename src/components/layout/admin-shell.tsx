@@ -39,7 +39,7 @@ export function AdminShell({
           <Link
             className="inline-flex items-center gap-3"
             href="/admin"
-            aria-label="perX admin"
+            aria-label="PtahX admin"
           >
             <BrandLogo className="h-10" dark />
             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white/80">

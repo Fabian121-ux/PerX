@@ -16,13 +16,13 @@ export function proxy(request: NextRequest) {
   }
 
   if (request.headers.has("x-middleware-subrequest")) {
-    response.headers.set("x-perx-blocked-header", "x-middleware-subrequest");
+    response.headers.set("x-ptahx-blocked-header", "x-middleware-subrequest");
   }
 
   const { pathname } = request.nextUrl;
   const isProtectedPage = pathname.startsWith("/app");
   
-  const cookieName = process.env.SESSION_COOKIE_NAME || "perx_session";
+  const cookieName = process.env.SESSION_COOKIE_NAME || "ptahx_session";
   const sessionCookie = request.cookies.get(cookieName);
 
   if (!sessionCookie && isProtectedPage) {

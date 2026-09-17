@@ -51,7 +51,7 @@ export default async function SignInPage({
   return (
     <PublicPageShell>
       <main className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8">
-        <section className="perx-hero-card hidden rounded-[24px] p-8 shadow-[var(--px-shadow-strong)] lg:grid">
+        <section className="ptahx-hero-card hidden rounded-[24px] p-8 shadow-[var(--px-shadow-strong)] lg:grid">
           <div>
             <BrandLogo className="h-12" dark />
             <div className="mt-10 max-w-sm">
@@ -88,7 +88,7 @@ export default async function SignInPage({
               Sign in
             </p>
             <h1 className="mt-2 text-3xl font-bold text-[color:var(--px-text)]">
-              Welcome back to perX
+              Welcome back to PtahX
             </h1>
 
             {didResetPassword && !error && (

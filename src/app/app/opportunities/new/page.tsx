@@ -23,7 +23,7 @@ const errors: Record<string, string> = {
   "property-listing-type": "Choose a property listing type.",
   "property-type": "Choose a property type.",
   "type-unavailable":
-    "That post type is not available for publishing on PerX yet.",
+    "That post type is not available for publishing on PtahX yet.",
 };
 
 export default async function NewOpportunityPage({
@@ -35,7 +35,7 @@ export default async function NewOpportunityPage({
     Authenticated first, authorized second.
 
     This route previously called `requireCapabilityOrNotFound`, so a signed-in
-    member without trading access was told "This PerX page is not available" -
+    member without trading access was told "This PtahX page is not available" -
     the page does exist, they simply have not been granted access yet, and the
     404 gave them no way to find that out.
 
@@ -56,7 +56,7 @@ export default async function NewOpportunityPage({
       // Do not collapse a dependency failure into "no application". A user
       // could already be pending review, and inviting them to apply again would
       // misrepresent their state. Keep logs opaque: no Prisma/connection text.
-      console.error("[perx:create-trader-application]", {
+      console.error("[ptahx:create-trader-application]", {
         operation: "getOwnTraderApplication",
         route: "/app/opportunities/new",
         timestamp: new Date().toISOString(),

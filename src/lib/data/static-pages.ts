@@ -3,7 +3,7 @@ export const staticPages = {
     eyebrow: "About",
     sections: [
       {
-        body: "perX is a global trust-based commerce ecosystem. Its purpose is to improve how value is exchanged across industries, markets and borders through trusted, transparent, accountable and reliable systems.",
+        body: "PtahX is a global trust-based commerce ecosystem. Its purpose is to improve how value is exchanged across industries, markets and borders through trusted, transparent, accountable and reliable systems.",
         heading: "Building Trust. Enabling Value. Connecting Opportunity.",
       },
       {
@@ -11,13 +11,13 @@ export const staticPages = {
         heading: "Built to expand carefully",
       },
     ],
-    title: "About perX",
+    title: "About PtahX",
   },
   help: {
     eyebrow: "Help",
     sections: [
       {
-        body: "Create one account, complete your profile, then discover or publish opportunities based on the activities you actually complete on perX.",
+        body: "Create one account, complete your profile, then discover or publish opportunities based on the activities you actually complete on PtahX.",
         heading: "Getting started",
       },
       {
@@ -39,7 +39,7 @@ export const staticPages = {
         heading: "From discovery to reputation",
       },
     ],
-    title: "How perX works",
+    title: "How PtahX works",
   },
   privacy: {
     eyebrow: "Privacy",
@@ -59,7 +59,7 @@ export const staticPages = {
     eyebrow: "Terms",
     sections: [
       {
-        body: "perX provides software for opportunity discovery, structured collaboration, reputation, and simulated release-state tracking. Live regulated payments and escrow are not enabled during this beta, and no real funds are collected or held by perX.",
+        body: "PtahX provides software for opportunity discovery, structured collaboration, reputation, and simulated release-state tracking. Live regulated payments and escrow are not enabled during this beta, and no real funds are collected or held by PtahX.",
         heading: "Service scope",
       },
       {

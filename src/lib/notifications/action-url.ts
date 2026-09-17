@@ -90,8 +90,8 @@ export function normalizeNotificationActionUrl(
     return null;
 
   try {
-    const url = new URL(value, "https://perx.local");
-    if (url.origin !== "https://perx.local") return null;
+    const url = new URL(value, "https://ptahx.local");
+    if (url.origin !== "https://ptahx.local") return null;
     if (
       url.pathname.startsWith("/api/") ||
       url.pathname.startsWith("/admin/")
@@ -111,7 +111,7 @@ function pathSegments(path: string) {
 
 function parseDynamicDestination(path: string): DynamicDestination | null {
   const segments = pathSegments(path);
-  const url = new URL(path, "https://perx.local");
+  const url = new URL(path, "https://ptahx.local");
   const pathname = url.pathname;
 
   if (approvedExactPaths.has(pathname)) return { kind: "static" };

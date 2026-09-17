@@ -15,7 +15,7 @@ export default function NotFound() {
             Page not found
           </p>
           <h1 className="mt-3 text-4xl font-black text-[color:var(--px-text)]">
-            This PerX page is not available
+            This PtahX page is not available
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-[color:var(--px-text-muted)]">
             The link may be outdated, private, or still being prepared for beta.

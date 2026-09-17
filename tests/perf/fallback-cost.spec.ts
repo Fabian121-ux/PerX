@@ -15,7 +15,7 @@ import crypto from "node:crypto";
 
 const BASE = process.env.PERF_BASE_URL ?? "http://127.0.0.1:3200";
 const TEST_DB = process.env.TEST_DATABASE_URL!;
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 const OBSERVE_MS = Number(process.env.PERF_FALLBACK_WINDOW_MS ?? 90_000);
 
 async function signIn(page: Page, email: string) {
@@ -61,7 +61,7 @@ async function conversationId() {
          FROM "Conversation" c
          JOIN "ConversationParticipant" p ON p."conversationId" = c.id
          JOIN "User" u ON u.id = p."userId"
-        WHERE u.email = 'alice-test@perx.test'
+        WHERE u.email = 'alice-test@ptahx.test'
      ORDER BY c."updatedAt" DESC
         LIMIT 1`,
     );
@@ -79,7 +79,7 @@ for (const mode of ["active", "idle", "hidden"] as const) {
     });
     try {
       const conv = await conversationId();
-      await signIn(page, "alice-test@perx.test");
+      await signIn(page, "alice-test@ptahx.test");
       await page.goto(`${BASE}/app/messages/${conv}`);
       await page.getByLabel("Message history").waitFor({ timeout: 30_000 });
 

@@ -9,18 +9,29 @@ const brandDir = resolve(root, "public/brand");
 const sourceDir = resolve(brandDir, "source");
 const iconsDir = resolve(root, "public/icons");
 
-const sourceReference = resolve(sourceDir, "perx-original-reference.jpg");
+const sourceReference = resolve(sourceDir, "ptahx-original-reference.jpg");
+
+// Ink bounds measured for the configured 54px font stack: "ptah" starts
+// 3px after its anchor and spans 105px; "X" spans 36px. Preserve 16px
+// padding on either side and an intentional 8px gap between the runs.
+const wordmarkPadding = 16;
+const darkTextWidth = 105;
+const wordmarkGap = 8;
+const goldTextWidth = 36;
+const darkTextX = wordmarkPadding - 3;
+const goldTextX = wordmarkPadding + darkTextWidth + wordmarkGap;
+const wordmarkWidth = wordmarkPadding * 2 + darkTextWidth + wordmarkGap + goldTextWidth;
 
 function rgbaSvgText({
   color = "#0b1020",
   gold = "#f59e0b",
   height = 96,
-  width = 166,
+  width = wordmarkWidth,
 }) {
   return Buffer.from(`
     <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <text x="0" y="63" font-family="Inter, Arial, Helvetica, sans-serif" font-size="54" font-weight="900" letter-spacing="-1" fill="${color}">per</text>
-      <text x="96" y="63" font-family="Inter, Arial, Helvetica, sans-serif" font-size="54" font-weight="900" letter-spacing="-1" fill="${gold}">X</text>
+      <text x="${darkTextX}" y="63" font-family="Inter, Arial, Helvetica, sans-serif" font-size="54" font-weight="900" letter-spacing="-1" fill="${color}">ptah</text>
+      <text x="${goldTextX}" y="63" font-family="Inter, Arial, Helvetica, sans-serif" font-size="54" font-weight="900" letter-spacing="-1" fill="${gold}">X</text>
     </svg>
   `);
 }
@@ -78,7 +89,7 @@ async function cleanedSymbolBuffer() {
       }
 
       // MAIN_LOGO.jpg includes legacy center lettering. Visible UI
-      // branding must use perX, so this masks that lettering while
+      // branding must use PtahX, so this masks that lettering while
       // preserving the source loops and proportions.
       if (x >= 335 && x <= 602 && y >= 62 && y <= 190 && max < 248) {
         out[i + 3] = 0;
@@ -132,7 +143,7 @@ async function makeWordmark({ file, textColor }) {
       background: { alpha: 0, b: 0, g: 0, r: 0 },
       channels: 4,
       height: 96,
-      width: 176,
+      width: wordmarkWidth,
     },
   })
     .composite([{ input: rgbaSvgText({ color: textColor }), left: 0, top: 0 }])
@@ -230,37 +241,37 @@ await copyFile(sourceLogo, sourceReference);
 const symbol = await cleanedSymbolBuffer();
 
 const symbolFiles = [
-  "perx-symbol.png",
-  "perx-symbol-light.png",
-  "perx-symbol-dark.png",
-  "perx-symbol-monochrome.png",
+  "ptahx-symbol.png",
+  "ptahx-symbol-light.png",
+  "ptahx-symbol-dark.png",
+  "ptahx-symbol-monochrome.png",
 ];
 
 for (const file of symbolFiles) {
   await sharp(symbol).toFile(resolve(brandDir, file));
 }
 
-await makeLogo({ file: "perx-logo.png", symbol, textColor: "#0b1020" });
-await makeLogo({ file: "perx-logo-light.png", symbol, textColor: "#0b1020" });
+await makeLogo({ file: "ptahx-logo.png", symbol, textColor: "#0b1020" });
+await makeLogo({ file: "ptahx-logo-light.png", symbol, textColor: "#0b1020" });
 await makeLogo({
-  file: "perx-logo-horizontal.png",
+  file: "ptahx-logo-horizontal.png",
   symbol,
   textColor: "#0b1020",
 });
 await makeLogo({
-  file: "perx-logo-horizontal-light.png",
+  file: "ptahx-logo-horizontal-light.png",
   symbol,
   textColor: "#0b1020",
 });
-await makeLogo({ file: "perx-logo-dark.png", symbol, textColor: "#f8fafc" });
+await makeLogo({ file: "ptahx-logo-dark.png", symbol, textColor: "#f8fafc" });
 await makeLogo({
-  file: "perx-logo-horizontal-dark.png",
+  file: "ptahx-logo-horizontal-dark.png",
   symbol,
   textColor: "#f8fafc",
 });
-await makeWordmark({ file: "perx-wordmark.png", textColor: "#0b1020" });
-await makeWordmark({ file: "perx-wordmark-light.png", textColor: "#0b1020" });
-await makeWordmark({ file: "perx-wordmark-dark.png", textColor: "#f8fafc" });
+await makeWordmark({ file: "ptahx-wordmark.png", textColor: "#0b1020" });
+await makeWordmark({ file: "ptahx-wordmark-light.png", textColor: "#0b1020" });
+await makeWordmark({ file: "ptahx-wordmark-dark.png", textColor: "#f8fafc" });
 
 const iconSpecs = [
   ["favicon-16x16.png", 16, false],
@@ -290,6 +301,6 @@ await writeFile(
 );
 
 console.log(
-  "Generated perX brand derivatives from public/image_ux_ux/MAIN_LOGO.jpg",
+  "Generated PtahX brand derivatives from public/image_ux_ux/MAIN_LOGO.jpg",
 );
 console.log("Generated app icons and favicon from public/main_app_logo.png");

@@ -1,4 +1,4 @@
-# perX UI Reference Page Map
+# PtahX UI Reference Page Map
 
 This map records the visual inspection of every valid image in `public/image_ux_ux`.
 These files are UI/UX reference screens, not placeholder content images. They should guide layout, colours, spacing, controls, density and responsive behaviour.
@@ -13,7 +13,7 @@ These files are UI/UX reference screens, not placeholder content images. They sh
 
 ## Global Design Observations
 
-- Brand mark: metallic infinity ribbon with black/charcoal left loop and gold right loop. The source image contains legacy `PER`; visible UI copy must use `perX`.
+- Brand mark: metallic infinity ribbon with black/charcoal left loop and gold right loop. The source image contains legacy `PER`; visible UI copy must use `PtahX`.
 - Light mode: deep navy sidebar/top brand band, soft off-white page canvas, white cards, light blue selected surfaces, blue primary actions, purple accent for selected tabs and premium panels, green success states and orange/gold notification badges.
 - Dark mode: navy/charcoal page and sidebar surfaces, elevated dark panels, purple primary actions and selected states, blue secondary icons, green success, orange notification accents. Gold is not the dominant theme.
 - Layout: fixed left sidebar on desktop, structured top header with search and utility actions, three-column dashboard composition where appropriate, right rails for activity/insights/details, dense but readable card systems.

@@ -44,7 +44,7 @@ const client = new pg.Client({ connectionString: testUrl });
 await client.connect();
 
 const user = await client.query(`SELECT id FROM "User" WHERE email = $1`, [
-  "alice-test@perx.test",
+  "alice-test@ptahx.test",
 ]);
 const token = crypto.randomBytes(32).toString("base64url");
 const sessionId = `sess_${crypto.randomUUID()}`;
@@ -58,7 +58,7 @@ await client.query(
     new Date(Date.now() + 3_600_000),
   ],
 );
-const cookie = `${process.env.SESSION_COOKIE_NAME ?? "perx_session"}=${token}`;
+const cookie = `${process.env.SESSION_COOKIE_NAME ?? "ptahx_session"}=${token}`;
 
 const ROUTES = [
   ["Home", "/app"],

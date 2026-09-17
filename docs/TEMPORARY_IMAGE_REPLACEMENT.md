@@ -20,7 +20,7 @@ Temporary content imagery is centralized in `src/lib/data/temporary-images.ts`.
 - Keep accessible alt text.
 - Avoid layout shifts and stretched crops.
 - Keep remote hosts restricted in `next.config.ts`.
-- Replace temporary URLs with owned perX content assets before production launch when available.
+- Replace temporary URLs with owned PtahX content assets before production launch when available.
 
 ## Replacement Process
 

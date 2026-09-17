@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
 const TEST_DB = process.env.TEST_DATABASE_URL!;
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 
 /** carol is a MEMBER: no `opportunity:create`. alice holds CLIENT. */
 async function signIn(page: Page, email: string) {
@@ -43,7 +43,7 @@ async function signIn(page: Page, email: string) {
 test("a non-trader gets the Trader gate, not a 404", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 780 } });
   try {
-    await signIn(page, "carol-test@perx.test");
+    await signIn(page, "carol-test@ptahx.test");
     const response = await page.goto(`${BASE}/app/opportunities/new`);
 
     // The route exists and the user is signed in; telling them the page is not
@@ -53,7 +53,7 @@ test("a non-trader gets the Trader gate, not a 404", async ({ browser }) => {
       page.getByRole("heading", { name: /become a trader/i }),
     ).toBeVisible();
     await expect(
-      page.getByText(/this perx page is not available/i),
+      page.getByText(/this ptahx page is not available/i),
     ).toHaveCount(0);
 
     await expect(
@@ -69,7 +69,7 @@ test("the protected composer is never sent to a non-trader", async ({
 }) => {
   const page = await browser.newPage();
   try {
-    await signIn(page, "carol-test@perx.test");
+    await signIn(page, "carol-test@ptahx.test");
     await page.goto(`${BASE}/app/opportunities/new`);
 
     // Gating must not be cosmetic: the form must be absent from the payload,
@@ -87,7 +87,7 @@ test("the protected composer is never sent to a non-trader", async ({
 test("a trader still reaches the real composer", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 780 } });
   try {
-    await signIn(page, "alice-test@perx.test");
+    await signIn(page, "alice-test@ptahx.test");
     const response = await page.goto(`${BASE}/app/opportunities/new`);
 
     expect(response?.status()).toBe(200);
@@ -106,7 +106,7 @@ for (const width of [320, 360, 375, 390, 412, 430]) {
   }) => {
     const page = await browser.newPage({ viewport: { width, height: 780 } });
     try {
-      await signIn(page, "carol-test@perx.test");
+      await signIn(page, "carol-test@ptahx.test");
       await page.goto(`${BASE}/app`);
 
       // Discoverability must not depend on viewport width or on role.
@@ -145,7 +145,7 @@ for (const width of [320, 360, 375, 390, 412, 430]) {
 test("Create is visible to a trader on a small phone", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 320, height: 780 } });
   try {
-    await signIn(page, "alice-test@perx.test");
+    await signIn(page, "alice-test@ptahx.test");
     await page.goto(`${BASE}/app`);
 
     const create = page.getByRole("link", { name: "Create", exact: true });

@@ -27,7 +27,7 @@ export default async function DealWorkspacePage({
     <AppSection
       description={
         simulated
-          ? "This legacy Deal uses simulated state tracking. No real funds are collected, held, transferred, or released by PerX."
+          ? "This legacy Deal uses simulated state tracking. No real funds are collected, held, transferred, or released by PtahX."
           : "Payments are currently unavailable. This Deal records agreed terms but does not hold funds."
       }
       title={deal.proposal.opportunity.title}

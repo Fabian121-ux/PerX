@@ -65,13 +65,13 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
   it("User C cannot access User A/B conversation via direct query", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
     const alice = await prisma.user.findUnique({
-      where: { email: "alice-test@perx.test" },
+      where: { email: "alice-test@ptahx.test" },
     });
     const bob = await prisma.user.findUnique({
-      where: { email: "bob-test@perx.test" },
+      where: { email: "bob-test@ptahx.test" },
     });
     const carol = await prisma.user.findUnique({
-      where: { email: "carol-test@perx.test" },
+      where: { email: "carol-test@ptahx.test" },
     });
     if (!alice || !bob || !carol) throw new Error("Seed users missing");
 
@@ -98,10 +98,10 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
   it("user cannot edit another user's listing (ownership check)", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
     const alice = await prisma.user.findUnique({
-      where: { email: "alice-test@perx.test" },
+      where: { email: "alice-test@ptahx.test" },
     });
     const bob = await prisma.user.findUnique({
-      where: { email: "bob-test@perx.test" },
+      where: { email: "bob-test@ptahx.test" },
     });
     if (!alice || !bob) throw new Error("Seed users missing");
 
@@ -196,10 +196,10 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
   it("verifies seeded APPROVED deal between Alice and Bob qualifies as partner", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
     const alice = await prisma.user.findUnique({
-      where: { email: "alice-test@perx.test" },
+      where: { email: "alice-test@ptahx.test" },
     });
     const bob = await prisma.user.findUnique({
-      where: { email: "bob-test@perx.test" },
+      where: { email: "bob-test@ptahx.test" },
     });
     if (!alice || !bob) throw new Error("Seed users missing");
 
@@ -222,10 +222,10 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
   it("verifies seeded IN_PROGRESS deal does NOT qualify as partner", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
     const alice = await prisma.user.findUnique({
-      where: { email: "alice-test@perx.test" },
+      where: { email: "alice-test@ptahx.test" },
     });
     const carol = await prisma.user.findUnique({
-      where: { email: "carol-test@perx.test" },
+      where: { email: "carol-test@ptahx.test" },
     });
     if (!alice || !carol) throw new Error("Seed users missing");
 
@@ -247,7 +247,7 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
   it("published content from Alice is discoverable by others excluding draft/paused/rejected", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
     const alice = await prisma.user.findUnique({
-      where: { email: "alice-test@perx.test" },
+      where: { email: "alice-test@ptahx.test" },
     });
     if (!alice) throw new Error("Seed user missing");
 
@@ -324,10 +324,10 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
   it("keeps private proposal drafts out of the opportunity owner's received list", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
     const alice = await prisma.user.findUniqueOrThrow({
-      where: { email: "alice-test@perx.test" },
+      where: { email: "alice-test@ptahx.test" },
     });
     const bob = await prisma.user.findUniqueOrThrow({
-      where: { email: "bob-test@perx.test" },
+      where: { email: "bob-test@ptahx.test" },
     });
     const opportunity = await prisma.opportunity.findUniqueOrThrow({
       where: { slug: "bob-mech-keyboard" },
@@ -370,7 +370,7 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
   it("enforces submitted proposal terms as immutable in PostgreSQL", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
     const alice = await prisma.user.findUniqueOrThrow({
-      where: { email: "alice-test@perx.test" },
+      where: { email: "alice-test@ptahx.test" },
     });
     const opportunity = await prisma.opportunity.findUniqueOrThrow({
       where: { slug: "bob-mech-keyboard" },
@@ -414,10 +414,10 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
   it("rejects a Deal linked to a version from another proposal", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
     const alice = await prisma.user.findUniqueOrThrow({
-      where: { email: "alice-test@perx.test" },
+      where: { email: "alice-test@ptahx.test" },
     });
     const bob = await prisma.user.findUniqueOrThrow({
-      where: { email: "bob-test@perx.test" },
+      where: { email: "bob-test@ptahx.test" },
     });
     const opportunity = await prisma.opportunity.findUniqueOrThrow({
       where: { slug: "bob-mech-keyboard" },
@@ -486,7 +486,7 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
   it("loads conversations with the current messaging schema and legacy JSON snapshots", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
     const alice = await prisma.user.findUniqueOrThrow({
-      where: { email: "alice-test@perx.test" },
+      where: { email: "alice-test@ptahx.test" },
     });
     const conversation = await prisma.conversation.findFirstOrThrow({
       where: { participants: { some: { userId: alice.id } } },
@@ -535,7 +535,7 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
   it("filters a participant-locally removed conversation without a render-time query failure", async () => {
     if (!prisma) throw new Error("TEST_DATABASE_URL is required.");
     const alice = await prisma.user.findUniqueOrThrow({
-      where: { email: "alice-test@perx.test" },
+      where: { email: "alice-test@ptahx.test" },
     });
     const participant = await prisma.conversationParticipant.findFirstOrThrow({
       where: { userId: alice.id },

@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
 const TEST_DB = process.env.TEST_DATABASE_URL!;
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 
 async function createSession(
   page: import("@playwright/test").Page,
@@ -50,7 +50,7 @@ for (const width of [320, 360, 375, 390, 430]) {
   }) => {
     const page = await browser.newPage({ viewport: { width, height: 780 } });
     try {
-      await createSession(page, "alice-test@perx.test");
+      await createSession(page, "alice-test@ptahx.test");
       await page.goto(`${BASE}/app`);
       const nav = page.getByRole("navigation", { name: "Primary navigation" });
       await expect(nav).toBeVisible();

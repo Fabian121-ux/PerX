@@ -1,4 +1,4 @@
-# perX Implementation Plan
+# PtahX Implementation Plan
 
 Last updated: 2026-06-27
 
@@ -16,9 +16,9 @@ Last updated: 2026-06-27
 
 ## Remaining Priority Work
 
-1. Align future development with the newly established PerX Master Blueprint and phased roadmap.
+1. Align future development with the newly established PtahX Master Blueprint and phased roadmap.
 2. Continue applying reference patterns to lower-priority routes: notifications, profile, saved, settings and admin detail pages.
-3. Replace temporary Unsplash imagery with owned perX content assets.
+3. Replace temporary Unsplash imagery with owned PtahX content assets.
 4. Improve the logo crossing if a higher-quality official transparent source becomes available.
 5. Review npm audit findings and remediate without forced breaking upgrades.
 

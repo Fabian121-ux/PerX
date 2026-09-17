@@ -27,7 +27,7 @@ describe("News read marker", () => {
 
   it("uses the explicit read action and refreshes live indicators", async () => {
     const indicatorRefresh = vi.fn();
-    window.addEventListener("perx-unread-refresh", indicatorRefresh);
+    window.addEventListener("ptahx-unread-refresh", indicatorRefresh);
 
     render(
       <NewsReadMarker
@@ -44,7 +44,7 @@ describe("News read marker", () => {
       expect(mocks.refresh).toHaveBeenCalledTimes(1);
     });
 
-    window.removeEventListener("perx-unread-refresh", indicatorRefresh);
+    window.removeEventListener("ptahx-unread-refresh", indicatorRefresh);
   });
 
   it("does not mutate when the page has no unread News", () => {

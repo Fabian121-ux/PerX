@@ -28,7 +28,7 @@ describe("application proxy security boundary", () => {
   it("allows a protected request through the proxy when a session cookie exists", () => {
     const response = proxy(
       new NextRequest("http://localhost/app/messages", {
-        headers: { cookie: "perx_session=test-token" },
+        headers: { cookie: "ptahx_session=test-token" },
       }),
     );
 

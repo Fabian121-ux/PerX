@@ -19,7 +19,7 @@ export default async function NewsPage() {
 
   return (
     <AppSection
-      description="Official announcements and platform updates from the PerX team."
+      description="Official announcements and platform updates from the PtahX team."
       title="News"
     >
       <NewsReadMarker notificationIds={unreadIds} />
@@ -46,7 +46,7 @@ export default async function NewsPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs font-black uppercase tracking-[0.12em] text-[color:var(--px-primary)]">
-                        Official PerX News
+                        Official PtahX News
                       </span>
                       {item.priority === "HIGH" ? (
                         <span className="rounded-full bg-[color:var(--px-warning)] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-white">
@@ -82,7 +82,7 @@ export default async function NewsPage() {
         </div>
       ) : (
         <EmptyState
-          body="Official PerX announcements will appear here when they are published for your account."
+          body="Official PtahX announcements will appear here when they are published for your account."
           title="No News yet"
         />
       )}

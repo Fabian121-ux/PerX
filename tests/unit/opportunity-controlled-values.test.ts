@@ -14,7 +14,7 @@ const validOpportunity = {
   title: "Verified property listing",
   summary: "A real property listing with required structured fields.",
   description:
-    "This listing has enough detail for a user to understand the property and for PerX to evaluate the content before publication.",
+    "This listing has enough detail for a user to understand the property and for PtahX to evaluate the content before publication.",
   type: "PROPERTY",
   category: "real-estate",
   location: "Lagos",
@@ -31,7 +31,7 @@ describe("opportunity controlled values", () => {
       propertyListingType: "RENT",
       contactPreference: "PERX_MESSAGES",
       authorityDeclaration:
-        "I confirm I own this property or have authority to list it on PerX.",
+        "I confirm I own this property or have authority to list it on PtahX.",
       listingRulesAccepted: true,
     });
 

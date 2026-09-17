@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
 const TEST_DB = process.env.TEST_DATABASE_URL!;
-const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "perx_session";
+const SESSION_COOKIE = process.env.SESSION_COOKIE_NAME ?? "ptahx_session";
 
 async function createSession(page: Page, email: string) {
   const { Pool } = await import("pg");
@@ -62,7 +62,7 @@ test("desktop sign out ends the server session and protects app routes", async (
     viewport: { width: 1280, height: 800 },
   });
   try {
-    const { tokenHash } = await createSession(page, "alice-test@perx.test");
+    const { tokenHash } = await createSession(page, "alice-test@ptahx.test");
     await page.goto(`${BASE}/app`);
     expect(await sessionExists(tokenHash)).toBe(true);
 
@@ -88,7 +88,7 @@ test("signed-out browser cannot reach a protected route with the old cookie", as
 }) => {
   const page = await browser.newPage();
   try {
-    const { tokenHash } = await createSession(page, "alice-test@perx.test");
+    const { tokenHash } = await createSession(page, "alice-test@ptahx.test");
     await page.goto(`${BASE}/app`);
 
     // Invalidate server-side exactly as sign-out does.
@@ -109,16 +109,16 @@ test("mobile sign out ends the session and clears cached authenticated state", a
 }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 800 } });
   try {
-    const { tokenHash } = await createSession(page, "alice-test@perx.test");
+    const { tokenHash } = await createSession(page, "alice-test@ptahx.test");
     await page.goto(`${BASE}/app`);
 
     // Stand in for the authenticated caches the app writes for this account.
     await page.evaluate(() => {
       window.sessionStorage.setItem(
-        "perx:home-feed:v1",
+        "ptahx:home-feed:v1",
         '{"items":["private"]}',
       );
-      window.sessionStorage.setItem("perx:messages:user-1:drafts", "private");
+      window.sessionStorage.setItem("ptahx:messages:user-1:drafts", "private");
       window.localStorage.setItem("theme", "dark");
     });
 
@@ -131,8 +131,8 @@ test("mobile sign out ends the session and clears cached authenticated state", a
     await expect(page).toHaveURL(/\/sign-in/, { timeout: 15_000 });
 
     const remaining = await page.evaluate(() => ({
-      drafts: window.sessionStorage.getItem("perx:messages:user-1:drafts"),
-      feed: window.sessionStorage.getItem("perx:home-feed:v1"),
+      drafts: window.sessionStorage.getItem("ptahx:messages:user-1:drafts"),
+      feed: window.sessionStorage.getItem("ptahx:home-feed:v1"),
       theme: window.localStorage.getItem("theme"),
     }));
     // Private per-account state is gone; device preference survives.

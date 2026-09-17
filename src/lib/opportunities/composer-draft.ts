@@ -69,7 +69,7 @@ export function getOpportunityComposerDraftKey(
   if (!userId || userId.length > 128 || !isCreatableOpportunityType(type)) {
     return null;
   }
-  return `perx:opportunity-composer:v${OPPORTUNITY_COMPOSER_DRAFT_VERSION}:${encodeURIComponent(userId)}:${type}`;
+  return `ptahx:opportunity-composer:v${OPPORTUNITY_COMPOSER_DRAFT_VERSION}:${encodeURIComponent(userId)}:${type}`;
 }
 
 export function readOpportunityComposerDraft(

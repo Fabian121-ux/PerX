@@ -75,7 +75,7 @@ export default async function AdminTraderApplicationsPage() {
     // message, stack or Prisma metadata. The outage digest was opaque in the
     // browser precisely because the raw object was logged where it could not
     // help; the kind is what an operator can actually act on.
-    console.error("[perx:admin-trader-applications]", {
+    console.error("[ptahx:admin-trader-applications]", {
       digest:
         typeof error === "object" && error !== null && "digest" in error
           ? String((error as { digest?: unknown }).digest ?? "")

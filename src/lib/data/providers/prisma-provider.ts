@@ -23,7 +23,7 @@ import type {
   AdminDealSummary,
   AdminListKind,
   AdminUserSummary,
-  PerXDataProvider,
+  PtahXDataProvider,
 } from "./interfaces";
 
 type OpportunityTypeValue =
@@ -696,7 +696,7 @@ async function collectCursorPages<T>(
   }
 }
 
-export const prismaProvider: PerXDataProvider = {
+export const prismaProvider: PtahXDataProvider = {
   opportunities: {
     getOpportunityFeed: async ({ category, q, type } = {}) => {
       const page = await getPublicOpportunityPage({

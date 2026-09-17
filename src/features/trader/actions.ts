@@ -80,7 +80,7 @@ function unavailable(
 
   // Redacted by construction: a classification and a route, never the message,
   // stack or Prisma metadata.
-  console.error("[perx:trader-application-submit]", {
+  console.error("[ptahx:trader-application-submit]", {
     digest:
       typeof error === "object" && error !== null && "digest" in error
         ? String((error as { digest?: unknown }).digest ?? "")

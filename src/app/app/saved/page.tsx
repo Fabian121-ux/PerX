@@ -161,7 +161,7 @@ export default async function SavedItemsPage({ searchParams }: { searchParams: P
                   </div>
                   <div>
                     <h3 className="font-semibold text-[color:var(--px-text)]">{bookmark.profile.user.name}</h3>
-                    <p className="text-sm text-[color:var(--px-text-muted)]">{bookmark.profile.headline || "PerX Member"}</p>
+                    <p className="text-sm text-[color:var(--px-text-muted)]">{bookmark.profile.headline || "PtahX Member"}</p>
                     <span className={`mt-1 inline-block rounded-full border px-2 py-0.5 text-xs font-semibold ${trustBadgeClassName(trust.level)}`}>{trust.shortLabel}</span>
                   </div>
                 </Link>

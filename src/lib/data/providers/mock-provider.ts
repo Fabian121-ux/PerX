@@ -2,7 +2,7 @@
 import type {
   AdminDealSummary,
   AdminUserSummary,
-  PerXDataProvider,
+  PtahXDataProvider,
 } from "./interfaces";
 import { 
   previewOpportunities, 
@@ -192,7 +192,7 @@ function getMockAdminRows(kind: AdminListKind): any[] {
   }
 }
 
-export const mockProvider: PerXDataProvider = {
+export const mockProvider: PtahXDataProvider = {
   opportunities: {
     getOpportunityFeed: async ({ category, q, type } = {}) => {
       // In mock mode, we try to use previewOpportunities or demoOpportunities

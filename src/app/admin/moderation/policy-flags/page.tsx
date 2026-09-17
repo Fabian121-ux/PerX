@@ -110,7 +110,7 @@ export default async function AdminPolicyFlagsPage() {
     // framework rather than being rendered as a degraded queue.
     unstable_rethrow(error);
     casesUnavailable = true;
-    console.error("[perx:admin-policy-flags]", {
+    console.error("[ptahx:admin-policy-flags]", {
       digest:
         typeof error === "object" && error !== null && "digest" in error
           ? String((error as { digest?: unknown }).digest ?? "")

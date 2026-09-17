@@ -7,7 +7,7 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#f4f7fb",
     categories: ["business", "productivity", "finance"],
     description:
-      "An opportunity ecosystem for discovery, trust, structured proposals, deals, beta-stage simulated payment states, and reputation.",
+      "PtahX is an opportunity ecosystem for discovery, trust, structured proposals, deals, beta-stage simulated payment states, and reputation.",
     display: "standalone",
     // Stable install identity so changing `start_url` does not orphan
     // already-installed instances.
@@ -39,8 +39,8 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
       },
     ],
-    name: "perX",
-    short_name: "perX",
+    name: "PtahX",
+    short_name: "PtahX",
     // Launches at `/`, which resolves server-side: an authenticated user is
     // redirected to the app home, an unauthenticated user still gets the
     // public landing page. See `src/lib/navigation/entry.ts`.

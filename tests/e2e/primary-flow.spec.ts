@@ -40,15 +40,15 @@ test("primary public journey can view an opportunity detail page", async ({
 test("primary public journey can load sign up", async ({ page }) => {
   await page.goto("/sign-up");
   await expect(
-    page.getByRole("heading", { name: "Create your PerX account" }),
+    page.getByRole("heading", { name: "Create your PtahX account" }),
   ).toBeVisible();
 });
 
 test("not-found page gives users safe recovery links", async ({ page }) => {
-  await page.goto("/definitely-not-a-perx-route");
+  await page.goto("/definitely-not-a-ptahx-route");
 
   await expect(
-    page.getByRole("heading", { name: "This PerX page is not available" }),
+    page.getByRole("heading", { name: "This PtahX page is not available" }),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "Go home" })).toHaveAttribute(
     "href",

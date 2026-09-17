@@ -5,7 +5,7 @@ import { PrismaClient } from "@/generated/prisma/client";
 import { assertDatabaseConfiguration, getResolvedDataMode } from "@/lib/env";
 
 declare global {
-  var __perxPrisma: PrismaClient | undefined;
+  var __ptahxPrisma: PrismaClient | undefined;
 }
 
 export function getPrisma() {
@@ -16,15 +16,15 @@ export function getPrisma() {
 
   assertDatabaseConfiguration();
 
-  if (!globalThis.__perxPrisma) {
+  if (!globalThis.__ptahxPrisma) {
     const pool = new Pool({ connectionString: process.env.DATABASE_URL! });
     const adapter = new PrismaPg(pool);
     
-    globalThis.__perxPrisma = new PrismaClient({
+    globalThis.__ptahxPrisma = new PrismaClient({
       adapter,
       log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     });
   }
 
-  return globalThis.__perxPrisma;
+  return globalThis.__ptahxPrisma;
 }

@@ -49,7 +49,7 @@ export function SecondaryMenu({
           <div className="flex min-h-16 items-center justify-between border-b border-[color:var(--px-border)] px-4">
             <div>
               <Dialog.Title className="font-black text-[color:var(--px-text)]">
-                More from PerX
+                More from PtahX
               </Dialog.Title>
               <Dialog.Description className="sr-only">
                 Account, news, support, and settings links

@@ -54,7 +54,7 @@ export default async function NewReportPage({
 
   return (
     <AppSection
-      description="Tell PerX what needs review. Internal moderation notes stay private."
+      description="Tell PtahX what needs review. Internal moderation notes stay private."
       title={`Report ${targetLabels[targetType]}`}
     >
       <Card className="max-w-2xl">

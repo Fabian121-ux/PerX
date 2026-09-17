@@ -56,7 +56,7 @@ export default async function SupportTicketDetailPage({
                 ? "You"
                 : sentByRequester
                   ? message.sender.name
-                  : "PreX support";
+                  : "PtahX support";
 
               return (
                 <article

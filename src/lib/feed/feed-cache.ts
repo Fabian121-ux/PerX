@@ -19,7 +19,7 @@ import type { HomeFeedSegment } from "@/lib/data/home-feed";
  * cached list would be a large dependency for a small, well-bounded need.
  */
 
-const CACHE_KEY = "perx:home-feed:v1";
+const CACHE_KEY = "ptahx:home-feed:v1";
 /** Beyond this the cache is considered stale and a fresh first page is fetched. */
 const MAX_AGE_MS = 5 * 60 * 1000;
 /**

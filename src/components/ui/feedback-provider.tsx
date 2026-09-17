@@ -95,7 +95,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
       {children}
       <div
         aria-label="Notifications"
-        className="perx-toast-viewport pointer-events-none fixed inset-x-3 z-[90] flex flex-col items-stretch gap-2 sm:left-auto sm:right-5 sm:w-[min(24rem,calc(100vw-2rem))]"
+        className="ptahx-toast-viewport pointer-events-none fixed inset-x-3 z-[90] flex flex-col items-stretch gap-2 sm:left-auto sm:right-5 sm:w-[min(24rem,calc(100vw-2rem))]"
         role="region"
       >
         {toasts.map((item) => (

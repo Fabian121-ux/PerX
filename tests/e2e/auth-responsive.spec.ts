@@ -2,7 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
 
-/** The device widths the PreX mobile brief requires, plus a desktop check. */
+/** The device widths the PtahX mobile brief requires, plus a desktop check. */
 const WIDTHS = [320, 360, 375, 390, 412, 430, 768] as const;
 
 const AUTH_ROUTES = [
@@ -85,7 +85,7 @@ test("the recovery submit button reports progress instead of going dead", async 
     });
 
     const submit = page.getByRole("button", { name: /send reset link/i });
-    await page.getByLabel("Email").fill("someone@perx.test");
+    await page.getByLabel("Email").fill("someone@ptahx.test");
     await submit.click();
 
     // A user who sees no acknowledgement clicks again, spending another attempt

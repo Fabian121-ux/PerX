@@ -10,7 +10,7 @@ test.describe("auth form experience", () => {
     await expect(page.getByLabel("Username")).toBeVisible();
     await expect(page.getByLabel("Email address")).toBeVisible();
     await expect(
-      page.getByText("PerX is currently open to a limited number of beta users."),
+      page.getByText("PtahX is currently open to a limited number of beta users."),
     ).toBeVisible();
     await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
     await expect(

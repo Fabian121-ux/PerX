@@ -7,20 +7,20 @@ type BrandTheme = "light" | "dark";
 
 const assetMap: Record<BrandVariant, Record<BrandTheme, string>> = {
   logo: {
-    light: "/brand/perx-logo-light.png",
-    dark: "/brand/perx-logo-dark.png",
+    light: "/brand/ptahx-logo-light.png",
+    dark: "/brand/ptahx-logo-dark.png",
   },
   horizontal: {
-    light: "/brand/perx-logo-horizontal-light.png",
-    dark: "/brand/perx-logo-horizontal-dark.png",
+    light: "/brand/ptahx-logo-horizontal-light.png",
+    dark: "/brand/ptahx-logo-horizontal-dark.png",
   },
   symbol: {
     light: "/main_app_logo.png",
     dark: "/main_app_logo.png",
   },
   wordmark: {
-    light: "/brand/perx-wordmark-light.png",
-    dark: "/brand/perx-wordmark-dark.png",
+    light: "/brand/ptahx-wordmark-light.png",
+    dark: "/brand/ptahx-wordmark-dark.png",
   },
 };
 
@@ -28,11 +28,11 @@ const defaultDimensions: Record<BrandVariant, { width: number; height: number; c
   logo: { width: 420, height: 116, className: "h-10 w-auto" },
   horizontal: { width: 420, height: 116, className: "h-10 w-auto" },
   symbol: { width: 1024, height: 1536, className: "h-8 w-auto" },
-  wordmark: { width: 176, height: 96, className: "h-8 w-auto" },
+  wordmark: { width: 181, height: 96, className: "h-8 w-auto" },
 };
 
 export function BrandLogo({
-  ariaLabel = "perX",
+  ariaLabel = "PtahX",
   className,
   compact = false,
   dark,
@@ -72,7 +72,7 @@ export function BrandLogo({
 }
 
 export function BrandSymbol({
-  ariaLabel = "perX infinity symbol",
+  ariaLabel = "PtahX infinity symbol",
   className,
   decorative = false,
   dark,

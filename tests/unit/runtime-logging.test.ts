@@ -13,7 +13,7 @@ describe("server runtime diagnostics", () => {
       .mockImplementation(() => {});
     const error = Object.assign(
       new Error(
-        "Failed for private.user@example.com at postgresql://user:password@db.example.test/perx",
+        "Failed for private.user@example.com at postgresql://user:password@db.example.test/ptahx",
       ),
       { code: "P2022", digest: "server-digest" },
     );

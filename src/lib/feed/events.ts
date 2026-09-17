@@ -25,7 +25,7 @@ export type FeedEventName =
   | "post_save"
   /**
    * Reserved. Reactions and comments do not exist in the schema yet and are
-   * deferred by `docs/architecture/PERX_B3_PRESENTATION_AND_B4_BOUNDARIES.md`.
+   * deferred by `docs/architecture/ptahx_b3_presentation_and_b4_boundaries.md`.
    * Named here so Batch 8 does not redefine the vocabulary.
    */
   | "post_react"

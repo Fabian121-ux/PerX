@@ -45,7 +45,7 @@ export function useSoftwareKeyboard(): KeyboardState {
  *
  * Publishes state three ways so both React and plain CSS can consume it:
  *  - context, for components that need the numeric inset
- *  - `data-perx-keyboard="open"` on <html>, for CSS-only rules
+ *  - `data-ptahx-keyboard="open"` on <html>, for CSS-only rules
  *  - `--px-keyboard-inset` custom property, for `calc()` in stylesheets
  */
 export function SoftwareKeyboardProvider({
@@ -153,14 +153,14 @@ export function SoftwareKeyboardProvider({
   useEffect(() => {
     const root = document.documentElement;
     if (state.open) {
-      root.dataset.perxKeyboard = "open";
+      root.dataset.ptahxKeyboard = "open";
     } else {
-      delete root.dataset.perxKeyboard;
+      delete root.dataset.ptahxKeyboard;
     }
     root.style.setProperty("--px-keyboard-inset", `${state.inset}px`);
 
     return () => {
-      delete root.dataset.perxKeyboard;
+      delete root.dataset.ptahxKeyboard;
       root.style.removeProperty("--px-keyboard-inset");
     };
   }, [state.inset, state.open]);

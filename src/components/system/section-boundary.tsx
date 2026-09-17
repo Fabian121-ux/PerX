@@ -99,7 +99,7 @@ export class SectionBoundary extends Component<
   componentDidCatch(error: unknown) {
     // Structured and safe: the section name only. The underlying error stays
     // in server logs rather than reaching the browser.
-    console.error("[perx:section-boundary]", {
+    console.error("[ptahx:section-boundary]", {
       label: this.props.label,
       timestamp: new Date().toISOString(),
     });

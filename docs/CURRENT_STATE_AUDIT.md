@@ -1,4 +1,4 @@
-# perX Current State Audit
+# PtahX Current State Audit
 
 Last updated: 2026-06-27
 
@@ -14,7 +14,7 @@ Last updated: 2026-06-27
 ## Current UI Correction Pass
 
 - The old gold-dominant dashboard theme has been replaced with the reference-led navy, off-white, blue, purple and charcoal system.
-- `MAIN_LOGO.jpg` is copied to `public/brand/source/perx-original-reference.jpg` and used by `scripts/generate-brand-icons.mjs` to create all brand/icon derivatives.
+- `MAIN_LOGO.jpg` is copied to `public/brand/source/ptahx-original-reference.jpg` and used by `scripts/generate-brand-icons.mjs` to create all brand/icon derivatives.
 - App and preview shells now use a fixed viewport-height layout: desktop sidebar and header remain fixed while the content region scrolls.
 - The app sidebar now uses one typed approved navigation configuration with 15 links: Home Dashboard, Network/Friends, Real Estate, Logistics, Travel & Stay, Services, Market, Wallet, Escrow, Service Center, Messages, Notifications, Saved, Reports and Settings.
 - Dashboard, Discover, Messages and Landing routes have been redesigned around the approved reference patterns without inserting UI screenshots as content images.

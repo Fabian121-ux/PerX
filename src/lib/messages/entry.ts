@@ -23,13 +23,13 @@ export function parseExactMessageTarget(
   value: string,
 ): ExactMessageTarget | null {
   try {
-    const url = new URL(value, "https://perx.local");
+    const url = new URL(value, "https://ptahx.local");
     const segments = url.pathname.split("/").filter(Boolean);
     const messageValues = url.searchParams.getAll("message");
     const queryEntries = [...url.searchParams.entries()];
 
     if (
-      url.origin !== "https://perx.local" ||
+      url.origin !== "https://ptahx.local" ||
       segments.length !== 3 ||
       segments[0] !== "app" ||
       segments[1] !== "messages" ||
@@ -58,13 +58,13 @@ export function parseExactConversationEventTarget(
   value: string,
 ): ExactConversationEventTarget | null {
   try {
-    const url = new URL(value, "https://perx.local");
+    const url = new URL(value, "https://ptahx.local");
     const segments = url.pathname.split("/").filter(Boolean);
     const eventValues = url.searchParams.getAll("event");
     const queryEntries = [...url.searchParams.entries()];
 
     if (
-      url.origin !== "https://perx.local" ||
+      url.origin !== "https://ptahx.local" ||
       segments.length !== 3 ||
       segments[0] !== "app" ||
       segments[1] !== "messages" ||

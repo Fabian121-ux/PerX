@@ -9,9 +9,9 @@ import { logServerDataError } from "@/lib/logging/runtime";
 export const REGISTRATION_CLOSED_MESSAGE =
   "Registration is currently closed.";
 export const BETA_FULL_MESSAGE =
-  "The current PerX beta group is full. Registration will reopen when more spaces become available.";
+  "The current PtahX beta group is full. Registration will reopen when more spaces become available.";
 export const OPEN_BETA_NOTICE =
-  "PerX is currently open to a limited number of beta users.";
+  "PtahX is currently open to a limited number of beta users.";
 
 const OPEN_BETA_CAPACITY_LOCK_KEY = 2026071801;
 

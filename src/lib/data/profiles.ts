@@ -1,11 +1,11 @@
 import { getPrisma } from "@/lib/db/prisma";
 import { isProductionMockModeError } from "@/lib/env";
 import { logServerDataError } from "@/lib/logging/runtime";
-import { getPerXDataProvider } from "./provider";
+import { getPtahXDataProvider } from "./provider";
 
 export async function getPublicProfileResult(username: string) {
   try {
-    const provider = await getPerXDataProvider();
+    const provider = await getPtahXDataProvider();
     const profile = await provider.profiles.getPublicProfile(username);
     return { profile, unavailable: false };
   } catch (error) {

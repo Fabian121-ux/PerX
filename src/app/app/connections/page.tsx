@@ -58,7 +58,7 @@ const tabs: {
 
 const emptyStates: Record<ConnectionTab, { body: string; title: string }> = {
   connections: {
-    body: "Accepted connections with eligible, visible PerX members will appear here.",
+    body: "Accepted connections with eligible, visible PtahX members will appear here.",
     title: "No connections yet",
   },
   discover: {
@@ -102,7 +102,7 @@ export default async function ConnectionsPage({
 
   return (
     <AppSection
-      description="Discover eligible PerX members and manage connection requests in one place."
+      description="Discover eligible PtahX members and manage connection requests in one place."
       title="Connections"
     >
       <nav

@@ -121,7 +121,7 @@ export const allOpportunityCategoryOptions = [
     value: "travel-stay",
   },
   {
-    description: "Professional services offered through PerX.",
+    description: "Professional services offered through PtahX.",
     label: "Services",
     value: "services",
   },
@@ -220,7 +220,7 @@ export const propertyListingTypeOptions = [
 export const contactPreferenceValues = ["PERX_MESSAGES", "PHONE_AFTER_CONNECTION", "EMAIL_AFTER_CONNECTION"] as const;
 
 export const contactPreferenceOptions = [
-  { label: "PerX messages", value: "PERX_MESSAGES" },
+  { label: "PtahX messages", value: "PERX_MESSAGES" },
   { label: "Phone after connection", value: "PHONE_AFTER_CONNECTION" },
   { label: "Email after connection", value: "EMAIL_AFTER_CONNECTION" },
 ] as const;

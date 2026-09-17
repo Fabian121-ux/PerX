@@ -32,7 +32,7 @@ export function SponsoredCard({ content, className }: SponsoredCardProps) {
     <aside
       aria-label="Sponsored content"
       className={cn(
-        "sponsored-enter perx-card relative flex flex-col gap-3 overflow-hidden p-4 sm:flex-row sm:items-center",
+        "sponsored-enter ptahx-card relative flex flex-col gap-3 overflow-hidden p-4 sm:flex-row sm:items-center",
         className,
       )}
       data-testid="sponsored-card"
@@ -73,7 +73,7 @@ export function SponsoredCard({ content, className }: SponsoredCardProps) {
       </div>
 
       <a
-        className="perx-btn-secondary inline-flex shrink-0 items-center justify-center gap-1.5 self-start whitespace-nowrap rounded-[var(--px-radius-sm)] px-3.5 py-2 text-xs font-semibold sm:self-center"
+        className="ptahx-btn-secondary inline-flex shrink-0 items-center justify-center gap-1.5 self-start whitespace-nowrap rounded-[var(--px-radius-sm)] px-3.5 py-2 text-xs font-semibold sm:self-center"
         href={ctaHref}
         rel="sponsored"
       >

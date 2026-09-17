@@ -129,7 +129,7 @@ export function calculateTrustSummary(
     },
     NEW: {
       description:
-        "Not enough verified PerX activity exists yet to show a stronger trust level.",
+        "Not enough verified PtahX activity exists yet to show a stronger trust level.",
       label: "New member",
       shortLabel: "New",
     },

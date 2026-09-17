@@ -116,7 +116,7 @@ function toNetworkEntry(
       relationship === "AVAILABLE" &&
       Boolean(person.profile?.allowConnectionRequests),
     connectionId,
-    headline: person.profile?.headline || "PerX member",
+    headline: person.profile?.headline || "PtahX member",
     id: person.id,
     imageUrl: person.imageUrl ?? person.profile?.profileImageUrl ?? null,
     isPartner: partnerUserIds.has(person.id),

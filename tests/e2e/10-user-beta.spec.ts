@@ -60,7 +60,7 @@ describeWithDatabase("10-User Beta constraints and Core Workflow", () => {
 
       // Wait for load
       await expect(
-        page.getByRole("heading", { name: "Create your PerX account" }),
+        page.getByRole("heading", { name: "Create your PtahX account" }),
       ).toBeVisible();
 
       // Ensure form is available or unavailable

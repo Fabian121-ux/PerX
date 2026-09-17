@@ -53,7 +53,7 @@ export function TraderAccessGate({
           . We&apos;ll notify you when a decision has been made.
         </FormNotice>
         <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">
-          You can keep using everything else on PerX while you wait.
+          You can keep using everything else on PtahX while you wait.
         </p>
         <ButtonLink href="/app/trader">View application</ButtonLink>
       </GateShell>
@@ -80,7 +80,7 @@ export function TraderAccessGate({
             "Trading access was declined for this account."}
         </FormNotice>
         <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">
-          Everything else on PerX continues to work as normal.
+          Everything else on PtahX continues to work as normal.
         </p>
         <ButtonLink href="/app/support" variant="secondary">
           Contact support
@@ -92,7 +92,7 @@ export function TraderAccessGate({
   return (
     <GateShell title="Become a Trader to create">
       <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">
-        Traders publish listings, projects and other opportunities on PerX. It
+        Traders publish listings, projects and other opportunities on PtahX. It
         takes about a minute to apply.
       </p>
       <ButtonLink href="/app/trader">Become a Trader</ButtonLink>

@@ -188,7 +188,7 @@ export default async function NotificationsPage({
             </div>
           </div>
           <ButtonLink href="/app/news" size="sm" variant="ghost">
-            Open PerX News
+            Open PtahX News
           </ButtonLink>
         </Card>
 
@@ -511,7 +511,7 @@ function notificationTypeLabel(type: string) {
   if (["MODERATION", "MODERATION_UPDATE"].includes(type)) {
     return "Trust & safety";
   }
-  if (type === "BROADCAST") return "PerX News";
+  if (type === "BROADCAST") return "PtahX News";
   return "Account";
 }
 

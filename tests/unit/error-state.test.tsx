@@ -69,7 +69,7 @@ describe("ErrorState", () => {
 
   it("surfaces a reference id without leaking internals", () => {
     const error = Object.assign(
-      new Error("prisma postgresql://user:secret@db:5432/perx"),
+      new Error("prisma postgresql://user:secret@db:5432/ptahx"),
       { digest: "ref-987" },
     );
     render(<ErrorState error={error} />);

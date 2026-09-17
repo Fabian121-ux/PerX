@@ -9,7 +9,7 @@ export function TrustHeroCard() {
   const pathname = usePathname();
   const env = getEnvironment(pathname);
   return (
-    <div className="perx-hero-card relative overflow-hidden rounded-[24px] px-6 py-8 text-white shadow-lg ring-1 ring-[color:var(--px-border)] sm:px-8 sm:py-10">
+    <div className="ptahx-hero-card relative overflow-hidden rounded-[24px] px-6 py-8 text-white shadow-lg ring-1 ring-[color:var(--px-border)] sm:px-8 sm:py-10">
       {/* Decorative background elements constrained to right/top */}
       <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/20 blur-[60px] sm:-right-20 sm:-top-20 sm:h-64 sm:w-64" />
       <div className="absolute right-10 -bottom-10 h-32 w-32 rounded-full bg-[color:var(--px-secondary)]/20 blur-[50px] sm:right-20 sm:-bottom-20 sm:h-48 sm:w-48" />
@@ -22,7 +22,7 @@ export function TrustHeroCard() {
           Build trusted deals
         </h2>
         <p className="mt-4 text-base leading-relaxed text-blue-50 sm:text-lg">
-          Connect, agree on milestones and complete opportunities with greater confidence through perX.
+          Connect, agree on milestones and complete opportunities with greater confidence through PtahX.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-4">

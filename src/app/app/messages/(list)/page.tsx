@@ -179,7 +179,7 @@ function toWorkspaceConversation(
           id: linkedDeal.id,
           settlementMode: linkedDeal.settlementMode,
           status: linkedDeal.status,
-          title: dbConversation.opportunity?.title ?? "PerX Deal",
+          title: dbConversation.opportunity?.title ?? "PtahX Deal",
           versionLabel: linkedDeal.proposalVersion
             ? `v${linkedDeal.proposalVersion.versionNumber}`
             : undefined,

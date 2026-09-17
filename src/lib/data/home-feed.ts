@@ -15,7 +15,7 @@ import { getTrustRecordEvidenceByUserIds } from "@/lib/trust/records";
 /**
  * Home social feed.
  *
- * PerX has no separate `Post` table: a "post" is an `Opportunity`, which is why
+ * PtahX has no separate `Post` table: a "post" is an `Opportunity`, which is why
  * this reuses `buildPublicOpportunityWhere` verbatim rather than growing a
  * second visibility filter. That helper is the single place where publication,
  * moderation, author eligibility and bidirectional blocking are enforced, so
