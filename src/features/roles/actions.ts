@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { getPrisma } from "@/lib/db/prisma";
 import { hasDatabaseUrl, getResolvedDataMode } from "@/lib/env";
 import { writeAuditLog } from "@/lib/logging/audit";
-import { normalizeRole, type RoleName } from "@/lib/permissions/capabilities";
+import {
+  normalizeRole,
+  selfAssignableRoles,
+  type RoleName,
+} from "@/lib/permissions/capabilities";
 import { requireUser } from "@/lib/auth/session";
 
 async function ensureRole(role: RoleName) {
@@ -20,19 +24,6 @@ async function ensureRole(role: RoleName) {
   });
 }
 
-/**
- * Roles a user may assign to themselves.
- *
- * CLIENT, FOUNDER and PROPERTY_OWNER were removed: each one carries
- * `opportunity:create`, so this form was a self-service grant of creation
- * access. Anyone could tick a box and bypass review entirely, which made the
- * Create authorization gate decorative.
- *
- * Creation access is now requested through the trader application and granted
- * by a reviewer. What remains here are descriptive roles that carry no
- * publishing capability.
- */
-const selfAssignableRoles = new Set<RoleName>(["FREELANCER", "INVESTOR"]);
 
 export async function updateRolesAction(formData: FormData) {
   const user = await requireUser();
