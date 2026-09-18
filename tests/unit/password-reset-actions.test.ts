@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  /**
+   * EMAIL-1 moved provider delivery into `after()`, so the request path no
+   * longer performs it. Tasks are captured rather than run: `after()` also
+   * throws outside a request scope, which is why this mock is required at all.
+   */
+  afterTasks: [] as Array<() => unknown>,
   consumePasswordResetToken: vi.fn(),
   deliver: vi.fn(),
   hasExceededResetRequestLimit: vi.fn(),
@@ -18,6 +24,11 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("next/server", () => ({
+  after: (task: () => unknown) => {
+    mocks.afterTasks.push(task);
+  },
+}));
 vi.mock("@/lib/logging/audit", () => ({ writeAuditLog: mocks.writeAuditLog }));
 vi.mock("@/lib/logging/runtime", () => ({
   logServerDataError: vi.fn(),
@@ -72,9 +83,17 @@ async function captureRedirect(run: () => Promise<unknown>) {
   return null;
 }
 
+/** Run the work `after()` deferred, as the runtime does post-response. */
+async function flushAfterTasks() {
+  const tasks = [...mocks.afterTasks];
+  mocks.afterTasks.length = 0;
+  for (const task of tasks) await task();
+}
+
 describe("password recovery request", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.afterTasks.length = 0;
     mocks.hasExceededResetRequestLimit.mockResolvedValue(false);
     mocks.issuePasswordResetToken.mockResolvedValue({
       expiresAt: new Date("2026-01-01T00:30:00.000Z"),
@@ -96,8 +115,16 @@ describe("password recovery request", () => {
     expect(mocks.issuePasswordResetToken).toHaveBeenCalledWith({
       userId: "user-1",
     });
-    expect(mocks.deliver).toHaveBeenCalledTimes(1);
     expect(redirected).toContain("/password-recovery?status=requested");
+
+    /*
+     * Delivery must NOT have happened yet: the provider network call sits
+     * behind `after()` so its latency cannot be part of the response, which
+     * would make the known-account branch measurably slower.
+     */
+    expect(mocks.deliver).not.toHaveBeenCalled();
+    await flushAfterTasks();
+    expect(mocks.deliver).toHaveBeenCalledTimes(1);
   });
 
   it("returns the identical neutral response for an unknown email", async () => {
@@ -110,6 +137,7 @@ describe("password recovery request", () => {
     // Same destination as the existing-account case: no enumeration signal.
     expect(redirected).toContain("/password-recovery?status=requested");
     expect(mocks.issuePasswordResetToken).not.toHaveBeenCalled();
+    await flushAfterTasks();
     expect(mocks.deliver).not.toHaveBeenCalled();
   });
 
@@ -126,6 +154,9 @@ describe("password recovery request", () => {
 
     expect(redirected).toContain("/password-recovery?status=requested");
     expect(mocks.issuePasswordResetToken).not.toHaveBeenCalled();
+    // Flushed, so this cannot pass merely because nothing has run yet.
+    await flushAfterTasks();
+    expect(mocks.deliver).not.toHaveBeenCalled();
   });
 
   it("stays neutral for a malformed email", async () => {

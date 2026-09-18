@@ -37,6 +37,13 @@ const envSchema = z.object({
     .max(25 * 1024 * 1024)
     .default(5 * 1024 * 1024),
   MESSAGE_EDIT_WINDOW_MINUTES: z.coerce.number().int().positive().default(15),
+  /*
+   * Transactional email. Both optional and both required together: with either
+   * missing, `src/lib/email/service.ts` stays on the disabled provider and
+   * nothing is sent. Email configuration must never be able to fail a boot.
+   */
+  RESEND_API_KEY: z.string().min(1).optional(),
+  EMAIL_FROM: z.string().min(1).optional(),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   ERROR_MONITORING_DSN: z.string().url().or(z.literal("")).optional(),
   PERX_ENABLE_PREVIEW: booleanEnv,

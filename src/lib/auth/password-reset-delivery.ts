@@ -1,36 +1,27 @@
+import crypto from "node:crypto";
+
+import type { EmailDeliveryResult } from "@/lib/email/provider";
+import {
+  describeEmailConfiguration,
+  getEmailProvider,
+  isEmailDeliveryConfigured,
+} from "@/lib/email/service";
+import { buildPasswordResetEmail } from "@/lib/email/templates/password-reset";
 import { getServerEnv } from "@/lib/env";
 
 /**
  * Password reset link delivery.
  *
- * PtahX has no email provider configured (audited: no resend/nodemailer/
- * sendgrid/postmark integration exists anywhere in the repository). Rather
- * than invent Production credentials or add a provider nobody asked for, this
- * is a narrow seam with one server-side implementation today.
- *
- * To connect a real provider, implement `PasswordResetDelivery` and swap the
- * export below - no caller changes. Return `"delivered"` only when the provider
- * has actually accepted the message.
+ * A thin caller over the generic email seam in `src/lib/email/`: it builds a
+ * message and hands it to whichever provider is configured. All provider
+ * selection, failure classification and credential handling lives there, so
+ * no Resend-specific code appears in auth.
  *
  * The link is never logged in production, because anything written to a log
  * pipeline is a working credential until it expires.
  */
 
-/**
- * What actually happened, so the UI can describe it truthfully.
- *
- * - `delivered`     a provider accepted the message
- * - `logged`        development seam; the link went to the server console
- * - `unconfigured`  no provider exists, so nothing was sent
- *
- * Returning a result rather than `void` is the point: without it every caller
- * has to assume success, and the interface ends up telling users an email is on
- * its way when nothing was sent.
- */
-export type PasswordResetDeliveryOutcome =
-  | "delivered"
-  | "logged"
-  | "unconfigured";
+export type PasswordResetDeliveryOutcome = EmailDeliveryResult;
 
 export type PasswordResetDelivery = {
   deliverPasswordResetLink(input: {
@@ -40,43 +31,101 @@ export type PasswordResetDelivery = {
   }): Promise<PasswordResetDeliveryOutcome>;
 };
 
-function isDevelopmentDelivery() {
-  return process.env.NODE_ENV !== "production";
+/**
+ * An origin we are willing to put in an email.
+ *
+ * `getServerEnv()` defaults NEXT_PUBLIC_APP_URL to `http://localhost:3000`, so
+ * an unset origin does NOT produce a relative link - it produces a confidently
+ * wrong absolute one. Mailing that to a real inbox is worse than sending
+ * nothing: the recipient gets a link that cannot work, and the one-use token is
+ * spent. So a local origin disqualifies external delivery.
+ */
+function isExternallyUsableOrigin(value: string) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return false;
+    return !["127.0.0.1", "::1", "localhost"].includes(url.hostname);
+  } catch {
+    return false;
+  }
 }
 
 export const passwordResetDelivery: PasswordResetDelivery = {
   async deliverPasswordResetLink({ email, expiresAt, resetUrl }) {
-    if (isDevelopmentDelivery()) {
-      // Development/test only. Never reached in production builds.
-      console.info(
-        `[password-reset] link for ${email} (expires ${expiresAt.toISOString()}): ${resetUrl}`,
-      );
-      return "logged";
+    const provider = getEmailProvider();
+
+    if (provider.id === "resend" && !isExternallyUsableOrigin(resetUrl)) {
+      /*
+       * Configuration failure, reported without the credential. Sending a
+       * localhost link to a real recipient would burn the token on a URL that
+       * cannot resolve.
+       */
+      console.error("[ptahx:password-reset-delivery]", {
+        provider: provider.id,
+        reason: "invalid_message",
+        status: "failed",
+        timestamp: new Date().toISOString(),
+      });
+      return {
+        provider: "resend",
+        reason: "invalid_message",
+        status: "failed",
+      };
     }
 
-    // No production email provider is configured yet. Failing loudly here
-    // would leak account existence through timing/error differences, so the
-    // request stays neutral and the absence is surfaced operationally.
-    console.warn(
-      "[password-reset] no email provider configured; reset link was not delivered",
-    );
-    return "unconfigured";
+    const message = buildPasswordResetEmail({ expiresAt, resetUrl });
+    return provider.send({
+      ...message,
+      /*
+       * Derived from the token so a retry of the same grant de-duplicates at
+       * the provider, but hashed and truncated so the key itself is not a
+       * usable credential if it appears in provider-side metadata.
+       */
+      idempotencyKey: `password-reset-${crypto
+        .createHash("sha256")
+        .update(resetUrl)
+        .digest("hex")
+        .slice(0, 32)}`,
+      to: email,
+    });
   },
 };
 
 /**
- * Whether reset links can actually reach a user right now.
+ * Whether reset links can actually reach a user's inbox right now.
  *
- * Read by the admin surface so an operator is told plainly that no provider is
- * connected, instead of being shown a success message for an email that was
- * never sent.
+ * Previously this returned `NODE_ENV !== "production"`, which answered a
+ * different question - whether this is a development build - and was wrong in
+ * both directions: development claimed an email was "on its way" when the link
+ * had only reached a server console, and production claimed delivery was
+ * disabled regardless of configuration.
+ *
+ *   real provider configured  -> true
+ *   development console only  -> false
+ *   disabled / unconfigured   -> false
+ *   partial configuration     -> false
  */
 export function isPasswordResetDeliveryConfigured() {
-  return isDevelopmentDelivery();
+  return isEmailDeliveryConfigured();
 }
 
+/** Redacted configuration snapshot for operational logging. */
+export function describePasswordResetDelivery() {
+  return describeEmailConfiguration();
+}
+
+/**
+ * Absolute reset URL.
+ *
+ * `getServerEnv()` supplies NEXT_PUBLIC_APP_URL - the canonical origin already
+ * in the Zod schema - and defaults it to `http://localhost:3000`, so the result
+ * is always absolute. Whether that origin is fit to mail is decided at delivery
+ * time by `isExternallyUsableOrigin`.
+ */
 export function buildPasswordResetUrl(token: string) {
-  const base = getServerEnv().NEXT_PUBLIC_APP_URL ?? "";
-  const path = `/reset-password?token=${encodeURIComponent(token)}`;
-  return base ? new URL(path, base).toString() : path;
+  const base = getServerEnv().NEXT_PUBLIC_APP_URL;
+  return new URL(
+    `/reset-password?token=${encodeURIComponent(token)}`,
+    base,
+  ).toString();
 }

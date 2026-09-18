@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 
 import { getPrisma } from "@/lib/db/prisma";
 import { evaluateAccountAccess } from "@/lib/account/enforcement";
@@ -20,6 +21,7 @@ import {
   isProductionMockModeError,
 } from "@/lib/env";
 import { getSafeAuthRedirect } from "@/lib/auth/redirects";
+import { classifyError } from "@/lib/errors/taxonomy";
 import { logServerDataError } from "@/lib/logging/runtime";
 import {
   checkRegistrationGate,
@@ -449,6 +451,19 @@ export async function signOutAction() {
 export async function passwordRecoveryAction(formData: FormData) {
   const parsed = emailSchema.safeParse(formData.get("email") ?? "");
 
+  /*
+   * Delivery work for THIS request, or null when there is nothing to send.
+   *
+   * Held in a local rather than sent immediately: the provider call is a
+   * network round trip, and paying it here would mean only the known-account
+   * branch was slow. That is the timing oracle the comment above warns about.
+   */
+  let pendingDelivery: {
+    email: string;
+    expiresAt: Date;
+    resetUrl: string;
+  } | null = null;
+
   if (parsed.success && hasDatabaseUrl()) {
     try {
       const user = await getPrisma().user.findUnique({
@@ -460,11 +475,11 @@ export async function passwordRecoveryAction(formData: FormData) {
       // fall through to the same neutral response below.
       if (user?.isActive && !(await hasExceededResetRequestLimit(user.id))) {
         const grant = await issuePasswordResetToken({ userId: user.id });
-        await passwordResetDelivery.deliverPasswordResetLink({
+        pendingDelivery = {
           email: user.email,
           expiresAt: grant.expiresAt,
           resetUrl: buildPasswordResetUrl(grant.token),
-        });
+        };
         await writeAuditLog({
           action: "auth.password_reset_requested",
           actorId: user.id,
@@ -482,6 +497,48 @@ export async function passwordRecoveryAction(formData: FormData) {
       });
     }
   }
+
+  /*
+   * Registered unconditionally, on every request, including unknown addresses
+   * and rate-limited ones. The callback decides whether there is work.
+   *
+   * Two reasons for the uniform shape. First, `after()` runs the callback once
+   * the response is committed, so provider latency is outside the
+   * request-response path entirely - verified in this runtime, not assumed.
+   * Second, scheduling on every branch means the registration itself is not a
+   * signal; an `after()` call that only happened for real accounts would
+   * reintroduce the difference it exists to remove.
+   *
+   * Not a bare `void deliver(...)`: an untracked promise can be killed when a
+   * serverless invocation is frozen after responding, losing the mail silently.
+   */
+  after(async () => {
+    if (!pendingDelivery) return;
+    try {
+      const outcome =
+        await passwordResetDelivery.deliverPasswordResetLink(pendingDelivery);
+      // P0-1 log shape: status and safe provider identity only. No address, no
+      // token, no reset URL - a log pipeline is not a place for a credential.
+      console.info("[ptahx:password-reset-delivery]", {
+        provider: outcome.provider,
+        reason: "reason" in outcome ? outcome.reason : undefined,
+        route: "/password-recovery",
+        status: outcome.status,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      // A provider that throws despite the contract must not escape into the
+      // request lifecycle. The error object itself is never logged: it can
+      // carry the request URL and Authorization header.
+      console.error("[ptahx:password-reset-delivery]", {
+        kind: classifyError(error),
+        reason: "unknown",
+        route: "/password-recovery",
+        status: "failed",
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
 
   redirect("/password-recovery?status=requested");
 }
