@@ -33,6 +33,7 @@ vi.mock("@/lib/db/prisma", () => ({
 }));
 
 import { updateRolesAction } from "@/features/roles/actions";
+import { selfAssignableRoles, type RoleName } from "@/lib/permissions/capabilities";
 
 describe("public role self-assignment", () => {
   beforeEach(() => {
@@ -44,6 +45,28 @@ describe("public role self-assignment", () => {
         userRole: { create: mocks.create, deleteMany: mocks.deleteMany },
       }),
     );
+  });
+
+
+  it("uses the shared self-assignable role set rather than a private duplicate", async () => {
+    const mutableAllowList = selfAssignableRoles as Set<RoleName>;
+    mutableAllowList.add("MEMBER");
+    mocks.roleUpsert.mockResolvedValue({ id: "role-member" });
+
+    try {
+      const formData = new FormData();
+      formData.append("roles", "MEMBER");
+
+      await expect(updateRolesAction(formData)).rejects.toThrow(
+        "REDIRECT:/app?success=roles-updated",
+      );
+
+      expect(mocks.create).toHaveBeenCalledWith({
+        data: { roleId: "role-member", userId: "user-1" },
+      });
+    } finally {
+      mutableAllowList.delete("MEMBER");
+    }
   });
 
   it("rejects MASTER_ADMIN from a user-controlled role form", async () => {
