@@ -401,12 +401,22 @@ function FeedEmptyState() {
       className="rounded-[var(--px-radius)] border border-dashed border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] p-8 text-center"
       data-testid="feed-empty"
     >
+      {/*
+        The previous copy read "Connect with founders and explore the ecosystem,
+        and posts will start appearing here", which states the feed is
+        connection-gated. It is not: `getHomeFeed` serves the discovery segment
+        when the network segment is empty on the first page, so a viewer with no
+        connections already sees strangers' posts. An empty feed means the query
+        genuinely returned nothing, and sending the user off to make connections
+        pointed them at something that was never the cause.
+      */}
       <h3 className="font-black text-[color:var(--px-text)]">
-        Your feed is quiet.
+        There are no posts to show yet.
       </h3>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[color:var(--px-text-muted)]">
-        Connect with founders and explore the ecosystem, and posts will start
-        appearing here.
+        Your feed already includes posts from across the ecosystem, not just
+        from people you know. Check back as new ones are published, or start the
+        conversation yourself.
       </p>
       <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
         <EmptyStateLink href="/app/people" primary>

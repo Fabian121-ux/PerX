@@ -25,6 +25,12 @@ export const TRADER_GRANT_ROLE: RoleName = "CLIENT";
 
 export type TraderApplicationView = {
   decidedAt: Date | null;
+  /*
+   * Selected so a failed submit can re-render the answer the applicant already
+   * wrote. It is the longest field on the form, and omitting it here is what
+   * forced the page to pass `experience: undefined` into the form defaults.
+   */
+  experience: string;
   headline: string;
   id: string;
   reviewerNote: string | null;
@@ -51,6 +57,7 @@ export async function getOwnTraderApplication(
   return getPrisma().traderApplication.findUnique({
     select: {
       decidedAt: true,
+      experience: true,
       headline: true,
       id: true,
       reviewerNote: true,

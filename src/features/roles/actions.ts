@@ -39,14 +39,29 @@ export async function updateRolesAction(formData: FormData) {
   if (getResolvedDataMode() === "mock") redirect("/app?mock=true");
   if (!hasDatabaseUrl()) redirect("/app/roles?error=database-not-configured");
 
-  const roles = formData
-    .getAll("roles")
+  const submitted = formData.getAll("roles");
+  const roles = submitted
     .map((role) => normalizeRole(role))
     .filter(
       (role): role is RoleName =>
         role !== null && selfAssignableRoles.has(role),
     );
-  if (roles.length === 0) redirect("/app/roles?error=choose-role");
+  /*
+   * Two different failures, previously collapsed into one misleading message.
+   *
+   * Submitting nothing is genuinely "choose a role". Submitting only roles this
+   * form cannot grant is not: the user DID choose, and telling them otherwise
+   * sends them back to repeat the same action. The UI no longer offers those
+   * options, so this is reachable only by a hand-crafted POST - but it must
+   * still not assert a cause that is untrue.
+   */
+  if (roles.length === 0) {
+    redirect(
+      submitted.length === 0
+        ? "/app/roles?error=choose-role"
+        : "/app/roles?error=role-not-self-assignable",
+    );
+  }
 
   try {
     await getPrisma().$transaction(async (tx) => {
