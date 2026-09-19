@@ -12,6 +12,30 @@ export const roleLabels = {
 
 export type RoleName = keyof typeof roleLabels;
 
+/**
+ * Roles a user may grant themselves from /app/roles.
+ *
+ * CLIENT, FOUNDER and PROPERTY_OWNER are deliberately absent: each carries
+ * `opportunity:create`, so offering them here would make self-assignment a
+ * bypass of trader review and the Create authorization gate decorative.
+ * Creation access is requested through the trader application and granted by a
+ * reviewer. What remains are descriptive roles carrying no publishing
+ * capability.
+ *
+ * Lives here, beside `roleLabels`, rather than in `src/features/roles/actions.ts`:
+ * that module is `"use server"`, which may export only async functions, so a
+ * client-rendered page cannot import a constant from it. This module has no
+ * imports at all and is safe on both sides.
+ *
+ * The roles page renders this set directly. It previously kept its own list of
+ * five, and the drift between the two WAS the bug - a second list guarantees it
+ * recurs.
+ */
+export const selfAssignableRoles: ReadonlySet<RoleName> = new Set<RoleName>([
+  "FREELANCER",
+  "INVESTOR",
+]);
+
 export type Capability =
   | "admin:access"
   | "admin:moderate"

@@ -1,16 +1,27 @@
+import Link from "next/link";
+
 import { AppSection } from "@/components/app-section";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { updateRolesAction } from "@/features/roles/actions";
 import { getCurrentUser } from "@/lib/auth/session";
+import {
+  roleLabels,
+  selfAssignableRoles,
+} from "@/lib/permissions/capabilities";
 
-const roleOptions = [
-  ["FREELANCER", "Freelancer"],
-  ["CLIENT", "Client"],
-  ["FOUNDER", "Founder"],
-  ["INVESTOR", "Investor"],
-  ["PROPERTY_OWNER", "Property Owner"],
-];
+/*
+ * Rendered from `selfAssignableRoles` rather than a local list.
+ *
+ * The page previously hardcoded five options while the server accepted two, so
+ * Client, Founder and Property Owner were silently filtered - and ticking only
+ * Client produced "choose a role" after the user had chosen one. Deriving the
+ * options means adding a role to the allow-list changes this page with no
+ * second edit, which is the only way the two stay in agreement.
+ */
+const roleOptions = [...selfAssignableRoles].map(
+  (role) => [role, roleLabels[role]] as const,
+);
 
 export default async function RolesPage() {
   const user = await getCurrentUser();
@@ -29,6 +40,29 @@ export default async function RolesPage() {
           </div>
           <Button type="submit">Update roles</Button>
         </form>
+      </Card>
+
+      {/*
+        Removing the three options without saying where publishing access comes
+        from would replace a misleading control with a dead end.
+      */}
+      <Card>
+        <h2 className="font-bold text-[color:var(--px-text)]">
+          Posting and listing access
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
+          Roles that let you publish opportunities are granted by a reviewer
+          rather than chosen here. Apply through the trader application and
+          we&apos;ll let you know when it has been reviewed.
+        </p>
+        <p className="mt-3 text-sm">
+          <Link
+            className="font-semibold text-[color:var(--px-primary)] hover:underline"
+            href="/app/trader"
+          >
+            Open the trader application
+          </Link>
+        </p>
       </Card>
     </AppSection>
   );

@@ -136,10 +136,19 @@ export default async function TraderPage({
 
           <TraderApplicationForm
             categories={categories}
+            /*
+              `experience` was passed as `undefined` while the two short fields
+              beside it were passed through. React resets an uncontrolled
+              `<form action>` once the action settles, so every field falls back
+              to its `defaultValue` - and the longest answer, the one that takes
+              real effort to write, was the only one discarded. That happened on
+              ANY failed submit, including a validation error that never reached
+              the database.
+            */
             defaults={
               application
                 ? {
-                    experience: undefined,
+                    experience: application.experience,
                     headline: application.headline,
                     tradeCategory: application.tradeCategory,
                   }

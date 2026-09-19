@@ -33,6 +33,7 @@ vi.mock("@/lib/db/prisma", () => ({
 }));
 
 import { updateRolesAction } from "@/features/roles/actions";
+import { selfAssignableRoles, type RoleName } from "@/lib/permissions/capabilities";
 
 describe("public role self-assignment", () => {
   beforeEach(() => {
@@ -44,6 +45,28 @@ describe("public role self-assignment", () => {
         userRole: { create: mocks.create, deleteMany: mocks.deleteMany },
       }),
     );
+  });
+
+
+  it("uses the shared self-assignable role set rather than a private duplicate", async () => {
+    const mutableAllowList = selfAssignableRoles as Set<RoleName>;
+    mutableAllowList.add("MEMBER");
+    mocks.roleUpsert.mockResolvedValue({ id: "role-member" });
+
+    try {
+      const formData = new FormData();
+      formData.append("roles", "MEMBER");
+
+      await expect(updateRolesAction(formData)).rejects.toThrow(
+        "REDIRECT:/app?success=roles-updated",
+      );
+
+      expect(mocks.create).toHaveBeenCalledWith({
+        data: { roleId: "role-member", userId: "user-1" },
+      });
+    } finally {
+      mutableAllowList.delete("MEMBER");
+    }
   });
 
   it("rejects MASTER_ADMIN from a user-controlled role form", async () => {
@@ -58,5 +81,46 @@ describe("public role self-assignment", () => {
     expect(mocks.create).toHaveBeenCalledWith({
       data: { roleId: "role-freelancer", userId: "user-1" },
     });
+  });
+});
+
+/**
+ * P0-7 C: a non-self-assignable role must not produce a misleading error.
+ *
+ * Ticking only "Client" filtered to an empty set and redirected to
+ * `?error=choose-role` - an error telling the user to choose a role when they
+ * had chosen one. The UI no longer offers those options, so this path is now
+ * only reachable by a hand-crafted POST; it must still not lie about the cause.
+ */
+describe("non-self-assignable submissions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.roleUpsert.mockResolvedValue({ id: "role-freelancer" });
+    mocks.transaction.mockImplementation(async (callback) =>
+      callback({
+        role: { upsert: mocks.roleUpsert },
+        userRole: { create: mocks.create, deleteMany: mocks.deleteMany },
+      }),
+    );
+  });
+
+  it("does not claim the user failed to choose a role when they chose one", async () => {
+    const formData = new FormData();
+    formData.append("roles", "CLIENT");
+
+    await updateRolesAction(formData).catch(() => {});
+
+    const target = String(mocks.redirect.mock.calls[0]?.[0] ?? "");
+    expect(target).not.toContain("error=choose-role");
+    // The submission granted nothing, so nothing may be written either.
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
+  it("still reports a genuinely empty submission as choose-role", async () => {
+    await updateRolesAction(new FormData()).catch(() => {});
+
+    expect(String(mocks.redirect.mock.calls[0]?.[0] ?? "")).toContain(
+      "error=choose-role",
+    );
   });
 });
