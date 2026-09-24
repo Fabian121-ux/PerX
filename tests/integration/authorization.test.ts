@@ -2,6 +2,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import * as databaseModule from "@/lib/db/prisma";
 import { signUpAction } from "@/features/auth/actions";
+import { getPublicFeedResult } from "@/lib/data/public-feed";
+import { setOpportunityBookmarkAction } from "@/features/opportunities/actions";
 import { updateOpportunityAction } from "@/features/opportunities/actions";
 import { getDeliveryApprovalDecision } from "@/features/deals/authorization";
 import {
@@ -139,6 +141,80 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
       20_000,
     );
   }
+
+  dbTest(
+    "anonymous landing feed uses public visibility without private viewer state",
+    async (f) => {
+      const owner = await f.user(["CLIENT"]);
+      const eligible = await f.opportunity(owner.id, {
+        publishedAt: new Date("2050-01-01"),
+      });
+      const hidden = [];
+      for (const overrides of [
+        { status: "DRAFT" as const },
+        { status: "PAUSED" as const },
+        { status: "ARCHIVED" as const },
+        { moderationStatus: "REJECTED" as const },
+        { publishedAt: null },
+        { type: "INVESTMENT" as const },
+      ])
+        hidden.push(
+          await f.opportunity(owner.id, {
+            publishedAt: new Date("2051-01-01"),
+            ...overrides,
+          }),
+        );
+      const privateOwner = await f.user();
+      await f.prisma.profile.update({
+        where: { userId: privateOwner.id },
+        data: { isDiscoverable: false },
+      });
+      hidden.push(
+        await f.opportunity(privateOwner.id, {
+          publishedAt: new Date("2051-01-01"),
+        }),
+      );
+      const bookmarks = vi.spyOn(f.prisma.opportunityBookmark, "findMany");
+      const connections = vi.spyOn(f.prisma.connection, "findMany");
+      try {
+        const result = await getPublicFeedResult();
+        expect(result.unavailable).toBe(false);
+        expect(result.posts.map((p) => p.id)).toContain(eligible.id);
+        for (const row of hidden)
+          expect(result.posts.map((p) => p.id)).not.toContain(row.id);
+        for (const post of result.posts) {
+          expect(post).not.toHaveProperty("viewerHasSaved");
+          expect(post).not.toHaveProperty("description");
+          expect(post).not.toHaveProperty("owner");
+        }
+        expect(bookmarks).not.toHaveBeenCalled();
+        expect(connections).not.toHaveBeenCalled();
+        for (let i = 0; i < 13; i++)
+          await f.opportunity(owner.id, { publishedAt: new Date("2050-02-01") });
+        expect((await getPublicFeedResult()).posts).toHaveLength(12);
+      } finally {
+        bookmarks.mockRestore();
+        connections.mockRestore();
+      }
+    },
+  );
+
+  dbTest(
+    "anonymous feed save action refuses before any bookmark write",
+    async (f) => {
+      const owner = await f.user(["CLIENT"]);
+      const post = await f.opportunity(owner.id);
+      await expectRedirect(
+        setOpportunityBookmarkAction(post.id, true),
+        "/sign-in?next=/app",
+      );
+      expect(
+        await f.prisma.opportunityBookmark.count({
+          where: { opportunityId: post.id },
+        }),
+      ).toBe(0);
+    },
+  );
 
   dbTest(
     "nested action transactions roll back partial writes on failure",
