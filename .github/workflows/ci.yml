@@ -33,3 +33,45 @@ jobs:
       - run: npm run type-check
       - run: npm run test
       - run: npm run build
+
+  authorization-integration:
+    runs-on: ubuntu-latest
+    # Disposable service, bound to loopback. No deployment/database secrets.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: perx_test_authz
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 127.0.0.1:5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d perx_test_authz"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Configure disposable test database
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const url = new URL("postgresql://127.0.0.1:5432");
+            url.username = "postgres";
+            url.pathname = "/perx_test_authz";
+            fs.appendFileSync(process.env.GITHUB_ENV, `TEST_DATABASE_URL=${url}\nTEST_DIRECT_URL=${url}\n`);
+          '
+      - name: Validate isolation and apply existing migrations
+        run: |
+          node --import tsx --input-type=module -e 'import { enforceTestDatabaseIsolation } from "./tests/e2e/utils/db-guard.ts"; enforceTestDatabaseIsolation();'
+          npm run db:local -- migrate deploy
+      - run: npm run test:authorization
+      - name: Repeat authorization in shuffled order
+        run: npm run test:authorization -- --sequence.shuffle --sequence.seed=42173
+      - name: Full suite with Postgres available
+        run: npm run test
