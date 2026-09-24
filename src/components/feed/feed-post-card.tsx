@@ -1,15 +1,16 @@
 "use client";
 
-import { Clock, MapPin, ShieldCheck } from "lucide-react";
+import { Bookmark, Clock, MapPin, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 import { FeedSaveButton } from "@/components/dashboard/feed-save-button";
 import { Avatar } from "@/components/ui/avatar";
-import type { HomeFeedPost } from "@/lib/data/home-feed-view";
+import type { HomeFeedPost, PublicFeedPost } from "@/lib/data/home-feed-view";
 import { getCanonicalOpportunityPath } from "@/lib/data/opportunity-path";
 import { recordFeedEvent } from "@/lib/feed/events";
+import { getSafeAuthRedirect } from "@/lib/auth/redirects";
 import { formatBudgetRange } from "@/lib/money";
 import { trustBadgeClassName } from "@/lib/trust/engine";
 
@@ -20,15 +21,17 @@ import { trustBadgeClassName } from "@/lib/trust/engine";
  */
 const ABOVE_THE_FOLD_COUNT = 2;
 
-export function FeedPostCard({
-  onVisible,
-  position,
-  post,
-}: {
-  onVisible?: (post: HomeFeedPost, position: number) => void;
-  position: number;
-  post: HomeFeedPost;
-}) {
+type FeedPostCardProps = { position: number } & (
+  | { audience: "public"; post: PublicFeedPost; onVisible?: never }
+  | {
+      audience?: "authenticated";
+      post: HomeFeedPost;
+      onVisible?: (post: HomeFeedPost, position: number) => void;
+    }
+);
+
+export function FeedPostCard(props: FeedPostCardProps) {
+  const { onVisible, position, post } = props;
   const detailHref = getCanonicalOpportunityPath(post.slug);
   const authorHref = post.authorUsername ? `/u/${post.authorUsername}` : null;
   const articleRef = useRef<HTMLElement | null>(null);
@@ -62,7 +65,7 @@ export function FeedPostCard({
 
   return (
     <article
-      className="overflow-hidden rounded-[22px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] shadow-sm"
+      className="min-w-0 overflow-hidden rounded-[22px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] shadow-sm"
       data-post-id={post.id}
       ref={articleRef}
     >
@@ -85,7 +88,11 @@ export function FeedPostCard({
                 className="block truncate text-sm font-black text-[color:var(--px-text)] hover:text-[color:var(--px-primary)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                 href={authorHref}
                 onClick={() =>
-                  recordFeedEvent({ name: "profile_open", position, postId: post.id })
+                  recordFeedEvent({
+                    name: "profile_open",
+                    position,
+                    postId: post.id,
+                  })
                 }
               >
                 {post.authorName}
@@ -120,7 +127,7 @@ export function FeedPostCard({
             recordFeedEvent({ name: "post_open", position, postId: post.id })
           }
         >
-          <h3 className="text-lg font-black leading-7 text-[color:var(--px-text)] transition group-hover:text-[color:var(--px-primary)] sm:text-xl">
+          <h3 className="break-words text-lg font-black leading-7 text-[color:var(--px-text)] transition group-hover:text-[color:var(--px-primary)] sm:text-xl">
             {post.title}
           </h3>
           {/*
@@ -189,10 +196,21 @@ export function FeedPostCard({
           </span>
         </div>
         <div className="flex items-center justify-between gap-3 border-t border-[color:var(--px-border)] pt-3">
-          <FeedSaveButton
-            initialSaved={post.viewerHasSaved}
-            opportunityId={post.id}
-          />
+          {/* Existing actions live here; reactions/comments require persistence first. */}
+          {props.audience === "public" ? (
+            <Link
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)]"
+              href={`/sign-in?next=${encodeURIComponent(getSafeAuthRedirect(detailHref, "/"))}`}
+            >
+              <Bookmark aria-hidden size={18} />
+              Sign in to save
+            </Link>
+          ) : (
+            <FeedSaveButton
+              initialSaved={props.post.viewerHasSaved}
+              opportunityId={post.id}
+            />
+          )}
           <Link
             className="inline-flex min-h-11 items-center rounded-xl bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white transition hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={detailHref}

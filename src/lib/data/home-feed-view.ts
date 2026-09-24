@@ -41,10 +41,9 @@ type HomeFeedRowWithEvidence = HomeFeedRow & {
   owner: HomeFeedRow["owner"] & { trustRecordEvidence?: TrustRecordEvidence };
 };
 
-export function toHomeFeedPost(
-  row: HomeFeedRowWithEvidence,
-  { savedIds }: { savedIds: ReadonlySet<string> },
-): HomeFeedPost {
+export type PublicFeedPost = Omit<HomeFeedPost, "viewerHasSaved">;
+
+export function toPublicFeedPost(row: HomeFeedRowWithEvidence): PublicFeedPost {
   const storedImage = row.images.find((image) => image.isCover) ?? row.images[0];
   // Only fall back to a placeholder when the post genuinely has no media, so a
   // real upload is never replaced by decoration.
@@ -78,8 +77,14 @@ export function toHomeFeedPost(
       verificationStatus: row.owner.verificationStatus,
     }),
     type: row.type,
-    viewerHasSaved: savedIds.has(row.id),
   };
+}
+
+export function toHomeFeedPost(
+  row: HomeFeedRowWithEvidence,
+  { savedIds }: { savedIds: ReadonlySet<string> },
+): HomeFeedPost {
+  return { ...toPublicFeedPost(row), viewerHasSaved: savedIds.has(row.id) };
 }
 
 /**
