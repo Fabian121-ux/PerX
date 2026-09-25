@@ -33,4 +33,5 @@ export const MIGRATION_MANIFEST: readonly string[] = [
   "20260825120000_messaging_realtime_admin_grant",
   "20260825151826_password_reset_tokens",
   "20260827150000_trader_applications",
+  "20260924160000_add_supabase_auth_user_link",
 ];
