@@ -23,6 +23,7 @@ export default async function SignInPage({
   searchParams,
 }: {
   searchParams: Promise<{
+    confirmation?: string;
     error?: string;
     next?: string;
     passwordReset?: string;
@@ -84,6 +85,23 @@ export default async function SignInPage({
         </section>
         <section className="grid place-items-center">
           <Card className="w-full max-w-md">
+            {params.confirmation === "required" && (
+              <FormNotice tone="info">
+                Check your email and confirm your address before signing in.
+              </FormNotice>
+            )}
+            {params.confirmation === "invalid" && (
+              <FormNotice tone="warning">
+                This confirmation link is invalid or has expired. Request a new
+                recovery link or contact support.
+              </FormNotice>
+            )}
+            {params.confirmation === "unavailable" && (
+              <FormNotice tone="warning">
+                Account access or setup is unavailable. Contact support to
+                complete your account link.
+              </FormNotice>
+            )}
             <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--px-primary)]">
               Sign in
             </p>

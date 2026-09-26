@@ -1,3 +1,8 @@
+import { usesSupabaseAuth } from "./provider";
+import {
+  getVerifiedSupabaseIdentity,
+  clearSupabaseSession,
+} from "./supabase-server";
 import crypto from "node:crypto";
 
 import { cache } from "react";
@@ -80,9 +85,7 @@ export async function createSessionRecord(
   const rawToken = crypto.randomBytes(32).toString("base64url");
   const tokenHash = hashToken(rawToken);
   const maxAge = env.AUTH_SESSION_DAYS * 24 * 60 * 60;
-  const expiresAt = new Date(
-    Date.now() + maxAge * 1000,
-  );
+  const expiresAt = new Date(Date.now() + maxAge * 1000);
   const headerStore = await headers();
 
   await client.session.create({
@@ -115,7 +118,9 @@ export async function setSessionCookie(sessionCookie: SessionCookie) {
 export async function createSession(userId: string) {
   const access = await getAccountAccessPolicy(userId);
   if (!access?.canAuthenticate) {
-    throw new Error(access?.publicExplanation ?? "Account access is unavailable.");
+    throw new Error(
+      access?.publicExplanation ?? "Account access is unavailable.",
+    );
   }
   const sessionCookie = await createSessionRecord(userId);
   await setSessionCookie(sessionCookie);
@@ -136,6 +141,20 @@ export async function destroySession() {
     sameSite: "lax",
     secure: secureSessionCookie(),
   });
+  if (usesSupabaseAuth()) {
+    try {
+      await clearSupabaseSession();
+    } catch {
+      /* local revocation and cookie removal already completed */
+    }
+  }
+}
+
+async function matchesSupabaseIdentity(authUserId: string | null) {
+  if (!usesSupabaseAuth()) return true;
+  if (!authUserId) return false;
+  const identity = await getVerifiedSupabaseIdentity();
+  return Boolean(identity?.email_confirmed_at && identity.id === authUserId);
 }
 
 /**
@@ -161,21 +180,22 @@ async function loadCurrentUser(): Promise<CurrentUser | null> {
       id: true,
       user: {
         select: {
-           accountClassification: true,
-           bannedAt: true,
-           createdAt: true,
-           connectionRequestsRestrictedUntil: true,
-           deactivatedAt: true,
-           email: true,
+          authUserId: true,
+          accountClassification: true,
+          bannedAt: true,
+          createdAt: true,
+          connectionRequestsRestrictedUntil: true,
+          deactivatedAt: true,
+          email: true,
           emailVerifiedAt: true,
           id: true,
           imageUrl: true,
-           isActive: true,
-           enforcementReasonPublic: true,
-           messagingRestrictedUntil: true,
+          isActive: true,
+          enforcementReasonPublic: true,
+          messagingRestrictedUntil: true,
           name: true,
           onboardingDismissedAt: true,
-           profile: {
+          profile: {
             select: {
               biography: true,
               averageRating: true,
@@ -196,10 +216,10 @@ async function loadCurrentUser(): Promise<CurrentUser | null> {
               trustScore: true,
             },
           },
-           roles: { include: { role: true } },
-           publishingRestrictedUntil: true,
-           suspendedAt: true,
-           suspendedUntil: true,
+          roles: { include: { role: true } },
+          publishingRestrictedUntil: true,
+          suspendedAt: true,
+          suspendedUntil: true,
           username: true,
           verificationStatus: true,
         },
@@ -214,6 +234,8 @@ async function loadCurrentUser(): Promise<CurrentUser | null> {
     }
     return null;
   }
+
+  if (!(await matchesSupabaseIdentity(session.user.authUserId))) return null;
 
   const access = evaluateAccountAccess(
     {
@@ -232,13 +254,15 @@ async function loadCurrentUser(): Promise<CurrentUser | null> {
     new Date(),
   );
   if (!access.canAccessApplication) {
-    await getPrisma().session.delete({ where: { id: session.id } }).catch(() => {});
+    await getPrisma()
+      .session.delete({ where: { id: session.id } })
+      .catch(() => {});
     return null;
   }
 
   return {
-          email: session.user.email,
-          emailVerifiedAt: session.user.emailVerifiedAt,
+    email: session.user.email,
+    emailVerifiedAt: session.user.emailVerifiedAt,
     id: session.user.id,
     name: session.user.name,
     onboardingDismissedAt: session.user.onboardingDismissedAt,
@@ -249,14 +273,13 @@ async function loadCurrentUser(): Promise<CurrentUser | null> {
     createdAt: session.user.createdAt,
     profile: session.user.profile
       ? {
-            averageRating: Number(session.user.profile.averageRating),
-            allowConnectionRequests:
-              session.user.profile.allowConnectionRequests,
-            allowMessagesFromConnections:
-              session.user.profile.allowMessagesFromConnections,
-            allowMessagesFromMembers:
-              session.user.profile.allowMessagesFromMembers,
-            completedDeals: session.user.profile.completedDeals,
+          averageRating: Number(session.user.profile.averageRating),
+          allowConnectionRequests: session.user.profile.allowConnectionRequests,
+          allowMessagesFromConnections:
+            session.user.profile.allowMessagesFromConnections,
+          allowMessagesFromMembers:
+            session.user.profile.allowMessagesFromMembers,
+          completedDeals: session.user.profile.completedDeals,
           headline: session.user.profile.headline,
           isDiscoverable: session.user.profile.isDiscoverable,
           biography: session.user.profile.biography,
@@ -292,6 +315,7 @@ export async function validateCurrentSessionAccess() {
       id: true,
       user: {
         select: {
+          authUserId: true,
           bannedAt: true,
           connectionRequestsRestrictedUntil: true,
           deactivatedAt: true,
@@ -308,13 +332,19 @@ export async function validateCurrentSessionAccess() {
   });
 
   if (!session || session.expiresAt <= new Date()) {
-    if (session) await getPrisma().session.delete({ where: { id: session.id } }).catch(() => {});
+    if (session)
+      await getPrisma()
+        .session.delete({ where: { id: session.id } })
+        .catch(() => {});
     return false;
   }
 
+  if (!(await matchesSupabaseIdentity(session.user.authUserId))) return false;
   const access = evaluateAccountAccess(session.user);
   if (!access.canAccessApplication) {
-    await getPrisma().session.delete({ where: { id: session.id } }).catch(() => {});
+    await getPrisma()
+      .session.delete({ where: { id: session.id } })
+      .catch(() => {});
     return false;
   }
 

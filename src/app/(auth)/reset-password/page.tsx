@@ -1,3 +1,9 @@
+import { cookies } from "next/headers";
+import { usesSupabaseAuth } from "@/lib/auth/provider";
+import {
+  getVerifiedSupabaseIdentity,
+  RECOVERY_COOKIE,
+} from "@/lib/auth/supabase-server";
 import Link from "next/link";
 
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
@@ -15,11 +21,16 @@ export default async function ResetPasswordPage({
   searchParams: Promise<{ token?: string }>;
 }) {
   const params = await searchParams;
-  const token = params.token ?? "";
+  const supabase = usesSupabaseAuth();
+  const token = supabase
+    ? ((await cookies()).get(RECOVERY_COOKIE)?.value ?? "")
+    : (params.token ?? "");
   // Checked without consuming, so an expired link renders a recovery pathway
   // instead of asking for a password that would be rejected on submit.
   const redeemable =
-    Boolean(token) && hasDatabaseUrl()
+    Boolean(token) &&
+    hasDatabaseUrl() &&
+    (!supabase || Boolean(await getVerifiedSupabaseIdentity()))
       ? await isPasswordResetTokenRedeemable(token)
       : false;
 
@@ -40,7 +51,7 @@ export default async function ResetPasswordPage({
                 Set a new password for your account. Signing in again on your
                 other devices will be required.
               </p>
-              <ResetPasswordForm token={token} />
+              <ResetPasswordForm token={supabase ? "" : token} />
               <p className="mt-5 text-sm text-[color:var(--px-text-muted)]">
                 Changed your mind?{" "}
                 <Link
