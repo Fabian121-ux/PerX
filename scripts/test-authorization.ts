@@ -12,6 +12,7 @@ const result = spawnSync(
     "node_modules/vitest/vitest.mjs",
     "run",
     "tests/integration/authorization.test.ts",
+    "tests/integration/supabase-auth.test.ts",
     ...process.argv.slice(2),
   ],
   { env: process.env, stdio: "inherit" },

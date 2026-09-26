@@ -1,6 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { usesSupabaseAuth } from "@/lib/auth/provider";
+import {
+  supabaseSignUp,
+  supabaseSignIn,
+  supabasePasswordRecovery,
+  supabaseResetPassword,
+} from "@/lib/auth/supabase-flow";
 import { after } from "next/server";
 
 import { getPrisma } from "@/lib/db/prisma";
@@ -90,7 +97,9 @@ function getSignInValues(formData: FormData) {
   };
 }
 
-function validationErrors(error: { issues: { message: string; path: PropertyKey[] }[] }) {
+function validationErrors(error: {
+  issues: { message: string; path: PropertyKey[] }[];
+}) {
   return error.issues.reduce<Record<string, string>>((errors, issue) => {
     const field = issue.path[0];
     if (typeof field === "string" && !errors[field]) {
@@ -104,10 +113,7 @@ function addMockQuery(path: string) {
   return path.includes("?") ? `${path}&mock=true` : `${path}?mock=true`;
 }
 
-function duplicateTargetIncludes(
-  error: unknown,
-  field: "email" | "username",
-) {
+function duplicateTargetIncludes(error: unknown, field: "email" | "username") {
   const err = error as { code?: string; meta?: { target?: string | string[] } };
   if (err.code !== "P2002") return false;
   const target = err.meta?.target;
@@ -137,7 +143,8 @@ export async function signUpAction(
       route: "/sign-up",
     });
     return {
-      message: "Account creation is temporarily unavailable. Please try again shortly.",
+      message:
+        "Account creation is temporarily unavailable. Please try again shortly.",
       status: "error",
       values,
     };
@@ -166,11 +173,14 @@ export async function signUpAction(
   if (mode === "mock") redirect("/app/profile/setup?mock=true");
   if (mode === "unavailable" || !hasDatabaseUrl()) {
     return {
-      message: "Account creation is temporarily unavailable. Please try again shortly.",
+      message:
+        "Account creation is temporarily unavailable. Please try again shortly.",
       status: "error",
       values,
     };
   }
+
+  if (usesSupabaseAuth()) return supabaseSignUp(parsed.data, values);
 
   const passwordHash = await hashPassword(parsed.data.password);
 
@@ -301,7 +311,8 @@ export async function signUpAction(
       route: "/sign-up",
     });
     return {
-      message: "Account creation is temporarily unavailable. Please try again shortly.",
+      message:
+        "Account creation is temporarily unavailable. Please try again shortly.",
       status: "error",
       values,
     };
@@ -328,7 +339,8 @@ export async function signInAction(
   if (mode === "mock") redirect(addMockQuery(nextPath));
   if (mode === "unavailable" || !hasDatabaseUrl()) {
     return {
-      message: "The authentication service is temporarily unavailable. Please try again.",
+      message:
+        "The authentication service is temporarily unavailable. Please try again.",
       status: "error",
       values,
     };
@@ -348,6 +360,8 @@ export async function signInAction(
     };
   }
 
+  if (usesSupabaseAuth()) return supabaseSignIn(parsed.data, nextPath, values);
+
   let user;
   try {
     user = await getPrisma().user.findUnique({
@@ -360,7 +374,8 @@ export async function signInAction(
       route: "/sign-in",
     });
     return {
-      message: "The authentication service is temporarily unavailable. Please try again.",
+      message:
+        "The authentication service is temporarily unavailable. Please try again.",
       status: "error",
       values,
     };
@@ -396,7 +411,8 @@ export async function signInAction(
           ? "Access to this account is unavailable."
           : !user.isActive
             ? "This account is deactivated. Contact support if you believe this is a mistake."
-            : access.publicExplanation ?? "This account is currently restricted.",
+            : (access.publicExplanation ??
+              "This account is currently restricted."),
       status: "error",
       values,
     };
@@ -411,7 +427,8 @@ export async function signInAction(
       route: "/sign-in",
     });
     return {
-      message: "The authentication service is temporarily unavailable. Please try again.",
+      message:
+        "The authentication service is temporarily unavailable. Please try again.",
       status: "error",
       values,
     };
@@ -449,6 +466,7 @@ export async function signOutAction() {
  * password recovery was non-functional.
  */
 export async function passwordRecoveryAction(formData: FormData) {
+  if (usesSupabaseAuth()) return supabasePasswordRecovery(formData);
   const parsed = emailSchema.safeParse(formData.get("email") ?? "");
 
   /*
@@ -578,6 +596,8 @@ export async function resetPasswordAction(
   if (!hasDatabaseUrl()) {
     return { message: "Password reset is unavailable.", status: "error" };
   }
+
+  if (usesSupabaseAuth()) return supabaseResetPassword(parsedPassword.data);
 
   const consumed = await consumePasswordResetToken(token);
   if (!consumed.ok) {

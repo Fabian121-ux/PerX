@@ -1,3 +1,4 @@
+import { usesSupabaseAuth } from "@/lib/auth/provider";
 import Link from "next/link";
 
 import { PasswordRecoveryForm } from "@/components/auth/password-recovery-form";
@@ -15,7 +16,8 @@ export default async function PasswordRecoveryPage({
   const requested = params.status === "requested";
   // Enumeration-safe either way: the wording never depends on whether the
   // address exists, only on whether this deployment can send mail at all.
-  const canDeliver = isPasswordResetDeliveryConfigured();
+  const supabase = usesSupabaseAuth();
+  const canDeliver = !supabase && isPasswordResetDeliveryConfigured();
 
   return (
     <PublicPageShell>
@@ -34,9 +36,11 @@ export default async function PasswordRecoveryPage({
 
           {requested ? (
             <FormNotice className="mt-4" tone={canDeliver ? "success" : "info"}>
-              {canDeliver
-                ? "If that email exists, a password reset link is on its way. The link expires in 30 minutes."
-                : "Your request was recorded. Email delivery is not yet enabled on this environment, so contact support to finish resetting your password."}
+              {supabase
+                ? "If this account is eligible for recovery, you will receive an email with the next step. Check your inbox and spam folder."
+                : canDeliver
+                  ? "If that email exists, a password reset link is on its way. The link expires in 30 minutes."
+                  : "Your request was recorded. Email delivery is not yet enabled on this environment, so contact support to finish resetting your password."}
             </FormNotice>
           ) : null}
 
