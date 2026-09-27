@@ -1,3 +1,4 @@
+import { SocialFeed } from "@/components/social/social-feed";
 import { HomeFeed } from "@/components/feed/home-feed";
 import { getHomeFeedPageResult } from "@/lib/data/home-feed";
 import {
@@ -25,14 +26,17 @@ export async function HomeFeedSection({ userId }: { userId: string }) {
   );
 
   return (
-    <HomeFeed
-      initialNextCursor={feedPage.nextCursor}
-      initialNextSegment={feedPage.nextSegment}
-      initialPosts={feedPage.items.map((item) =>
-        toHomeFeedPost(item, { savedIds }),
-      )}
-      unavailable={feedPage.unavailable}
-      userId={userId}
-    />
+    <>
+      <SocialFeed viewerId={userId} />
+      <HomeFeed
+        initialNextCursor={feedPage.nextCursor}
+        initialNextSegment={feedPage.nextSegment}
+        initialPosts={feedPage.items.map((item) =>
+          toHomeFeedPost(item, { savedIds }),
+        )}
+        unavailable={feedPage.unavailable}
+        userId={userId}
+      />
+    </>
   );
 }

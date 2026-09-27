@@ -108,7 +108,10 @@ export const ModelName = {
   ProfileBookmark: 'ProfileBookmark',
   SupportTicket: 'SupportTicket',
   TicketMessage: 'TicketMessage',
-  SponsoredContent: 'SponsoredContent'
+  SponsoredContent: 'SponsoredContent',
+  Post: 'Post',
+  PostReaction: 'PostReaction',
+  PostComment: 'PostComment'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -982,6 +985,47 @@ export const SponsoredContentScalarFieldEnum = {
 } as const
 
 export type SponsoredContentScalarFieldEnum = (typeof SponsoredContentScalarFieldEnum)[keyof typeof SponsoredContentScalarFieldEnum]
+
+
+export const PostScalarFieldEnum = {
+  id: 'id',
+  authorId: 'authorId',
+  body: 'body',
+  status: 'status',
+  moderationStatus: 'moderationStatus',
+  publishedAt: 'publishedAt',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PostScalarFieldEnum = (typeof PostScalarFieldEnum)[keyof typeof PostScalarFieldEnum]
+
+
+export const PostReactionScalarFieldEnum = {
+  id: 'id',
+  postId: 'postId',
+  userId: 'userId',
+  kind: 'kind',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PostReactionScalarFieldEnum = (typeof PostReactionScalarFieldEnum)[keyof typeof PostReactionScalarFieldEnum]
+
+
+export const PostCommentScalarFieldEnum = {
+  id: 'id',
+  postId: 'postId',
+  authorId: 'authorId',
+  body: 'body',
+  moderationStatus: 'moderationStatus',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PostCommentScalarFieldEnum = (typeof PostCommentScalarFieldEnum)[keyof typeof PostCommentScalarFieldEnum]
 
 
 export const SortOrder = {

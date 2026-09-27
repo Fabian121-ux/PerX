@@ -319,3 +319,18 @@ export type TicketMessage = Prisma.TicketMessageModel
  * 
  */
 export type SponsoredContent = Prisma.SponsoredContentModel
+/**
+ * Model Post
+ * 
+ */
+export type Post = Prisma.PostModel
+/**
+ * Model PostReaction
+ * 
+ */
+export type PostReaction = Prisma.PostReactionModel
+/**
+ * Model PostComment
+ * 
+ */
+export type PostComment = Prisma.PostCommentModel

@@ -28,6 +28,7 @@ export const policyCategories = [
 export type PolicyCategory = (typeof policyCategories)[number];
 
 export type PolicyEntityType =
+  | "post"
   | "message"
   | "opportunity"
   | "profile"

@@ -42,9 +42,7 @@ export function HomeFeedView({
       <div className="mx-auto flex w-full min-w-0 max-w-[640px] flex-col gap-4 lg:mx-0">
         <h1 className="sr-only">Home</h1>
 
-        {canCreate ? (
-          <FeedComposerEntry avatarUrl={user.avatarUrl} name={user.name} />
-        ) : null}
+        <FeedComposerEntry avatarUrl={user.avatarUrl} name={user.name} />
 
         {feed}
       </div>

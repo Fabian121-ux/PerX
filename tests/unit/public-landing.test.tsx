@@ -7,7 +7,9 @@ const mocks = vi.hoisted(() => ({
   user: vi.fn(),
   feed: vi.fn(),
   save: vi.fn(),
+  social: vi.fn(),
 }));
+vi.mock("@/lib/data/social-posts", () => ({ getSocialFeedResult: mocks.social }));
 vi.mock("@/lib/auth/session", () => ({ getCurrentUser: mocks.user }));
 vi.mock("@/lib/data/public-feed", () => ({ getPublicFeedResult: mocks.feed }));
 vi.mock("@/features/opportunities/actions", () => ({
@@ -64,6 +66,7 @@ function textInTree(node: ReactNode): string {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.user.mockResolvedValue(null);
+  mocks.social.mockResolvedValue({items:[],nextCursor:null,unavailable:false});
   mocks.feed.mockResolvedValue({ posts: [post], unavailable: false });
 });
 afterEach(cleanup);
@@ -145,4 +148,15 @@ it("keeps guest return paths local even with hostile slug characters", async () 
   expect(href.origin).toBe("https://ptahx.local");
   expect(returnUrl.origin).toBe("https://ptahx.local");
   expect(returnUrl.pathname.startsWith("/opportunities/")).toBe(true);
+});
+
+it("composes real social cards before opportunities with server counts and guest links", async () => {
+  mocks.social.mockResolvedValue({items:[{kind:"SOCIAL_POST",id:"social-id",body:"Community update",publishedAt:"2026-09-01T12:00:00.000Z",author:{id:"author",name:"Founder",username:"founder",imageUrl:null},reactionCount:3,commentCount:2}],nextCursor:null,unavailable:false});
+  const view=render(await Home());
+  expect(view.container.querySelector("article")).toHaveAttribute("data-social-post-id","social-id");
+  expect(view.getByTestId("reaction-count")).toHaveTextContent("3 reactions");
+  expect(view.getByTestId("comment-count")).toHaveTextContent("2 comments");
+  expect(view.getByRole("link",{name:"Like",exact:true})).toHaveAttribute("href","/sign-in?next=%2Fposts%2Fsocial-id");
+  expect(view.queryByRole("button",{name:"Like",exact:true})).toBeNull();
+  expect(view.getByRole("heading",{name:post.title})).toBeVisible();
 });

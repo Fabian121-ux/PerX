@@ -79,6 +79,7 @@ export default async function AdminModerationPage() {
       description="Route real moderation work to cases, reports, disputes, and verification reviews."
       title="Moderation"
     >
+      <Link className="mb-4 inline-flex min-h-11 items-center font-semibold" href="/admin/social">Social posts and comments</Link>
       {queues.some((queue) => queue.value > 0) ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {queues.map((queue) => (
