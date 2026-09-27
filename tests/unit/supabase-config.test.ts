@@ -15,14 +15,29 @@ beforeEach(() => {
   env.NEXT_PUBLIC_APP_URL = "https://app.example.test";
 });
 afterEach(() => vi.unstubAllEnvs());
-it("defaults to Supabase, with explicit legacy rollback only", () => {
-  vi.stubEnv("PERX_AUTH_PROVIDER", undefined);
-  expect(usesSupabaseAuth()).toBe(true);
-  vi.stubEnv("PERX_AUTH_PROVIDER", "legacy");
-  expect(usesSupabaseAuth()).toBe(false);
-  vi.stubEnv("PERX_AUTH_PROVIDER", "typo");
-  expect(() => usesSupabaseAuth()).toThrow();
+it.each(["development", "test", "production"])(
+  "keeps legacy auth when the provider setting is absent in %s",
+  (environment) => {
+    vi.stubEnv("NODE_ENV", environment);
+    vi.stubEnv("PERX_AUTH_PROVIDER", undefined);
+    // Existing Supabase URL/key configuration must not imply an auth cutover.
+    expect(usesSupabaseAuth()).toBe(false);
+  },
+);
+it.each([
+  ["legacy", false],
+  ["supabase", true],
+] as const)("honors explicit provider %s", (provider, expected) => {
+  vi.stubEnv("PERX_AUTH_PROVIDER", provider);
+  expect(usesSupabaseAuth()).toBe(expected);
 });
+it.each(["", "typo", "SUPABASE", " supabase "])(
+  "rejects invalid provider setting %j instead of silently choosing a provider",
+  (provider) => {
+    vi.stubEnv("PERX_AUTH_PROVIDER", provider);
+    expect(() => usesSupabaseAuth()).toThrow("Invalid PERX_AUTH_PROVIDER.");
+  },
+);
 it.each([
   "http://localhost:3100",
   "http://127.0.0.1:3100",

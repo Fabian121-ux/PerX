@@ -1,7 +1,8 @@
 # Supabase Auth and the PtahX identity bridge
 
-Supabase owns email/password authentication, email confirmation and password
-changes. `User.authUserId` is the unique nullable UUID bridge to the provider.
+When explicitly enabled, Supabase owns email/password authentication, email
+confirmation and password changes. `User.authUserId` is the unique nullable UUID
+bridge to the provider.
 `User.id` remains the existing application cuid/text primary key. Profiles,
 roles, capabilities, account enforcement and all resource relationships remain
 in PtahX. Email and user-editable provider metadata never select an application
@@ -9,7 +10,11 @@ account during authentication.
 
 ## Sessions and rollback
 
-The default `PERX_AUTH_PROVIDER=supabase` requires both a verified, online
+An absent `PERX_AUTH_PROVIDER` keeps legacy authentication active in every
+environment. Existing Supabase URL/key settings do not opt an environment into
+Supabase Auth. Invalid values (including an empty string) are rejected.
+
+Only explicit `PERX_AUTH_PROVIDER=supabase` requires both a verified, online
 Supabase `getUser()` result matching `authUserId` and a valid PtahX Session.
 The latter is retained as a revocation record so existing account/session
 revocation continues to work immediately. A legacy cookie alone grants no
@@ -24,8 +29,10 @@ sessions are revoked before and after the provider update. Cross-system writes
 are not claimed to be one transaction. A provider or audit failure reports an
 error and requires a new recovery link.
 
-`PERX_AUTH_PROVIDER=legacy` is an explicit operational rollback, not an automatic
-fallback. Legacy password hashes, Session and PasswordResetToken tables remain.
+`PERX_AUTH_PROVIDER=legacy` explicitly pins the staged rollout to legacy auth.
+After cutover it can also be used as a controlled rollback. A failure in explicit
+Supabase mode never automatically falls back to legacy. Legacy password hashes,
+Session and PasswordResetToken tables remain.
 Supabase password changes do not update retained legacy hashes. A rollback can
 reactivate an old legacy password for an existing user; treat rollback as a
 controlled recovery operation, not routine provider failover.
@@ -49,6 +56,44 @@ An operator must inspect the state, repair any application-side conflict and
 link the identity through the controlled tool below. Do not retry by deleting
 users or copying a password hash. Confirmation must remain enabled: unexpected
 automatic provider confirmation fails closed.
+
+## Expand and cut over in separate stages
+
+This is the future operational sequence, not authorization to perform production
+changes as part of the staged-rollout code adjustment. Keep PR #15 Draft in this
+step; do not migrate production, change production env, create production Auth
+users, merge or deploy. `vercel.json` disables automatic deployments only for
+`auth-supabase-1-user-link` so PR updates can run CI without deploying. Remove
+that branch-specific rule only when a later preview deployment is authorized;
+other branches retain their existing deployment behavior.
+
+1. **Apply the additive production migration first.** Review and apply
+   `20260924160000_add_supabase_auth_user_link` through the established migration
+   procedure. Verify the nullable UUID column and unique index before deploying
+   the generated Prisma client, even while legacy auth remains active. Never use
+   `prisma db push` or replace application IDs.
+2. **Explicitly set `PERX_AUTH_PROVIDER=legacy`.** Pin the intended production
+   rollout state before deployment. Absence also selects legacy, but explicit
+   configuration makes the staged state reviewable.
+3. **Deploy the dormant Supabase code.** Keep legacy sign-in, sessions and
+   recovery active; verify those existing flows before proceeding.
+4. **Configure production Supabase Auth, SMTP and templates.** Follow the exact
+   email/password, Confirm Email, trusted origin, redirect and token-hash
+   template requirements below. Do not point Vercel Preview at production.
+5. **Link the existing admin through the controlled setup path.** Preserve the
+   application ID, INTERNAL_ADMIN classification, roles and related records;
+   never copy bcrypt or recreate the account. Verify the UUID link and ensure
+   other accounts that must remain usable also have their intended UUID links.
+   The Supabase callback is inactive in legacy mode: complete password setup
+   during acceptance after the explicit flip, using a fresh recovery link if
+   necessary. Do not claim that linking alone verifies password setup.
+6. **Explicitly flip `PERX_AUTH_PROVIDER=supabase`.** This is the separate auth
+   cutover. Do not infer readiness from the dormant deployment or a build alone.
+   Preserve the reviewed rollback plan and its password limitations above.
+7. **Run live acceptance.** Prove signup, unverified denial, email confirmation,
+   sign-in, application access, logout, recovery and password replacement, plus
+   account enforcement and safe return paths. Record actual results before
+   declaring the cutover complete.
 
 ## Dashboard configuration required before cutover
 
@@ -94,8 +139,9 @@ Never log email bodies, token-bearing URLs or provider payloads.
 ## Existing account setup
 
 Apply the additive UUID-column migration through the established reviewed
-migration process before enabling this code. Never use `prisma db push` on
-production. Inspect current application and provider state first.
+migration process before deploying this code, including its dormant legacy mode.
+Never use `prisma db push` on production. Inspect current application and provider
+state first.
 
 The operator-only tool defaults to a read-only dry run:
 
@@ -119,8 +165,9 @@ roles, profile, messages and related records are preserved. If delivery fails
 after linking, fix delivery and use password recovery; do not relink or recreate.
 
 In particular, preserve the existing `dev-test@gmail.com` INTERNAL_ADMIN record.
-Complete and verify its password setup before production cutover. There is no
-automatic email-based linking during sign-in.
+Verify its UUID link before the provider flip; complete and verify its password
+setup during live acceptance after the explicit flip. There is no automatic
+email-based linking during sign-in.
 
 ## Verification
 
@@ -151,7 +198,9 @@ provider flow and must not be described as Supabase runtime acceptance.
 
 ## Release prerequisites
 
-Keep PR #15 Draft until the final commit's CI, migration review, preview/browser
-acceptance, provider templates/SMTP/redirects and existing-account setup are all
-verified. A green schema-only preview does not verify this authentication slice.
+Keep PR #15 Draft during this adjustment. The staged sequence above separates
+shipping dormant code from enabling Supabase Auth. Migration review, relevant
+checks and explicit deployment authorization are required before the dormant
+deployment; provider configuration, account setup and live acceptance belong to
+the later cutover. A green build is not proof of either authentication flow.
 Do not switch existing production accounts to Supabase without their UUID links.

@@ -1,4 +1,4 @@
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 const m = vi.hoisted(() => ({
   verify: vi.fn(),
@@ -28,6 +28,7 @@ vi.mock("@/lib/auth/password-reset", () => ({
 import { GET } from "@/app/auth/confirm/route";
 const uuid = "12345678-1234-4234-8234-123456789abc";
 beforeEach(() => {
+  vi.stubEnv("PERX_AUTH_PROVIDER", "supabase");
   vi.clearAllMocks();
   m.verify.mockResolvedValue({
     data: { user: { id: uuid, email_confirmed_at: "2026-09-01" }, session: {} },
@@ -43,6 +44,7 @@ beforeEach(() => {
     expiresAt: new Date("2099-01-01"),
   });
 });
+afterEach(() => vi.unstubAllEnvs());
 function request(query: string) {
   return new NextRequest(`https://app.example.test/auth/confirm?${query}`);
 }
@@ -64,6 +66,7 @@ it("rejects expired tokens without establishing application session", async () =
   expect(
     (await GET(request("token_hash=test&type=signup"))).headers.get("location"),
   ).toContain("confirmation=invalid");
+  expect(m.verify).toHaveBeenCalledWith({ token_hash: "test", type: "signup" });
   expect(m.session).not.toHaveBeenCalled();
 });
 it("rejects unknown verified identity rather than matching email", async () => {

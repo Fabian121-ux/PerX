@@ -64,6 +64,22 @@ describe("Supabase identity is required in addition to PtahX revocation and enfo
     });
   });
   afterEach(() => vi.unstubAllEnvs());
+  it("preserves an existing unlinked legacy session when the provider setting is absent", async () => {
+    vi.stubEnv("PERX_AUTH_PROVIDER", undefined);
+    mocks.identity.mockResolvedValue(null);
+    mocks.findSession.mockResolvedValue({
+      id: "session",
+      expiresAt: new Date("2099-01-01"),
+      user: user({ authUserId: null }),
+    });
+
+    expect(await getCurrentUser()).toMatchObject({
+      id: "app-cuid",
+      roles: ["MEMBER"],
+    });
+    expect(await validateCurrentSessionAccess()).toBe(true);
+    expect(mocks.identity).not.toHaveBeenCalled();
+  });
   it("accepts verified linked identity with application roles", async () => {
     expect(await getCurrentUser()).toMatchObject({
       id: "app-cuid",
