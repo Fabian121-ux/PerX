@@ -3,10 +3,12 @@ import { test, expect, type Page } from "@playwright/test";
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3100";
 
 /** The device widths the PtahX mobile brief requires, plus a desktop check. */
-const WIDTHS = [320, 360, 375, 390, 412, 430, 768] as const;
+const WIDTHS = [320, 360, 375, 390, 412, 430, 768, 1280] as const;
 
 const AUTH_ROUTES = [
   { name: "sign-in", path: "/sign-in" },
+  { name: "sign-up", path: "/sign-up" },
+  { name: "confirmation (invalid)", path: "/sign-in?confirmation=invalid" },
   { name: "password-recovery", path: "/password-recovery" },
   { name: "reset-password (expired)", path: "/reset-password?token=expired-x" },
 ] as const;
@@ -182,4 +184,11 @@ test("auth surfaces stay readable in dark mode", async ({ browser }) => {
   } finally {
     await page.close();
   }
+});
+
+test("dormant confirmation rejects an invalid link and hostile return path", async ({ page }) => {
+  await page.goto("/auth/confirm?token_hash=invalid&type=signup&next=https%3A%2F%2Fhostile.example");
+  await expect(page).toHaveURL(`${BASE}/sign-in?confirmation=invalid`);
+  await expect(page.getByText("This link is no longer valid.", { exact: false })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Request a new reset link" })).toHaveAttribute("href", "/password-recovery");
 });

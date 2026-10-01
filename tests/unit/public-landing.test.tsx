@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import "@testing-library/jest-dom/vitest";
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { isValidElement, type ReactNode } from "react";
@@ -107,7 +108,7 @@ it("renders an anonymous save link with a safe content return path, never a muta
 it("keeps password recovery reachable from sign-in", async () => {
   const view = render(await SignIn({ searchParams: Promise.resolve({}) }));
   expect(
-    view.getByRole("link", { name: "Recover password" }).getAttribute("href"),
+    view.getByRole("link", { name: "Reset password" }).getAttribute("href"),
   ).toBe("/password-recovery");
 });
 it.each([false, true])(
@@ -156,7 +157,7 @@ it("composes real social cards before opportunities with server counts and guest
   expect(view.container.querySelector("article")).toHaveAttribute("data-social-post-id","social-id");
   expect(view.getByTestId("reaction-count")).toHaveTextContent("3 reactions");
   expect(view.getByTestId("comment-count")).toHaveTextContent("2 comments");
-  expect(view.getByRole("link",{name:"Like",exact:true})).toHaveAttribute("href","/sign-in?next=%2Fposts%2Fsocial-id");
-  expect(view.queryByRole("button",{name:"Like",exact:true})).toBeNull();
+  expect(view.getByRole("link",{name:"Like"})).toHaveAttribute("href","/sign-in?next=%2Fposts%2Fsocial-id");
+  expect(view.queryByRole("button",{name:"Like"})).toBeNull();
   expect(view.getByRole("heading",{name:post.title})).toBeVisible();
 });

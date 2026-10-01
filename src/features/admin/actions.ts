@@ -1,5 +1,8 @@
 "use server";
 
+import { usesSupabaseAuth } from "@/lib/auth/provider";
+import { requestSupabaseRecovery } from "@/lib/auth/supabase-flow";
+
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -1217,13 +1220,31 @@ export async function initiateUserPasswordResetAction(formData: FormData) {
   if (!userId) throw new Error("Select a user to reset.");
 
   const user = await getPrisma().user.findUnique({
-    select: { email: true, id: true, isActive: true },
+    select: { email: true, id: true, isActive: true, authUserId: true },
     where: { id: userId },
   });
   // Same neutral failure for "missing" and "inactive": an admin tool should
   // still not become a probe for which accounts exist.
   if (!user?.isActive) {
     throw new Error("That account cannot be reset.");
+  }
+
+  if (usesSupabaseAuth()) {
+    if (!user.authUserId)
+      throw new Error(
+        "This account needs controlled Supabase identity setup first.",
+      );
+    await getPrisma().auditLog.create({
+      data: {
+        action: "admin.user_password_reset_initiated",
+        actorId: admin.id,
+        entityId: user.id,
+        entityType: "user",
+      },
+    });
+    await requestSupabaseRecovery(user.email);
+    revalidatePath("/admin/users");
+    return;
   }
 
   const grant = await issuePasswordResetToken({

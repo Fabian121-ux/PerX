@@ -1,3 +1,4 @@
+import "../utils/legacy-auth";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { getCurrentUser, requireUser, requireCapability, requireCapabilityOrNotFound } from "@/lib/auth/session";
 import { hasDatabaseUrl } from "@/lib/env";

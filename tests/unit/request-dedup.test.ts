@@ -1,3 +1,4 @@
+import "../utils/legacy-auth";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
