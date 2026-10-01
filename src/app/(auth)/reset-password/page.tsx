@@ -48,8 +48,8 @@ export default async function ResetPasswordPage({
           {redeemable ? (
             <>
               <p className="mt-3 text-sm text-[color:var(--px-text-muted)]">
-                Set a new password for your account. Signing in again on your
-                other devices will be required.
+                Choose a new password. You’ll need to sign in again on your
+                other devices.
               </p>
               <ResetPasswordForm token={supabase ? "" : token} />
               <p className="mt-5 text-sm text-[color:var(--px-text-muted)]">

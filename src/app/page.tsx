@@ -1,3 +1,5 @@
+import { SocialPostCard } from "@/components/social/social-post-card";
+import { getSocialFeedResult } from "@/lib/data/social-posts";
 import { Fragment } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -18,7 +20,10 @@ export default async function Home() {
   const currentUser = await getCurrentUser().catch(() => null);
   if (currentUser) redirect(AUTHENTICATED_HOME_PATH);
 
-  const { posts, unavailable } = await getPublicFeedResult();
+  const [{ posts, unavailable }, social] = await Promise.all([
+    getPublicFeedResult(),
+    getSocialFeedResult(),
+  ]);
   return (
     <div className="min-h-dvh min-w-0 bg-[color:var(--px-page)]">
       <header className="sticky top-0 z-30 border-b border-[color:var(--px-border)] bg-[color:var(--px-surface)]/95 backdrop-blur">
@@ -44,6 +49,20 @@ export default async function Home() {
         aria-label="Public feed"
       >
         <h1 className="sr-only">Public feed</h1>
+        {social.items.map((post) => (
+          <SocialPostCard key={post.id} post={post} />
+        ))}
+        {social.unavailable && (
+          <p role="status">Community posts are temporarily unavailable.</p>
+        )}
+        {social.nextCursor && (
+          <Link
+            className="py-3 text-center font-semibold"
+            href={`/posts?cursor=${encodeURIComponent(social.nextCursor)}`}
+          >
+            More community posts
+          </Link>
+        )}
         {unavailable ? (
           <EmptyState
             title="Public feed temporarily unavailable"
@@ -65,12 +84,12 @@ export default async function Home() {
               Explore more opportunities
             </ButtonLink>
           </>
-        ) : (
+        ) : !social.items.length && !social.unavailable ? (
           <EmptyState
             title="No public posts yet"
             body="Sign in or create an account to start building the PtahX ecosystem."
           />
-        )}
+        ) : null}
       </main>
       <footer className="mx-auto flex max-w-[640px] flex-wrap justify-center gap-x-4 gap-y-2 px-4 py-6 text-xs text-[color:var(--px-text-muted)]">
         {[

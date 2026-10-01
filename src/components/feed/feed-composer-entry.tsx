@@ -1,18 +1,10 @@
 "use client";
 
-import { ImagePlus, PenLine } from "lucide-react";
+import { PenLine } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-/**
- * Feed composer entry point.
- *
- * A link, not an inline editor: Create Post is a distraction-free route
- * (`src/lib/navigation/immersive-routes.ts`) with its own draft recovery and
- * leave guard. Duplicating a lightweight editor here would create a second
- * composer with none of that behaviour, and a partially typed post could be
- * lost on navigation.
- */
+/** Opens the dedicated social composer; opportunities retain their own creation flow. */
 export function FeedComposerEntry({
   avatarUrl,
   name,
@@ -45,24 +37,17 @@ export function FeedComposerEntry({
         )}
         <Link
           className="flex min-h-11 min-w-0 flex-1 items-center rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-muted)] px-4 text-left text-sm text-[color:var(--px-text-muted)] transition hover:border-[color:var(--px-primary)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-          href="/app/opportunities/new"
+          href="/app/posts/new"
         >
-          <span className="truncate">
-            What&rsquo;s happening, {firstName}?
-          </span>
+          <span className="truncate">What&rsquo;s happening, {firstName}?</span>
         </Link>
       </div>
 
       <div className="mt-3 flex items-center gap-2 border-t border-[color:var(--px-border)] pt-3">
         <ComposerAction
-          href="/app/opportunities/new"
+          href="/app/posts/new"
           icon={<PenLine aria-hidden size={17} />}
           label="Write a post"
-        />
-        <ComposerAction
-          href="/app/opportunities/new"
-          icon={<ImagePlus aria-hidden size={17} />}
-          label="Add media"
         />
       </div>
     </div>

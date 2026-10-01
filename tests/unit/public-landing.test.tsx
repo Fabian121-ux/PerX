@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import "@testing-library/jest-dom/vitest";
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { isValidElement, type ReactNode } from "react";
@@ -7,7 +8,9 @@ const mocks = vi.hoisted(() => ({
   user: vi.fn(),
   feed: vi.fn(),
   save: vi.fn(),
+  social: vi.fn(),
 }));
+vi.mock("@/lib/data/social-posts", () => ({ getSocialFeedResult: mocks.social }));
 vi.mock("@/lib/auth/session", () => ({ getCurrentUser: mocks.user }));
 vi.mock("@/lib/data/public-feed", () => ({ getPublicFeedResult: mocks.feed }));
 vi.mock("@/features/opportunities/actions", () => ({
@@ -64,6 +67,7 @@ function textInTree(node: ReactNode): string {
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.user.mockResolvedValue(null);
+  mocks.social.mockResolvedValue({items:[],nextCursor:null,unavailable:false});
   mocks.feed.mockResolvedValue({ posts: [post], unavailable: false });
 });
 afterEach(cleanup);
@@ -104,7 +108,7 @@ it("renders an anonymous save link with a safe content return path, never a muta
 it("keeps password recovery reachable from sign-in", async () => {
   const view = render(await SignIn({ searchParams: Promise.resolve({}) }));
   expect(
-    view.getByRole("link", { name: "Recover password" }).getAttribute("href"),
+    view.getByRole("link", { name: "Reset password" }).getAttribute("href"),
   ).toBe("/password-recovery");
 });
 it.each([false, true])(
@@ -145,4 +149,15 @@ it("keeps guest return paths local even with hostile slug characters", async () 
   expect(href.origin).toBe("https://ptahx.local");
   expect(returnUrl.origin).toBe("https://ptahx.local");
   expect(returnUrl.pathname.startsWith("/opportunities/")).toBe(true);
+});
+
+it("composes real social cards before opportunities with server counts and guest links", async () => {
+  mocks.social.mockResolvedValue({items:[{kind:"SOCIAL_POST",id:"social-id",body:"Community update",publishedAt:"2026-09-01T12:00:00.000Z",author:{id:"author",name:"Founder",username:"founder",imageUrl:null},reactionCount:3,commentCount:2}],nextCursor:null,unavailable:false});
+  const view=render(await Home());
+  expect(view.container.querySelector("article")).toHaveAttribute("data-social-post-id","social-id");
+  expect(view.getByTestId("reaction-count")).toHaveTextContent("3 reactions");
+  expect(view.getByTestId("comment-count")).toHaveTextContent("2 comments");
+  expect(view.getByRole("link",{name:"Like"})).toHaveAttribute("href","/sign-in?next=%2Fposts%2Fsocial-id");
+  expect(view.queryByRole("button",{name:"Like"})).toBeNull();
+  expect(view.getByRole("heading",{name:post.title})).toBeVisible();
 });

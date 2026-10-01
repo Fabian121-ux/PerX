@@ -143,7 +143,9 @@ describe("Supabase auth orchestration", () => {
     m.create.mockRejectedValueOnce({ code: "P2002" });
     expect(await supabaseSignUp(input, {})).toMatchObject({
       status: "error",
-      message: expect.stringContaining("setup did not finish"),
+      message: expect.stringMatching(
+        /couldn’t finish creating.*Contact support before trying again/,
+      ),
     });
     expect(m.session).not.toHaveBeenCalled();
   });

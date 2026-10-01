@@ -135,7 +135,7 @@ export async function supabaseSignUp(
     report(error, "signup");
     return failure(
       identityCreated
-        ? "Your identity was created, but PtahX account setup did not finish. Contact support to complete the link; no application access has been granted."
+        ? "We couldn’t finish creating your account. Contact support before trying again."
         : error instanceof SignupGateError
           ? error.message
           : "Account creation is temporarily unavailable. Please try again shortly.",
@@ -154,7 +154,7 @@ export async function supabaseSignIn(
     const { data, error } = await client.auth.signInWithPassword(input);
     if (error || !data.user?.email_confirmed_at || !data.session)
       return failure(
-        "Sign-in failed. Check your credentials and confirm your email before signing in.",
+        "We couldn’t sign you in. Check your email and password. Confirm your email address before signing in.",
         values,
       );
     const user = await getPrisma().user.findUnique({
@@ -168,7 +168,7 @@ export async function supabaseSignIn(
     ) {
       await clearSupabaseSession();
       return failure(
-        "Access to this account is unavailable. Contact support if account setup is incomplete.",
+        "Access to this account is unavailable. Contact support for help.",
         values,
       );
     }
@@ -176,10 +176,7 @@ export async function supabaseSignIn(
   } catch (error) {
     unstable_rethrow(error);
     report(error, "sign_in");
-    return failure(
-      "The authentication service is temporarily unavailable. Please try again.",
-      values,
-    );
+    return failure("We can’t sign you in right now. Try again later.", values);
   }
   redirect(nextPath);
 }
@@ -226,7 +223,8 @@ export async function supabaseResetPassword(
     if (!identity || !token)
       return {
         status: "error",
-        message: "This reset link is invalid or has expired.",
+        message:
+          "This reset link is invalid or has expired. Request a new reset link.",
       };
     const user = await getPrisma().user.findUnique({
       where: { authUserId: identity.id },
@@ -241,7 +239,8 @@ export async function supabaseResetPassword(
     if (!consumed.ok || consumed.userId !== user.id)
       return {
         status: "error",
-        message: "This reset link is invalid or has expired.",
+        message:
+          "This reset link is invalid or has expired. Request a new reset link.",
       };
     // Revoke PtahX access before contacting the password provider. Failure remains closed.
     await getPrisma().$transaction(async (tx) => {
@@ -278,7 +277,7 @@ export async function supabaseResetPassword(
     return {
       status: "error",
       message:
-        "Password reset could not finish. Request a new recovery link and try again.",
+        "We couldn’t reset your password. Request a new reset link and try again.",
     };
   }
   redirect("/sign-in?passwordReset=1");

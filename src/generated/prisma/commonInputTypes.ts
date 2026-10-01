@@ -997,6 +997,40 @@ export type EnumSponsoredContentStatusWithAggregatesFilter<$PrismaModel = never>
   _max?: Prisma.NestedEnumSponsoredContentStatusFilter<$PrismaModel>
 }
 
+export type EnumPostStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.PostStatus | Prisma.EnumPostStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.PostStatus[] | Prisma.ListEnumPostStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PostStatus[] | Prisma.ListEnumPostStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPostStatusFilter<$PrismaModel> | $Enums.PostStatus
+}
+
+export type EnumPostStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PostStatus | Prisma.EnumPostStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.PostStatus[] | Prisma.ListEnumPostStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PostStatus[] | Prisma.ListEnumPostStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPostStatusWithAggregatesFilter<$PrismaModel> | $Enums.PostStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPostStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPostStatusFilter<$PrismaModel>
+}
+
+export type EnumPostReactionKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.PostReactionKind | Prisma.EnumPostReactionKindFieldRefInput<$PrismaModel>
+  in?: $Enums.PostReactionKind[] | Prisma.ListEnumPostReactionKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PostReactionKind[] | Prisma.ListEnumPostReactionKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPostReactionKindFilter<$PrismaModel> | $Enums.PostReactionKind
+}
+
+export type EnumPostReactionKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PostReactionKind | Prisma.EnumPostReactionKindFieldRefInput<$PrismaModel>
+  in?: $Enums.PostReactionKind[] | Prisma.ListEnumPostReactionKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PostReactionKind[] | Prisma.ListEnumPostReactionKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPostReactionKindWithAggregatesFilter<$PrismaModel> | $Enums.PostReactionKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPostReactionKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPostReactionKindFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -1946,6 +1980,40 @@ export type NestedEnumSponsoredContentStatusWithAggregatesFilter<$PrismaModel = 
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumSponsoredContentStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumSponsoredContentStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumPostStatusFilter<$PrismaModel = never> = {
+  equals?: $Enums.PostStatus | Prisma.EnumPostStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.PostStatus[] | Prisma.ListEnumPostStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PostStatus[] | Prisma.ListEnumPostStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPostStatusFilter<$PrismaModel> | $Enums.PostStatus
+}
+
+export type NestedEnumPostStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PostStatus | Prisma.EnumPostStatusFieldRefInput<$PrismaModel>
+  in?: $Enums.PostStatus[] | Prisma.ListEnumPostStatusFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PostStatus[] | Prisma.ListEnumPostStatusFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPostStatusWithAggregatesFilter<$PrismaModel> | $Enums.PostStatus
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPostStatusFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPostStatusFilter<$PrismaModel>
+}
+
+export type NestedEnumPostReactionKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.PostReactionKind | Prisma.EnumPostReactionKindFieldRefInput<$PrismaModel>
+  in?: $Enums.PostReactionKind[] | Prisma.ListEnumPostReactionKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PostReactionKind[] | Prisma.ListEnumPostReactionKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPostReactionKindFilter<$PrismaModel> | $Enums.PostReactionKind
+}
+
+export type NestedEnumPostReactionKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.PostReactionKind | Prisma.EnumPostReactionKindFieldRefInput<$PrismaModel>
+  in?: $Enums.PostReactionKind[] | Prisma.ListEnumPostReactionKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.PostReactionKind[] | Prisma.ListEnumPostReactionKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumPostReactionKindWithAggregatesFilter<$PrismaModel> | $Enums.PostReactionKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumPostReactionKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumPostReactionKindFilter<$PrismaModel>
 }
 
 

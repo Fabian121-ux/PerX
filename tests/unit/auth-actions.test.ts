@@ -5,7 +5,11 @@ import {
   signInAction,
   signOutAction,
 } from "@/features/auth/actions";
-import { getResolvedDataMode, getSignupConfig, hasDatabaseUrl } from "@/lib/env";
+import {
+  getResolvedDataMode,
+  getSignupConfig,
+  hasDatabaseUrl,
+} from "@/lib/env";
 import { getPrisma } from "@/lib/db/prisma";
 import * as session from "@/lib/auth/session";
 
@@ -151,9 +155,7 @@ describe("Auth Actions", () => {
       const tx = {
         $executeRawUnsafe: vi.fn().mockResolvedValue(1),
         role: {
-          upsert: vi
-            .fn()
-            .mockResolvedValueOnce({ id: "role_member" }),
+          upsert: vi.fn().mockResolvedValueOnce({ id: "role_member" }),
         },
         user: {
           count: vi.fn().mockResolvedValue(0),
@@ -331,7 +333,9 @@ describe("Auth Actions", () => {
       formData.set("confirmPassword", "validpassword1");
 
       await expect(signUpAction(idleState, formData)).resolves.toMatchObject({
-        fieldErrors: { terms: "You must accept the terms to create an account." },
+        fieldErrors: {
+          terms: "You must accept the terms to create an account.",
+        },
         status: "error",
       });
       expect(getPrisma).not.toHaveBeenCalled();
@@ -363,13 +367,11 @@ describe("Auth Actions", () => {
     it("redirects to invalid-credentials on incorrect password", async () => {
       vi.mocked(getPrisma).mockReturnValue({
         user: {
-          findUnique: vi
-            .fn()
-            .mockResolvedValue({
-              id: "user_1",
-              passwordHash: "hashed_wrongpass",
-              isActive: true,
-            }),
+          findUnique: vi.fn().mockResolvedValue({
+            id: "user_1",
+            passwordHash: "hashed_wrongpass",
+            isActive: true,
+          }),
         },
       } as never);
 
@@ -378,21 +380,21 @@ describe("Auth Actions", () => {
       formData.set("password", "wrongpass");
 
       await expect(signInAction(idleState, formData)).resolves.toMatchObject({
-        message: "The email or password you entered is incorrect.",
+        message: expect.stringMatching(
+          /email or password.*incorrect.*try again/i,
+        ),
         status: "error",
       });
     });
 
-  it("redirects to account-deactivated if user is not active", async () => {
+    it("redirects to account-deactivated if user is not active", async () => {
       vi.mocked(getPrisma).mockReturnValue({
         user: {
-          findUnique: vi
-            .fn()
-            .mockResolvedValue({
-              id: "user_1",
-              passwordHash: "hashed_validpass",
-              isActive: false,
-            }),
+          findUnique: vi.fn().mockResolvedValue({
+            id: "user_1",
+            passwordHash: "hashed_validpass",
+            isActive: false,
+          }),
         },
       } as never);
 
@@ -401,11 +403,12 @@ describe("Auth Actions", () => {
       formData.set("password", "validpass");
 
       await expect(signInAction(idleState, formData)).resolves.toMatchObject({
-        message:
-          "This account is deactivated. Contact support if you believe this is a mistake.",
+        message: expect.stringMatching(
+          /account is not active.*Contact support/,
+        ),
         status: "error",
       });
-  });
+    });
 
     it("denies an active temporary suspension after password verification", async () => {
       vi.mocked(getPrisma).mockReturnValue({
@@ -440,13 +443,11 @@ describe("Auth Actions", () => {
     it("creates session and redirects to /app on success", async () => {
       vi.mocked(getPrisma).mockReturnValue({
         user: {
-          findUnique: vi
-            .fn()
-            .mockResolvedValue({
-              id: "user_1",
-              passwordHash: "hashed_validpass",
-              isActive: true,
-            }),
+          findUnique: vi.fn().mockResolvedValue({
+            id: "user_1",
+            passwordHash: "hashed_validpass",
+            isActive: true,
+          }),
         },
       } as never);
 

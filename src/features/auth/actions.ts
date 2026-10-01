@@ -339,8 +339,7 @@ export async function signInAction(
   if (mode === "mock") redirect(addMockQuery(nextPath));
   if (mode === "unavailable" || !hasDatabaseUrl()) {
     return {
-      message:
-        "The authentication service is temporarily unavailable. Please try again.",
+      message: "We can’t sign you in right now. Try again later.",
       status: "error",
       values,
     };
@@ -354,7 +353,7 @@ export async function signInAction(
   if (!parsed.success) {
     return {
       fieldErrors: validationErrors(parsed.error),
-      message: "The email or password you entered is incorrect.",
+      message: "The email or password is incorrect. Check both and try again.",
       status: "error",
       values,
     };
@@ -374,8 +373,7 @@ export async function signInAction(
       route: "/sign-in",
     });
     return {
-      message:
-        "The authentication service is temporarily unavailable. Please try again.",
+      message: "We can’t sign you in right now. Try again later.",
       status: "error",
       values,
     };
@@ -386,7 +384,7 @@ export async function signInAction(
     !(await verifyPassword(parsed.data.password, user.passwordHash))
   ) {
     return {
-      message: "The email or password you entered is incorrect.",
+      message: "The email or password is incorrect. Check both and try again.",
       status: "error",
       values,
     };
@@ -408,11 +406,11 @@ export async function signInAction(
     return {
       message:
         user.bannedAt || user.deactivatedAt
-          ? "Access to this account is unavailable."
+          ? "Access to this account is unavailable. Contact support for help."
           : !user.isActive
-            ? "This account is deactivated. Contact support if you believe this is a mistake."
+            ? "This account is not active. Contact support if you think this is a mistake."
             : (access.publicExplanation ??
-              "This account is currently restricted."),
+              "This account is currently restricted. Contact support for help."),
       status: "error",
       values,
     };
@@ -427,8 +425,7 @@ export async function signInAction(
       route: "/sign-in",
     });
     return {
-      message:
-        "The authentication service is temporarily unavailable. Please try again.",
+      message: "We can’t sign you in right now. Try again later.",
       status: "error",
       values,
     };
@@ -594,7 +591,10 @@ export async function resetPasswordAction(
     };
   }
   if (!hasDatabaseUrl()) {
-    return { message: "Password reset is unavailable.", status: "error" };
+    return {
+      message: "We can’t reset your password right now. Try again later.",
+      status: "error",
+    };
   }
 
   if (usesSupabaseAuth()) return supabaseResetPassword(parsedPassword.data);
@@ -602,7 +602,8 @@ export async function resetPasswordAction(
   const consumed = await consumePasswordResetToken(token);
   if (!consumed.ok) {
     return {
-      message: "This reset link is invalid or has expired.",
+      message:
+        "This reset link is invalid or has expired. Request a new reset link.",
       status: "error",
     };
   }

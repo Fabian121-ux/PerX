@@ -59,13 +59,18 @@ automatic provider confirmation fails closed.
 
 ## Expand and cut over in separate stages
 
-This is the future operational sequence, not authorization to perform production
-changes as part of the staged-rollout code adjustment. Keep PR #15 Draft in this
-step; do not migrate production, change production env, create production Auth
-users, merge or deploy. `vercel.json` disables automatic deployments only for
-`auth-supabase-1-user-link` so PR updates can run CI without deploying. Remove
-that branch-specific rule only when a later preview deployment is authorized;
-other branches retain their existing deployment behavior.
+PROD-AUTH-STAGE-1 authorizes a dormant production rollout only after its
+production and source gates pass. Keep legacy authentication authoritative.
+The only production migration authorized for this stage is
+`20260924160000_add_supabase_auth_user_link`. Stop if `migrate deploy` would also
+apply an unrelated migration; resolve that prerequisite separately.
+Never point Vercel Preview at production auth or database services.
+
+Keep PR #15 Draft and its branch-specific `vercel.json` deployment suppression
+until schema migration/preservation checks pass, production explicitly selects
+`PERX_AUTH_PROVIDER=legacy`, and all source/security gates pass. Only then remove
+that rule, rerun validation, push, verify final CI and merge. Do not change other
+Vercel behavior.
 
 1. **Apply the additive production migration first.** Review and apply
    `20260924160000_add_supabase_auth_user_link` through the established migration
@@ -77,6 +82,10 @@ other branches retain their existing deployment behavior.
    configuration makes the staged state reviewable.
 3. **Deploy the dormant Supabase code.** Keep legacy sign-in, sessions and
    recovery active; verify those existing flows before proceeding.
+**Stop after step 3 for PROD-AUTH-STAGE-1.** Steps 4–7 belong to the separately
+authorized PROD-AUTH-CUTOVER-2. Do not create Auth identities, link accounts,
+send setup emails or enable Supabase during the dormant stage.
+
 4. **Configure production Supabase Auth, SMTP and templates.** Follow the exact
    email/password, Confirm Email, trusted origin, redirect and token-hash
    template requirements below. Do not point Vercel Preview at production.
@@ -198,9 +207,24 @@ provider flow and must not be described as Supabase runtime acceptance.
 
 ## Release prerequisites
 
-Keep PR #15 Draft during this adjustment. The staged sequence above separates
-shipping dormant code from enabling Supabase Auth. Migration review, relevant
-checks and explicit deployment authorization are required before the dormant
-deployment; provider configuration, account setup and live acceptance belong to
-the later cutover. A green build is not proof of either authentication flow.
-Do not switch existing production accounts to Supabase without their UUID links.
+Keep PR #15 Draft until every stage gate passes. Record application/Auth user
+counts, application IDs and admin classification/roles/profile before migration.
+Keep sensitive preservation snapshots private. Verify nullable UUID type, a valid
+unique index, unchanged IDs/data/counts and NULL existing links afterward.
+Any unexpected change stops deployment.
+
+Verify production explicitly selects legacy and has the canonical app origin.
+Require lint, typecheck, targeted auth tests, authorization tests, full isolated
+DB tests, intentional no-DB tests, Prisma generation/validation, build and final
+CI. Review the complete diff after reconciliation with latest main; exclude
+credentials, browser artifacts and local test configuration from commits.
+
+After merge, verify the actual Vercel Production deployment ID, commit and READY
+status. Test existing legacy sign-in, session persistence, roles, logout, recovery
+and public/auth routes in a browser at desktop and 320px. Inspect runtime logs;
+a 200 response is not evidence of successful authentication.
+If legacy auth breaks, retain the additive column/index and legacy provider pin.
+Revert or hotfix application code through normal Git history and verify again.
+
+See [stage evidence](prod-auth-stage-1.md) for actual results and blockers and
+[PLAIN-ENGLISH-UX-1](plain-english-ux-1.md) for deferred copy review.

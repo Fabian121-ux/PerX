@@ -1,4 +1,4 @@
-/** Existing rollback-path coverage. Supabase's default path has separate unit,
+/** Existing rollback-path coverage. Explicit Supabase mode has separate unit,
  * real-Postgres integration and real-provider browser acceptance suites. */
 import { beforeEach, afterEach } from "vitest";
 let original: string | undefined;

@@ -402,3 +402,21 @@ export const SponsoredContentStatus = {
 } as const
 
 export type SponsoredContentStatus = (typeof SponsoredContentStatus)[keyof typeof SponsoredContentStatus]
+
+
+export const PostStatus = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED'
+} as const
+
+export type PostStatus = (typeof PostStatus)[keyof typeof PostStatus]
+
+
+export const PostReactionKind = {
+  LIKE: 'LIKE',
+  CELEBRATE: 'CELEBRATE',
+  SUPPORT: 'SUPPORT',
+  INSIGHTFUL: 'INSIGHTFUL'
+} as const
+
+export type PostReactionKind = (typeof PostReactionKind)[keyof typeof PostReactionKind]
