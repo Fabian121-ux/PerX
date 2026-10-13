@@ -91,6 +91,7 @@ test("public routes render without errors or overflow after the framework upgrad
     const response = await page.goto(route);
     expect(response?.status(), route).toBe(200);
     await expect(page.locator("main")).toBeVisible();
+    await expect(page.getByText(/temporarily unavailable/i)).toHaveCount(0);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= innerWidth,
