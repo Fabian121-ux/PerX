@@ -127,6 +127,31 @@ describe("message workspace gestures and actions", () => {
     cleanup();
   });
 
+  it("shows a usable conversation list and real deal shortcuts", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[{
+          id: "conversation-1",
+          participantName: "Zee Stitches",
+          participantImageUrl: null,
+          lastMessage: "The details are ready",
+          unreadCount: 2,
+          dealOffer: { currency: "NGN", opportunityTitle: "Two-piece set" },
+          messages: [],
+        }]}
+        currentUserId="user-1"
+        defaultConversationId="conversation-1"
+      />,
+    );
+    await act(async () => {});
+    expect(view.getByRole("link", { name: "Find people to message" }).getAttribute("href")).toContain("/app/connections");
+    expect(view.getByRole("button", { name: "Make a Deal" })).toBeTruthy();
+    expect(view.getByText("Deal terms")).toBeTruthy();
+    expect(view.getByRole("button", { name: "deals" })).toBeTruthy();
+    fireEvent.click(view.getByRole("button", { name: "deals" }));
+    expect(view.getAllByText("Zee Stitches").length).toBeGreaterThan(0);
+  });
+
   it("opens on long press and never also replies", async () => {
     const view = render(workspace());
     await act(async () => {});

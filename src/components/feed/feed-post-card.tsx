@@ -20,7 +20,7 @@ import { trustBadgeClassName } from "@/lib/trust/engine";
  * loaded eagerly with fetch priority. Everything after is lazy, so a long feed
  * does not download media the viewer may never scroll to.
  */
-const ABOVE_THE_FOLD_COUNT = 2;
+const ABOVE_THE_FOLD_COUNT = 1;
 
 type FeedPostCardProps = { position: number } & (
   | { audience: "public"; post: PublicFeedPost; onVisible?: never }
@@ -66,11 +66,11 @@ export function FeedPostCard(props: FeedPostCardProps) {
 
   return (
     <article
-      className="min-w-0 overflow-hidden rounded-[22px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] shadow-sm"
+      className="flex min-w-0 flex-col overflow-hidden rounded-[22px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] shadow-[0_8px_28px_rgba(10,25,55,0.065)]"
       data-post-id={post.id}
       ref={articleRef}
     >
-      <header className="flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5">
+      <header className="order-1 flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5">
         <div className="flex min-w-0 items-center gap-3">
           {/*
             Every feed avatar is lazy. Only the composer avatar above it is
@@ -106,7 +106,14 @@ export function FeedPostCard(props: FeedPostCardProps) {
             <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-[color:var(--px-text-muted)]">
               <PostedTime value={post.publishedAt} />
               <span aria-hidden>·</span>
-              <span>{post.type.replaceAll("_", " ")}</span>
+              <span>{post.type === "PRODUCT" ? "Product listing" : post.type.replaceAll("_", " ")}</span>
+              {post.type === "PRODUCT" && post.location ? (
+                <>
+                  <span aria-hidden>·</span>
+                  <MapPin aria-hidden size={12} />
+                  <span className="max-w-24 truncate">{post.location}</span>
+                </>
+              ) : null}
             </p>
           </div>
         </div>
@@ -120,7 +127,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
         </span>
       </header>
 
-      <div className="px-4 pb-4 sm:px-5">
+      <div className={`${post.type === "PRODUCT" ? "order-3 pt-4" : "order-2"} px-4 pb-4 sm:px-5`}>
         <Link
           className="group block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
           href={detailHref}
@@ -135,7 +142,12 @@ export function FeedPostCard(props: FeedPostCardProps) {
             `break-words` matters on narrow viewports: an unbroken URL or token
             in a summary is the usual cause of horizontal overflow at 320px.
           */}
-          <p className="mt-2 whitespace-pre-line break-words text-sm leading-6 text-[color:var(--px-text-muted)]">
+          {post.type === "PRODUCT" ? (
+            <p className="mt-2 text-2xl font-black tracking-tight text-[color:var(--px-primary)]">
+              {formatBudgetRange(post.budgetMinMinor, post.budgetMaxMinor, post.currency)}
+            </p>
+          ) : null}
+          <p className={`mt-2 whitespace-pre-line break-words text-sm leading-6 text-[color:var(--px-text-muted)] ${post.type === "PRODUCT" ? "line-clamp-3" : ""}`}>
             {post.summary}
           </p>
         </Link>
@@ -149,12 +161,15 @@ export function FeedPostCard(props: FeedPostCardProps) {
             reserves the exact box before the image arrives. Without it every
             image load would shift the posts below it.
           */
-          className={`relative block w-full overflow-hidden bg-[color:var(--px-muted)] focus:outline-none focus-visible:ring-inset focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${post.type === "PRODUCT" ? "aspect-[4/5] max-h-[510px] sm:aspect-[16/10]" : "aspect-[16/9]"}`}
+          className={`relative block w-full overflow-hidden bg-[color:var(--px-muted)] focus:outline-none focus-visible:ring-inset focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${post.type === "PRODUCT" ? "order-2 aspect-[4/5] max-h-[510px] sm:aspect-[16/10]" : "order-3 aspect-[16/9]"}`}
           href={detailHref}
           onClick={() =>
             recordFeedEvent({ name: "post_open", position, postId: post.id })
           }
         >
+          {post.type === "PRODUCT" ? (
+            <span className="absolute left-3 top-3 z-10 rounded-full bg-[#061936]/85 px-3 py-1 text-[11px] font-bold text-white shadow-sm">Product</span>
+          ) : null}
           <Image
             alt={post.imageAlt}
             className="object-cover transition duration-300 hover:scale-[1.015] motion-reduce:transform-none"
@@ -174,7 +189,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
         <PostGraphic title={post.title} type={post.type} />
       )}
 
-      <div className="grid gap-3 px-4 py-4 sm:px-5">
+      <div className="order-4 grid gap-3 px-4 py-4 sm:px-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-[color:var(--px-text-muted)]">
             <span className="inline-flex items-center gap-1.5">
@@ -188,7 +203,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
               <PostedTime value={post.publishedAt} />
             </span>
           </div>
-          <span className="font-black text-[color:var(--px-primary)]">
+          <span className={`font-black text-[color:var(--px-primary)] ${post.type === "PRODUCT" ? "sr-only" : ""}`}>
             {formatBudgetRange(
               post.budgetMinMinor,
               post.budgetMaxMinor,
@@ -197,7 +212,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-1 border-t border-[color:var(--px-border)] pt-3">
-          {/* Existing actions live here; reactions/comments require persistence first. */}
+          {/* Real actions only: no invented purchase or delivery integrations. */}
           {props.audience === "public" ? (
             <Link
               className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)]"
@@ -217,7 +232,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
             href={`${detailHref}#respond-to-listing`}
           >
             <MessageCircleQuestion aria-hidden size={17} />
-            Ask
+            {post.type === "PRODUCT" ? "Enquire" : "Ask"}
           </Link>
           <ShareButton href={detailHref} />
           <Link
@@ -276,7 +291,7 @@ function PostGraphic({ title, type }: { title: string; type: string }) {
   return (
     <div
       aria-hidden
-      className="relative h-36 w-full overflow-hidden bg-[linear-gradient(135deg,#061936_0%,#123466_55%,#5b46f2_100%)]"
+      className={`relative h-36 w-full overflow-hidden bg-[linear-gradient(135deg,#061936_0%,#123466_55%,#5b46f2_100%)] ${type === "PRODUCT" ? "order-2" : "order-3"}`}
     >
       <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/20 blur-2xl" />
       <div className="absolute bottom-5 left-5 h-12 w-12 rounded-full border border-white/40" />
