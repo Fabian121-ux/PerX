@@ -2,6 +2,8 @@ import {
   Bookmark,
   MessageSquare,
   PlusCircle,
+  Search,
+  ShieldCheck,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -41,6 +43,19 @@ export function HomeFeedView({
     <div className="mx-auto grid w-full max-w-[1180px] gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
       <div className="mx-auto flex w-full min-w-0 max-w-[640px] flex-col gap-4 lg:mx-0">
         <h1 className="sr-only">Home</h1>
+
+        <div className="grid gap-2 rounded-[22px] bg-[linear-gradient(130deg,var(--px-navy),var(--px-navy-3))] p-3 text-white shadow-lg lg:hidden">
+          <div className="flex items-center justify-between gap-3 px-1">
+            <span className="text-sm font-black tracking-wide">Discover on PtahX</span>
+            <Link className="inline-flex min-h-11 items-center gap-1.5 text-xs font-semibold text-white/85 hover:text-white" href="/app/trust">
+              <ShieldCheck aria-hidden size={16} /> Trust &amp; safety
+            </Link>
+          </div>
+          <Link className="flex min-h-12 items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 text-sm text-white/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/app/search">
+            <Search aria-hidden size={18} />
+            <span className="truncate">Search people, services and opportunities</span>
+          </Link>
+        </div>
 
         <FeedComposerEntry avatarUrl={user.avatarUrl} name={user.name} />
 

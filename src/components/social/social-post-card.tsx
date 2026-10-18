@@ -3,6 +3,8 @@ import Link from "next/link";
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
+import { ShareButton } from "@/components/feed/share-button";
+import { MessageCircle } from "lucide-react";
 import { setPostReactionAction } from "@/features/social/actions";
 import {
   reactionKinds,
@@ -20,7 +22,7 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
       className="min-w-0 overflow-hidden rounded-[22px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4 shadow-sm sm:p-5"
     >
       <header className="mb-3 flex min-w-0 items-center gap-3">
-        <Avatar name={post.author.name} src={post.author.imageUrl} size={40} />
+        <Avatar name={post.author.name} src={post.author.imageUrl} size={44} />
         <div className="min-w-0">
           <Link
             className="block truncate text-sm font-bold"
@@ -38,7 +40,7 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
           </time>
         </div>
       </header>
-      <Link href={path} aria-label="Open post" className="block">
+      <Link href={path} aria-label="Open post" className="block rounded-xl py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]">
         <p className="whitespace-pre-wrap break-words text-sm leading-6 [overflow-wrap:anywhere]">
           {post.body}
         </p>
@@ -65,12 +67,16 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
             ))}
           </div>
         )}
-        <Link
-          className="inline-flex min-h-11 items-center text-sm font-bold text-[color:var(--px-primary)]"
-          href={authenticated ? `${path}#comments` : socialSignInPath(post.id)}
-        >
-          {authenticated ? "Comment" : "Sign in to comment"}
-        </Link>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-1 border-t border-[color:var(--px-border)] pt-2">
+          <Link
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)]"
+            href={authenticated ? `${path}#comments` : socialSignInPath(post.id)}
+          >
+            <MessageCircle aria-hidden size={17} />
+            {authenticated ? "Comment" : "Sign in to comment"}
+          </Link>
+          <ShareButton href={path} />
+        </div>
       </div>
     </article>
   );

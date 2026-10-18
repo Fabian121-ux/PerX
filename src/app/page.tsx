@@ -1,6 +1,7 @@
 import { SocialPostCard } from "@/components/social/social-post-card";
 import { getSocialFeedResult } from "@/lib/data/social-posts";
 import { Fragment } from "react";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -44,6 +45,12 @@ export default async function Home() {
           </nav>
         </div>
       </header>
+      <div className="border-b border-[color:var(--px-border)] bg-[linear-gradient(130deg,var(--px-navy),var(--px-navy-3))] px-3 py-3 sm:px-4">
+        <Link className="mx-auto flex min-h-12 max-w-[608px] items-center gap-3 rounded-xl border border-white/15 bg-white/10 px-4 text-sm text-white/85 transition hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/discover">
+          <Search aria-hidden size={19} />
+          <span className="truncate">Search opportunities, services and people</span>
+        </Link>
+      </div>
       <main
         className="mx-auto grid min-w-0 max-w-[640px] gap-4 px-2 py-4 sm:px-4"
         aria-label="Public feed"

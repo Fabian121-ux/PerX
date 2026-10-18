@@ -1,6 +1,6 @@
 "use client";
 
-import { PenLine } from "lucide-react";
+import { BriefcaseBusiness, PenLine } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -47,7 +47,12 @@ export function FeedComposerEntry({
         <ComposerAction
           href="/app/posts/new"
           icon={<PenLine aria-hidden size={17} />}
-          label="Write a post"
+          label="Share an update"
+        />
+        <ComposerAction
+          href="/app/create"
+          icon={<BriefcaseBusiness aria-hidden size={17} />}
+          label="Create listing"
         />
       </div>
     </div>

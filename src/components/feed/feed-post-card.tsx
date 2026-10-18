@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 import { FeedSaveButton } from "@/components/dashboard/feed-save-button";
+import { ShareButton } from "@/components/feed/share-button";
 import { Avatar } from "@/components/ui/avatar";
 import type { HomeFeedPost, PublicFeedPost } from "@/lib/data/home-feed-view";
 import { getCanonicalOpportunityPath } from "@/lib/data/opportunity-path";
@@ -148,7 +149,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
             reserves the exact box before the image arrives. Without it every
             image load would shift the posts below it.
           */
-          className="relative block aspect-[16/8] w-full overflow-hidden bg-[color:var(--px-muted)] focus:outline-none focus-visible:ring-inset focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+          className={`relative block w-full overflow-hidden bg-[color:var(--px-muted)] focus:outline-none focus-visible:ring-inset focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${post.type === "PRODUCT" ? "aspect-[4/5] max-h-[510px] sm:aspect-[16/10]" : "aspect-[16/9]"}`}
           href={detailHref}
           onClick={() =>
             recordFeedEvent({ name: "post_open", position, postId: post.id })
@@ -195,7 +196,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
             )}
           </span>
         </div>
-        <div className="flex items-center justify-between gap-3 border-t border-[color:var(--px-border)] pt-3">
+        <div className="flex flex-wrap items-center gap-1 border-t border-[color:var(--px-border)] pt-3">
           {/* Existing actions live here; reactions/comments require persistence first. */}
           {props.audience === "public" ? (
             <Link
@@ -211,14 +212,15 @@ export function FeedPostCard(props: FeedPostCardProps) {
               opportunityId={post.id}
             />
           )}
+          <ShareButton href={detailHref} />
           <Link
-            className="inline-flex min-h-11 items-center rounded-xl bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white transition hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            className="ml-auto inline-flex min-h-11 items-center rounded-xl bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white transition hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={detailHref}
             onClick={() =>
               recordFeedEvent({ name: "post_open", position, postId: post.id })
             }
           >
-            View post
+            {post.type === "PRODUCT" ? "View item" : "View details"}
           </Link>
         </div>
       </div>

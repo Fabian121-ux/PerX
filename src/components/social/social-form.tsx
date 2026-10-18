@@ -12,6 +12,7 @@ export function SocialForm({
   maxLength,
   navigateToPost = false,
   deletedPost = false,
+  draftKey,
 }: {
   action: (state: SocialFormState, data: FormData) => Promise<SocialFormState>;
   fields?: Record<string, string>;
@@ -21,14 +22,30 @@ export function SocialForm({
   maxLength?: number;
   navigateToPost?: boolean;
   deletedPost?: boolean;
+  draftKey?: string;
 }) {
   const [text, setText] = useState(initialBody);
   const [state, submit, pending] = useActionState(async (previous: SocialFormState, data: FormData) => {
     const result = await action(previous, data);
-    if (result.status === "success" && !initialBody) setText("");
+    if (result.status === "success" && !initialBody) {
+      setText("");
+      if (draftKey) {
+        try { window.sessionStorage.removeItem(draftKey); } catch { /* Storage may be disabled. */ }
+      }
+    }
     return result;
   }, { status: "idle" });
   const router = useRouter();
+  useEffect(() => {
+    if (!draftKey) return;
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const saved = window.sessionStorage.getItem(draftKey);
+        if (saved) setText(saved.slice(0, maxLength));
+      } catch { /* The composer still works without browser storage. */ }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [draftKey, maxLength]);
   useEffect(() => {
     if (state.status !== "success") return;
     if (navigateToPost && state.id) router.push(socialPostPath(state.id));
@@ -47,11 +64,18 @@ export function SocialForm({
             className="min-h-28 w-full min-w-0 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-3 text-[color:var(--px-text)]"
             name="body"
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              if (draftKey) {
+                try { window.sessionStorage.setItem(draftKey, e.target.value); } catch { /* Optional local draft. */ }
+              }
+            }}
+            placeholder={navigateToPost ? "Share progress, ask a question or start a conversation..." : undefined}
             maxLength={maxLength}
             required
             disabled={pending}
           />
+          {maxLength ? <span className="text-right text-xs font-normal text-[color:var(--px-text-muted)]">{text.length} / {maxLength} characters</span> : null}
         </label>
       )}
       <Button className="w-fit" disabled={pending} type="submit">
