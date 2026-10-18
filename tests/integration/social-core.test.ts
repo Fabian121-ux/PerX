@@ -563,7 +563,7 @@ suite("social core production authorization and PostgreSQL persistence", () => {
                 : state === "banned"
                   ? { bannedAt: new Date() }
                   : state === "suspended"
-                    ? { suspendedUntil: new Date(Date.now() + 60000) }
+                    ? { suspendedAt: new Date(), suspendedUntil: new Date(Date.now() + 60000) }
                     : { accountClassification: "INTERNAL_TEST_USER" },
           });
         expect(await getSocialPost(p.id)).toBeNull();

@@ -107,13 +107,14 @@ export const featureRegistry = [
     showInSidebar: true,
   },
   {
-    description: "Publish an opportunity, service, partnership, or listing.",
+    description: "Share an update or create an opportunity, service, partnership, or listing.",
+    activePaths: ["/app/posts/new", "/app/opportunities/new"],
     group: "work",
     href: getAppRoute("create_post"),
     icon: SquarePen,
     id: "create-post",
     keywords: ["new", "publish", "listing", "opportunity", "content"],
-    label: "Create Post",
+    label: "Create",
     /*
       Intentionally ungated.
 

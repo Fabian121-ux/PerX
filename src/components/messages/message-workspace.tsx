@@ -2335,6 +2335,12 @@ export function MessageWorkspace({
                   <p className="truncate text-xs font-semibold text-[color:var(--px-primary)]">
                     {conversation.opportunityTitle ?? conversation.context}
                   </p>
+                  {conversation.deal ? (
+                    <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-50 px-2 py-0.5 text-[10px] font-black text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                      <LockKeyhole aria-hidden size={12} />
+                      Deal record
+                    </span>
+                  ) : null}
                   <p className="mt-1 line-clamp-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
                     {drafts[conversation.id]?.trim() ? (
                       <>
@@ -2503,7 +2509,7 @@ export function MessageWorkspace({
                       : "Load older messages"}
                   </button>
                 ) : null}
-                <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4">
+                <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-3 sm:p-4">
                   <div className="flex items-center gap-2 text-[color:var(--px-primary)]">
                     <LockKeyhole aria-hidden size={15} />
                     <p className="text-xs font-bold uppercase tracking-wide">
@@ -2515,7 +2521,7 @@ export function MessageWorkspace({
                       activeConversation.context ??
                       "Professional conversation"}
                   </p>
-                  <p className="mt-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
+                  <p className="mt-2 hidden text-xs leading-5 text-[color:var(--px-text-muted)] sm:block">
                     Keep important conversations and agreements on PtahX. This
                     helps preserve records that may support dispute resolution,
                     safety reviews and account protection.{" "}
@@ -2680,7 +2686,7 @@ export function MessageWorkspace({
                     type="button"
                   >
                     <Handshake aria-hidden size={17} />
-                    <span className="hidden sm:inline">Make a Deal</span>
+                    <span className="text-[11px] sm:text-xs">Deal</span>
                   </button>
                 ) : null}
                 <label className="sr-only" htmlFor="message-draft">
@@ -2744,7 +2750,7 @@ export function MessageWorkspace({
                   )}
                 </button>
               </div>
-              <p className="px-1 text-[10px] font-semibold text-[color:var(--px-text-muted)]">
+              <p className="hidden px-1 text-[10px] font-semibold text-[color:var(--px-text-muted)] sm:block">
                 Enter adds a new line. Ctrl+Enter or Command+Enter sends.
                 {activeConversation.dealOffer
                   ? " Type @deal to open structured terms."

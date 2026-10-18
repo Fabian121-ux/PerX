@@ -289,8 +289,8 @@ export function HomeFeed({
 
   return (
     <section aria-labelledby="home-feed-heading" className="grid gap-4">
-      <h2 className="sr-only" id="home-feed-heading">
-        Your feed
+      <h2 className="px-1 text-base font-black text-[color:var(--px-text)]" id="home-feed-heading">
+        Opportunities &amp; listings
       </h2>
 
       {posts.length ? (

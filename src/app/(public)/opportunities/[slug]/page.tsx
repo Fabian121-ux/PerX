@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -14,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { PublicPageShell } from "@/components/standard-page";
+import { ListingMediaGallery } from "@/components/opportunities/listing-media-gallery";
 import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
@@ -55,6 +55,12 @@ export default async function OpportunityDetailPage({
   if (!opportunity) notFound();
 
   const image = getTemporaryOpportunityImage(opportunity.slug);
+  const photos = opportunity.images?.length
+    ? opportunity.images.map((item: { url: string; altText?: string | null }) => ({
+        src: item.url,
+        alt: item.altText || `${opportunity.title} photo`,
+      }))
+    : [{ src: image.src, alt: image.alt }];
   const ownerName = opportunity.owner?.name ?? "PtahX member";
   const trust = calculateTrustSummary({
     averageRating: opportunity.owner?.trustRecordEvidence?.averageRating ?? 0,
@@ -70,17 +76,10 @@ export default async function OpportunityDetailPage({
       <main className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:px-8">
         <section className="min-w-0">
           <Card className="overflow-hidden p-0">
-            <div className="relative h-56 overflow-hidden bg-[color:var(--px-muted)] sm:h-72">
-              <Image
-                alt={image.alt}
-                className="object-cover"
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 820px"
-                src={image.src}
-              />
-              <div className="absolute inset-0 bg-gradient-to-tr from-black/72 via-black/30 to-transparent" />
-              <div className="absolute bottom-5 left-5 right-5">
+            <div className={`relative overflow-hidden bg-[color:var(--px-muted)] ${opportunity.type === "PRODUCT" ? "h-[min(110vw,540px)] sm:h-[460px]" : "h-64 sm:h-72"}`}>
+              <ListingMediaGallery photos={photos} />
+              <div aria-hidden className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-tr from-black/60 via-black/15 to-transparent" />
+              <div className="pointer-events-none absolute bottom-5 left-5 right-5 z-20">
                 <div className="flex flex-wrap gap-2">
                   <Badge className="bg-white/90 capitalize text-[color:var(--px-text)]">
                     {opportunity.type.replaceAll("_", " ").toLowerCase()}
@@ -194,7 +193,7 @@ export default async function OpportunityDetailPage({
 
         <aside className="grid gap-5 self-start lg:sticky lg:top-24">
           <Card>
-            <h2 className="text-lg font-black text-[color:var(--px-text)]">
+            <h2 id="respond-to-listing" className="scroll-mt-24 text-lg font-black text-[color:var(--px-text)]">
               Respond to this listing
             </h2>
             <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">

@@ -20,7 +20,6 @@ import {
   formatNavigationBadge,
   shouldShowNavigationDot,
 } from "@/lib/navigation/navigation-state";
-import { hasCapability } from "@/lib/permissions/capabilities";
 import { AccountMenu } from "./account-menu";
 import { CreateMenu } from "./create-menu";
 import { ThemeToggle } from "./theme-toggle";
@@ -78,7 +77,6 @@ export function DashboardTopbar({
   );
   const unreadActivity = formatNavigationBadge(unreadCounts.generalActivity);
   const hasUnreadNews = shouldShowNavigationDot(unreadCounts.unreadNews);
-  const canCreate = previewMode || hasCapability(user.roles, "opportunity:create");
 
   return (
     <header className="dashboard-topbar sticky top-0 z-40 flex h-16 w-full shrink-0 items-center justify-between border-b border-[color:var(--px-border)] px-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur sm:px-4 lg:px-8">
@@ -171,7 +169,7 @@ export function DashboardTopbar({
         </div>
 
         <div className="hidden items-center gap-2 lg:flex">
-          {canCreate ? <CreateMenu previewMode={previewMode} /> : null}
+          <CreateMenu previewMode={previewMode} />
           <div className="mx-2 h-6 w-px bg-[color:var(--px-border)]" />
           <ThemeToggle />
 

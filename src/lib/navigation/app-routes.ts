@@ -50,7 +50,7 @@ const routeMap: Record<RouteKey, string> = {
   discover: "/app/discover",
   profile: "/app/profile",
   opportunities: "/app/opportunities",
-  create_post: "/app/opportunities/new",
+  create_post: "/app/create",
   new_opportunity: "/app/opportunities/new",
   saved: "/app/saved",
   proposals: "/app/proposals",
@@ -80,6 +80,7 @@ export function getAppRoute(
     if (key === "home") return "/preview";
     if (key === "deals") return "/preview/deals/demo-deal";
     if (key === "profile") return "/preview/profile";
+    if (key === "create_post") return "/preview/opportunities/new";
 
     const path = routeMap[key];
     return `/preview${path.startsWith("/app/") ? path.slice(4) : path}`;

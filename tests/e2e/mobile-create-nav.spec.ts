@@ -55,7 +55,7 @@ for (const width of [320, 360, 375, 390, 430]) {
       const nav = page.getByRole("navigation", { name: "Primary navigation" });
       await expect(nav).toBeVisible();
 
-      const create = nav.getByRole("link", { name: "Create" });
+      const create = nav.getByRole("button", { name: "Create" });
       await expect(create).toBeVisible();
 
       const box = (await create.boundingBox())!;
@@ -65,8 +65,8 @@ for (const width of [320, 360, 375, 390, 430]) {
       expect(box.x).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width).toBeLessThanOrEqual(width + 0.5);
 
-      // All five primary destinations remain reachable.
-      for (const name of ["Home", "Network", "Create", "Messages", "Profile"]) {
+      // Four destinations are links; Create is a dialog trigger.
+      for (const name of ["Home", "Network", "Messages", "Profile"]) {
         await expect(
           nav.getByRole("link", { name: new RegExp(`^${name}`) }),
         ).toBeVisible();
@@ -81,9 +81,11 @@ for (const width of [320, 360, 375, 390, 430]) {
       expect(overflow).toBeLessThanOrEqual(0);
 
       await create.click();
-      await expect(page).toHaveURL(/\/app\/opportunities\/new/, {
-        timeout: 30_000,
-      });
+      const dialog = page.getByRole("dialog", { name: "What would you like to create?" });
+      await expect(dialog.getByRole("link", { name: /Share an update/ })).toBeVisible();
+      await expect(dialog.getByRole("link", { name: /Post an opportunity/ })).toBeVisible();
+      await dialog.getByRole("link", { name: /Share an update/ }).click();
+      await expect(page).toHaveURL(/\/app\/posts\/new/, { timeout: 30_000 });
     } finally {
       await page.close();
     }
