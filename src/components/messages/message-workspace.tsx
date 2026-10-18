@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import {
   Fragment,
+  memo,
   useCallback,
   useEffect,
   useEffectEvent,
@@ -26,6 +27,7 @@ import {
   Handshake,
   Info,
   Menu,
+  MessageSquarePlus,
   Loader2,
   LockKeyhole,
   MoreVertical,
@@ -1263,7 +1265,7 @@ export function MessageWorkspace({
     return syncedConversations.filter((conversation) => {
       if (conversationFilter === "unread" && !conversation.unreadCount)
         return false;
-      if (conversationFilter === "deals" && !conversation.dealHref)
+      if (conversationFilter === "deals" && !conversation.dealHref && !conversation.dealOffer)
         return false;
       if (!query) return true;
       return [
@@ -2214,9 +2216,9 @@ export function MessageWorkspace({
     >
       <aside
         aria-label="Conversation list"
-        className={`${mobileDetailOpen ? "hidden lg:flex" : "flex"} min-h-0 flex-col border-r border-[color:var(--px-border)] bg-[color:var(--px-surface)]`}
+        className={`${mobileDetailOpen ? "hidden lg:flex" : "flex"} relative min-h-0 flex-col border-r border-[color:var(--px-border)] bg-[color:var(--px-surface)]`}
       >
-        <div className="border-b border-[color:var(--px-border)] bg-[linear-gradient(145deg,var(--px-navy),var(--px-navy-3))] p-4 text-white">
+        <div className="shrink-0 border-b border-white/10 bg-[linear-gradient(145deg,#061936,#0d3370)] p-4 pb-5 text-white">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/55">
@@ -2224,7 +2226,7 @@ export function MessageWorkspace({
               </p>
               <h1 className="mt-1 text-xl font-black">Messages</h1>
               <p className="truncate text-xs text-white/65">
-                Conversations, terms, and Deal records.
+                Conversations, connections and Deal records.
               </p>
             </div>
             <span
@@ -2268,13 +2270,13 @@ export function MessageWorkspace({
           </label>
           <div
             aria-label="Conversation filters"
-            className="mt-3 flex gap-1.5"
+            className="mt-4 flex gap-2"
             role="group"
           >
             {(["all", "unread", "deals"] as const).map((filter) => (
               <button
                 aria-pressed={conversationFilter === filter}
-                className={`rounded-lg px-3 py-1.5 text-[11px] font-black capitalize transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+                className={`min-h-10 rounded-xl px-3 text-[11px] font-black capitalize transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
                   conversationFilter === filter
                     ? "bg-white text-[color:var(--px-navy)]"
                     : "bg-white/8 text-white/70 hover:bg-white/14 hover:text-white"
@@ -2293,19 +2295,27 @@ export function MessageWorkspace({
         </div>
 
         <div
-          className="min-h-0 flex-1 overflow-y-auto p-3"
+          className="min-h-0 flex-1 space-y-2 overflow-y-auto bg-[color:var(--px-page)] p-3 pb-24"
           data-conversation-list-scroll="true"
           ref={listRef}
         >
+          <div className="flex items-center justify-between gap-2 px-1 pb-1 pt-1">
+            <p className="text-[11px] font-black uppercase tracking-[0.13em] text-[color:var(--px-text-muted)]">
+              {conversationFilter === "all" ? "Recent conversations" : conversationFilter === "unread" ? "Unread messages" : "Deal conversations"}
+            </p>
+            <span className="rounded-full bg-[color:var(--px-muted)] px-2 py-0.5 text-[11px] font-bold text-[color:var(--px-text-muted)]">
+              {visibleConversations.length}
+            </span>
+          </div>
           {visibleConversations.map((conversation) => {
             const active = conversation.id === activeConversation?.id;
             return (
               <button
                 aria-current={active ? "true" : undefined}
-                className={`flex w-full min-w-0 items-start gap-3 rounded-2xl p-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${
+                className={`flex min-h-[92px] w-full min-w-0 items-start gap-3 rounded-2xl border p-3 text-left shadow-[0_2px_12px_rgba(10,25,55,0.04)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${
                   active
-                    ? "bg-[color:var(--px-primary-soft)] ring-1 ring-[color:var(--px-primary)]/25"
-                    : "hover:bg-[color:var(--px-surface-soft)]"
+                    ? "border-[color:var(--px-primary)] bg-[color:var(--px-primary-soft)] ring-1 ring-[color:var(--px-primary)]/20"
+                    : "border-[color:var(--px-border)] bg-[color:var(--px-surface)] hover:border-[color:var(--px-primary)]/35 hover:bg-[color:var(--px-surface-soft)]"
                 }`}
                 data-conversation-id={conversation.id}
                 key={conversation.id}
@@ -2322,7 +2332,7 @@ export function MessageWorkspace({
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-bold text-[color:var(--px-text)]">
+                    <p className="truncate text-[14px] font-black text-[color:var(--px-text)]">
                       {conversation.participantName}
                     </p>
                     <span className="shrink-0 text-[10px] font-semibold text-[color:var(--px-text-muted)]">
@@ -2332,16 +2342,18 @@ export function MessageWorkspace({
                       )}
                     </span>
                   </div>
-                  <p className="truncate text-xs font-semibold text-[color:var(--px-primary)]">
-                    {conversation.opportunityTitle ?? conversation.context}
-                  </p>
+                  {conversation.opportunityTitle || conversation.context ? (
+                    <p className="mt-0.5 truncate text-[11px] font-semibold text-[color:var(--px-primary)]">
+                      {conversation.opportunityTitle ?? conversation.context}
+                    </p>
+                  ) : null}
                   {conversation.deal ? (
                     <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-50 px-2 py-0.5 text-[10px] font-black text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
                       <LockKeyhole aria-hidden size={12} />
                       Deal record
                     </span>
                   ) : null}
-                  <p className="mt-1 line-clamp-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
+                  <p className="mt-1 line-clamp-1 text-xs leading-5 text-[color:var(--px-text-muted)]">
                     {drafts[conversation.id]?.trim() ? (
                       <>
                         <span className="font-black text-[color:var(--px-error)]">
@@ -2396,12 +2408,20 @@ export function MessageWorkspace({
             </button>
           ) : null}
         </div>
+        <Link
+          aria-label="Find people to message"
+          className="absolute bottom-4 right-4 inline-flex min-h-12 items-center gap-2 rounded-full bg-[color:var(--px-primary)] px-4 text-sm font-black text-white shadow-[0_12px_28px_rgba(37,99,235,0.28)] transition hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] focus-visible:ring-offset-2"
+          href="/app/connections?tab=discover"
+        >
+          <MessageSquarePlus aria-hidden size={19} />
+          Find people
+        </Link>
       </aside>
 
       {activeConversation ? (
         <section
           aria-label="Active conversation"
-          className={`${mobileDetailOpen ? "flex" : "hidden lg:flex"} relative min-w-0 min-h-0 flex-col bg-[color:var(--px-page)]`}
+          className={`${mobileDetailOpen ? "flex" : "hidden lg:flex"} relative min-w-0 min-h-0 flex-col bg-[#f7f5f0] dark:bg-[#111d31]`}
         >
           <div
             className="message-conversation-header flex h-16 shrink-0 items-center justify-between gap-2 border-b border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-2 outline-none sm:gap-3 sm:px-4"
@@ -2484,7 +2504,7 @@ export function MessageWorkspace({
             <div
               aria-label="Message history"
               aria-live="off"
-              className="bg-dot-pattern h-full overflow-y-auto overscroll-contain p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--px-focus)] sm:p-4"
+              className="bg-dot-pattern h-full overflow-y-auto overscroll-contain p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--px-focus)] sm:p-5"
               data-history-positioned={historyPositioned}
               onFocusCapture={() =>
                 setActivatedConversationId(activeConversation.id)
@@ -2496,7 +2516,7 @@ export function MessageWorkspace({
               role="log"
               tabIndex={-1}
             >
-              <div className="mx-auto flex max-w-3xl flex-col gap-4">
+              <div className="mx-auto flex max-w-3xl flex-col gap-3">
                 {activeConversation.olderMessagesCursor ? (
                   <button
                     className="self-center rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-2 text-xs font-black text-[color:var(--px-primary)] shadow-sm transition hover:bg-[color:var(--px-primary-soft)] disabled:cursor-wait disabled:opacity-60"
@@ -2509,7 +2529,7 @@ export function MessageWorkspace({
                       : "Load older messages"}
                   </button>
                 ) : null}
-                <div className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-3 sm:p-4">
+                <div className="rounded-2xl border border-amber-200/70 bg-[#fff6df] p-3 shadow-sm dark:border-amber-400/20 dark:bg-[#3a321f] sm:p-4">
                   <div className="flex items-center gap-2 text-[color:var(--px-primary)]">
                     <LockKeyhole aria-hidden size={15} />
                     <p className="text-xs font-bold uppercase tracking-wide">
@@ -2647,7 +2667,7 @@ export function MessageWorkspace({
 
           <form
             aria-label="Message composer"
-            className="message-composer min-w-0 max-w-full shrink-0 border-t border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-3"
+            className="message-composer min-w-0 max-w-full shrink-0 border-t border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-3 shadow-[0_-8px_28px_rgba(10,25,55,0.05)]"
             onFocusCapture={() =>
               setActivatedConversationId(activeConversation.id)
             }
@@ -2674,21 +2694,34 @@ export function MessageWorkspace({
                   </button>
                 </div>
               ) : null}
-              <div className="flex w-full min-w-0 max-w-full items-end gap-2 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-2">
-                {activeConversation.dealOffer ? (
-                  <button
-                    aria-expanded={dealOfferOpen}
-                    aria-haspopup="dialog"
-                    aria-label="Make a Deal"
-                    className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 text-xs font-black text-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)] disabled:cursor-wait disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                    disabled={!useBrowserFormatting}
-                    onClick={() => setDealOfferOpen(true)}
-                    type="button"
-                  >
-                    <Handshake aria-hidden size={17} />
-                    <span className="text-[11px] sm:text-xs">Deal</span>
-                  </button>
-                ) : null}
+              {activeConversation.dealOffer || activeConversation.dealHref ? (
+                <div aria-label="Conversation shortcuts" className="flex flex-wrap items-center gap-2 pb-1">
+                  {activeConversation.dealOffer ? (
+                    <button
+                      aria-expanded={dealOfferOpen}
+                      aria-haspopup="dialog"
+                      aria-label="Make a Deal"
+                      className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 text-xs font-black text-amber-900 transition hover:bg-amber-100 disabled:opacity-60 dark:border-amber-600/30 dark:bg-amber-600/10 dark:text-amber-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                      disabled={!useBrowserFormatting}
+                      onClick={() => setDealOfferOpen(true)}
+                      type="button"
+                    >
+                      <LockKeyhole aria-hidden size={16} />
+                      Deal terms
+                    </button>
+                  ) : null}
+                  {activeConversation.dealHref ? (
+                    <Link
+                      className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-muted)] px-3 text-xs font-black text-[color:var(--px-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                      href={activeConversation.dealHref}
+                    >
+                      <Handshake aria-hidden size={16} />
+                      View Deal record
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
+              <div className="flex w-full min-w-0 max-w-full items-end gap-2 rounded-[26px] border border-[color:var(--px-border)] bg-[color:var(--px-muted)] p-1.5 pl-2 shadow-inner">
                 <label className="sr-only" htmlFor="message-draft">
                   Message
                 </label>
@@ -2739,7 +2772,7 @@ export function MessageWorkspace({
                 />
                 <button
                   aria-label="Send message"
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[color:var(--px-primary)] text-white transition hover:bg-[color:var(--px-primary-strong)] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#07866c] text-white transition hover:bg-[#056650] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                   disabled={!draft.trim() || isPending}
                   type="submit"
                 >
@@ -2984,8 +3017,8 @@ function MessageBubble({
           swipeOffset > 0 ? "relative" : ""
         } ${
           mine
-            ? "rounded-br-md bg-[linear-gradient(135deg,var(--px-primary),var(--px-secondary))] text-white"
-            : "rounded-bl-md bg-[color:var(--px-surface)] text-[color:var(--px-text)] ring-1 ring-[color:var(--px-border)]"
+            ? "rounded-br-md bg-[#ddf7dc] text-[#163e30] ring-1 ring-[#b9e6bc] dark:bg-[#1e5649] dark:text-emerald-50 dark:ring-[#287b62]"
+            : "rounded-bl-md bg-white text-[#1e293b] ring-1 ring-[#e4e9ed] dark:bg-[#243248] dark:text-white dark:ring-white/10"
         } ${highlighted ? "ring-4 ring-[color:var(--px-warning)]" : ""}`}
         style={
           swipeOffset > 0
@@ -2995,7 +3028,7 @@ function MessageBubble({
       >
         <div className="mb-1 flex items-center justify-between gap-3">
           <p
-            className={`truncate text-[10px] font-black uppercase tracking-wide ${mine ? "text-blue-100" : "text-[color:var(--px-primary)]"}`}
+            className={`truncate text-[10px] font-black uppercase tracking-wide ${mine ? "text-[#28624c] dark:text-emerald-200" : "text-[color:var(--px-primary)]"}`}
           >
             {message.senderName}
           </p>
@@ -3064,19 +3097,19 @@ function MessageBubble({
           <button
             className={`mb-2 block w-full rounded-2xl border-l-4 p-3 text-left focus:outline-none focus-visible:ring-2 ${
               mine
-                ? "border-white/70 bg-white/10 focus-visible:ring-white"
+                ? "border-[#2b8364] bg-white/55 focus-visible:ring-[#2b8364] dark:bg-black/15"
                 : "border-[color:var(--px-primary)] bg-[color:var(--px-muted)] focus-visible:ring-[color:var(--px-focus)]"
             }`}
             onClick={() => jumpToMessage(message.replyTo?.id ?? "")}
             type="button"
           >
             <p
-              className={`text-xs font-black ${mine ? "text-white" : "text-[color:var(--px-primary)]"}`}
+              className={`text-xs font-black ${mine ? "text-[#205741] dark:text-emerald-100" : "text-[color:var(--px-primary)]"}`}
             >
               {message.replyTo.senderName}
             </p>
             <p
-              className={`mt-1 line-clamp-2 text-xs leading-5 ${mine ? "text-blue-50" : "text-[color:var(--px-text-muted)]"}`}
+              className={`mt-1 line-clamp-2 text-xs leading-5 ${mine ? "text-[#3c6b52] dark:text-emerald-100" : "text-[color:var(--px-text-muted)]"}`}
             >
               {messageExcerpt(message.replyTo)}
             </p>
@@ -3161,7 +3194,7 @@ function MessageBubble({
           </p>
         )}
         <div
-          className={`mt-2 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-blue-100" : "text-[color:var(--px-text-muted)]"}`}
+          className={`mt-2 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-[#43725c] dark:text-emerald-200" : "text-[#64748b] dark:text-white/60"}`}
         >
           {message.editedAt ? <span>Edited</span> : null}
           <span>
@@ -3172,14 +3205,14 @@ function MessageBubble({
         {mine && message.status === "failed" ? (
           <div className="mt-1 flex items-center justify-end gap-2">
             <button
-              className="min-h-9 rounded-lg bg-white/15 px-2.5 text-[11px] font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              className="min-h-9 rounded-lg bg-emerald-700 px-2.5 text-[11px] font-bold text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
               onClick={() => onRetry(message)}
               type="button"
             >
               Retry
             </button>
             <button
-              className="min-h-9 rounded-lg px-2.5 text-[11px] font-semibold text-blue-100 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              className="min-h-9 rounded-lg px-2.5 text-[11px] font-semibold text-[#205741] underline dark:text-emerald-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
               onClick={() => onDiscardFailed(message)}
               type="button"
             >
@@ -3759,7 +3792,7 @@ function ConversationDetailsContent({
   );
 }
 
-function Avatar({
+const Avatar = memo(function Avatar({
   imageUrl,
   name,
   presence = "hidden",
@@ -3779,17 +3812,21 @@ function Avatar({
     .toUpperCase();
   const dimensions =
     size === "lg" ? "mx-auto h-20 w-20 text-xl" : "h-11 w-11 text-sm";
+  const avatarColors = ["bg-[#176bc3]", "bg-[#238355]", "bg-[#7042cc]", "bg-[#dd6418]", "bg-[#008f9d]", "bg-[#b48a09]"] as const;
+  const colorIndex = Array.from(name).reduce((sum, letter) => sum + letter.charCodeAt(0), 0) % avatarColors.length;
 
   return (
     <div className="relative shrink-0">
       <div
-        className={`${dimensions} grid overflow-hidden place-items-center rounded-full bg-[color:var(--px-primary)] font-black text-white ring-2 ring-[color:var(--px-surface)]`}
+        className={`${dimensions} grid overflow-hidden place-items-center rounded-full ${avatarColors[colorIndex]} font-black text-white ring-2 ring-[color:var(--px-surface)]`}
       >
         {imageUrl && !imageFailed ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             alt={`${name} avatar`}
             className="h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
             onError={() => setImageFailed(true)}
             src={imageUrl}
           />
@@ -3812,7 +3849,7 @@ function Avatar({
       ) : null}
     </div>
   );
-}
+});
 
 const MESSAGE_COMPOSER_MIN_HEIGHT = 44;
 const MESSAGE_COMPOSER_MAX_HEIGHT = 144;
@@ -4579,7 +4616,7 @@ function MessageStateIcon({ message }: { message: WorkspaceMessage }) {
   }
   if (message.readByOtherParticipants) {
     return (
-      <CheckCheck aria-label="Read" className="text-green-200" size={14} />
+      <CheckCheck aria-label="Read" className="text-[#0a9378] dark:text-emerald-300" size={14} />
     );
   }
   return <Check aria-label="Sent" size={13} />;
