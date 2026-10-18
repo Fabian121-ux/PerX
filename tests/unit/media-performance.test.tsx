@@ -166,7 +166,8 @@ describe("media performance", () => {
     });
 
     it("reserves an aspect ratio for post media", () => {
-      expect(card).toContain("aspect-[16/8]");
+      expect(card).toContain("aspect-[16/9]");
+      expect(card).toContain("aspect-[4/5]");
     });
   });
 });
