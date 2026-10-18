@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CreateActionSheet } from "@/components/navigation/create-action-sheet";
 import { usePathname } from "next/navigation";
 
 import { useSoftwareKeyboard } from "@/components/layout/software-keyboard-provider";
@@ -66,26 +67,18 @@ export function AuthenticatedMobileNav({
 
           if ("prominent" in item && item.prominent) {
             return (
-              <Link
-                aria-current={active ? "page" : undefined}
-                aria-label={label}
-                className="group relative -top-3 flex min-h-16 min-w-11 flex-col items-center justify-start gap-1 rounded-2xl px-1 pt-0.5 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                href={feature.href}
-                key={feature.id}
-              >
-                <span
-                  className={`grid h-14 w-14 place-items-center rounded-full border-4 border-[color:var(--px-surface)] shadow-[0_10px_24px_rgba(37,99,235,0.3)] transition group-active:scale-95 ${
-                    active
-                      ? "bg-[color:var(--px-primary-strong)] text-white ring-2 ring-[color:var(--px-primary)]/40"
-                      : "bg-[color:var(--px-primary)] text-white"
-                  }`}
+              <CreateActionSheet key={feature.id}>
+                <button
+                  aria-label={label}
+                  className="group relative -top-3 flex min-h-16 min-w-11 flex-col items-center justify-start gap-1 rounded-2xl px-1 pt-0.5 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  type="button"
                 >
-                  <Icon aria-hidden size={24} strokeWidth={2.4} />
-                </span>
-                <span className="text-[10px] font-black leading-3 text-[color:var(--px-primary)]">
-                  {label}
-                </span>
-              </Link>
+                  <span className={`grid h-14 w-14 place-items-center rounded-full border-4 border-[color:var(--px-surface)] bg-[color:var(--px-primary)] text-white shadow-[0_10px_24px_rgba(37,99,235,0.3)] transition group-active:scale-95`}>
+                    <Icon aria-hidden size={24} strokeWidth={2.4} />
+                  </span>
+                  <span className="text-[10px] font-black leading-3 text-[color:var(--px-primary)]">{label}</span>
+                </button>
+              </CreateActionSheet>
             );
           }
 

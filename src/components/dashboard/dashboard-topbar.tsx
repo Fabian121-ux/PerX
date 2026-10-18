@@ -171,7 +171,7 @@ export function DashboardTopbar({
         </div>
 
         <div className="hidden items-center gap-2 lg:flex">
-          {canCreate ? <CreateMenu previewMode={previewMode} /> : null}
+          <CreateMenu previewMode={previewMode} />
           <div className="mx-2 h-6 w-px bg-[color:var(--px-border)]" />
           <ThemeToggle />
 
