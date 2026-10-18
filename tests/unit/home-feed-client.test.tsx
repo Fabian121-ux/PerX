@@ -172,6 +172,33 @@ describe("home feed client", () => {
     expect(view.container.querySelectorAll("[data-post-id]")).toHaveLength(2);
   });
 
+  it("renders product listings image-first with an honest price and enquiry route", async () => {
+    const view = renderFeed({
+      initialNextCursor: null,
+      initialNextSegment: null,
+      initialPosts: [post("product", {
+        type: "PRODUCT",
+        title: "Handmade two-piece set",
+        summary: "Made to order in several sizes.",
+        budgetMinMinor: "3500000",
+        budgetMaxMinor: "3500000",
+        currency: "NGN",
+        imageUrl: "/sample-product.jpg",
+        imageAlt: "Clothing on display",
+        location: "Aba, Abia",
+      })],
+    });
+    await act(async () => {});
+    const card = view.container.querySelector('[data-post-id="product"]');
+    expect(card).toBeTruthy();
+    const imageLink = view.getByRole("link", { name: "Open Handmade two-piece set" });
+    expect(imageLink.className).toContain("order-2");
+    expect(view.getByRole("link", { name: /Handmade two-piece set/ }).className).toContain("order-3");
+    expect(view.getByText(/₦35,000/)).toBeTruthy();
+    expect(view.getByRole("link", { name: "Enquire" }).getAttribute("href")).toContain("#respond-to-listing");
+    expect(view.queryByRole("button", { name: /Buy now/i })).toBeNull();
+  });
+
   it("loads the next page when the sentinel enters the viewport", async () => {
     const fetchMock = vi
       .fn()

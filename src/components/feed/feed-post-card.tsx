@@ -291,7 +291,7 @@ function PostGraphic({ title, type }: { title: string; type: string }) {
   return (
     <div
       aria-hidden
-      className={`relative order-3 h-36 w-full overflow-hidden bg-[linear-gradient(135deg,#061936_0%,#123466_55%,#5b46f2_100%)] ${type === "PRODUCT" ? "order-2" : ""}`}
+      className={`relative h-36 w-full overflow-hidden bg-[linear-gradient(135deg,#061936_0%,#123466_55%,#5b46f2_100%)] ${type === "PRODUCT" ? "order-2" : "order-3"}`}
     >
       <div className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/20 blur-2xl" />
       <div className="absolute bottom-5 left-5 h-12 w-12 rounded-full border border-white/40" />
