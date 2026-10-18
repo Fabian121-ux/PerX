@@ -194,7 +194,7 @@ export default async function OpportunityDetailPage({
 
         <aside className="grid gap-5 self-start lg:sticky lg:top-24">
           <Card>
-            <h2 className="text-lg font-black text-[color:var(--px-text)]">
+            <h2 id="respond-to-listing" className="scroll-mt-24 text-lg font-black text-[color:var(--px-text)]">
               Respond to this listing
             </h2>
             <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">

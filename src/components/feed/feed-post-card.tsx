@@ -1,6 +1,6 @@
 "use client";
 
-import { Bookmark, Clock, MapPin, ShieldCheck } from "lucide-react";
+import { Bookmark, Clock, MapPin, MessageCircleQuestion, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
@@ -212,6 +212,13 @@ export function FeedPostCard(props: FeedPostCardProps) {
               opportunityId={post.id}
             />
           )}
+          <Link
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)] hover:text-[color:var(--px-primary)]"
+            href={`${detailHref}#respond-to-listing`}
+          >
+            <MessageCircleQuestion aria-hidden size={17} />
+            Ask
+          </Link>
           <ShareButton href={detailHref} />
           <Link
             className="ml-auto inline-flex min-h-11 items-center rounded-xl bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white transition hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"

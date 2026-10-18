@@ -3,6 +3,7 @@ import {
   Handshake,
   MessageSquareText,
   Rocket,
+  ShoppingBag,
   Wrench,
 } from "lucide-react";
 
@@ -20,6 +21,13 @@ export const createOptions = [
     label: "Post an opportunity",
     description: "Find people for a project or an open role.",
     icon: BriefcaseBusiness,
+    commercial: true,
+  },
+  {
+    href: "/app/opportunities/new?type=PRODUCT&category=market",
+    label: "List a product",
+    description: "Show an item for buyers to enquire about. No in-app checkout yet.",
+    icon: ShoppingBag,
     commercial: true,
   },
   {
