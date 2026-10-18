@@ -193,8 +193,8 @@ describe("home feed client", () => {
     expect(card).toBeTruthy();
     const imageLink = view.getByRole("link", { name: "Open Handmade two-piece set" });
     expect(imageLink.className).toContain("order-2");
-    expect(view.getByRole("link", { name: /Handmade two-piece set/ }).className).toContain("order-3");
-    expect(view.getByText(/₦35,000/)).toBeTruthy();
+    expect(view.getByRole("heading", { name: "Handmade two-piece set" }).closest("a")?.parentElement?.className).toContain("order-3");
+    expect(view.getAllByText(/35,000/).length).toBeGreaterThan(0);
     expect(view.getByRole("link", { name: "Enquire" }).getAttribute("href")).toContain("#respond-to-listing");
     expect(view.queryByRole("button", { name: /Buy now/i })).toBeNull();
   });

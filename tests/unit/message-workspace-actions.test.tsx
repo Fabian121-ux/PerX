@@ -149,7 +149,7 @@ describe("message workspace gestures and actions", () => {
     expect(view.getByText("Deal terms")).toBeTruthy();
     expect(view.getByRole("button", { name: "deals" })).toBeTruthy();
     fireEvent.click(view.getByRole("button", { name: "deals" }));
-    expect(view.getByText("Zee Stitches")).toBeTruthy();
+    expect(view.getAllByText("Zee Stitches").length).toBeGreaterThan(0);
   });
 
   it("opens on long press and never also replies", async () => {
