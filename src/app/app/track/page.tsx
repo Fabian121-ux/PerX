@@ -2,13 +2,17 @@ import Link from "next/link";
 import {
   ArrowRight,
   ClipboardCheck,
-  MapPinOff,
+  Clock3,
   MessageSquare,
+  Package,
   PackageCheck,
+  ShieldCheck,
   Truck,
 } from "lucide-react";
 
 import { AppSection } from "@/components/app-section";
+import { TrackingAutoRefresh } from "@/components/tracking/tracking-auto-refresh";
+import { TrackingMapPanel } from "@/components/tracking/tracking-map-panel";
 import { CursorPagination } from "@/components/cursor-pagination";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
@@ -16,20 +20,108 @@ import { requireUser } from "@/lib/auth/session";
 import { getUserDealsPage } from "@/lib/data/app";
 
 /**
- * This route deliberately reuses the participant-authorized agreement query.
- * Deal deliveries are milestone submissions, NOT physical parcel GPS events.
- * There is no Order/Shipment/ShipmentLocation schema or courier connection yet,
- * so a moving pin or "in transit" status would mislead buyers.
+ * The only automatic source today is the participant-authorized Deal stream.
+ * A Deal on a PRODUCT listing is a product agreement, not proof of purchase,
+ * dispatch or shipment. Never turn Deal.status into a courier delivery status.
  */
 type TrackedAgreement = {
   id: string;
   status: string;
   proposal: { opportunity: { title: string; type: string } };
-  statusHistory: { id: string; toStatus: string; createdAt: Date }[];
+  statusHistory: {
+    id: string;
+    toStatus: string;
+    createdAt: Date | string;
+  }[];
 };
 
 function statusLabel(value: string) {
-  return value.replaceAll("_", " ").toLowerCase();
+  return value.toLowerCase().replaceAll("_", " ");
+}
+
+function formatHistoryTime(value: Date | string) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  return new Intl.DateTimeFormat("en-NG", {
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Africa/Lagos",
+  }).format(date);
+}
+
+function AgreementCard({ agreement }: { agreement: TrackedAgreement }) {
+  const product = agreement.proposal?.opportunity?.type === "PRODUCT";
+  const events = agreement.statusHistory ?? [];
+
+  return (
+    <Card className="min-w-0 overflow-hidden">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <span className="inline-flex rounded-full bg-[color:var(--px-primary-soft)] px-2.5 py-1 text-[11px] font-black text-[color:var(--px-primary)]">
+            {product ? "Product agreement" : "Service or project agreement"}
+          </span>
+          <h3 className="mt-2 break-words text-base font-black text-[color:var(--px-text)]">
+            {agreement.proposal?.opportunity?.title ?? "Agreement"}
+          </h3>
+          <p className="mt-1 text-sm leading-6 text-[color:var(--px-text-muted)]">
+            Current agreement state:{" "}
+            <span className="font-bold text-[color:var(--px-text)]">
+              {statusLabel(agreement.status)}
+            </span>
+          </p>
+          {product ? (
+            <p className="mt-2 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] px-3 py-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
+              Shipping not confirmed. We will show verified courier progress here
+              when a shipping service is connected to PtahX.
+            </p>
+          ) : null}
+        </div>
+        {product ? (
+          <Package aria-hidden className="shrink-0 text-[color:var(--px-primary)]" size={25} />
+        ) : (
+          <PackageCheck aria-hidden className="shrink-0 text-[color:var(--px-primary)]" size={25} />
+        )}
+      </div>
+
+      {events.length ? (
+        <div className="mt-4 border-t border-[color:var(--px-border)] pt-4">
+          <p className="mb-3 flex items-center gap-2 text-xs font-black uppercase tracking-wide text-[color:var(--px-text)]">
+            <Clock3 aria-hidden size={15} /> Recorded agreement activity
+          </p>
+          <ol className="space-y-3" aria-label="Recorded agreement activity">
+            {events.slice(0, 5).map((event) => (
+              <li className="flex gap-3 text-xs" key={event.id}>
+                <span aria-hidden className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-[color:var(--px-primary)]" />
+                <span className="min-w-0 flex-1 font-semibold capitalize text-[color:var(--px-text)]">
+                  {statusLabel(event.toStatus)}
+                </span>
+                <time className="shrink-0 text-[color:var(--px-text-muted)]" dateTime={new Date(event.createdAt).toISOString()}>
+                  {formatHistoryTime(event.createdAt)}
+                </time>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
+
+      <div className="mt-4 flex flex-wrap gap-2 border-t border-[color:var(--px-border)] pt-3">
+        <Link
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[color:var(--px-primary)] px-3 text-sm font-bold text-white hover:bg-[color:var(--px-primary-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+          href={`/app/deals/${agreement.id}`}
+        >
+          View agreement <ArrowRight aria-hidden size={16} />
+        </Link>
+        <Link
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface-soft)] px-3 text-sm font-bold text-[color:var(--px-text)] hover:bg-[color:var(--px-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+          href={`/app/deals/${agreement.id}/deliveries`}
+        >
+          <ClipboardCheck aria-hidden size={16} /> Delivery records
+        </Link>
+      </div>
+    </Card>
+  );
 }
 
 export default async function TrackingPage({
@@ -39,106 +131,102 @@ export default async function TrackingPage({
 }) {
   const user = await requireUser();
   const { cursor } = await searchParams;
+  // No manual tracking setup: new Deal records for this user show on their
+  // next refresh, including product agreements. Only authorized participants
+  // can see these records.
   const page = await getUserDealsPage(user.id, { cursor, pageSize: 20 });
   const agreements = page.items as TrackedAgreement[];
+  const productAgreements = agreements.filter(
+    (deal) => deal.proposal?.opportunity?.type === "PRODUCT",
+  );
+  const otherAgreements = agreements.filter(
+    (deal) => deal.proposal?.opportunity?.type !== "PRODUCT",
+  );
 
   return (
     <AppSection
       title="Tracking centre"
-      description="Check progress on agreements you are part of. Courier parcel tracking is not connected yet."
-      actions={<ButtonLink href="/app/messages" variant="secondary"><MessageSquare aria-hidden size={16} className="mr-2" />Open messages</ButtonLink>}
+      description="See the progress of your product agreements and recorded deliveries. Live parcel tracking starts only when a verified courier feed is connected."
+      actions={<TrackingAutoRefresh />}
     >
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="min-w-0 space-y-4">
-          <Card className="border-blue-200 bg-[color:var(--px-surface)]">
-            <div className="flex items-start gap-3">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)]">
-                <Truck aria-hidden size={23} />
-              </span>
-              <div>
-                <h2 className="text-lg font-black text-[color:var(--px-text)]">Your agreements and deliveries</h2>
-                <p className="mt-1 text-sm leading-6 text-[color:var(--px-text-muted)]">
-                  You can check deal milestones and submitted delivery records here. These records show work agreed or submitted, not the location of a physical package.
-                </p>
-              </div>
-            </div>
-          </Card>
+      <section className="overflow-hidden rounded-[24px] bg-[linear-gradient(130deg,#061936,#0d3370)] p-5 text-white shadow-lg sm:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-2xl">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-100">PtahX deliveries</p>
+            <h2 className="mt-2 text-xl font-black sm:text-2xl">Your product updates, one place</h2>
+            <p className="mt-2 text-sm leading-6 text-white/85">
+              Product agreements appear here automatically after a deal is created.
+              Agreement changes refresh every minute while you have this page open.
+              We will not say an item has shipped until a carrier confirms it.
+            </p>
+          </div>
+          <span className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 text-xs font-bold text-white">
+            <ShieldCheck aria-hidden size={17} /> Your agreements only
+          </span>
+        </div>
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-white/15 bg-white/10 p-3">
+            <p className="text-xs font-bold text-white/80">Product agreements on this page</p>
+            <p className="mt-1 text-2xl font-black text-white">{productAgreements.length}</p>
+          </div>
+          <div className="rounded-2xl border border-white/15 bg-white/10 p-3">
+            <p className="text-xs font-bold text-white/80">Verified courier locations</p>
+            <p className="mt-1 text-2xl font-black text-white">0</p>
+            <p className="text-[11px] text-white/80">No courier feed connected</p>
+          </div>
+        </div>
+      </section>
 
-          {agreements.length ? (
-            <div className="grid gap-3">
-              {agreements.map((deal) => {
-                const latest = deal.statusHistory?.[0];
-                const product = deal.proposal?.opportunity?.type === "PRODUCT";
-                return (
-                  <Card key={deal.id} className="min-w-0">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <span className="inline-flex rounded-full bg-[color:var(--px-primary-soft)] px-2.5 py-1 text-xs font-bold text-[color:var(--px-primary)]">
-                          {product ? "Product agreement" : "Service or project agreement"}
-                        </span>
-                        <h3 className="mt-2 break-words text-base font-black text-[color:var(--px-text)]">
-                          {deal.proposal?.opportunity?.title ?? "Agreement"}
-                        </h3>
-                        <p className="mt-1 text-sm text-[color:var(--px-text-muted)]">
-                          Current agreement state: <span className="font-bold text-[color:var(--px-text)]">{statusLabel(deal.status)}</span>
-                        </p>
-                        {latest ? (
-                          <p className="mt-1 text-xs text-[color:var(--px-text-muted)]">
-                            Latest recorded change: {statusLabel(latest.toStatus)}
-                          </p>
-                        ) : null}
-                      </div>
-                      <PackageCheck aria-hidden className="shrink-0 text-[color:var(--px-primary)]" size={24} />
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2 border-t border-[color:var(--px-border)] pt-3">
-                      <Link className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[color:var(--px-primary)] px-3 text-sm font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]" href={`/app/deals/${deal.id}`}>
-                        View agreement <ArrowRight aria-hidden size={16} />
-                      </Link>
-                      <Link className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface-soft)] px-3 text-sm font-bold text-[color:var(--px-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]" href={`/app/deals/${deal.id}/deliveries`}>
-                        <ClipboardCheck aria-hidden size={16} /> Delivery records
-                      </Link>
-                    </div>
-                  </Card>
-                );
-              })}
-              <CursorPagination basePath="/app/track" cursor={page.cursor} label="Tracking centre pagination" nextCursor={page.nextCursor} />
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="order-2 min-w-0 space-y-5 lg:order-1">
+          <section aria-labelledby="product-track-heading" className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h2 id="product-track-heading" className="text-lg font-black text-[color:var(--px-text)]">
+                Your product agreements
+              </h2>
+              <Truck aria-hidden className="text-[color:var(--px-primary)]" size={20} />
             </div>
-          ) : (
-            <EmptyState
-              title="No agreements to track yet"
-              body="Once a proposal is accepted and an agreement is created, you can see its progress here. Enquiring about a product alone does not create an order."
-              action={<ButtonLink href="/app/market">Browse listings</ButtonLink>}
-            />
-          )}
+            {productAgreements.length ? (
+              productAgreements.map((deal) => <AgreementCard agreement={deal} key={deal.id} />)
+            ) : (
+              <EmptyState
+                title="No agreements to track yet"
+                body="Once a product proposal is accepted and an agreement is created, it will appear here automatically. Enquiring about a product alone does not create an order."
+                action={<ButtonLink href="/app/discover?type=PRODUCT">Browse products</ButtonLink>}
+              />
+            )}
+          </section>
+
+          {otherAgreements.length ? (
+            <section aria-labelledby="other-deal-heading" className="space-y-3">
+              <h2 id="other-deal-heading" className="text-lg font-black text-[color:var(--px-text)]">Other agreements</h2>
+              {otherAgreements.map((deal) => <AgreementCard agreement={deal} key={deal.id} />)}
+            </section>
+          ) : null}
+          <CursorPagination basePath="/app/track" cursor={page.cursor} label="Tracking centre pagination" nextCursor={page.nextCursor} />
         </div>
 
-        <aside className="space-y-4">
+        <aside className="order-1 min-w-0 space-y-4 lg:order-2">
+          <TrackingMapPanel />
           <Card>
-            <div className="flex items-center gap-2 text-[color:var(--px-text)]">
-              <MapPinOff aria-hidden size={21} className="text-[color:var(--px-primary)]" />
-              <h2 className="font-black">Live parcel map</h2>
-            </div>
-            <div className="mt-3 grid min-h-40 place-items-center rounded-2xl border border-dashed border-[color:var(--px-border-strong)] bg-[color:var(--px-surface-soft)] p-4 text-center">
-              <div>
-                <MapPinOff aria-hidden className="mx-auto text-[color:var(--px-text-muted)]" size={30} />
-                <p className="mt-2 text-sm font-black text-[color:var(--px-text)]">Location not available</p>
-                <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">
-                  We have not received any verified courier location or tracking number for your parcel.
-                </p>
-              </div>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-[color:var(--px-text-muted)]">
-              A map will only be shown after an actual courier integration sends shipment and location updates. We will not guess where your parcel is.
+            <h2 className="font-black text-[color:var(--px-text)]">What happens next?</h2>
+            <ol className="mt-3 space-y-3 text-sm leading-6 text-[color:var(--px-text-muted)]">
+              <li><strong className="text-[color:var(--px-text)]">1. Agree:</strong> You and the seller complete a proper Deal.</li>
+              <li><strong className="text-[color:var(--px-text)]">2. Ship:</strong> A connected courier confirms collection and sends tracking updates.</li>
+              <li><strong className="text-[color:var(--px-text)]">3. Follow:</strong> PtahX can then display verified parcel status and an approximate location.</li>
+            </ol>
+            <p className="mt-3 rounded-xl bg-[color:var(--px-muted)] p-3 text-xs leading-5 text-[color:var(--px-text-muted)]">
+              Step 2 needs a courier integration. Deal delivery records are not proof that a physical parcel was sent.
             </p>
           </Card>
           <Card>
-            <h2 className="font-black text-[color:var(--px-text)]">Need a delivery partner?</h2>
+            <h2 className="font-black text-[color:var(--px-text)]">Need help with delivery?</h2>
             <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
-              Search for logistics services or message the seller about delivery arrangements.
+              Find a logistics partner or ask your seller how the item will be delivered.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <ButtonLink href="/app/logistics" variant="secondary">Logistics</ButtonLink>
-              <ButtonLink href="/app/messages" variant="secondary">Messages</ButtonLink>
+              <ButtonLink href="/app/logistics" variant="secondary"><Truck aria-hidden size={16} className="mr-2" />Logistics</ButtonLink>
+              <ButtonLink href="/app/messages" variant="secondary"><MessageSquare aria-hidden size={16} className="mr-2" />Messages</ButtonLink>
             </div>
           </Card>
         </aside>
