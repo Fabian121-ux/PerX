@@ -66,6 +66,6 @@ describe("connected tracking centre", () => {
     const html = renderToStaticMarkup(await TrackingPage({ searchParams: Promise.resolve({}) }));
     expect(html).toContain("No agreements to track yet");
     expect(html).toContain("Enquiring about a product alone does not create an order");
-    expect(html).toContain("/app/market");
+    expect(html).toContain("/app/discover?type=PRODUCT");
   });
 });
