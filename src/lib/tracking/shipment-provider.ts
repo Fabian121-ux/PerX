@@ -1,6 +1,6 @@
 import "server-only";
 
-import { parseVerifiedShipment } from "@/lib/tracking/shipment-contract";
+import { parseVerifiedShipment, type VerifiedShipment } from "@/lib/tracking/shipment-contract";
 export type { VerifiedShipment } from "@/lib/tracking/shipment-contract";
 
 const MAX_RESPONSE_BYTES = 16_384;
