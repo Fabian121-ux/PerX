@@ -52,7 +52,7 @@ function formatHistoryTime(value: Date | string) {
   }).format(date);
 }
 
-function AgreementCard({ agreement, selected = false, cursor }: { agreement: TrackedAgreement; selected?: boolean; cursor?: string }) {
+function AgreementCard({ agreement, selected = false, cursor, shipment }: { agreement: TrackedAgreement; selected?: boolean; cursor?: string; shipment?: VerifiedShipment | null }) {
   const product = agreement.proposal?.opportunity?.type === "PRODUCT";
   const events = agreement.statusHistory ?? [];
 
@@ -75,8 +75,11 @@ function AgreementCard({ agreement, selected = false, cursor }: { agreement: Tra
           </p>
           {product ? (
             <p className="mt-2 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] px-3 py-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
-              Shipping not confirmed. We will show verified courier progress here
-              when a shipping service is connected to PtahX.
+              {shipment
+                ? `Verified carrier update: ${shipment.carrierName} — ${statusLabel(shipment.status)}.`
+                : selected
+                  ? "Shipping not confirmed. No verified carrier update is available for this agreement yet."
+                  : "Select Track this item to check for verified courier updates."}
             </p>
           ) : null}
         </div>
@@ -246,6 +249,7 @@ export default async function TrackingPage({
                   cursor={cursor}
                   key={deal.id}
                   selected={deal.id === selectedProduct?.id}
+                  shipment={deal.id === selectedProduct?.id ? shipment : null}
                 />
               ))
             ) : (
@@ -276,7 +280,7 @@ export default async function TrackingPage({
             </p>
             {shipment ? <CarrierShipmentDetails shipment={shipment} /> : (
               <p className="rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] p-3 text-sm leading-6 text-[color:var(--px-text-muted)]" role="status">
-                No verified shipment has been linked to this agreement. Your seller or a connected courier must first book the parcel.
+                No verified shipment information is available right now. The parcel may not be booked yet, or the courier service may be offline.
               </p>
             )}
           </Card>
