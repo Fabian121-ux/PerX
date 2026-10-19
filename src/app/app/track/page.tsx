@@ -18,6 +18,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/session";
 import { getUserDealsPage } from "@/lib/data/app";
+import { getVerifiedShipmentForDeal, type VerifiedShipment } from "@/lib/tracking/shipment-provider";
 
 /**
  * The only automatic source today is the participant-authorized Deal stream.
@@ -51,17 +52,18 @@ function formatHistoryTime(value: Date | string) {
   }).format(date);
 }
 
-function AgreementCard({ agreement }: { agreement: TrackedAgreement }) {
+function AgreementCard({ agreement, selected = false, cursor, shipment }: { agreement: TrackedAgreement; selected?: boolean; cursor?: string; shipment?: VerifiedShipment | null }) {
   const product = agreement.proposal?.opportunity?.type === "PRODUCT";
   const events = agreement.statusHistory ?? [];
 
   return (
-    <Card className="min-w-0 overflow-hidden">
+    <Card className={`min-w-0 overflow-hidden ${selected ? "ring-2 ring-[color:var(--px-primary)]" : ""}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <span className="inline-flex rounded-full bg-[color:var(--px-primary-soft)] px-2.5 py-1 text-[11px] font-black text-[color:var(--px-primary)]">
             {product ? "Product agreement" : "Service or project agreement"}
           </span>
+          {selected ? <span className="ml-2 inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-black text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-100">Selected for tracking</span> : null}
           <h3 className="mt-2 break-words text-base font-black text-[color:var(--px-text)]">
             {agreement.proposal?.opportunity?.title ?? "Agreement"}
           </h3>
@@ -73,8 +75,11 @@ function AgreementCard({ agreement }: { agreement: TrackedAgreement }) {
           </p>
           {product ? (
             <p className="mt-2 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] px-3 py-2 text-xs leading-5 text-[color:var(--px-text-muted)]">
-              Shipping not confirmed. We will show verified courier progress here
-              when a shipping service is connected to PtahX.
+              {shipment
+                ? `Verified carrier update: ${shipment.carrierName} — ${statusLabel(shipment.status)}.`
+                : selected
+                  ? "Shipping not confirmed. No verified carrier update is available for this agreement yet."
+                  : "Select Track this item to check for verified courier updates."}
             </p>
           ) : null}
         </div>
@@ -107,6 +112,15 @@ function AgreementCard({ agreement }: { agreement: TrackedAgreement }) {
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2 border-t border-[color:var(--px-border)] pt-3">
+        {product && !selected ? (
+          <Link
+            aria-label={`Track ${agreement.proposal?.opportunity?.title ?? "this product"} on the map`}
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[color:var(--px-primary)] bg-[color:var(--px-primary-soft)] px-3 text-sm font-black text-[color:var(--px-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            href={`/app/track?deal=${encodeURIComponent(agreement.id)}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`}
+          >
+            Track this item <ArrowRight aria-hidden size={16} />
+          </Link>
+        ) : null}
         <Link
           className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[color:var(--px-primary)] px-3 text-sm font-bold text-white hover:bg-[color:var(--px-primary-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
           href={`/app/deals/${agreement.id}`}
@@ -124,13 +138,46 @@ function AgreementCard({ agreement }: { agreement: TrackedAgreement }) {
   );
 }
 
+const SHIPMENT_STAGES = ["LABEL_CREATED", "PICKED_UP", "IN_TRANSIT", "OUT_FOR_DELIVERY", "DELIVERED"] as const;
+
+function CarrierShipmentDetails({ shipment }: { shipment: VerifiedShipment }) {
+  const currentIndex = SHIPMENT_STAGES.findIndex((stage) => stage === shipment.status);
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] p-3">
+        <p className="text-xs text-[color:var(--px-text-muted)]">Carrier</p>
+        <p className="font-black text-[color:var(--px-text)]">{shipment.carrierName}</p>
+        <p className="mt-2 text-xs text-[color:var(--px-text-muted)]">Tracking number</p>
+        <p className="break-all font-mono text-sm font-bold text-[color:var(--px-text)]">{shipment.trackingNumber}</p>
+        <p className="mt-2 text-xs text-[color:var(--px-text-muted)]">Carrier update</p>
+        <p className="font-semibold capitalize text-[color:var(--px-text)]">{statusLabel(shipment.status)}</p>
+        <time className="mt-1 block text-xs text-[color:var(--px-text-muted)]" dateTime={shipment.updatedAt}>{formatHistoryTime(shipment.updatedAt)}</time>
+      </div>
+      {currentIndex >= 0 ? (
+        <ol aria-label="Verified shipment progress" className="space-y-2">
+          {SHIPMENT_STAGES.map((stage, index) => (
+            <li className="flex items-center gap-2 text-xs" key={stage}>
+              <span aria-hidden className={`h-2.5 w-2.5 rounded-full ${index <= currentIndex ? "bg-emerald-500" : "bg-[color:var(--px-border-strong)]"}`} />
+              <span className={index <= currentIndex ? "font-bold text-[color:var(--px-text)]" : "text-[color:var(--px-text-muted)]"}>{statusLabel(stage)}</span>
+              {index === currentIndex ? <span className="ml-auto font-black text-emerald-700 dark:text-emerald-300">Latest</span> : null}
+            </li>
+          ))}
+        </ol>
+      ) : <p role="status" className="text-sm font-bold text-[color:var(--px-error)]">Courier reported an exception. Please contact the seller or carrier.</p>}
+      <p className="text-xs leading-5 text-[color:var(--px-text-muted)]">
+        Status comes from the connected carrier, not PtahX agreement milestones. Map coordinates are approximate and may be older than the latest update.
+      </p>
+    </div>
+  );
+}
+
 export default async function TrackingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cursor?: string }>;
+  searchParams: Promise<{ cursor?: string; deal?: string }>;
 }) {
   const user = await requireUser();
-  const { cursor } = await searchParams;
+  const { cursor, deal: selectedDealId } = await searchParams;
   // No manual tracking setup: new Deal records for this user show on their
   // next refresh, including product agreements. Only authorized participants
   // can see these records.
@@ -142,6 +189,15 @@ export default async function TrackingPage({
   const otherAgreements = agreements.filter(
     (deal) => deal.proposal?.opportunity?.type !== "PRODUCT",
   );
+  // The selection is restricted to the current authorized result page.
+  // Never let a URL parameter authorize fetching a different user's shipment.
+  const selectedProduct =
+    productAgreements.find((deal) => deal.id === selectedDealId) ??
+    productAgreements[0] ??
+    null;
+  const shipment = selectedProduct
+    ? await getVerifiedShipmentForDeal(selectedProduct.id)
+    : null;
 
   return (
     <AppSection
@@ -170,9 +226,9 @@ export default async function TrackingPage({
             <p className="mt-1 text-2xl font-black text-white">{productAgreements.length}</p>
           </div>
           <div className="rounded-2xl border border-white/15 bg-white/10 p-3">
-            <p className="text-xs font-bold text-white/80">Verified courier locations</p>
-            <p className="mt-1 text-2xl font-black text-white">0</p>
-            <p className="text-[11px] text-white/80">No courier feed connected</p>
+            <p className="text-xs font-bold text-white/80">Selected item: courier location</p>
+            <p className="mt-1 text-2xl font-black text-white">{shipment?.location ? "1" : "0"}</p>
+            <p className="text-[11px] text-white/80">{shipment?.location ? "Verified event received" : "No verified location yet"}</p>
           </div>
         </div>
       </section>
@@ -187,7 +243,15 @@ export default async function TrackingPage({
               <Truck aria-hidden className="text-[color:var(--px-primary)]" size={20} />
             </div>
             {productAgreements.length ? (
-              productAgreements.map((deal) => <AgreementCard agreement={deal} key={deal.id} />)
+              productAgreements.map((deal) => (
+                <AgreementCard
+                  agreement={deal}
+                  cursor={cursor}
+                  key={deal.id}
+                  selected={deal.id === selectedProduct?.id}
+                  shipment={deal.id === selectedProduct?.id ? shipment : null}
+                />
+              ))
             ) : (
               <EmptyState
                 title="No agreements to track yet"
@@ -207,7 +271,20 @@ export default async function TrackingPage({
         </div>
 
         <aside className="order-1 min-w-0 space-y-4 lg:order-2">
-          <TrackingMapPanel />
+          <Card className="space-y-3">
+            <h2 className="text-base font-black text-[color:var(--px-text)]">Shipment details</h2>
+            <p className="text-xs leading-5 text-[color:var(--px-text-muted)]">
+              {selectedProduct
+                ? selectedProduct.proposal?.opportunity?.title
+                : "Choose a product agreement once it is created."}
+            </p>
+            {shipment ? <CarrierShipmentDetails shipment={shipment} /> : (
+              <p className="rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] p-3 text-sm leading-6 text-[color:var(--px-text-muted)]" role="status">
+                No verified shipment information is available right now. The parcel may not be booked yet, or the courier service may be offline.
+              </p>
+            )}
+          </Card>
+          <TrackingMapPanel key={selectedProduct?.id ?? "none"} location={shipment?.location ?? null} />
           <Card>
             <h2 className="font-black text-[color:var(--px-text)]">What happens next?</h2>
             <ol className="mt-3 space-y-3 text-sm leading-6 text-[color:var(--px-text-muted)]">
