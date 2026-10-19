@@ -37,6 +37,7 @@ import {
   Send,
   ShieldCheck,
   Trash2,
+  Truck,
   UserRoundX,
   X,
 } from "lucide-react";
@@ -2717,6 +2718,15 @@ export function MessageWorkspace({
                     >
                       <Handshake aria-hidden size={16} />
                       View Deal record
+                    </Link>
+                  ) : null}
+                  {activeConversation.dealHref ? (
+                    <Link
+                      className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 text-xs font-black text-[color:var(--px-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                      href="/app/track"
+                    >
+                      <Truck aria-hidden size={16} />
+                      Track agreement
                     </Link>
                   ) : null}
                 </div>

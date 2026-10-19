@@ -70,7 +70,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
       data-post-id={post.id}
       ref={articleRef}
     >
-      <header className="order-1 flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5">
+      <header className="order-1 flex flex-wrap items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5">
         <div className="flex min-w-0 items-center gap-3">
           {/*
             Every feed avatar is lazy. Only the composer avatar above it is
@@ -126,8 +126,11 @@ export function FeedPostCard(props: FeedPostCardProps) {
           {post.trust.shortLabel}
         </span>
         {authorHref ? (
-          <Link className="sr-only focus:not-sr-only focus:rounded-lg focus:bg-[color:var(--px-primary-soft)] focus:px-2 focus:py-1 focus:text-[color:var(--px-primary)]" href={authorHref}>
-            Open seller profile
+          <Link
+            className="inline-flex min-h-10 shrink-0 items-center rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-3 text-xs font-black text-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            href={authorHref}
+          >
+            {post.type === "PRODUCT" ? "View seller" : "Connect"}
           </Link>
         ) : null}
       </header>
