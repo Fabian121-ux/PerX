@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/auth/session", () => ({ requireUser: mocks.requireUser }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("@/lib/data/app", () => ({ getUserDealsPage: mocks.getUserDealsPage }));
 
 import TrackingPage from "@/app/app/track/page";
@@ -53,6 +54,9 @@ describe("connected tracking centre", () => {
     expect(html).toContain("/app/deals/deal-visible/deliveries");
     expect(html).toContain("Current agreement state");
     expect(html).toContain("Location not available");
+    expect(html).toContain("Your product agreements");
+    expect(html).toContain("Open interactive map");
+    expect(html).toContain("Shipping not confirmed");
     expect(html).not.toMatch(/live GPS|currently in transit|delivered to your home/i);
     expect(html).not.toContain("<iframe");
   });

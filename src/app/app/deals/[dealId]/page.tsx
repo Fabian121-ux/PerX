@@ -42,7 +42,7 @@ export default async function DealWorkspacePage({
           <p className="mt-3 break-all text-xs font-semibold text-[color:var(--px-text-muted)]">
             Deal reference: {deal.id}
           </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="mt-5 flex flex-wrap gap-3">
             <ButtonLink
               href={`/app/deals/${deal.id}/milestones`}
               variant="secondary"
@@ -61,6 +61,11 @@ export default async function DealWorkspacePage({
             >
               Agreement state
             </ButtonLink>
+            {deal.proposal.opportunity.type === "PRODUCT" ? (
+              <ButtonLink href="/app/track" variant="primary">
+                Track product agreement
+              </ButtonLink>
+            ) : null}
           </div>
           <div className="mt-6 border-t border-[color:var(--px-border)] pt-4">
             <h3 className="text-sm font-semibold text-[color:var(--px-text)]">
