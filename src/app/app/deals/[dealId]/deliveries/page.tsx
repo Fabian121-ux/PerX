@@ -32,7 +32,7 @@ export default async function DeliveriesPage({ params }: { params: Promise<{ dea
     <AppSection description="Authorized providers submit milestone work and clients record review decisions. Payment is not active for provider-disabled Deals." title="Deliveries">
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
-          <h2 className="font-semibold text-slate-950">Submit delivery</h2>
+          <h2 className="font-semibold text-[color:var(--px-text)]">Submit delivery</h2>
           {canSubmit && deal.status === "IN_PROGRESS" && activeMilestones.length ? (
             <form action={submitDeliveryAction} className="mt-4 grid gap-4">
               <input name="dealId" type="hidden" value={deal.id} />
@@ -62,7 +62,7 @@ export default async function DeliveriesPage({ params }: { params: Promise<{ dea
           )}
         </Card>
         <Card>
-          <h2 className="font-semibold text-slate-950">Approval</h2>
+          <h2 className="font-semibold text-[color:var(--px-text)]">Approval</h2>
           <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">Approval records a review decision against the submitted milestone. It does not claim that funds were collected, held, or released.</p>
           {canApprove && deal.status === "SUBMITTED" && submittedMilestone ? (
             <form action={approveDeliveryAction} className="mt-4">

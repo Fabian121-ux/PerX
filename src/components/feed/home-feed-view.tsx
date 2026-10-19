@@ -5,6 +5,7 @@ import {
   Search,
   ShieldCheck,
   ShoppingBag,
+  Truck,
   Wrench,
   UsersRound,
 } from "lucide-react";
@@ -69,6 +70,9 @@ export function HomeFeedView({
             </Link>
             <Link className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/app/discover?type=SERVICE">
               <Wrench aria-hidden size={15} /> Services
+            </Link>
+            <Link className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/app/track">
+              <Truck aria-hidden size={15} /> Track
             </Link>
           </nav>
         </section>

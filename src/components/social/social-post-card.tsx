@@ -25,7 +25,7 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
         <Avatar name={post.author.name} src={post.author.imageUrl} size={44} />
         <div className="min-w-0">
           <Link
-            className="block truncate text-sm font-bold"
+            className="block truncate text-sm font-bold text-[color:var(--px-text)] hover:text-[color:var(--px-primary)]"
             href={`/u/${encodeURIComponent(post.author.username)}`}
           >
             {post.author.name}
@@ -41,7 +41,7 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
         </div>
       </header>
       <Link href={path} aria-label="Open post" className="block rounded-xl py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]">
-        <p className="whitespace-pre-wrap break-words text-sm leading-6 [overflow-wrap:anywhere]">
+        <p className="whitespace-pre-wrap break-words text-sm leading-6 text-[color:var(--px-text)] [overflow-wrap:anywhere]">
           {post.body}
         </p>
       </Link>
@@ -59,7 +59,7 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
             {reactionKinds.map((kind) => (
               <Link
                 key={kind}
-                className="inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-semibold hover:bg-[color:var(--px-muted)]"
+                className="inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-semibold text-[color:var(--px-text)] hover:bg-[color:var(--px-muted)]"
                 href={socialSignInPath(post.id)}
               >
                 {reactionLabels[kind]}
@@ -95,7 +95,7 @@ function ReactionControls({ post }: { post: SocialPostView }) {
       <div className="flex flex-wrap gap-2">
         {reactionKinds.map((kind) => (
           <button
-            className="min-h-11 rounded-lg px-2 text-sm font-semibold aria-pressed:bg-[color:var(--px-primary-soft)] disabled:opacity-50"
+            className="min-h-11 rounded-lg px-2 text-sm font-semibold text-[color:var(--px-text)] aria-pressed:bg-[color:var(--px-primary-soft)] disabled:opacity-50"
             key={kind}
             name="kind"
             type="submit"
@@ -108,7 +108,7 @@ function ReactionControls({ post }: { post: SocialPostView }) {
         ))}
       </div>
       {state.status === "error" && (
-        <p role="alert" className="text-sm">
+        <p role="alert" className="text-sm text-[color:var(--px-error)]">
           {state.message}
         </p>
       )}
