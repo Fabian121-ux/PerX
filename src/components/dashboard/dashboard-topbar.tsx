@@ -7,6 +7,7 @@ import {
   Newspaper,
   Search,
   ShieldCheck,
+  Truck,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -72,6 +73,7 @@ export function DashboardTopbar({
     : "/app/notifications";
   const newsHref = previewMode ? "/preview/notifications" : getAppRoute("news");
   const trustHref = previewMode ? "/preview" : "/app/trust";
+  const trackHref = previewMode ? "/preview/logistics" : "/app/track";
   const unreadConversations = formatNavigationBadge(
     unreadCounts.unreadConversations,
   );
@@ -136,7 +138,7 @@ export function DashboardTopbar({
       </div>
 
       <div className="flex shrink-0 items-center">
-        <div className="flex items-center gap-1.5 lg:hidden">
+        <div className="flex items-center gap-1 lg:hidden">
           <Link
             aria-label="Search PtahX"
             className="grid h-11 w-11 place-items-center rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text)] transition hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
@@ -154,6 +156,14 @@ export function DashboardTopbar({
             <IconDot show={hasUnreadNews} />
           </Link>
 
+          <Link
+            aria-label="Track an agreement"
+            className="grid h-11 w-11 place-items-center rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            href={trackHref}
+            title="Track"
+          >
+            <Truck aria-hidden size={20} />
+          </Link>
           {secondaryMenu ? (
             <SecondaryMenu unreadCounts={unreadCounts} user={user} />
           ) : (
@@ -170,6 +180,7 @@ export function DashboardTopbar({
 
         <div className="hidden items-center gap-2 lg:flex">
           <CreateMenu previewMode={previewMode} />
+          <Link className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text)] hover:bg-[color:var(--px-surface-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]" href={trackHref}><Truck aria-hidden size={17} /> Track</Link>
           <div className="mx-2 h-6 w-px bg-[color:var(--px-border)]" />
           <ThemeToggle />
 

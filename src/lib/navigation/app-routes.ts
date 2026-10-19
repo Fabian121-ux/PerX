@@ -7,6 +7,7 @@ export type RouteKey =
   | "manage"
   | "network"
   | "logistics"
+  | "track"
   | "travel_stay"
   | "services"
   | "market"
@@ -40,6 +41,7 @@ const routeMap: Record<RouteKey, string> = {
   manage: "/app/manage",
   network: "/app/network",
   logistics: "/app/logistics",
+  track: "/app/track",
   travel_stay: "/app/travel-stay",
   services: "/app/services",
   market: "/app/market",
@@ -80,6 +82,7 @@ export function getAppRoute(
     if (key === "home") return "/preview";
     if (key === "deals") return "/preview/deals/demo-deal";
     if (key === "profile") return "/preview/profile";
+    if (key === "track") return "/preview/logistics";
     if (key === "create_post") return "/preview/opportunities/new";
 
     const path = routeMap[key];

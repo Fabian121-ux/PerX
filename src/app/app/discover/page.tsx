@@ -59,6 +59,9 @@ function getOpportunityFilterType(type?: string) {
     "COFOUNDER",
     "PARTNERSHIP",
     "SERVICE",
+    "PRODUCT",
+    "INVESTMENT",
+    "PROPERTY",
   ].includes(type ?? "")
     ? type
     : undefined;
