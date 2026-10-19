@@ -10,6 +10,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getDealForUser } from "@/lib/data/app";
 import { formatMoney } from "@/lib/money";
 import { getPaymentReadiness } from "@/lib/payments/service";
+import { logisticsV1Enabled } from "@/lib/logistics/v1-policy";
 
 export default async function DealWorkspacePage({
   params,
@@ -62,9 +63,16 @@ export default async function DealWorkspacePage({
               Agreement state
             </ButtonLink>
             {deal.proposal.opportunity.type === "PRODUCT" ? (
-              <ButtonLink href="/app/track" variant="primary">
-                Track product agreement
-              </ButtonLink>
+              <>
+                <ButtonLink href={`/app/track?deal=${encodeURIComponent(deal.id)}`} variant="primary">
+                  Track product agreement
+                </ButtonLink>
+                {logisticsV1Enabled() && deal.proposal.opportunity.ownerId === user?.id ? (
+                  <ButtonLink href={`/app/logistics/dispatch?deal=${encodeURIComponent(deal.id)}`} variant="secondary">
+                    Assign V1 driver
+                  </ButtonLink>
+                ) : null}
+              </>
             ) : null}
           </div>
           <div className="mt-6 border-t border-[color:var(--px-border)] pt-4">

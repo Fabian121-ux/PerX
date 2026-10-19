@@ -353,6 +353,9 @@ model User {
   messages                          Message[]
   deals                             DealParticipant[]
   deliveries                        Delivery[]
+  logisticsV1AsSeller               LogisticsV1Shipment[]     @relation("LogisticsV1Seller")
+  logisticsV1AsBuyer                LogisticsV1Shipment[]     @relation("LogisticsV1Buyer")
+  logisticsV1AsDriver               LogisticsV1Shipment[]     @relation("LogisticsV1Driver")
   approvals                         Approval[]
   releases                          Release[]
   refunds                           Refund[]
@@ -1030,6 +1033,7 @@ model Deal {
   statusHistory      EscrowStatusHistory[]
   reviews            Review[]
   conversationEvents ConversationEvent[]
+  logisticsV1Shipment LogisticsV1Shipment?
 
   @@unique([proposalVersionId, proposalId])
   @@index([status, createdAt])
@@ -1409,4 +1413,37 @@ model PostComment {
 
   @@index([postId, deletedAt, moderationStatus, createdAt, id])
   @@index([authorId, createdAt])
+}
+
+/**
+ * Supabase Free V1: one mutable row per product agreement, not a permanent
+ * GPS trail. Location is visible only while a driver-owned consent session
+ * is active and recent. Coordinates are server-validated and time-bounded.
+ * This is a trial dispatch, not a payment/order/parcel booking system.
+ */
+model LogisticsV1Shipment {
+  id                   String    @id @default(cuid())
+  dealId               String    @unique
+  sellerId             String
+  buyerId              String
+  driverId             String
+  status               String    @default("ASSIGNED")
+  acceptedAt           DateTime?
+  sharingUntil         DateTime?
+  sharingStartedAt     DateTime?
+  lastLatitude         Float?
+  lastLongitude        Float?
+  lastAccuracyMetres   Float?
+  lastLocationAt       DateTime?
+  lastPositionWriteAt  DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  deal                 Deal      @relation(fields: [dealId], references: [id], onDelete: Cascade)
+  seller               User      @relation("LogisticsV1Seller", fields: [sellerId], references: [id], onDelete: Cascade)
+  buyer                User      @relation("LogisticsV1Buyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  driver               User      @relation("LogisticsV1Driver", fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([driverId, status, createdAt])
+  @@index([buyerId, createdAt])
+  @@index([sellerId, createdAt])
 }
