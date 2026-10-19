@@ -33,7 +33,7 @@ export function LogisticsV1DispatchForm({ dealId }: { dealId: string }) {
   return (
     <form onSubmit={(e) => void submit(e)} className="space-y-4 rounded-[22px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-5">
       <label className="block space-y-2 text-sm font-bold text-[color:var(--px-text)]" htmlFor="driver-username">
-        Driver's PtahX username
+        Driver&apos;s PtahX username
         <input id="driver-username" autoComplete="off" required minLength={2} maxLength={48}
           value={username} onChange={(event) => setUsername(event.target.value)}
           placeholder="e.g. alexdriver"

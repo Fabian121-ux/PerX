@@ -170,8 +170,8 @@ export function LogisticsV1Workspace({ initial }: { initial: LogisticsV1Snapshot
             ) : <>
               <p className="flex items-start gap-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
                 <ShieldCheck aria-hidden className="mt-1 shrink-0 text-[color:var(--px-primary)]" size={19} />
-                Only share your phone's location during this delivery. You can stop any time.
-                The browser must remain open; hotspot access alone cannot share another person's position.
+                Only share your phone&apos;s location during this delivery. You can stop any time.
+                The browser must remain open; hotspot access alone cannot share another person&apos;s position.
               </p>
               {!shipment.sharing ? (
                 <div className="space-y-3">
