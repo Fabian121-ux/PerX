@@ -4,6 +4,8 @@ export const GPS_MAX_ACCURACY_METRES = 300;
 export const GPS_STALE_AFTER_MS = 120_000;
 export const GPS_DURATIONS_MINUTES = [15, 30, 60, 120] as const;
 export const LOGISTICS_V1_POLL_MS = 30_000;
+/** Hard pilot cap to protect the free database until measured load testing. */
+export const LOGISTICS_V1_MAX_ACTIVE_ASSIGNMENTS = 20;
 
 export function logisticsV1Enabled() {
   return process.env.PTAHX_LOGISTICS_V1_ENABLED === "1";

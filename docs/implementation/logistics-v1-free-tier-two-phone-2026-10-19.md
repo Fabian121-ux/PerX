@@ -46,7 +46,8 @@ finite sharing duration. Neither buyer nor seller can switch that on remotely.
   data saver, no websocket, Redis or third-party realtime subscription.
 - Existing product listing and agreement queries remain unchanged. The new
   V1 page queries only the authorized shipment ID; map tiles are click-to-load.
-- Trial capped by feature flag, not publicly enabled by default.
+- Hard cap of **20 active pilot assignments**; feature flag defaults OFF.
+- When the driver backgrounds the browser tab, V1 stops the local GPS watcher and attempts a best-effort server stop. If that fails, stale observations disappear after two minutes and the server deadline still applies.
 - Actual drivers with the screen off/locked may stop producing GPS on mobile
   browsers. This V1 makes no background tracking promise; a later native app
   is needed for reliable background GPS.

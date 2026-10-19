@@ -53,13 +53,26 @@ export function LogisticsV1Workspace({ initial }: { initial: LogisticsV1Snapshot
       const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
       if (!conn?.saveData) void refresh();
     }, LOGISTICS_V1_POLL_MS);
-    document.addEventListener("visibilitychange", refresh);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void refresh();
+      } else if (watchId.current !== null) {
+        // V1 is foreground-only: do not keep consuming device GPS when hidden.
+        stopLocalWatch();
+        void fetch(endpoint, {
+          method: "POST", credentials: "same-origin", keepalive: true,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "stop" }),
+        }).catch(() => {});
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       clearInterval(ticker);
-      document.removeEventListener("visibilitychange", refresh);
+      document.removeEventListener("visibilitychange", onVisibility);
       stopLocalWatch();
     };
-  }, [refresh, stopLocalWatch]);
+  }, [refresh, stopLocalWatch, endpoint]);
 
   async function postAction(action: Action, extra: Record<string, unknown> = {}) {
     if (busy.current) return null;

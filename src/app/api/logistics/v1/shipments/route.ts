@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { getCurrentUser } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
-import { logisticsV1Enabled } from "@/lib/logistics/v1-policy";
+import { LOGISTICS_V1_MAX_ACTIVE_ASSIGNMENTS, logisticsV1Enabled } from "@/lib/logistics/v1-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +50,14 @@ export async function POST(request: Request) {
     (driver.suspendedUntil && driver.suspendedUntil > new Date()) ||
     driver.id === user.id || driver.id === deal.proposal.senderId) {
     return jsonError("Choose a different active PtahX member as the driver.", 400);
+  }
+  // Small Supabase Free V1 pilot: protect database writes and polling volume.
+  // This is a soft concurrent cap; the unique deal key is enforced atomically.
+  const active = await db.logisticsV1Shipment.count({
+    where: { status: { notIn: ["DELIVERED", "CANCELLED"] } },
+  });
+  if (active >= LOGISTICS_V1_MAX_ACTIVE_ASSIGNMENTS) {
+    return jsonError("The delivery pilot is full. Try again when an existing test delivery finishes.", 429);
   }
   try {
     const shipment = await db.logisticsV1Shipment.create({

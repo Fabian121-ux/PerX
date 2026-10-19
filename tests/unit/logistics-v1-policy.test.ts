@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canShareLocation, publicDriverLocation, validGpsDuration, validGpsReport,
-  GPS_MIN_INTERVAL_MS, LOGISTICS_V1_POLL_MS,
+  GPS_MIN_INTERVAL_MS, LOGISTICS_V1_POLL_MS, LOGISTICS_V1_MAX_ACTIVE_ASSIGNMENTS,
 } from "@/lib/logistics/v1-policy";
 
 const now = new Date("2026-10-19T19:00:00.000Z");
@@ -49,5 +49,6 @@ describe("PtahX Logistics V1 privacy and free-tier controls", () => {
   it("does not create high-frequency writes by default", () => {
     expect(GPS_MIN_INTERVAL_MS).toBeGreaterThanOrEqual(25_000);
     expect(LOGISTICS_V1_POLL_MS).toBeGreaterThanOrEqual(30_000);
+    expect(LOGISTICS_V1_MAX_ACTIVE_ASSIGNMENTS).toBeLessThanOrEqual(20);
   });
 });
