@@ -11,7 +11,7 @@ vi.mock("@/components/social/social-post-card", () => ({
 import { SocialFeedStream } from "@/components/social/social-feed-stream";
 
 const posts = [
-  { id: "a", body: "Original update", publishedAt: "2026-10-20", author: { id: "a", name: "A", username: "a", imageUrl: null }, reactionCount: 0, commentCount: 0 },
+  { kind: "SOCIAL_POST" as const, id: "a", body: "Original update", publishedAt: "2026-10-20", author: { id: "a", name: "A", username: "a", imageUrl: null }, reactionCount: 0, commentCount: 0 },
 ];
 let notify: ((entries: { isIntersecting: boolean }[]) => void) | undefined;
 const observe = vi.fn();

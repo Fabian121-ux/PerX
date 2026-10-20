@@ -41,7 +41,6 @@ import {
   Send,
   ShieldCheck,
   Trash2,
-  Truck,
   UserRoundX,
   X,
 } from "lucide-react";
