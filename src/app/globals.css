@@ -167,6 +167,42 @@ a {
   text-underline-offset: 3px;
 }
 
+/*
+ * Immediate press acknowledgement on every interactive control, including
+ * legacy plain HTML buttons and links. The delegated pointer-down feedback
+ * persists 260ms after a quick tap so people on touch screens can see it.
+ * It never blocks repeatable controls; submit actions use a pending state.
+ */
+:where(button:not(:disabled), a[href], [role="button"]:not([aria-disabled="true"])) {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(109, 93, 246, 0.22);
+}
+
+:where(button:not(:disabled), a[href], [role="button"]:not([aria-disabled="true"])):is(:active, [data-ptahx-pressed="true"]) {
+  filter: brightness(0.84);
+  outline: 2px solid var(--px-focus);
+  outline-offset: 2px;
+}
+
+:where(button:not(:disabled)):is(:active, [data-ptahx-pressed="true"]) {
+  transform: scale(0.97);
+}
+
+:where(button, a[href], [role="button"])[aria-busy="true"] {
+  cursor: progress;
+}
+
+:where(button, a[href], [role="button"]):focus-visible {
+  outline: 3px solid var(--px-focus);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(button:not(:disabled)):is(:active, [data-ptahx-pressed="true"]) {
+    transform: none;
+  }
+}
+
 @keyframes float {
   0% {
     transform: translateY(0px);

@@ -15,7 +15,9 @@ import {
 import { PublicPageShell } from "@/components/standard-page";
 import { ListingMediaGallery } from "@/components/opportunities/listing-media-gallery";
 import { Badge } from "@/components/ui/badge";
-import { Button, ButtonLink } from "@/components/ui/button";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
+import { getCurrentUser } from "@/lib/auth/session";
+import { ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
 import { Field, Input, Select, Textarea } from "@/components/ui/form";
 import {
@@ -53,6 +55,11 @@ export default async function OpportunityDetailPage({
     );
   }
   if (!opportunity) notFound();
+
+  // This public listing is also visited by signed-in members. Never ask an
+  // authenticated viewer to log in again to respond to a listing.
+  const viewer = await getCurrentUser();
+  const signInHref = `/sign-in?next=${encodeURIComponent(`/opportunities/${opportunity.slug}#respond-to-listing`)}`;
 
   const image = getTemporaryOpportunityImage(opportunity.slug);
   const photos = opportunity.images?.length
@@ -109,10 +116,10 @@ export default async function OpportunityDetailPage({
                     type="hidden"
                     value={opportunity.id}
                   />
-                  <Button type="submit" variant="secondary">
+                  <PendingSubmitButton type="submit" variant="secondary" pendingLabel="Saving...">
                     <Bookmark aria-hidden className="mr-2" size={16} />
                     Save
-                  </Button>
+                  </PendingSubmitButton>
                 </form>
               </div>
 
@@ -229,20 +236,22 @@ export default async function OpportunityDetailPage({
                 />
               </Field>
               <div className="grid gap-2 sm:grid-cols-2">
-                <Button formAction={saveProposalDraftAction} type="submit" variant="secondary">
+                <PendingSubmitButton formAction={saveProposalDraftAction} type="submit" variant="secondary" pendingLabel="Saving draft...">
                   Save draft
-                </Button>
-                <Button type="submit">
+                </PendingSubmitButton>
+                <PendingSubmitButton type="submit" pendingLabel="Submitting...">
                   <Send aria-hidden className="mr-2" size={16} />
                   Submit locked version
-                </Button>
+                </PendingSubmitButton>
               </div>
               <p className="text-xs leading-5 text-[color:var(--px-text-muted)]">
                 Drafts remain private and editable. A submitted version is locked; later changes require a numbered revision.
               </p>
-              <ButtonLink href="/sign-in" variant="ghost">
-                Sign in first if needed
-              </ButtonLink>
+              {!viewer ? (
+                <ButtonLink href={signInHref} variant="ghost">
+                  Sign in to respond
+                </ButtonLink>
+              ) : null}
             </form>
           </Card>
 
@@ -299,10 +308,10 @@ export default async function OpportunityDetailPage({
                   placeholder="Optional context for the safety team"
                 />
               </Field>
-              <Button type="submit" variant="secondary">
+              <PendingSubmitButton type="submit" variant="secondary" pendingLabel="Sending report...">
                 <Flag aria-hidden className="mr-2" size={16} />
                 Report
-              </Button>
+              </PendingSubmitButton>
             </form>
           </Card>
         </aside>
