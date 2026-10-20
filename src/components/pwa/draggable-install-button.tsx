@@ -13,6 +13,17 @@ const EDGE = 12;
 const TOP_CLEARANCE = 112;
 const BOTTOM_CLEARANCE = 108;
 const DRAG_THRESHOLD = 7;
+const SCROLL_IDLE_MS = 850;
+
+/** Inputs, editors and soft-keyboard surfaces must never be obscured by the
+ * install shortcut. Dialogs use their own backdrop and should not compete
+ * with another floating control. */
+export function isInstallFabObscuredTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  return Boolean(target.closest(
+    "input, textarea, select, [contenteditable]:not([contenteditable='false']), [role='textbox']",
+  ));
+}
 type Position = { x: number; y: number };
 
 export function clampInstallFabPosition(position: Position, width: number, height: number): Position {
@@ -43,6 +54,8 @@ export function DraggableInstallButton({ onOpen }: { onOpen: () => void }) {
   const posRef = useRef<Position | null>(null);
   const dragging = useRef<{ pointerId: number; x: number; y: number; origin: Position; moved: boolean } | null>(null);
   const suppressClick = useRef(false);
+  const [editing, setEditing] = useState(false);
+  const [scrolling, setScrolling] = useState(false);
 
   const move = (next: Position, save: boolean) => {
     const clamped = clampInstallFabPosition(next, window.innerWidth, window.innerHeight);
@@ -64,6 +77,47 @@ export function DraggableInstallButton({ onOpen }: { onOpen: () => void }) {
       window.removeEventListener("resize", onResize);
     };
   }, []);
+
+  useEffect(() => {
+    let blurTimer: ReturnType<typeof setTimeout> | null = null;
+    let scrollTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const updateEditing = () => setEditing(
+      isInstallFabObscuredTarget(document.activeElement),
+    );
+    const onFocusIn = () => {
+      if (blurTimer) clearTimeout(blurTimer);
+      updateEditing();
+    };
+    const onFocusOut = () => {
+      if (blurTimer) clearTimeout(blurTimer);
+      // Wait until focus moves to the next element. This avoids exposing the
+      // floating button between two form fields.
+      blurTimer = setTimeout(updateEditing, 0);
+    };
+    const onScroll = () => {
+      setScrolling(true);
+      if (scrollTimer) clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => setScrolling(false), SCROLL_IDLE_MS);
+    };
+
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
+    window.addEventListener("scroll", onScroll, true);
+    const initialTimer = setTimeout(updateEditing, 0);
+    return () => {
+      clearTimeout(initialTimer);
+      if (blurTimer) clearTimeout(blurTimer);
+      if (scrollTimer) clearTimeout(scrollTimer);
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
+      window.removeEventListener("scroll", onScroll, true);
+    };
+  }, []);
+
+  // The user's saved position is never removed while typing or scrolling.
+  // Hide rather than move it over a keyboard or feed text being read.
+  if (editing || scrolling) return null;
 
   return (
     <button
