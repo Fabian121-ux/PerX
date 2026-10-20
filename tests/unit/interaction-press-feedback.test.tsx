@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
+import Link from "next/link";
 import { act, cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -30,7 +31,7 @@ describe("instant site-wide tap acknowledgement", () => {
 
   it("gives links and keyboard users the same visible press state", () => {
     const view = render(
-      <><InteractionPressFeedback /><a href="/app/messages">Messages</a></>,
+      <><InteractionPressFeedback /><Link href="/app/messages">Messages</Link></>,
     );
     const link = view.getByRole("link", { name: "Messages" });
 
