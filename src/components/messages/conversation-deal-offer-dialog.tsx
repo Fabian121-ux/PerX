@@ -2,9 +2,17 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { Handshake, Loader2, X } from "lucide-react";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { Field, Input, Textarea } from "@/components/ui/form";
+import {
+  DEFAULT_CHAT_DEAL_DRAFT,
+  clearChatDealDraft,
+  hasChatDealDraft,
+  readChatDealDraft,
+  saveChatDealDraft,
+  type ChatDealDraft,
+} from "@/lib/messages/deal-draft";
 import {
   submitConversationProposalAction,
   type ConversationProposalResult,
@@ -12,6 +20,7 @@ import {
 
 export function ConversationDealOfferDialog({
   conversationId,
+  currentUserId,
   currency,
   onOpenChange,
   onSubmitted,
@@ -20,6 +29,7 @@ export function ConversationDealOfferDialog({
   participantName,
 }: {
   conversationId: string;
+  currentUserId: string;
   currency: string;
   onOpenChange: (open: boolean) => void;
   onSubmitted: (
@@ -30,11 +40,40 @@ export function ConversationDealOfferDialog({
   participantName: string;
 }) {
   const [error, setError] = useState("");
+  const [draft, setDraft] = useState<ChatDealDraft>({ ...DEFAULT_CHAT_DEAL_DRAFT });
+  const [draftRestored, setDraftRestored] = useState(false);
   const [isPending, startTransition] = useTransition();
   const requestIdRef = useRef("");
   // Synchronous lock closes the gap before React paints the pending state.
   // The server also verifies the clientRequestId for idempotency.
   const submissionLockRef = useRef(false);
+
+  useEffect(() => {
+    // Defer browser-only session storage until hydration so SSR and client
+    // start with identical default markup.
+    const timer = window.setTimeout(() => {
+      setDraft(readChatDealDraft(currentUserId, conversationId));
+      setDraftRestored(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [currentUserId, conversationId]);
+
+  const changeDraft = (field: keyof ChatDealDraft, value: string) => {
+    const updated = { ...draft, [field]: value };
+    setDraft(updated);
+    saveChatDealDraft(currentUserId, conversationId, updated);
+    // If a failed submit committed remotely but its response was lost, a
+    // modified set of terms MUST NOT reuse the previous idempotency key.
+    if (!submissionLockRef.current) requestIdRef.current = "";
+  };
+
+  const discardDraft = () => {
+    if (submissionLockRef.current) return;
+    clearChatDealDraft(currentUserId, conversationId);
+    setDraft({ ...DEFAULT_CHAT_DEAL_DRAFT });
+    requestIdRef.current = "";
+    setError("");
+  };
 
   const closeDialog = () => {
     setError("");
@@ -115,6 +154,8 @@ export function ConversationDealOfferDialog({
                 // A newly opened proposal must get a fresh idempotency key;
                 // retries of a failed submission keep the same key.
                 requestIdRef.current = "";
+                clearChatDealDraft(currentUserId, conversationId);
+                setDraft({ ...DEFAULT_CHAT_DEAL_DRAFT });
                 onSubmitted(result.event);
                 closeDialog();
               });
@@ -124,6 +165,9 @@ export function ConversationDealOfferDialog({
               <Field label={`Agreement amount (${currency})`}>
                 <Input
                   autoComplete="off"
+                  disabled={isPending}
+                  value={draft.amount}
+                  onChange={(event) => changeDraft("amount", event.target.value)}
                   inputMode="decimal"
                   maxLength={24}
                   name="amount"
@@ -133,7 +177,9 @@ export function ConversationDealOfferDialog({
               </Field>
               <Field label="Delivery days">
                 <Input
-                  defaultValue="14"
+                  value={draft.deliveryDays}
+                  onChange={(event) => changeDraft("deliveryDays", event.target.value)}
+                  disabled={isPending}
                   inputMode="numeric"
                   max="365"
                   min="1"
@@ -144,7 +190,9 @@ export function ConversationDealOfferDialog({
               </Field>
               <Field label="Included revisions">
                 <Input
-                  defaultValue="1"
+                  value={draft.revisions}
+                  onChange={(event) => changeDraft("revisions", event.target.value)}
+                  disabled={isPending}
                   inputMode="numeric"
                   max="12"
                   min="0"
@@ -159,6 +207,9 @@ export function ConversationDealOfferDialog({
               label="Proposal terms"
             >
               <Textarea
+                value={draft.description}
+                onChange={(event) => changeDraft("description", event.target.value)}
+                disabled={isPending}
                 maxLength={2000}
                 minLength={40}
                 name="description"
@@ -166,6 +217,23 @@ export function ConversationDealOfferDialog({
                 rows={7}
               />
             </Field>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[color:var(--px-text-muted)]">
+              <p role="status">
+                {draftRestored && hasChatDealDraft(draft)
+                  ? "Draft saved in this browser tab · not submitted"
+                  : "Terms are sent only when you submit the proposal."}
+              </p>
+              {hasChatDealDraft(draft) ? (
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={discardDraft}
+                  className="min-h-10 rounded-lg border border-[color:var(--px-border-strong)] px-3 font-bold text-[color:var(--px-text)] hover:bg-[color:var(--px-muted)] disabled:opacity-50"
+                >
+                  Discard draft
+                </button>
+              ) : null}
+            </div>
             <div className="rounded-2xl border border-amber-400/40 bg-amber-500/10 p-3 text-xs leading-5 text-amber-900 dark:text-amber-100">
               Payments are currently unavailable. This Deal records agreed terms
               but does not hold funds.
