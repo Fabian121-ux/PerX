@@ -641,6 +641,32 @@ describe("message workspace exact targets", () => {
     await waitFor(() => expect(scrollIntoView).toHaveBeenCalled());
   });
 
+  it("opens @deal in a plain chat and lets a member ask for a listing", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[{
+          id: "conversation-1",
+          messages: [],
+          participantName: "Ada",
+        }]}
+        currentUserId="user-1"
+      />,
+    );
+    const composer = view.getByLabelText("Message") as HTMLTextAreaElement;
+    expect(view.getByRole("button", { name: "Attachment options" })).toBeTruthy();
+    fireEvent.click(view.getByRole("button", { name: "Open @ commands" }));
+    expect(view.getByRole("dialog", { name: "Deal room" })).toBeTruthy();
+    expect(view.getByText(/To submit locked terms, the other person must have an approved, published listing/i)).toBeTruthy();
+    fireEvent.click(view.getByRole("button", { name: "Ask for a listing" }));
+    expect(composer.value).toMatch(/share your approved listing/i);
+    expect(mocks.sendMessageAction).not.toHaveBeenCalled();
+    // Request is a draft, not sent on the user's behalf.
+    expect(view.queryByRole("dialog", { name: "Deal room" })).toBeNull();
+    fireEvent.change(composer, { target: { value: "@deal" } });
+    expect(view.getByRole("dialog", { name: "Deal room" })).toBeTruthy();
+    expect(mocks.sendMessageAction).not.toHaveBeenCalled();
+  });
+
   it("opens one structured proposal flow from Make a Deal and exact @deal", async () => {
     const view = render(
       <MessageWorkspace
@@ -708,7 +734,9 @@ describe("message workspace exact targets", () => {
     expect(
       view.getByRole("link", { name: "Review proposal" }).getAttribute("href"),
     ).toBe("/app/proposals/sent");
-    expect(view.queryByRole("button", { name: "Make a Deal" })).toBeNull();
+    // @deal remains a usable entry even after submission, but the server-backed
+    // terms form cannot be reopened for the already-active proposal.
+    expect(view.getByRole("button", { name: "Make a Deal" })).toBeTruthy();
     expect((composer as HTMLTextAreaElement).value).toBe("");
   }, 15_000);
 

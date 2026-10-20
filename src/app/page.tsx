@@ -1,4 +1,4 @@
-import { SocialPostCard } from "@/components/social/social-post-card";
+import { SocialFeedStream } from "@/components/social/social-feed-stream";
 import { getSocialFeedResult } from "@/lib/data/social-posts";
 import { Fragment } from "react";
 import { Search } from "lucide-react";
@@ -55,20 +55,12 @@ export default async function Home() {
         className="mx-auto grid min-w-0 max-w-[640px] gap-4 px-2 py-4 sm:px-4"
         aria-label="Public feed"
       >
-        <h1 className="sr-only">Public feed</h1>
-        {social.items.map((post) => (
-          <SocialPostCard key={post.id} post={post} />
-        ))}
+        <h1 className="px-2 text-xl font-black text-[color:var(--px-text)]">Latest updates</h1>
+        {social.items.length ? (
+          <SocialFeedStream initialItems={social.items} initialNextCursor={social.nextCursor} />
+        ) : null}
         {social.unavailable && (
           <p role="status">Community posts are temporarily unavailable.</p>
-        )}
-        {social.nextCursor && (
-          <Link
-            className="py-3 text-center font-semibold"
-            href={`/posts?cursor=${encodeURIComponent(social.nextCursor)}`}
-          >
-            More community posts
-          </Link>
         )}
         {unavailable ? (
           <EmptyState

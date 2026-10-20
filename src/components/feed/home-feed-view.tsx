@@ -3,10 +3,6 @@ import {
   MessageSquare,
   PlusCircle,
   Search,
-  ShieldCheck,
-  ShoppingBag,
-  Truck,
-  Wrench,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -47,35 +43,22 @@ export function HomeFeedView({
       <div className="mx-auto flex w-full min-w-0 max-w-[640px] flex-col gap-4 lg:mx-0">
         <h1 className="sr-only">Home</h1>
 
-        <section aria-label="Discover PtahX" className="overflow-hidden rounded-[22px] bg-[linear-gradient(140deg,#061936_0%,#0c2f67_70%,#15449c_100%)] p-4 text-white shadow-[0_14px_35px_rgba(6,25,54,0.15)] lg:hidden">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-100/70">Your ecosystem</p>
-              <p className="mt-1 text-lg font-black leading-6">Discover &amp; connect</p>
-            </div>
-            <Link className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 text-xs font-semibold text-white hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/app/trust">
-              <ShieldCheck aria-hidden size={17} /> Trust
-            </Link>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1 pt-1">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.12em] text-[color:var(--px-text-muted)]">Your PtahX community</p>
+            <h2 className="mt-0.5 text-xl font-black text-[color:var(--px-text)]">Home feed</h2>
           </div>
-          <Link className="mt-4 flex min-h-12 items-center gap-3 rounded-2xl border border-white/15 bg-white/10 px-4 text-sm text-white/85 transition-colors hover:bg-white/15 focus:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/app/search">
-            <Search aria-hidden size={19} />
-            <span className="truncate">Search products, services and more</span>
+          <Link href="/app/search" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-4 text-sm font-bold text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-surface-soft)]">
+            <Search aria-hidden size={18} /> Search
           </Link>
-          <nav aria-label="Explore categories" className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
-            <Link className="ptahx-discovery-all inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-xs font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/app/discover">
-              Explore all
-            </Link>
-            <Link className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/app/discover?type=PRODUCT">
-              <ShoppingBag aria-hidden size={15} /> Products
-            </Link>
-            <Link className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/app/discover?type=SERVICE">
-              <Wrench aria-hidden size={15} /> Services
-            </Link>
-            <Link className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/app/track">
-              <Truck aria-hidden size={15} /> Track
-            </Link>
-          </nav>
-        </section>
+        </div>
+        <nav aria-label="Explore PtahX" className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+          <Link aria-current="page" href="/app" className="inline-flex min-h-10 shrink-0 items-center rounded-full bg-[color:var(--px-primary)] px-4 text-sm font-black text-white">Feed</Link>
+          <Link href="/app/discover" className="ptahx-discovery-all inline-flex min-h-10 shrink-0 items-center rounded-full px-4 text-sm font-bold">Explore all</Link>
+          <Link href="/app/discover?type=PRODUCT" className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-4 text-sm font-bold text-[color:var(--px-text)] hover:bg-[color:var(--px-surface-soft)]">Products</Link>
+          <Link href="/app/people" className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-4 text-sm font-bold text-[color:var(--px-text)] hover:bg-[color:var(--px-surface-soft)]">People</Link>
+          <Link href="/app/track" className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-4 text-sm font-bold text-[color:var(--px-text)] hover:bg-[color:var(--px-surface-soft)]">Tracking</Link>
+        </nav>
 
         <FeedComposerEntry avatarUrl={user.avatarUrl} name={user.name} />
 
