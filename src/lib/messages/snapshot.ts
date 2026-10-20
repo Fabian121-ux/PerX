@@ -252,6 +252,11 @@ function formatMessageSnapshot(
             : (latestMessage?.body ?? "No messages yet."),
         messages: messages.map((message) => ({
           body: message.deletedAt ? "" : message.body,
+          attachments: message.deletedAt ? [] : message.attachments.filter((image) => image.status === "APPROVED").map((image) => ({
+            id: image.id,
+            filename: image.filename,
+            url: `/api/messages/images/${image.id}`,
+          })),
           canMutate: !message.deletedAt && message.createdAt >= mutationCutoff,
           createdAt: message.createdAt.toISOString(),
           deletedAt: message.deletedAt?.toISOString() ?? null,
@@ -423,6 +428,7 @@ function conversationSnapshotInclude(fullHistory: boolean) {
 
 function messageSnapshotInclude() {
   return {
+    attachments: { select: { id: true, filename: true, status: true } },
     readReceipts: { select: { userId: true } },
     replyTo: {
       select: {
