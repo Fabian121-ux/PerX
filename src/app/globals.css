@@ -499,6 +499,42 @@ a {
     color: #092554 !important;
   }
 
+  /*
+   * A paired foreground/background is essential on a fixed navy section.
+   * Global .bg-white and theme alias rules otherwise change only one side
+   * of the pair and make active tabs black-on-black on Android dark mode.
+   */
+  .ptahx-navy-tab-active,
+  .dark .ptahx-navy-tab-active {
+    background-color: #ffffff !important;
+    color: #092554 !important;
+    border: 1px solid #ffffff !important;
+  }
+  .ptahx-navy-tab-active:hover,
+  .dark .ptahx-navy-tab-active:hover {
+    background-color: #eaf1ff !important;
+    color: #092554 !important;
+  }
+  .ptahx-navy-tab-inactive,
+  .dark .ptahx-navy-tab-inactive {
+    background-color: #294c7c !important;
+    color: #ffffff !important;
+    border: 1px solid #829dc4 !important;
+  }
+  .ptahx-navy-tab-inactive:hover,
+  .dark .ptahx-navy-tab-inactive:hover {
+    background-color: #3a6197 !important;
+    color: #ffffff !important;
+  }
+
+  /* The floating install icon must never block a chat composer, software
+     keyboard, immersive detail view, or distracting full-screen workflow. */
+  :root[data-ptahx-keyboard="open"] .ptahx-pwa-fab,
+  .ptahx-mobile-conversation-active .ptahx-pwa-fab,
+  .ptahx-distraction-free-active .ptahx-pwa-fab {
+    display: none !important;
+  }
+
   .ptahx-btn-primary {
     background: var(--px-primary);
     color: #ffffff;
@@ -662,7 +698,7 @@ a {
   .text-blue-700,
   .text-indigo-600,
   .text-purple-600 {
-    color: var(--px-primary) !important;
+    color: var(--px-primary-ink) !important;
   }
 
   /* Do not recolour success/emerald surfaces as purple: it hides
