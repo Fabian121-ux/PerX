@@ -4,11 +4,10 @@ import { PublicPageShell } from "@/components/standard-page";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getSocialPost } from "@/lib/data/social-posts";
 import { SocialPostCard } from "@/components/social/social-post-card";
+import { SocialCommentsList } from "@/components/social/social-comments-list";
 import { SocialForm } from "@/components/social/social-form";
 import {
   createCommentAction,
-  editCommentAction,
-  deleteCommentAction,
   editPostAction,
   deletePostAction,
 } from "@/features/social/actions";
@@ -105,50 +104,7 @@ export default async function PostPage({
               Sign in to write a comment
             </Link>
           )}
-          {detail.comments.map((comment) => (
-            <article
-              key={comment.id}
-              data-comment-id={comment.id}
-              className="min-w-0 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4"
-            >
-              <Link
-                className="font-semibold"
-                href={`/u/${encodeURIComponent(comment.author.username)}`}
-              >
-                {comment.author.name}
-              </Link>
-              <time className="ml-2 text-xs" dateTime={comment.createdAt}>
-                {new Date(comment.createdAt).toLocaleDateString("en-GB", {
-                  timeZone: "UTC",
-                })}
-              </time>
-              <p className="my-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-                {comment.body}
-              </p>
-              {user?.id === comment.author.id && (
-                <div className="grid gap-3">
-                  <details>
-                    <summary className="min-h-11 cursor-pointer">
-                      Edit comment
-                    </summary>
-                    <SocialForm
-                      action={editCommentAction}
-                      fields={{ postId, commentId: comment.id }}
-                      label="Save comment"
-                      inputLabel="Comment text"
-                      initialBody={comment.body}
-                      maxLength={COMMENT_MAX_LENGTH}
-                    />
-                  </details>
-                  <SocialForm
-                    action={deleteCommentAction}
-                    fields={{ postId, commentId: comment.id }}
-                    label="Delete comment"
-                  />
-                </div>
-              )}
-            </article>
-          ))}
+          <SocialCommentsList comments={detail.comments} postId={postId} viewerId={user?.id} />
           {detail.nextCursor && (
             <Link
               href={`${socialPostPath(postId)}?cursor=${encodeURIComponent(detail.nextCursor)}#comments`}
