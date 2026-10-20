@@ -656,7 +656,7 @@ describe("message workspace exact targets", () => {
     expect(view.getByRole("button", { name: "Attachment options" })).toBeTruthy();
     fireEvent.click(view.getByRole("button", { name: "Open @ commands" }));
     expect(view.getByRole("dialog", { name: "Deal room" })).toBeTruthy();
-    expect(view.getByText(/To submit locked terms, the other person must have an approved, published listing/i)).toBeTruthy();
+    expect(view.getByText(/You can start a Deal by choosing an approved, published listing/i)).toBeTruthy();
     fireEvent.click(view.getByRole("button", { name: "Ask for a listing" }));
     expect(composer.value).toMatch(/share your approved listing/i);
     expect(mocks.sendMessageAction).not.toHaveBeenCalled();
