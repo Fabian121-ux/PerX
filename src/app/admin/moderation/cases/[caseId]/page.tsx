@@ -56,7 +56,9 @@ export default async function AdminModerationCasePage({
         })
       : null;
   const contentPostId = contentEvidence
-    ? ("postId" in contentEvidence ? contentEvidence.postId : contentEvidence.id)
+    ? ("postId" in contentEvidence && typeof contentEvidence.postId === "string"
+        ? contentEvidence.postId
+        : contentEvidence.id)
     : null;
   const contentUrl = contentPostId
     ? `${socialPostPath(contentPostId)}${contentTarget?.kind === "COMMENT" ? `#comment-${contentTarget.id}` : ""}`
