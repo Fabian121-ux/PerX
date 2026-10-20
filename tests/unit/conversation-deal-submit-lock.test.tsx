@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -14,8 +14,8 @@ vi.mock("@/features/proposals/actions", () => ({
 
 import { ConversationDealOfferDialog } from "@/components/messages/conversation-deal-offer-dialog";
 
-beforeEach(() => vi.clearAllMocks());
-afterEach(cleanup);
+beforeEach(() => { vi.clearAllMocks(); sessionStorage.clear(); });
+afterEach(() => { cleanup(); sessionStorage.clear(); });
 
 function renderDialog() {
   const onOpenChange = vi.fn();
@@ -23,6 +23,7 @@ function renderDialog() {
   render(
     <ConversationDealOfferDialog
       conversationId="conversation-1"
+      currentUserId="member-1"
       currency="NGN"
       onOpenChange={onOpenChange}
       onSubmitted={onSubmitted}
@@ -70,4 +71,61 @@ describe("chat Make a Deal / lock-terms proposal submission", () => {
     expect(mocks.submit).toHaveBeenCalledTimes(2);
     expect(mocks.submit.mock.calls[1][0].clientRequestId).toBe(firstKey);
   });
+  it("restores a draft after closing and reopening without sending to the server", async () => {
+    const first = renderDialog();
+    const amount = screen.getByRole("textbox", { name: /Agreement amount/ });
+    const terms = screen.getByRole("textbox", { name: "Proposal terms" });
+    fireEvent.change(amount, { target: { value: "185000" } });
+    fireEvent.change(terms, { target: { value: "Build the requested dashboard with source code and acceptance tests." } });
+    expect(screen.getByText(/Draft saved in this browser tab/i)).toBeInTheDocument();
+    first.onOpenChange.mockClear();
+    cleanup();
+
+    renderDialog();
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: /Agreement amount/ })).toHaveValue("185000"),
+    );
+    expect(screen.getByRole("textbox", { name: "Proposal terms" }))
+      .toHaveValue("Build the requested dashboard with source code and acceptance tests.");
+    expect(mocks.submit).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Discard draft" }));
+    expect(screen.getByRole("textbox", { name: /Agreement amount/ })).toHaveValue("");
+    cleanup();
+
+    renderDialog();
+    await waitFor(() =>
+      expect(screen.getByRole("textbox", { name: /Agreement amount/ })).toHaveValue(""),
+    );
+  });
+
+  it("changes the retry idempotency key when failed terms are edited", async () => {
+    mocks.submit.mockResolvedValue({ error: "Network unavailable." });
+    const { form } = renderDialog();
+    await act(async () => { fireEvent.submit(form); await Promise.resolve(); });
+    const originalId = mocks.submit.mock.calls[0][0].clientRequestId;
+    expect(screen.getByRole("alert")).toHaveTextContent("Network unavailable.");
+
+    fireEvent.change(screen.getByRole("textbox", { name: /Agreement amount/ }), {
+      target: { value: "190000" },
+    });
+    await act(async () => { fireEvent.submit(form); await Promise.resolve(); });
+    expect(mocks.submit).toHaveBeenCalledTimes(2);
+    expect(mocks.submit.mock.calls[1][0].clientRequestId).not.toBe(originalId);
+  });
+
+  it("clears on-device terms after a successful locked proposal submission", async () => {
+    mocks.submit.mockResolvedValue({ success: true, event: {
+      id: "event-1", proposalVersionId: "version-1",
+      snapshot: {}, type: "PROPOSAL_SUBMITTED", createdAt: "2026-10-20T12:00:00.000Z",
+      actorName: "Member", dealHref: null, proposalHref: "/app/proposals/sent",
+    } });
+    const { form, onSubmitted } = renderDialog();
+    fireEvent.change(screen.getByRole("textbox", { name: /Agreement amount/ }), {
+      target: { value: "190000" },
+    });
+    await act(async () => { fireEvent.submit(form); await Promise.resolve(); });
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalledTimes(1));
+    expect(sessionStorage.length).toBe(0);
+  });
+
 });
