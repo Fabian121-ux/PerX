@@ -54,7 +54,8 @@ export function HomeFeedView({
         </div>
         <nav aria-label="Explore PtahX" className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
           <Link aria-current="page" href="/app" className="inline-flex min-h-10 shrink-0 items-center rounded-full bg-[color:var(--px-primary)] px-4 text-sm font-black text-white">Feed</Link>
-          <Link href="/app/discover" className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-4 text-sm font-bold text-[color:var(--px-text)] hover:bg-[color:var(--px-surface-soft)]">Explore</Link>
+          <Link href="/app/discover" className="ptahx-discovery-all inline-flex min-h-10 shrink-0 items-center rounded-full px-4 text-sm font-bold">Explore all</Link>
+          <Link href="/app/discover?type=PRODUCT" className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-4 text-sm font-bold text-[color:var(--px-text)] hover:bg-[color:var(--px-surface-soft)]">Products</Link>
           <Link href="/app/people" className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-4 text-sm font-bold text-[color:var(--px-text)] hover:bg-[color:var(--px-surface-soft)]">People</Link>
           <Link href="/app/track" className="inline-flex min-h-10 shrink-0 items-center rounded-full border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-4 text-sm font-bold text-[color:var(--px-text)] hover:bg-[color:var(--px-surface-soft)]">Tracking</Link>
         </nav>
