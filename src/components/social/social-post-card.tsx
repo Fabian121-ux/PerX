@@ -56,6 +56,7 @@ export function SocialPostCard({
             authorId={post.author.id}
             authorName={post.author.name}
             username={post.author.username}
+            reportContent={{ kind: "POST", id: post.id }}
             onBlocked={(authorId) => {
               setHidden(true);
               onBlocked?.(authorId);
