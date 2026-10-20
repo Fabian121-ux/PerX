@@ -246,8 +246,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
             <MessageCircleQuestion aria-hidden size={17} />
             {post.type === "PRODUCT" ? "Enquire" : "Ask"}
           </Link>
-          <ShareButton href={detailHref}
-            prefetch={false} />
+          <ShareButton href={detailHref} />
           <Link className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-bold text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)] hover:text-[color:var(--px-error)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]" href={props.audience === "public" ? `/sign-in?next=${encodeURIComponent(`/app/reports/new?targetType=OPPORTUNITY&targetId=${post.id}`)}` : `/app/reports/new?targetType=OPPORTUNITY&targetId=${encodeURIComponent(post.id)}`}><Flag aria-hidden size={16} />Report</Link>
           <Link
             className="ml-auto inline-flex min-h-11 items-center rounded-xl bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white transition hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
