@@ -88,6 +88,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
               <Link
                 className="block truncate text-sm font-black text-[color:var(--px-text)] hover:text-[color:var(--px-primary-ink)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                 href={authorHref}
+                prefetch={false}
                 onClick={() =>
                   recordFeedEvent({
                     name: "profile_open",
@@ -129,6 +130,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
           <Link
             className="inline-flex min-h-10 shrink-0 items-center rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-3 text-xs font-black text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={authorHref}
+                prefetch={false}
           >
             {post.type === "PRODUCT" ? "View seller" : "Connect"}
           </Link>
@@ -139,6 +141,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
         <Link
           className="group block rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
           href={detailHref}
+            prefetch={false}
           onClick={() =>
             recordFeedEvent({ name: "post_open", position, postId: post.id })
           }
@@ -171,6 +174,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
           */
           className={`relative block w-full overflow-hidden bg-[color:var(--px-muted)] focus:outline-none focus-visible:ring-inset focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${post.type === "PRODUCT" ? "order-2 aspect-[4/5] max-h-[510px] sm:aspect-[16/10]" : "order-3 aspect-[16/9]"}`}
           href={detailHref}
+            prefetch={false}
           onClick={() =>
             recordFeedEvent({ name: "post_open", position, postId: post.id })
           }
@@ -247,6 +251,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
           <Link
             className="ml-auto inline-flex min-h-11 items-center rounded-xl bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white transition hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={detailHref}
+            prefetch={false}
             onClick={() =>
               recordFeedEvent({ name: "post_open", position, postId: post.id })
             }

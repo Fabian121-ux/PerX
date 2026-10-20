@@ -7,7 +7,7 @@ export function PresenceHeartbeat() {
     let stopped = false;
 
     const sendHeartbeat = () => {
-      if (stopped || document.visibilityState !== "visible") return;
+      if (stopped || document.visibilityState !== "visible" || !navigator.onLine) return;
       fetch("/api/presence/heartbeat", {
         cache: "no-store",
         method: "POST",

@@ -27,6 +27,7 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
           <Link
             className="block truncate text-sm font-bold text-[color:var(--px-text)] hover:text-[color:var(--px-primary)]"
             href={`/u/${encodeURIComponent(post.author.username)}`}
+            prefetch={false}
           >
             {post.author.name}
           </Link>
@@ -40,14 +41,14 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
           </time>
         </div>
       </header>
-      <Link href={path} aria-label="Open post" className="block rounded-xl py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]">
+      <Link href={path} prefetch={false} aria-label="Open post" className="block rounded-xl py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]">
         <p className="whitespace-pre-wrap break-words text-sm leading-6 text-[color:var(--px-text)] [overflow-wrap:anywhere]">
           {post.body}
         </p>
       </Link>
       <div className="mt-4 flex flex-wrap gap-4 text-xs text-[color:var(--px-text-muted)]">
         <span data-testid="reaction-count">{post.reactionCount} reactions</span>
-        <Link href={`${path}#comments`} data-testid="comment-count">
+        <Link href={`${path}#comments`} prefetch={false} data-testid="comment-count">
           {post.commentCount} comments
         </Link>
       </div>
@@ -71,6 +72,7 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
           <Link
             className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)]"
             href={authenticated ? `${path}#comments` : socialSignInPath(post.id)}
+            prefetch={false}
           >
             <MessageCircle aria-hidden size={17} />
             {authenticated ? "Comment" : "Sign in to comment"}
