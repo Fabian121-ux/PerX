@@ -58,7 +58,7 @@ export function InstallAppNudge() {
   const [mode, setMode] = useState<InstallMode>(null);
   const [isInstalled, setInstalled] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
-  const [hideFloat, setHideFloat] = useState(false);
+  const [hasSeenSuggestion, setHasSeenSuggestion] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const lockRef = useRef(false);
 
@@ -86,6 +86,7 @@ export function InstallAppNudge() {
     // Defer environment detection until after hydration. Don't show an
     // install prompt to a user already running the installed PWA.
     const initial = window.setTimeout(() => {
+      setHasSeenSuggestion(readLastShown() !== null);
       if (installed()) {
         updateInstalled();
         return;
@@ -115,6 +116,7 @@ export function InstallAppNudge() {
         now: Date.now(),
       })) {
         markShown();
+        setHasSeenSuggestion(true);
         setPopupOpen(true);
       }
     }, INSTALL_INITIAL_DELAY_MS);
@@ -156,7 +158,7 @@ export function InstallAppNudge() {
   const actionLabel = nativeInstall ? "Install PtahX" : "How to install";
   return (
     <>
-      {!popupOpen && !hideFloat ? (
+      {!popupOpen && hasSeenSuggestion ? (
         <button
           aria-label="Install PtahX app"
           className="fixed bottom-[calc(var(--mobile-nav-height,4.5rem)+env(safe-area-inset-bottom)+0.9rem)] right-3 z-[70] inline-flex min-h-11 items-center gap-2 rounded-full border border-white/25 bg-[#164ec2] px-4 py-2 text-xs font-black text-white shadow-[0_10px_28px_rgba(8,25,61,0.32)] transition hover:bg-[#0b3b9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 lg:bottom-5"

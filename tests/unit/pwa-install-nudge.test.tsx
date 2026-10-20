@@ -41,7 +41,8 @@ describe("Install PtahX pop-up and floating affordance", () => {
   it("opens after a short delay and leaves a visible floating button after dismissal", () => {
     render(<InstallAppNudge />);
     signalNativeInstall();
-    expect(screen.getByRole("button", { name: "Install PtahX app" })).toBeInTheDocument();
+    // First encounter: show the modal first, then leave the floating icon.
+    expect(screen.queryByRole("button", { name: "Install PtahX app" })).not.toBeInTheDocument();
     act(() => vi.advanceTimersByTime(INSTALL_INITIAL_DELAY_MS - 1));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     act(() => vi.advanceTimersByTime(1));
