@@ -20,7 +20,9 @@ export function shouldAutoSuggestInstall(input: {
   now: number;
 }) {
   if (input.isInstalled || !input.isOnline || !input.isEligible || !input.isHomeScreen || !input.isVisible) return false;
-  if (!input.lastShownAt || input.lastShownAt > input.now) return true;
+  if (!input.lastShownAt) return true;
+  // A clock shifted backward must not spam people with another pop-up.
+  if (input.lastShownAt > input.now) return false;
   return input.now - input.lastShownAt >= INSTALL_REMINDER_MS;
 }
 
