@@ -15,6 +15,9 @@ import { getPrisma } from "@/lib/db/prisma";
 import { reportReasonValues } from "@/lib/options";
 import { writeAuditLog } from "@/lib/logging/audit";
 import { lockUserPair } from "@/lib/network/pair-lock";
+import { socialCommentWhere, socialPostWhere } from "@/lib/data/social-posts";
+import { parseSocialContentReportTarget } from "@/lib/social/report-target";
+import { socialPostPath } from "@/lib/social/contracts";
 
 const reportTargetValues = [
   "MESSAGE",
@@ -41,6 +44,7 @@ type ReportContext = {
   contextConversationId?: string | null;
   contextMessageId?: string | null;
   reportedUserId?: string | null;
+  contentPath?: string;
 };
 
 export async function submitUserReportAction(formData: FormData) {
@@ -107,9 +111,10 @@ export async function submitUserReportAction(formData: FormData) {
         reporterId: user.id,
         reportedUserId: access.reportedUserId ?? null,
         source: sourceForTarget(parsed.data.targetType),
-        summary:
-          parsed.data.details ||
-          `User submitted a ${parsed.data.category.replaceAll("_", " ")} report.`,
+        summary: access.contentPath
+          ? `${parsed.data.details || `User submitted a ${parsed.data.category.replaceAll("_", " ")} report.`}\nReported content: ${access.contentPath}`
+          : parsed.data.details ||
+            `User submitted a ${parsed.data.category.replaceAll("_", " ")} report.`,
         targetId: parsed.data.targetId,
         targetType: parsed.data.targetType,
         title: `${parsed.data.targetType.replaceAll("_", " ")} report`,
@@ -252,6 +257,33 @@ async function getReportAccessContext(
             )?.userId ?? null,
         }
       : null;
+  }
+
+  if (report.targetType === "OTHER_CONTENT") {
+    const target = parseSocialContentReportTarget(report.targetId);
+    if (!target) return null;
+
+    if (target.kind === "POST") {
+      const post = await prisma.post.findFirst({
+        select: { authorId: true },
+        where: { ...socialPostWhere(reporterId), id: target.id },
+      });
+      if (!post || post.authorId === reporterId) return null;
+      return {
+        contentPath: socialPostPath(target.id),
+        reportedUserId: post.authorId,
+      };
+    }
+
+    const comment = await prisma.postComment.findFirst({
+      select: { authorId: true, postId: true },
+      where: { ...socialCommentWhere(reporterId), id: target.id },
+    });
+    if (!comment || comment.authorId === reporterId) return null;
+    return {
+      contentPath: `${socialPostPath(comment.postId)}#comment-${target.id}`,
+      reportedUserId: comment.authorId,
+    };
   }
 
   if (report.targetType === "USER") {
