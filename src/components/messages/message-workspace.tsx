@@ -2832,6 +2832,21 @@ export function MessageWorkspace({
             setDealRoomOpen(false);
             if (activeConversation.dealOffer) setDealOfferOpen(true);
           }}
+          onLinkedListing={(listing) => {
+            const conversationId = activeConversation.id;
+            setSyncedConversations((current) => current.map((conversation) =>
+              conversation.id === conversationId
+                ? {
+                    ...conversation,
+                    context: listing.title,
+                    opportunityTitle: listing.title,
+                    dealOffer: { currency: listing.currency, opportunityTitle: listing.title },
+                  }
+                : conversation,
+            ));
+            setDealRoomOpen(false);
+            setDealOfferOpen(true);
+          }}
           onRequestListing={() => {
             const conversationId = activeConversation.id;
             const requestText = "I'd like to make a Deal with you on PtahX. Please share your approved listing so we can submit and lock the terms securely.";
