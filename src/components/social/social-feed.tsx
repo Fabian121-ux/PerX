@@ -10,7 +10,7 @@ export async function SocialFeed({ viewerId }: { viewerId?: string }) {
           Community posts are temporarily unavailable.
         </p>
       ) : feed.items.length ? (
-        <SocialFeedStream initialItems={feed.items} initialNextCursor={feed.nextCursor} />
+        <SocialFeedStream initialItems={feed.items} initialNextCursor={feed.nextCursor} viewerId={viewerId} />
       ) : (
         <p className="rounded-xl border border-[color:var(--px-border)] p-5 text-sm text-[color:var(--px-text-muted)]">
           No community updates yet. You can be the first to share one.

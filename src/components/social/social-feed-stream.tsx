@@ -11,13 +11,16 @@ export function SocialFeedStream({
   initialItems,
   initialNextCursor,
   moreHref = "/posts",
+  viewerId,
 }: {
   initialItems: SocialPostView[];
   initialNextCursor: string | null;
   moreHref?: string;
+  viewerId?: string;
 }) {
   const [items, setItems] = useState(initialItems);
   const [cursor, setCursor] = useState(initialNextCursor);
+  const [blockedAuthors, setBlockedAuthors] = useState<ReadonlySet<string>>(() => new Set());
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "end">(
     initialNextCursor ? "idle" : "end",
   );
@@ -72,7 +75,16 @@ export function SocialFeedStream({
 
   return (
     <>
-      {items.map((post) => <SocialPostCard key={post.id} post={post} />)}
+      {items.filter((post) => !blockedAuthors.has(post.author.id)).map((post) => (
+        <SocialPostCard
+          key={post.id}
+          post={post}
+          viewerId={viewerId}
+          onBlocked={(authorId) =>
+            setBlockedAuthors((current) => new Set([...current, authorId]))
+          }
+        />
+      ))}
       <div aria-hidden className="h-1" ref={sentinel} />
       {status === "loading" ? (
         <p aria-live="polite" className="rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-5 text-center text-sm font-semibold text-[color:var(--px-text-muted)]">Loading more updates…</p>

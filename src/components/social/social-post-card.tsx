@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { ShareButton } from "@/components/feed/share-button";
+import { SocialAuthorActions } from "@/components/social/social-author-actions";
 import { MessageCircle } from "lucide-react";
 import { setPostReactionAction } from "@/features/social/actions";
 import {
@@ -13,8 +14,18 @@ import {
   socialSignInPath,
   type SocialPostView,
 } from "@/lib/social/contracts";
-export function SocialPostCard({ post }: { post: SocialPostView }) {
+export function SocialPostCard({
+  post,
+  viewerId,
+  onBlocked,
+}: {
+  post: SocialPostView;
+  viewerId?: string;
+  onBlocked?: (authorId: string) => void;
+}) {
+  const [hidden, setHidden] = useState(false);
   const authenticated = "viewerReaction" in post;
+  if (hidden) return null;
   const path = socialPostPath(post.id);
   return (
     <article
@@ -40,6 +51,17 @@ export function SocialPostCard({ post }: { post: SocialPostView }) {
             })}
           </time>
         </div>
+        {authenticated && viewerId && viewerId !== post.author.id ? (
+          <SocialAuthorActions
+            authorId={post.author.id}
+            authorName={post.author.name}
+            username={post.author.username}
+            onBlocked={(authorId) => {
+              setHidden(true);
+              onBlocked?.(authorId);
+            }}
+          />
+        ) : null}
       </header>
       <Link href={path} prefetch={false} aria-label="Open post" className="block rounded-xl py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]">
         <p className="whitespace-pre-wrap break-words text-sm leading-6 text-[color:var(--px-text)] [overflow-wrap:anywhere]">
