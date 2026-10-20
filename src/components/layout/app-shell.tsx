@@ -61,7 +61,13 @@ export function AppShell({
         ? new BroadcastChannel("ptahx-unread-counts")
         : null;
 
+    let pollInFlight = false;
     const refresh = async () => {
+      // The server already rendered the initial badges. Poll only when
+      // someone can see them and there is a working network; hidden tabs
+      // should not issue redundant database aggregates on Supabase Free.
+      if (stopped || pollInFlight || document.visibilityState !== "visible" || !navigator.onLine) return;
+      pollInFlight = true;
       const sequence = ++refreshSequence;
       try {
         const response = await fetch("/api/unread-counts", {
@@ -74,6 +80,8 @@ export function AppShell({
         channel?.postMessage(nextCounts);
       } catch {
         // Existing server-rendered counts remain visible until the next successful refresh.
+      } finally {
+        pollInFlight = false;
       }
     };
 
@@ -89,16 +97,30 @@ export function AppShell({
         }
       },
     );
-    window.addEventListener("focus", refresh);
-    window.addEventListener("ptahx-unread-refresh", refresh);
-    const interval = window.setInterval(refresh, 15_000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    const onRefresh = () => { void refresh(); };
+    const pollIfAllowed = () => {
+      const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+      if (!connection?.saveData) void refresh();
+    };
+    window.addEventListener("focus", onRefresh);
+    window.addEventListener("online", onRefresh);
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("ptahx-unread-refresh", onRefresh);
+    // Most badges update immediately through SSE, BroadcastChannel or local
+    // actions. Once-a-minute polling is a fallback, not a second realtime feed.
+    const interval = window.setInterval(pollIfAllowed, 60_000);
 
     return () => {
       stopped = true;
       refreshSequence += 1;
       channel?.close();
-      window.removeEventListener("focus", refresh);
-      window.removeEventListener("ptahx-unread-refresh", refresh);
+      window.removeEventListener("focus", onRefresh);
+      window.removeEventListener("online", onRefresh);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("ptahx-unread-refresh", onRefresh);
       window.clearInterval(interval);
     };
   }, [serverUnreadKey]);

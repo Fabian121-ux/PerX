@@ -15,9 +15,11 @@ export async function GET() {
         unreadConversations: 0,
         unreadNews: 0,
       },
-      { status: 401 },
+      { status: 401, headers: { "Cache-Control": "private, no-store" } },
     );
   }
 
-  return NextResponse.json(await getUnreadCounts(user.id));
+  return NextResponse.json(await getUnreadCounts(user.id), {
+    headers: { "Cache-Control": "private, no-store" },
+  });
 }

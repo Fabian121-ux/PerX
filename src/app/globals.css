@@ -61,6 +61,11 @@
   --animate-float: float 6s ease-in-out infinite;
 }
 
+@keyframes ptahx-route-progress {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(320%); }
+}
+
 @keyframes blob {
   0% {
     transform: translate(0px, 0px) scale(1);
