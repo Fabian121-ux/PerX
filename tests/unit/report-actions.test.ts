@@ -21,6 +21,8 @@ const tx = vi.hoisted(() => ({
 const prisma = vi.hoisted(() => ({
   $transaction: vi.fn((callback: (client: typeof tx) => unknown) => callback(tx)),
   message: { findFirst: vi.fn() },
+  post: { findFirst: vi.fn() },
+  postComment: { findFirst: vi.fn() },
   user: { findFirst: vi.fn() },
   userReport: { findFirst: vi.fn() },
 }));
@@ -42,6 +44,8 @@ describe("user report actions", () => {
     mocks.requireUser.mockResolvedValue({ id: "user-1" });
     mocks.assertAccountAccess.mockResolvedValue(null);
     prisma.user.findFirst.mockResolvedValue({ id: "user-2" });
+    prisma.post.findFirst.mockResolvedValue(null);
+    prisma.postComment.findFirst.mockResolvedValue(null);
     prisma.userReport.findFirst.mockResolvedValue(null);
     tx.userReport.create.mockResolvedValue({ id: "report-1" });
     tx.moderationCase.create.mockResolvedValue({ id: "case-1" });
@@ -122,4 +126,98 @@ describe("user report actions", () => {
       tx.blockedUser.upsert.mock.invocationCallOrder[0]!,
     );
   });
+  it("creates a genuine post-specific report and preserves the moderation permalink", async () => {
+    prisma.post.findFirst.mockResolvedValueOnce({ authorId: "user-2" });
+    const form = new FormData();
+    form.set("category", "HARASSMENT");
+    form.set("targetType", "OTHER_CONTENT");
+    form.set("targetId", "POST:ck8e6ot4h0000et9u5qg9q6e8");
+    form.set("blockAfterReport", "on");
+
+    await expect(submitUserReportAction(form)).rejects.toThrow(
+      "REDIRECT:/app/reports?submitted=1",
+    );
+
+    expect(prisma.post.findFirst).toHaveBeenCalledWith({
+      select: { authorId: true },
+      where: expect.objectContaining({
+        id: "ck8e6ot4h0000et9u5qg9q6e8",
+        status: "PUBLISHED",
+        moderationStatus: "APPROVED",
+        deletedAt: null,
+      }),
+    });
+    expect(tx.moderationCase.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        targetId: "POST:ck8e6ot4h0000et9u5qg9q6e8",
+        targetType: "OTHER_CONTENT",
+        reportedUserId: "user-2",
+        summary: expect.stringContaining(
+          "/posts/ck8e6ot4h0000et9u5qg9q6e8",
+        ),
+      }),
+      select: { id: true },
+    });
+    expect(tx.blockedUser.upsert).toHaveBeenCalled();
+  });
+
+  it("reports a specific comment and links to that comment for review", async () => {
+    prisma.postComment.findFirst.mockResolvedValueOnce({
+      authorId: "user-2",
+      postId: "ck8e6ot4h0000et9u5qg9q6e8",
+    });
+    const form = new FormData();
+    form.set("category", "HARASSMENT");
+    form.set("targetType", "OTHER_CONTENT");
+    form.set("targetId", "COMMENT:ck8e6ot4h0001et9u5qg9q6e9");
+    await expect(submitUserReportAction(form)).rejects.toThrow(
+      "REDIRECT:/app/reports?submitted=1",
+    );
+    expect(prisma.postComment.findFirst).toHaveBeenCalledWith({
+      select: { authorId: true, postId: true },
+      where: expect.objectContaining({
+        id: "ck8e6ot4h0001et9u5qg9q6e9",
+        deletedAt: null,
+        moderationStatus: "APPROVED",
+      }),
+    });
+    expect(tx.moderationCase.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        reportedUserId: "user-2",
+        summary: expect.stringContaining(
+          "/posts/ck8e6ot4h0000et9u5qg9q6e8#comment-ck8e6ot4h0001et9u5qg9q6e9",
+        ),
+      }),
+      select: { id: true },
+    });
+  });
+
+  it("refuses fabricated content targets and self-reporting without opening a case", async () => {
+    const invalid = new FormData();
+    invalid.set("category", "HARASSMENT");
+    invalid.set("targetType", "OTHER_CONTENT");
+    invalid.set("targetId", "MESSAGE:ck8e6ot4h0000et9u5qg9q6e8");
+    await expect(submitUserReportAction(invalid)).rejects.toThrow(
+      "REDIRECT:/app/reports/new?error=unavailable",
+    );
+    prisma.post.findFirst.mockResolvedValueOnce({ authorId: "user-1" });
+    invalid.set("targetId", "POST:ck8e6ot4h0000et9u5qg9q6e8");
+    await expect(submitUserReportAction(invalid)).rejects.toThrow(
+      "REDIRECT:/app/reports/new?error=unavailable",
+    );
+    expect(tx.userReport.create).not.toHaveBeenCalled();
+    expect(tx.moderationCase.create).not.toHaveBeenCalled();
+  });
+
+  it("refuses unavailable, blocked or unapproved posts instead of trusting IDs", async () => {
+    const form = new FormData();
+    form.set("category", "HARASSMENT");
+    form.set("targetType", "OTHER_CONTENT");
+    form.set("targetId", "POST:ck8e6ot4h0000et9u5qg9q6e8");
+    await expect(submitUserReportAction(form)).rejects.toThrow(
+      "REDIRECT:/app/reports/new?error=unavailable",
+    );
+    expect(tx.moderationCase.create).not.toHaveBeenCalled();
+  });
+
 });

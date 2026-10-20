@@ -8,6 +8,7 @@ import { useRef, useState } from "react";
 
 import { blockUserAction } from "@/features/network/actions";
 import { useConfirm, useToast } from "@/components/ui/feedback-provider";
+import { socialContentReportTarget, type SocialReportContentKind } from "@/lib/social/report-target";
 
 /**
  * Works with the existing moderated USER reports and personal block records.
@@ -19,11 +20,13 @@ export function SocialAuthorActions({
   authorName,
   username,
   onBlocked,
+  reportContent,
 }: {
   authorId: string;
   authorName: string;
   username: string;
   onBlocked?: (authorId: string) => void;
+  reportContent?: { kind: SocialReportContentKind; id: string };
 }) {
   const [isBlocking, setIsBlocking] = useState(false);
   const pendingRef = useRef(false);
@@ -76,13 +79,24 @@ export function SocialAuthorActions({
           sideOffset={6}
         >
           <DropdownMenu.Label className="px-3 py-2 text-xs font-black text-[color:var(--px-text-muted)]">
-            Manage your feed
+            Member and content options
           </DropdownMenu.Label>
           <DropdownMenu.Item asChild>
             <Link href={`/u/${encodeURIComponent(username)}`} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text)] outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
               <UserRound aria-hidden size={18} /> View profile
             </Link>
           </DropdownMenu.Item>
+          {reportContent ? (
+            <DropdownMenu.Item asChild>
+              <Link
+                href={`/app/reports/new?targetType=OTHER_CONTENT&targetId=${encodeURIComponent(socialContentReportTarget(reportContent.kind, reportContent.id))}`}
+                className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text)] outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+              >
+                <Flag aria-hidden size={18} />
+                Report {reportContent.kind === "POST" ? "post" : "comment"}
+              </Link>
+            </DropdownMenu.Item>
+          ) : null}
           <DropdownMenu.Item asChild>
             <Link href={`/app/reports/new?targetType=USER&targetId=${encodeURIComponent(authorId)}`} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text)] outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
               <Flag aria-hidden size={18} /> Report member
