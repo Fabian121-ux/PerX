@@ -64,7 +64,8 @@ describe("Install PtahX pop-up and floating affordance", () => {
   it("uses the browser install prompt only when a real native install event exists", async () => {
     render(<InstallAppNudge />);
     const prompt = signalNativeInstall();
-    fireEvent.click(screen.getByRole("button", { name: "Install PtahX app" }));
+    act(() => vi.advanceTimersByTime(INSTALL_INITIAL_DELAY_MS));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Install PtahX" }));
       await Promise.resolve();
