@@ -70,7 +70,7 @@ function ComposerAction({
 }) {
   return (
     <Link
-      className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--px-radius-sm)] px-3 text-sm font-bold text-[color:var(--px-text)] transition hover:bg-[color:var(--px-primary-soft)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+      className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--px-radius-sm)] px-3 text-sm font-bold text-[color:var(--px-text)] transition hover:bg-[color:var(--px-primary-soft)] hover:text-[color:var(--px-primary-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
       href={href}
     >
       {icon}

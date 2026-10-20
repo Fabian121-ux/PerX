@@ -12,6 +12,7 @@
   --px-header: #f8fafc;
   --px-primary: #2563eb;
   --px-primary-strong: #1d4ed8;
+  --px-primary-ink: #1d4ed8;
   --px-primary-soft: rgba(37, 99, 235, 0.1);
   --px-secondary: #5b46f2;
   --px-secondary-strong: #4632d8;
@@ -96,6 +97,8 @@
   --px-border-strong: #3a4d6d;
   --px-primary: #6d5df6;
   --px-primary-strong: #8b7cf8;
+  /* Text-only purple is brighter than filled button purple for dark WCAG contrast. */
+  --px-primary-ink: #b8b0ff;
   --px-primary-soft: rgba(109, 93, 246, 0.18);
   --px-secondary: #3b82f6;
   --px-secondary-strong: #60a5fa;

@@ -32,6 +32,7 @@ describe("site-wide readable text and button colour pairs", () => {
       const surface = themeToken("px-surface", mode);
       expect(ratio(themeToken("px-text", mode), surface)).toBeGreaterThanOrEqual(7);
       expect(ratio(themeToken("px-text-muted", mode), surface)).toBeGreaterThanOrEqual(4.5);
+      expect(ratio(themeToken("px-primary-ink", mode), surface)).toBeGreaterThanOrEqual(4.5);
     }
   });
 

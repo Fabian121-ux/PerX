@@ -189,7 +189,7 @@ function ProfileCompletionCard({ value }: { value: number }) {
         />
       </div>
       <Link
-        className="mt-4 inline-flex min-h-10 items-center text-sm font-bold text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"
+        className="mt-4 inline-flex min-h-10 items-center text-sm font-bold text-[color:var(--px-primary-ink)] hover:text-[color:var(--px-primary-strong)]"
         href="/app/profile/edit"
       >
         Update profile

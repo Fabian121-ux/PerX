@@ -76,7 +76,7 @@ export function AuthenticatedMobileNav({
                   <span className={`grid h-14 w-14 place-items-center rounded-full border-4 border-[color:var(--px-surface)] bg-[color:var(--px-primary)] text-white shadow-[0_10px_24px_rgba(37,99,235,0.3)] transition group-active:scale-95`}>
                     <Icon aria-hidden size={24} strokeWidth={2.4} />
                   </span>
-                  <span className="text-[10px] font-black leading-3 text-[color:var(--px-primary)]">{label}</span>
+                  <span className="text-[10px] font-black leading-3 text-[color:var(--px-primary-ink)]">{label}</span>
                 </button>
               </CreateActionSheet>
             );
@@ -94,7 +94,7 @@ export function AuthenticatedMobileNav({
               }
               className={`relative flex min-h-11 min-w-11 flex-col items-center justify-center gap-1 rounded-xl px-1 pb-1 pt-2 text-center transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${
                 active
-                  ? "text-[color:var(--px-primary)]"
+                  ? "text-[color:var(--px-primary-ink)]"
                   : "text-[color:var(--px-text-muted)] hover:text-[color:var(--px-text)]"
               }`}
               href={feature.href}

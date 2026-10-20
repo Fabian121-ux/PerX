@@ -2194,7 +2194,7 @@ export function MessageWorkspace({
     return (
       <section className="grid min-h-[58dvh] place-items-center rounded-[24px] bg-[color:var(--px-surface)] p-8 text-center shadow-sm ring-1 ring-[color:var(--px-border)]">
         <div className="max-w-md">
-          <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)]">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary-ink)]">
             <ShieldCheck size={24} />
           </div>
           <h1 className="mt-5 text-2xl font-black text-[color:var(--px-text)]">
@@ -2344,7 +2344,7 @@ export function MessageWorkspace({
                     </span>
                   </div>
                   {conversation.opportunityTitle || conversation.context ? (
-                    <p className="mt-0.5 truncate text-[11px] font-semibold text-[color:var(--px-primary)]">
+                    <p className="mt-0.5 truncate text-[11px] font-semibold text-[color:var(--px-primary-ink)]">
                       {conversation.opportunityTitle ?? conversation.context}
                     </p>
                   ) : null}
@@ -2398,7 +2398,7 @@ export function MessageWorkspace({
           ) : null}
           {olderConversationCursor ? (
             <button
-              className="mt-3 w-full rounded-xl border border-[color:var(--px-border)] px-3 py-2 text-xs font-black text-[color:var(--px-primary)] transition hover:bg-[color:var(--px-primary-soft)] disabled:cursor-wait disabled:opacity-60"
+              className="mt-3 w-full rounded-xl border border-[color:var(--px-border)] px-3 py-2 text-xs font-black text-[color:var(--px-primary-ink)] transition hover:bg-[color:var(--px-primary-soft)] disabled:cursor-wait disabled:opacity-60"
               disabled={isOlderConversationsPending}
               onClick={loadOlderConversations}
               type="button"
@@ -2483,7 +2483,7 @@ export function MessageWorkspace({
                 >
                   <button
                     aria-label="Show app navigation"
-                    className="grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:hidden"
+                    className="grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-primary-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:hidden"
                     type="button"
                   >
                     <Menu aria-hidden size={19} />
@@ -2520,7 +2520,7 @@ export function MessageWorkspace({
               <div className="mx-auto flex max-w-3xl flex-col gap-3">
                 {activeConversation.olderMessagesCursor ? (
                   <button
-                    className="self-center rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-2 text-xs font-black text-[color:var(--px-primary)] shadow-sm transition hover:bg-[color:var(--px-primary-soft)] disabled:cursor-wait disabled:opacity-60"
+                    className="self-center rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-2 text-xs font-black text-[color:var(--px-primary-ink)] shadow-sm transition hover:bg-[color:var(--px-primary-soft)] disabled:cursor-wait disabled:opacity-60"
                     disabled={isOlderPending}
                     onClick={loadOlderMessages}
                     type="button"
@@ -2569,7 +2569,7 @@ export function MessageWorkspace({
                       activeConversation.initialUnreadMessageId ? (
                       <div
                         aria-label="New messages"
-                        className="flex items-center gap-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-[color:var(--px-primary)]"
+                        className="flex items-center gap-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-[color:var(--px-primary-ink)]"
                         role="separator"
                       >
                         <span className="h-px flex-1 bg-[color:var(--px-primary)] opacity-40" />
@@ -2677,7 +2677,7 @@ export function MessageWorkspace({
               {replyTarget ? (
                 <div className="flex items-start justify-between gap-3 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-primary-soft)] p-3">
                   <div className="min-w-0 border-l-4 border-[color:var(--px-primary)] pl-3">
-                    <p className="text-xs font-black text-[color:var(--px-primary)]">
+                    <p className="text-xs font-black text-[color:var(--px-primary-ink)]">
                       Replying to {replyTarget.senderName}
                     </p>
                     <p className="mt-1 truncate text-sm text-[color:var(--px-text-muted)]">
@@ -3037,7 +3037,7 @@ function MessageBubble({
       >
         <div className="mb-1 flex items-center justify-between gap-3">
           <p
-            className={`truncate text-[10px] font-black uppercase tracking-wide ${mine ? "text-[#28624c] dark:text-emerald-200" : "text-[color:var(--px-primary)]"}`}
+            className={`truncate text-[10px] font-black uppercase tracking-wide ${mine ? "text-[#28624c] dark:text-emerald-200" : "text-[color:var(--px-primary-ink)]"}`}
           >
             {message.senderName}
           </p>
@@ -3113,7 +3113,7 @@ function MessageBubble({
             type="button"
           >
             <p
-              className={`text-xs font-black ${mine ? "text-[#205741] dark:text-emerald-100" : "text-[color:var(--px-primary)]"}`}
+              className={`text-xs font-black ${mine ? "text-[#205741] dark:text-emerald-100" : "text-[color:var(--px-primary-ink)]"}`}
             >
               {message.replyTo.senderName}
             </p>
@@ -3295,7 +3295,7 @@ function ConversationEventCard({
                 ? "bg-red-500/10 text-red-700 dark:text-red-200"
                 : accepted || dealEvent
                   ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-200"
-                  : "bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)]"
+                  : "bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary-ink)]"
           }`}
         >
           <div className="flex min-w-0 items-center gap-2.5">
@@ -3354,14 +3354,14 @@ function ConversationEventCard({
             </p>
             {event.dealHref ? (
               <Link
-                className="text-xs font-black text-[color:var(--px-primary)] hover:underline"
+                className="text-xs font-black text-[color:var(--px-primary-ink)] hover:underline"
                 href={event.dealHref}
               >
                 Open Deal
               </Link>
             ) : event.proposalHref ? (
               <Link
-                className="text-xs font-black text-[color:var(--px-primary)] hover:underline"
+                className="text-xs font-black text-[color:var(--px-primary-ink)] hover:underline"
                 href={event.proposalHref}
               >
                 Review proposal
@@ -3640,7 +3640,7 @@ function ConversationDetailsContent({
         <div className="flex items-center gap-1">
           {profileHref ? (
             <Link
-              className="inline-flex min-h-10 items-center rounded-lg px-3 text-xs font-black text-[color:var(--px-primary)] transition hover:bg-[color:var(--px-primary-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              className="inline-flex min-h-10 items-center rounded-lg px-3 text-xs font-black text-[color:var(--px-primary-ink)] transition hover:bg-[color:var(--px-primary-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
               href={profileHref}
             >
               Full profile

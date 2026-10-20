@@ -111,7 +111,7 @@ export function DashboardTopbar({
         </div>
 
         {previewMode ? (
-          <span className="hidden rounded-full bg-[color:var(--px-primary-soft)] px-2.5 py-0.5 text-xs font-bold tracking-wide text-[color:var(--px-primary)] ring-1 ring-[color:var(--px-primary)]/30 lg:inline-flex">
+          <span className="hidden rounded-full bg-[color:var(--px-primary-soft)] px-2.5 py-0.5 text-xs font-bold tracking-wide text-[color:var(--px-primary-ink)] ring-1 ring-[color:var(--px-primary)]/30 lg:inline-flex">
             Preview Mode
           </span>
         ) : null}
@@ -186,7 +186,7 @@ export function DashboardTopbar({
 
           <Link
             aria-label="Trust dashboard"
-            className="grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            className="grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={trustHref}
             title="Trust dashboard"
           >
@@ -197,7 +197,7 @@ export function DashboardTopbar({
             aria-label={
               hasUnreadNews ? "News, unread" : "News"
             }
-            className="relative grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            className="relative grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={newsHref}
             title="News"
           >
@@ -211,7 +211,7 @@ export function DashboardTopbar({
                 ? `${unreadActivity} unread activity updates`
                 : "Activity"
             }
-            className="relative grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            className="relative grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={activityHref}
             title="Activity"
           >
@@ -228,7 +228,7 @@ export function DashboardTopbar({
                 ? `${unreadConversations} unread conversations`
                 : "Messages"
             }
-            className="relative grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            className="relative grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={messagesHref}
             title="Messages"
           >
