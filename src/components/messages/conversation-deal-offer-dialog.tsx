@@ -41,7 +41,6 @@ export function ConversationDealOfferDialog({
 }) {
   const [error, setError] = useState("");
   const [draft, setDraft] = useState<ChatDealDraft>({ ...DEFAULT_CHAT_DEAL_DRAFT });
-  const [draftRestored, setDraftRestored] = useState(false);
   const [isPending, startTransition] = useTransition();
   const requestIdRef = useRef("");
   // Synchronous lock closes the gap before React paints the pending state.
@@ -53,7 +52,6 @@ export function ConversationDealOfferDialog({
     // start with identical default markup.
     const timer = window.setTimeout(() => {
       setDraft(readChatDealDraft(currentUserId, conversationId));
-      setDraftRestored(true);
     }, 0);
     return () => window.clearTimeout(timer);
   }, [currentUserId, conversationId]);
@@ -219,7 +217,7 @@ export function ConversationDealOfferDialog({
             </Field>
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[color:var(--px-text-muted)]">
               <p role="status">
-                {draftRestored && hasChatDealDraft(draft)
+                {hasChatDealDraft(draft)
                   ? "Draft saved in this browser tab · not submitted"
                   : "Terms are sent only when you submit the proposal."}
               </p>
