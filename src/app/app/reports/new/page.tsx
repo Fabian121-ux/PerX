@@ -7,6 +7,7 @@ import { Field, Select, Textarea } from "@/components/ui/form";
 import { submitUserReportAction } from "@/features/reports/actions";
 import { requireUser } from "@/lib/auth/session";
 import { reportReasonOptions } from "@/lib/options";
+import { parseSocialContentReportTarget } from "@/lib/social/report-target";
 
 const targetLabels: Record<string, string> = {
   CONVERSATION: "conversation",
@@ -36,6 +37,12 @@ export default async function NewReportPage({
   const params = await searchParams;
   const targetType = params.targetType ?? "";
   const targetId = params.targetId ?? "";
+  const socialContent = targetType === "OTHER_CONTENT"
+    ? parseSocialContentReportTarget(targetId)
+    : null;
+  const targetLabel = socialContent
+    ? socialContent.kind === "POST" ? "post" : "comment"
+    : targetLabels[targetType];
 
   if (!targetType || !targetId || !targetLabels[targetType]) {
     return (
@@ -55,7 +62,7 @@ export default async function NewReportPage({
   return (
     <AppSection
       description="Tell PtahX what needs review. Internal moderation notes stay private."
-      title={`Report ${targetLabels[targetType]}`}
+      title={`Report ${targetLabel}`}
     >
       <Card className="max-w-2xl">
         {params.error ? (
@@ -111,7 +118,7 @@ export default async function NewReportPage({
               placeholder="Add a short explanation for the moderation team."
             />
           </Field>
-          {["CONVERSATION", "MESSAGE", "USER"].includes(targetType) ? (
+          {["CONVERSATION", "MESSAGE", "USER", "OTHER_CONTENT"].includes(targetType) ? (
             <label className="flex items-start gap-3 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] p-3 text-sm text-[color:var(--px-text)]">
               <input
                 className="mt-1 h-4 w-4 rounded border-[color:var(--px-border)]"
