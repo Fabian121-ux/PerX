@@ -69,9 +69,9 @@ export function DraggableInstallButton({ onOpen }: { onOpen: () => void }) {
   useEffect(() => {
     const timer = window.setTimeout(() => move(firstPosition(), false), 0);
     const onResize = () => {
-      // Browser chrome, orientation and soft-keyboard resizes only affect the
-      // visible position, not the user's persisted preference.
-      if (posRef.current) move(posRef.current, false);
+      // Re-clamp the *saved preference*, not the already-clamped position.
+      // A temporary soft keyboard cannot permanently shove the shortcut up.
+      if (posRef.current) move(firstPosition(), false);
     };
     window.addEventListener("resize", onResize);
     return () => {
