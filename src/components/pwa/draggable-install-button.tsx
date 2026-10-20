@@ -69,7 +69,9 @@ export function DraggableInstallButton({ onOpen }: { onOpen: () => void }) {
   useEffect(() => {
     const timer = window.setTimeout(() => move(firstPosition(), false), 0);
     const onResize = () => {
-      if (posRef.current) move(posRef.current, true);
+      // Browser chrome, orientation and soft-keyboard resizes only affect the
+      // visible position, not the user's persisted preference.
+      if (posRef.current) move(posRef.current, false);
     };
     window.addEventListener("resize", onResize);
     return () => {
