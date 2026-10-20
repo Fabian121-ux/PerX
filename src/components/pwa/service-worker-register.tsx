@@ -1,12 +1,8 @@
 "use client";
 
-import { Download, RefreshCcw, WifiOff, X } from "lucide-react";
+import { RefreshCcw, WifiOff, X } from "lucide-react";
+import { InstallAppNudge } from "@/components/pwa/install-app-nudge";
 import { useEffect, useRef, useState } from "react";
-
-type InstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-};
 
 /**
  * Lightweight PWA lifecycle feedback. Only public assets are cached by sw.js.
@@ -16,8 +12,6 @@ type InstallPromptEvent = Event & {
 export function ServiceWorkerRegister() {
   const [offline, setOffline] = useState(false);
   const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
-  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
-  const [installDismissed, setInstallDismissed] = useState(false);
   const [updateDismissed, setUpdateDismissed] = useState(false);
   const approvedReload = useRef(false);
 
@@ -27,23 +21,9 @@ export function ServiceWorkerRegister() {
     window.addEventListener("offline", updateOnlineState);
     window.addEventListener("online", updateOnlineState);
 
-    const onInstall = (event: Event) => {
-      const standalone =
-        window.matchMedia?.("(display-mode: standalone)").matches ||
-        (navigator as Navigator & { standalone?: boolean }).standalone;
-      if (standalone) return;
-      event.preventDefault();
-      setInstallPrompt(event as InstallPromptEvent);
-    };
-    const onInstalled = () => setInstallPrompt(null);
-    window.addEventListener("beforeinstallprompt", onInstall);
-    window.addEventListener("appinstalled", onInstalled);
-
     return () => {
       window.removeEventListener("offline", updateOnlineState);
       window.removeEventListener("online", updateOnlineState);
-      window.removeEventListener("beforeinstallprompt", onInstall);
-      window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
 
@@ -103,23 +83,12 @@ export function ServiceWorkerRegister() {
     };
   }, []);
 
-  async function install() {
-    const event = installPrompt;
-    if (!event) return;
-    setInstallPrompt(null);
-    try {
-      await event.prompt();
-      await event.userChoice;
-    } catch {
-      // Unsupported/cancelled prompt; the website continues to work.
-    }
-  }
-
-  const showInstall = Boolean(installPrompt && !installDismissed && !waiting && !offline);
   const showUpdate = Boolean(waiting && !updateDismissed && !offline);
-  if (!offline && !showUpdate && !showInstall) return null;
+  if (!offline && !showUpdate) return <InstallAppNudge />;
 
   return (
+    <>
+      <InstallAppNudge />
     <div
       aria-label="App connection and install status"
       className="pointer-events-none fixed inset-x-3 top-[5rem] z-[85] mx-auto max-w-sm space-y-2 sm:inset-x-auto sm:right-5"
@@ -150,18 +119,8 @@ export function ServiceWorkerRegister() {
           <button aria-label="Dismiss update notice" className="grid h-11 w-11 place-items-center" onClick={() => setUpdateDismissed(true)} type="button"><X aria-hidden size={17} /></button>
         </div>
       ) : null}
-      {showInstall ? (
-        <div className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface-elevated)] p-3 text-[color:var(--px-text)] shadow-xl" role="status">
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-black">Use PtahX like an app</p>
-            <p className="text-xs text-[color:var(--px-text-muted)]">Install for quick access. It&apos;s free.</p>
-          </div>
-          <button className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-[color:var(--px-primary)] px-3 text-xs font-bold text-white" type="button" onClick={() => void install()}>
-            <Download aria-hidden size={16} /> Install
-          </button>
-          <button aria-label="Dismiss install suggestion" className="grid h-11 w-11 place-items-center" type="button" onClick={() => setInstallDismissed(true)}><X aria-hidden size={17} /></button>
-        </div>
-      ) : null}
+
     </div>
+    </>
   );
 }
