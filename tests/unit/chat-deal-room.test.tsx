@@ -42,4 +42,21 @@ describe("conversation Deal room uses real versioned records", () => {
     expect(screen.getByText(/Payments and real escrow are unavailable/i)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Pay now|Fund escrow|Release money/i })).not.toBeInTheDocument();
   });
+  it("lets any normal chat open a Deal room and request a real eligible listing", () => {
+    const onRequestListing = vi.fn();
+    render(<ChatDealRoom
+      conversation={{ id: "chat-no-listing", participantName: "Ada", messages: [], events: [] }}
+      open
+      onCreateTerms={vi.fn()}
+      onRequestListing={onRequestListing}
+      onOpenChange={vi.fn()}
+    />);
+    expect(screen.getByRole("dialog", { name: "Deal room" })).toBeInTheDocument();
+    expect(screen.getByText(/To submit locked terms, the other person must have an approved, published listing/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Draft and submit locked terms/ })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Ask for a listing" }));
+    expect(onRequestListing).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("link", { name: "Browse listings" })).toHaveAttribute("href", "/app/discover");
+  });
+
 });
