@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   ClipboardCheck,
   Clock3,
-  Handshake,
   LockKeyhole,
   MessageSquareText,
   PackageCheck,
