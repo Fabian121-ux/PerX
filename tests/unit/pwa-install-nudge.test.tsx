@@ -42,14 +42,15 @@ describe("Install PtahX pop-up and floating affordance", () => {
     render(<InstallAppNudge />);
     signalNativeInstall();
     // First encounter: show the modal first, then leave the floating icon.
-    expect(screen.queryByRole("button", { name: "Install PtahX app" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Install PtahX app/ })).not.toBeInTheDocument();
     act(() => vi.advanceTimersByTime(INSTALL_INITIAL_DELAY_MS - 1));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     act(() => vi.advanceTimersByTime(1));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Maybe later" }));
+    act(() => vi.advanceTimersByTime(0));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Install PtahX app" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Install PtahX app/ })).toBeInTheDocument();
     expect(localStorage.getItem(INSTALL_STATE_KEY)).not.toBeNull();
   });
   it("does not repeat the auto-popup within seven days but floating install stays available", () => {
@@ -58,7 +59,8 @@ describe("Install PtahX pop-up and floating affordance", () => {
     signalNativeInstall();
     act(() => vi.advanceTimersByTime(INSTALL_INITIAL_DELAY_MS + 2000));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Install PtahX app" }));
+    act(() => vi.advanceTimersByTime(0));
+    fireEvent.click(screen.getByRole("button", { name: /Install PtahX app/ }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
   it("uses the browser install prompt only when a real native install event exists", async () => {
@@ -73,7 +75,7 @@ describe("Install PtahX pop-up and floating affordance", () => {
     });
     expect(prompt).toHaveBeenCalledTimes(1);
     act(() => window.dispatchEvent(new Event("appinstalled")));
-    expect(screen.queryByRole("button", { name: "Install PtahX app" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Install PtahX app/ })).not.toBeInTheDocument();
   });
   it("never shows an install surface inside an already-installed standalone app", () => {
     Object.defineProperty(window, "matchMedia", {
@@ -84,7 +86,7 @@ describe("Install PtahX pop-up and floating affordance", () => {
     });
     render(<InstallAppNudge />);
     act(() => vi.advanceTimersByTime(INSTALL_INITIAL_DELAY_MS + 500));
-    expect(screen.queryByRole("button", { name: "Install PtahX app" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Install PtahX app/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

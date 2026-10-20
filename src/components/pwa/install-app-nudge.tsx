@@ -2,6 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { Download, MonitorDown, Share2, Smartphone, X } from "lucide-react";
+import { DraggableInstallButton } from "@/components/pwa/draggable-install-button";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -158,15 +159,8 @@ export function InstallAppNudge() {
   const actionLabel = nativeInstall ? "Install PtahX" : "How to install";
   return (
     <>
-      {!popupOpen && hasSeenSuggestion ? (
-        <button
-          aria-label="Install PtahX app"
-          className="fixed bottom-[calc(var(--mobile-nav-height,4.5rem)+env(safe-area-inset-bottom)+0.9rem)] right-3 z-[70] inline-flex min-h-11 items-center gap-2 rounded-full border border-white/25 bg-[#164ec2] px-4 py-2 text-xs font-black text-white shadow-[0_10px_28px_rgba(8,25,61,0.32)] transition hover:bg-[#0b3b9c] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 lg:bottom-5"
-          type="button"
-          onClick={() => setPopupOpen(true)}
-        >
-          <Download aria-hidden size={18} /> Install app
-        </button>
+      {!popupOpen && hasSeenSuggestion && !pathname.startsWith("/app/messages") && !pathname.startsWith("/app/deals") && !pathname.startsWith("/app/escrow") ? (
+        <DraggableInstallButton onOpen={() => setPopupOpen(true)} />
       ) : null}
       <Dialog.Root
         open={popupOpen}

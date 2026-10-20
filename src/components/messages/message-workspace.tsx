@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ConversationDealOfferDialog } from "@/components/messages/conversation-deal-offer-dialog";
+import { ChatDealRoom } from "@/components/messages/chat-deal-room";
 import { FeatureDirectory } from "@/components/navigation/feature-directory";
 import { useConfirm, useToast } from "@/components/ui/feedback-provider";
 import {
@@ -250,6 +251,7 @@ export function MessageWorkspace({
   const [isEditPending, startEditTransition] = useTransition();
   const [openActionMenuMessageId, setOpenActionMenuMessageId] = useState("");
   const [dealOfferOpen, setDealOfferOpen] = useState(false);
+  const [dealRoomOpen, setDealRoomOpen] = useState(false);
   const draftStorageKey = `ptahx:messages:${currentUserId}:drafts`;
   const filterStorageKey = `ptahx:messages:${currentUserId}:filter`;
   const listScrollStorageKey = `ptahx:messages:${currentUserId}:list-scroll`;
@@ -1799,6 +1801,7 @@ export function MessageWorkspace({
     );
     setOpenActionMenuMessageId("");
     setDealOfferOpen(false);
+    setDealRoomOpen(false);
     pendingLatestPositionRef.current = conversationId;
     historyPositionedRef.current = false;
     historyAtBottomRef.current = false;
@@ -1853,12 +1856,13 @@ export function MessageWorkspace({
     // Sending marks the thread active, so a degraded session reconciles at the
     // responsive interval instead of the backed-off one.
     markInteraction();
-    if (
-      activeConversation.dealOffer &&
-      isDealComposerTrigger(draft) &&
-      !isComposingRef.current
-    ) {
-      setDealOfferOpen(true);
+    if (isDealComposerTrigger(draft) && !isComposingRef.current) {
+      if (activeConversation.dealOffer || activeConversation.dealHref || activeConversation.events?.some((entry) => entry.type.startsWith("PROPOSAL_"))) {
+        setDealRoomOpen(true);
+      } else {
+        toast({ title: "Deal creation is not available in this chat", tone: "info" });
+      }
+      // A command is never a normal sent message.
       return;
     }
 
@@ -2279,8 +2283,8 @@ export function MessageWorkspace({
                 aria-pressed={conversationFilter === filter}
                 className={`min-h-10 rounded-xl px-3 text-[11px] font-black capitalize transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${
                   conversationFilter === filter
-                    ? "bg-white text-[#061936] shadow-sm"
-                    : "border border-white/25 bg-white/12 text-white hover:border-white/55 hover:bg-white/25 hover:text-white"
+                    ? "ptahx-navy-tab-active shadow-sm"
+                    : "ptahx-navy-tab-inactive"
                 }`}
                 key={filter}
                 onClick={() => {
@@ -2698,23 +2702,31 @@ export function MessageWorkspace({
                 <div aria-label="Conversation shortcuts" className="flex flex-wrap items-center gap-2 pb-2">
                   {activeConversation.dealOffer ? (
                     <button
-                      aria-expanded={dealOfferOpen}
+                      aria-expanded={dealRoomOpen}
                       aria-haspopup="dialog"
                       aria-label="Make a Deal"
                       className="flex min-h-[64px] w-full items-center gap-3 rounded-2xl border border-amber-300 bg-[#fff4d5] px-4 py-3 text-left text-xs font-black text-[#6b4806] shadow-sm transition hover:border-amber-500 hover:bg-[#ffe8ac] disabled:opacity-60 dark:border-amber-500/50 dark:bg-amber-500/20 dark:text-amber-100 dark:hover:bg-amber-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                       disabled={!useBrowserFormatting}
-                      onClick={() => setDealOfferOpen(true)}
+                      onClick={() => setDealRoomOpen(true)}
                       type="button"
                     >
                       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-[#7c510c] dark:bg-amber-500/20 dark:text-amber-100">
                         <LockKeyhole aria-hidden size={20} />
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-black">Turn this conversation into a Deal</span>
-                        <span className="mt-1 block text-xs font-medium text-[#705b36] dark:text-amber-100">
-                          Agree on terms and save a deal record.
-                        </span>
+                        <span className="block text-sm font-black">Make a Deal · @deal</span>
+                        <span className="mt-1 block text-xs font-medium text-[#705b36] dark:text-amber-100">Open the Deal room and lock agreement terms.</span>
                       </span>
+                    </button>
+                  ) : null}
+                  {activeConversation.dealHref ? (
+                    <button
+                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-300 bg-[#fff4d5] px-3 text-xs font-black text-[#6b4806] dark:border-amber-500/50 dark:bg-amber-500/20 dark:text-amber-100"
+                      onClick={() => setDealRoomOpen(true)}
+                      type="button"
+                    >
+                      <LockKeyhole aria-hidden size={16} />
+                      Deal room
                     </button>
                   ) : null}
                   {activeConversation.dealHref ? (
@@ -2753,6 +2765,13 @@ export function MessageWorkspace({
                       [conversationId]: nextDraft,
                     }));
                     persistDraft(draftStorageKey, conversationId, nextDraft);
+                    if (!isComposingRef.current && isDealComposerTrigger(nextDraft)) {
+                      if (activeConversation.dealOffer || activeConversation.dealHref || activeConversation.events?.some((entry) => entry.type.startsWith("PROPOSAL_"))) {
+                        setDealRoomOpen(true);
+                        setDrafts((current) => ({ ...current, [conversationId]: "" }));
+                        persistDraft(draftStorageKey, conversationId, "");
+                      }
+                    }
                   }}
                   onCompositionEnd={() => {
                     isComposingRef.current = false;
@@ -2824,6 +2843,17 @@ export function MessageWorkspace({
         onRemove={() => void removeConversation()}
         open={detailsOpen}
       />
+      {activeConversation && (activeConversation.dealOffer || activeConversation.dealHref || activeConversation.events?.some((entry) => entry.type.startsWith("PROPOSAL_"))) ? (
+        <ChatDealRoom
+          conversation={activeConversation}
+          onCreateTerms={() => {
+            setDealRoomOpen(false);
+            setDealOfferOpen(true);
+          }}
+          onOpenChange={setDealRoomOpen}
+          open={dealRoomOpen}
+        />
+      ) : null}
       {activeConversation?.dealOffer && dealOfferOpen ? (
         <ConversationDealOfferDialog
           conversationId={activeConversation.id}
