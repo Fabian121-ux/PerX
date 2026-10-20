@@ -146,7 +146,9 @@ describe("message workspace gestures and actions", () => {
     await act(async () => {});
     expect(view.getByRole("link", { name: "Find people to message" }).getAttribute("href")).toContain("/app/connections");
     expect(view.getByRole("button", { name: "Make a Deal" })).toBeTruthy();
-    expect(view.getByText("Deal terms")).toBeTruthy();
+    expect(view.getByRole("button", { name: "Make a Deal" }).className).toContain("text-[#6b4806]");
+    expect(view.getByText(/End-to-end encryption is not currently available/)).toBeTruthy();
+    expect(view.getByPlaceholderText("Search people or conversations").className).toContain("placeholder:text-white/85");
     expect(view.getByRole("button", { name: "deals" })).toBeTruthy();
     fireEvent.click(view.getByRole("button", { name: "deals" }));
     expect(view.getAllByText("Zee Stitches").length).toBeGreaterThan(0);
