@@ -3762,13 +3762,18 @@ function ConversationDetailsContent({
                     conversation.participantId,
                   )}
                 >
-                  <button
-                    className="inline-flex min-h-11 w-full items-center justify-center rounded-[var(--px-radius-sm)] border border-red-200 px-4 text-sm font-bold text-red-700 transition hover:bg-red-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:hover:bg-red-950/30"
+                  <PendingSubmitButton
+                    className="w-full border border-red-300 bg-red-50 font-bold text-red-900 hover:bg-red-100 dark:border-red-500/60 dark:bg-[#4a1d20] dark:text-red-100 dark:hover:bg-[#65272a]"
+                    pendingLabel="Blocking..."
                     type="submit"
+                    variant="outline"
                   >
                     Block member
-                  </button>
+                  </PendingSubmitButton>
                 </form>
+                <Link href="/app/settings/blocked" className="inline-flex min-h-11 items-center justify-center rounded-xl text-sm font-bold text-[color:var(--px-primary-ink)] underline underline-offset-4">
+                  Manage blocked people · Unblock
+                </Link>
               </div>
             ) : null}
           </div>
