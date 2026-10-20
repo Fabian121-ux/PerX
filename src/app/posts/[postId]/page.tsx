@@ -56,7 +56,7 @@ export default async function PostPage({
     <PublicPageShell>
       <main className="mx-auto grid min-w-0 max-w-[640px] gap-4 px-2 py-4 sm:px-4">
         <h1 className="sr-only">Community post</h1>
-        <SocialPostCard post={detail.post} />
+        <SocialPostCard post={detail.post} viewerId={user?.id} />
         {user?.id === detail.post.author.id && (
           <section
             className="grid gap-4 rounded-xl border border-[color:var(--px-border)] p-4"

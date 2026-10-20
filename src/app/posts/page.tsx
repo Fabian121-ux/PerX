@@ -33,7 +33,7 @@ export default async function PostsPage({
         {!feed ? (
           <p>Community posts are temporarily unavailable.</p>
         ) : feed.items.length ? (
-          feed.items.map((post) => <SocialPostCard key={post.id} post={post} />)
+          feed.items.map((post) => <SocialPostCard key={post.id} post={post} viewerId={user?.id} />)
         ) : (
           <p>No public posts yet.</p>
         )}
