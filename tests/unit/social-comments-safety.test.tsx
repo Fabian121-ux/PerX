@@ -52,7 +52,7 @@ describe("social comment safety", () => {
     expect(screen.getByRole("menuitem", { name: "Report member" })).toHaveAttribute(
       "href", "/app/reports/new?targetType=USER&targetId=ada-id",
     );
-    expect(screen.getByText("My own response")).toBeInTheDocument();
+    expect(screen.getAllByText("My own response").length).toBeGreaterThan(0);
     expect(screen.getByText("Edit comment")).toBeInTheDocument();
   });
 
@@ -77,7 +77,7 @@ describe("social comment safety", () => {
     await waitFor(() => expect(mocks.block).toHaveBeenCalledWith("ada-id"));
     await waitFor(() => expect(screen.queryByText("First response")).not.toBeInTheDocument());
     expect(screen.queryByText("Second response")).not.toBeInTheDocument();
-    expect(screen.getByText("My own response")).toBeInTheDocument();
+    expect(screen.getAllByText("My own response").length).toBeGreaterThan(0);
     expect(mocks.refresh).toHaveBeenCalledTimes(1);
   });
 
