@@ -18,6 +18,8 @@ import { ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState } from "@/components/ui/card";
 import { requireUser } from "@/lib/auth/session";
 import { getUserDealsPage } from "@/lib/data/app";
+import { getPrisma } from "@/lib/db/prisma";
+import { logisticsV1Enabled } from "@/lib/logistics/v1-policy";
 import { getVerifiedShipmentForDeal, type VerifiedShipment } from "@/lib/tracking/shipment-provider";
 
 /**
@@ -28,7 +30,7 @@ import { getVerifiedShipmentForDeal, type VerifiedShipment } from "@/lib/trackin
 type TrackedAgreement = {
   id: string;
   status: string;
-  proposal: { opportunity: { title: string; type: string } };
+  proposal: { opportunity: { title: string; type: string; ownerId?: string } };
   statusHistory: {
     id: string;
     toStatus: string;
@@ -52,7 +54,7 @@ function formatHistoryTime(value: Date | string) {
   }).format(date);
 }
 
-function AgreementCard({ agreement, selected = false, cursor, shipment }: { agreement: TrackedAgreement; selected?: boolean; cursor?: string; shipment?: VerifiedShipment | null }) {
+function AgreementCard({ agreement, selected = false, cursor, shipment, v1Id, viewerId }: { agreement: TrackedAgreement; selected?: boolean; cursor?: string; shipment?: VerifiedShipment | null; v1Id?: string; viewerId?: string }) {
   const product = agreement.proposal?.opportunity?.type === "PRODUCT";
   const events = agreement.statusHistory ?? [];
 
@@ -112,6 +114,17 @@ function AgreementCard({ agreement, selected = false, cursor, shipment }: { agre
       ) : null}
 
       <div className="mt-4 flex flex-wrap gap-2 border-t border-[color:var(--px-border)] pt-3">
+        {product && logisticsV1Enabled() ? (
+          v1Id ? (
+            <Link href={`/app/logistics/shipments/${v1Id}`} className="inline-flex min-h-11 items-center rounded-xl border border-emerald-600 bg-emerald-50 px-3 text-sm font-black text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200">
+              Open V1 delivery
+            </Link>
+          ) : agreement.proposal?.opportunity?.ownerId === viewerId ? (
+            <Link href={`/app/logistics/dispatch?deal=${encodeURIComponent(agreement.id)}`} className="inline-flex min-h-11 items-center rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 text-sm font-black text-[color:var(--px-primary)]">
+              Assign V1 driver
+            </Link>
+          ) : null
+        ) : null}
         {product && !selected ? (
           <Link
             aria-label={`Track ${agreement.proposal?.opportunity?.title ?? "this product"} on the map`}
@@ -198,6 +211,20 @@ export default async function TrackingPage({
   const shipment = selectedProduct
     ? await getVerifiedShipmentForDeal(selectedProduct.id)
     : null;
+  // One bounded server query for the current visible product page, never
+  // one DB lookup per card or a new tracking route for every agreement.
+  const v1ShipmentByDeal = new Map<string, string>();
+  if (logisticsV1Enabled() && productAgreements.length > 0) {
+    const active = await getPrisma().logisticsV1Shipment.findMany({
+      where: {
+        dealId: { in: productAgreements.map((item) => item.id) },
+        OR: [{ sellerId: user.id }, { buyerId: user.id }, { driverId: user.id }],
+      },
+      select: { id: true, dealId: true },
+      take: 20,
+    });
+    for (const row of active) v1ShipmentByDeal.set(row.dealId, row.id);
+  }
 
   return (
     <AppSection
@@ -250,6 +277,8 @@ export default async function TrackingPage({
                   key={deal.id}
                   selected={deal.id === selectedProduct?.id}
                   shipment={deal.id === selectedProduct?.id ? shipment : null}
+                  v1Id={v1ShipmentByDeal.get(deal.id)}
+                  viewerId={user.id}
                 />
               ))
             ) : (
