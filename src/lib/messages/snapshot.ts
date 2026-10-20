@@ -252,7 +252,7 @@ function formatMessageSnapshot(
             : (latestMessage?.body ?? "No messages yet."),
         messages: messages.map((message) => ({
           body: message.deletedAt ? "" : message.body,
-          attachments: message.deletedAt ? [] : message.attachments.filter((image) => image.status === "APPROVED").map((image) => ({
+          attachments: message.deletedAt ? [] : (message.attachments ?? []).filter((image) => image.status === "APPROVED").map((image) => ({
             id: image.id,
             filename: image.filename,
             url: `/api/messages/images/${image.id}`,
