@@ -1,9 +1,11 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
+import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Handshake, LockKeyhole, ScrollText, ShieldAlert, X } from "lucide-react";
 import Link from "next/link";
 import type { WorkspaceConversation } from "@/components/messages/message-workspace";
+import { getChatDealListingsAction, linkChatDealListingAction, type ChatDealListing } from "@/features/proposals/conversation-listings";
 
 /**
  * Deal room is a view of the existing immutable proposal and Deal events,
@@ -13,15 +15,69 @@ export function ChatDealRoom({
   conversation,
   onCreateTerms,
   onRequestListing,
+  onLinkedListing,
   onOpenChange,
   open,
 }: {
   conversation: WorkspaceConversation;
   onCreateTerms: () => void;
   onRequestListing?: () => void;
+  onLinkedListing?: (listing: ChatDealListing) => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) {
+  const [listings, setListings] = useState<ChatDealListing[]>([]);
+  const [listingsLoading, setListingsLoading] = useState(false);
+  const [linkingId, setLinkingId] = useState<string | null>(null);
+  const [listingsError, setListingsError] = useState("");
+  const linkPending = useRef(false);
+
+  useEffect(() => {
+    if (!open || conversation.deal || conversation.dealOffer || !onLinkedListing) return;
+    let cancelled = false;
+    // Reload on each opening: publication and moderation status may change.
+    // No cached eligibility is treated as authorization for linking.
+    void (async () => {
+      setListings([]);
+      setListingsError("");
+      setListingsLoading(true);
+      try {
+        const result = await getChatDealListingsAction(conversation.id);
+        if (cancelled) return;
+        if ("error" in result) setListingsError(result.error);
+        else setListings(result.listings);
+      } catch {
+        if (!cancelled) setListingsError("Could not load available listings.");
+      } finally {
+        if (!cancelled) setListingsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, conversation.id, conversation.deal, conversation.dealOffer, onLinkedListing]);
+
+  const chooseListing = async (listing: ChatDealListing) => {
+    if (linkPending.current) return;
+    linkPending.current = true;
+    setLinkingId(listing.id);
+    setListingsError("");
+    try {
+      const result = await linkChatDealListingAction({
+        conversationId: conversation.id,
+        opportunityId: listing.id,
+      });
+      if ("error" in result) {
+        setListingsError(result.error);
+        return;
+      }
+      onLinkedListing?.(result.listing);
+    } catch {
+      setListingsError("Unable to link this listing. Try again.");
+    } finally {
+      linkPending.current = false;
+      setLinkingId(null);
+    }
+  };
+
   const records = (conversation.events ?? []).filter((e) =>
     e.type.startsWith("PROPOSAL_") || e.type.startsWith("DEAL_"),
   ).slice(-6).reverse();
@@ -81,8 +137,34 @@ export function ChatDealRoom({
             <div className="mt-4 rounded-2xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface-soft)] p-4">
               <h3 className="text-sm font-black text-[color:var(--px-text)]">Start a Deal from this chat</h3>
               <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
-                You can discuss a Deal with {conversation.participantName} here. To submit locked terms, the other person must have an approved, published listing and your conversation must be linked to it. We cannot lock a Deal against an unverified listing.
+                You can start a Deal by choosing an approved, published listing from {conversation.participantName}. If they have not published one, ask them to share a listing. Terms remain locked only after submitting a real proposal.
               </p>
+              {onLinkedListing ? (
+                <div className="mt-3" aria-label="Eligible listings">
+                  {listingsLoading ? (
+                    <p className="text-sm text-[color:var(--px-text-muted)]" role="status">Finding approved listings…</p>
+                  ) : listings.length ? (
+                    <div className="grid gap-2">
+                      <p className="text-xs font-black text-[color:var(--px-text-muted)]">Choose a listing to create real Deal terms</p>
+                      {listings.map((listing) => (
+                        <button
+                          key={listing.id}
+                          className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-3 text-left text-sm font-bold text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] disabled:opacity-60"
+                          disabled={linkingId !== null}
+                          onClick={() => void chooseListing(listing)}
+                          type="button"
+                        >
+                          <span className="min-w-0 flex-1 break-words">{listing.title} <span className="text-xs font-medium text-[color:var(--px-text-muted)]">({listing.currency})</span></span>
+                          <span className="shrink-0">{linkingId === listing.id ? "Linking…" : "Select"}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : !listingsError ? (
+                    <p className="text-sm text-[color:var(--px-text-muted)]">No approved listings from this member are available for this chat yet.</p>
+                  ) : null}
+                  {listingsError ? <p role="alert" className="mt-2 text-sm font-semibold text-[color:var(--px-error)]">{listingsError}</p> : null}
+                </div>
+              ) : null}
               <div className="mt-3 flex flex-wrap gap-2">
                 {onRequestListing ? (
                   <button
