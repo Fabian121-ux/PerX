@@ -32,15 +32,18 @@ function showMenu() {
 }
 
 describe("social feed profile moderation actions", () => {
-  it("offers a real user report and a route to unblock, without inventing POST reporting", async () => {
+  it("offers content-specific and member reports plus a route to unblock", async () => {
     render(
       <FeedbackProvider>
-        <SocialAuthorActions authorId="author-123" authorName="Ada" username="ada" />
+        <SocialAuthorActions authorId="author-123" authorName="Ada" username="ada" reportContent={{ kind: "POST", id: "post-123" }} />
       </FeedbackProvider>,
     );
     showMenu();
     expect(await screen.findByRole("menuitem", { name: "Report member" })).toHaveAttribute(
       "href", "/app/reports/new?targetType=USER&targetId=author-123",
+    );
+    expect(screen.getByRole("menuitem", { name: "Report post" })).toHaveAttribute(
+      "href", "/app/reports/new?targetType=OTHER_CONTENT&targetId=POST%3Apost-123",
     );
     expect(screen.getByRole("menuitem", { name: "Manage blocked users" })).toHaveAttribute(
       "href", "/app/settings/blocked",
