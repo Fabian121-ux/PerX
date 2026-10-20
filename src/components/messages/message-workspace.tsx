@@ -2702,7 +2702,7 @@ export function MessageWorkspace({
                 </div>
               ) : null}
               <div aria-label="Conversation shortcuts" className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
-                <button aria-label="Open Deal room" aria-expanded={dealRoomOpen} aria-haspopup="dialog"
+                <button aria-label="Make a Deal" aria-expanded={dealRoomOpen} aria-haspopup="dialog"
                   className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-amber-300 bg-[#fff1c8] px-4 text-xs font-black text-[#634207] hover:bg-[#ffe3a3] dark:border-amber-500/50 dark:bg-[#4a3919] dark:text-amber-100"
                   onClick={() => setDealRoomOpen(true)} type="button">
                   <LockKeyhole aria-hidden size={16} /> {activeConversation.dealHref ? "Deal room" : "Make a Deal"}
