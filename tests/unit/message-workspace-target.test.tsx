@@ -734,7 +734,9 @@ describe("message workspace exact targets", () => {
     expect(
       view.getByRole("link", { name: "Review proposal" }).getAttribute("href"),
     ).toBe("/app/proposals/sent");
-    expect(view.queryByRole("button", { name: "Make a Deal" })).toBeNull();
+    // @deal remains a usable entry even after submission, but the server-backed
+    // terms form cannot be reopened for the already-active proposal.
+    expect(view.getByRole("button", { name: "Make a Deal" })).toBeTruthy();
     expect((composer as HTMLTextAreaElement).value).toBe("");
   }, 15_000);
 
