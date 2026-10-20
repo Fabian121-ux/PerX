@@ -1,4 +1,8 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { getPrisma } from "@/lib/db/prisma";
+import { parseSocialContentReportTarget } from "@/lib/social/report-target";
+import { socialPostPath } from "@/lib/social/contracts";
 
 import { AdminSection } from "@/components/admin-section";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +38,29 @@ export default async function AdminModerationCasePage({
   const { caseId } = await params;
   const moderationCase = await getAdminModerationCase(caseId);
   if (!moderationCase) notFound();
+
+  // Admin-only evidence preview: public post pages may be inaccessible after
+  // moderation/deletion, but the original report should remain reviewable.
+  const contentTarget = moderationCase.targetType === "OTHER_CONTENT"
+    ? parseSocialContentReportTarget(moderationCase.targetId)
+    : null;
+  const contentEvidence = contentTarget?.kind === "POST"
+    ? await getPrisma().post.findUnique({
+        select: { id: true, body: true, moderationStatus: true, deletedAt: true },
+        where: { id: contentTarget.id },
+      })
+    : contentTarget?.kind === "COMMENT"
+      ? await getPrisma().postComment.findUnique({
+          select: { id: true, postId: true, body: true, moderationStatus: true, deletedAt: true },
+          where: { id: contentTarget.id },
+        })
+      : null;
+  const contentPostId = contentEvidence
+    ? ("postId" in contentEvidence ? contentEvidence.postId : contentEvidence.id)
+    : null;
+  const contentUrl = contentPostId
+    ? `${socialPostPath(contentPostId)}${contentTarget?.kind === "COMMENT" ? `#comment-${contentTarget.id}` : ""}`
+    : null;
 
   // Only an open policy flag on a listing is decidable here; a resolved case
   // has already released or withheld the listing.
@@ -88,6 +115,37 @@ export default async function AdminModerationCasePage({
                 : ""}
             </p>
           </Card>
+
+          {contentTarget ? (
+            <Card>
+              <h2 className="font-black text-[color:var(--px-text)]">
+                Reported {contentTarget.kind === "POST" ? "post" : "comment"} evidence
+              </h2>
+              {contentEvidence ? (
+                <>
+                  <p className="mt-2 text-xs font-semibold text-[color:var(--px-text-muted)]">
+                    Moderation status: {contentEvidence.moderationStatus}
+                    {contentEvidence.deletedAt ? " · Deleted" : ""}
+                  </p>
+                  <p className="mt-3 whitespace-pre-wrap break-words rounded-xl bg-[color:var(--px-surface-soft)] p-3 text-sm text-[color:var(--px-text)]">
+                    {contentEvidence.body}
+                  </p>
+                  {contentUrl ? (
+                    <Link
+                      className="mt-3 inline-flex min-h-11 items-center font-bold text-[color:var(--px-primary-ink)] underline"
+                      href={contentUrl}
+                    >
+                      Open original content (if still public)
+                    </Link>
+                  ) : null}
+                </>
+              ) : (
+                <p className="mt-2 text-sm text-[color:var(--px-text-muted)]">
+                  This content is no longer stored. Review the report details and audit history.
+                </p>
+              )}
+            </Card>
+          ) : null}
 
           {moderationCase.conversationId ? (
             moderationCase.messageScopes.length ? (
