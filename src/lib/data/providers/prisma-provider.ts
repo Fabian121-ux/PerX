@@ -327,6 +327,7 @@ async function getConversationMessagesPage(
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
     take: pageSize + 1,
     include: {
+      attachments: { select: { id: true, filename: true, status: true } },
       readReceipts: { select: { userId: true } },
       replyTo: {
         select: {

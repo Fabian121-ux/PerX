@@ -35,6 +35,7 @@ type DbConversationLike = {
   }[];
   id: string;
   messages: {
+    attachments?: { id: string; filename: string; status: string }[];
     body: string;
     createdAt: Date;
     deletedAt?: Date | null;
@@ -179,6 +180,9 @@ export function toWorkspaceConversation(
       ? [
           {
             body: latestMessage.deletedAt ? "" : latestMessage.body,
+            attachments: latestMessage.deletedAt ? [] : (latestMessage.attachments ?? []).filter((image) => image.status === "APPROVED").map((image) => ({
+              id: image.id, filename: image.filename, url: `/api/messages/images/${image.id}`,
+            })),
             canMutate:
               !latestMessage.deletedAt && latestMessage.createdAt >= mutationCutoff,
             createdAt: latestMessage.createdAt.toISOString(),

@@ -12,6 +12,7 @@ import { getServerEnv } from "@/lib/env";
 export const dynamic = "force-dynamic";
 
 type ProviderMessage = {
+  attachments?: { id: string; filename: string; status: string }[];
   body: string;
   createdAt: Date | string;
   deletedAt?: Date | string | null;
@@ -106,6 +107,9 @@ function toWorkspaceMessage(message: ProviderMessage) {
   const createdAt = new Date(message.createdAt);
   return {
     body: message.deletedAt ? "" : message.body,
+    attachments: message.deletedAt ? [] : (message.attachments ?? []).filter((image) => image.status === "APPROVED").map((image) => ({
+      id: image.id, filename: image.filename, url: `/api/messages/images/${image.id}`,
+    })),
     canMutate:
       !message.deletedAt &&
       Date.now() - createdAt.getTime() <=
