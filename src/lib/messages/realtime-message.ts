@@ -13,6 +13,7 @@ export async function getRealtimeWorkspaceMessage({
 }) {
   const message = await getPrisma().message.findFirst({
     include: {
+      attachments: { select: { id: true, filename: true, status: true } },
       conversation: {
         select: {
           participants: { select: { lastReadAt: true, userId: true } },
@@ -55,6 +56,9 @@ export async function getRealtimeWorkspaceMessage({
 
   return {
     body: message.deletedAt ? "" : message.body,
+    attachments: message.deletedAt ? [] : message.attachments.filter((image) => image.status === "APPROVED").map((image) => ({
+      id: image.id, filename: image.filename, url: `/api/messages/images/${image.id}`,
+    })),
     canMutate: !message.deletedAt && message.createdAt >= mutationCutoff,
     createdAt: message.createdAt.toISOString(),
     deletedAt: message.deletedAt?.toISOString() ?? null,
