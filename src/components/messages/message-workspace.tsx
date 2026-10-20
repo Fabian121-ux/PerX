@@ -18,6 +18,10 @@ import {
 } from "react";
 import {
   ArrowDown,
+  AtSign,
+  Plus,
+  Image as ImageIcon,
+  Mic,
   ArrowLeft,
   Check,
   CheckCheck,
@@ -43,6 +47,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ConversationDealOfferDialog } from "@/components/messages/conversation-deal-offer-dialog";
+import { PendingSubmitButton } from "@/components/ui/pending-submit-button";
 import { ChatDealRoom } from "@/components/messages/chat-deal-room";
 import { FeatureDirectory } from "@/components/navigation/feature-directory";
 import { useConfirm, useToast } from "@/components/ui/feedback-provider";
@@ -1857,11 +1862,10 @@ export function MessageWorkspace({
     // responsive interval instead of the backed-off one.
     markInteraction();
     if (isDealComposerTrigger(draft) && !isComposingRef.current) {
-      if (activeConversation.dealOffer || activeConversation.dealHref || activeConversation.events?.some((entry) => entry.type.startsWith("PROPOSAL_"))) {
-        setDealRoomOpen(true);
-      } else {
-        toast({ title: "Deal creation is not available in this chat", tone: "info" });
-      }
+      setDealRoomOpen(true);
+      const conversationId = activeConversation.id;
+      setDrafts((current) => ({ ...current, [conversationId]: "" }));
+      persistDraft(draftStorageKey, conversationId, "");
       // A command is never a normal sent message.
       return;
     }
@@ -2698,58 +2702,41 @@ export function MessageWorkspace({
                   </button>
                 </div>
               ) : null}
-              {activeConversation.dealOffer || activeConversation.dealHref ? (
-                <div aria-label="Conversation shortcuts" className="flex flex-wrap items-center gap-2 pb-2">
-                  {activeConversation.dealOffer ? (
-                    <button
-                      aria-expanded={dealRoomOpen}
-                      aria-haspopup="dialog"
-                      aria-label="Make a Deal"
-                      className="flex min-h-[64px] w-full items-center gap-3 rounded-2xl border border-amber-300 bg-[#fff4d5] px-4 py-3 text-left text-xs font-black text-[#6b4806] shadow-sm transition hover:border-amber-500 hover:bg-[#ffe8ac] disabled:opacity-60 dark:border-amber-500/50 dark:bg-amber-500/20 dark:text-amber-100 dark:hover:bg-amber-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                      disabled={!useBrowserFormatting}
-                      onClick={() => setDealRoomOpen(true)}
-                      type="button"
-                    >
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-[#7c510c] dark:bg-amber-500/20 dark:text-amber-100">
-                        <LockKeyhole aria-hidden size={20} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-black">Make a Deal · @deal</span>
-                        <span className="mt-1 block text-xs font-medium text-[#705b36] dark:text-amber-100">Open the Deal room and lock agreement terms.</span>
-                      </span>
-                    </button>
-                  ) : null}
-                  {activeConversation.dealHref ? (
-                    <button
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-300 bg-[#fff4d5] px-3 text-xs font-black text-[#6b4806] dark:border-amber-500/50 dark:bg-amber-500/20 dark:text-amber-100"
-                      onClick={() => setDealRoomOpen(true)}
-                      type="button"
-                    >
-                      <LockKeyhole aria-hidden size={16} />
-                      Deal room
-                    </button>
-                  ) : null}
-                  {activeConversation.dealHref ? (
-                    <Link
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-3 text-xs font-black text-[color:var(--px-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                      href={activeConversation.dealHref}
-                    >
-                      <Handshake aria-hidden size={16} />
-                      View Deal record
-                    </Link>
-                  ) : null}
-                  {activeConversation.dealHref ? (
-                    <Link
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-3 text-xs font-black text-[color:var(--px-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                      href="/app/track"
-                    >
-                      <Truck aria-hidden size={16} />
-                      Track agreement
-                    </Link>
-                  ) : null}
-                </div>
-              ) : null}
+              <div aria-label="Conversation shortcuts" className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+                <button aria-label="Open Deal room" aria-expanded={dealRoomOpen} aria-haspopup="dialog"
+                  className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-amber-300 bg-[#fff1c8] px-4 text-xs font-black text-[#634207] hover:bg-[#ffe3a3] dark:border-amber-500/50 dark:bg-[#4a3919] dark:text-amber-100"
+                  onClick={() => setDealRoomOpen(true)} type="button">
+                  <LockKeyhole aria-hidden size={16} /> {activeConversation.dealHref ? "Deal room" : "Make a Deal"}
+                </button>
+                {activeConversation.dealHref ? (
+                  <Link className="inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-3 text-xs font-bold text-[color:var(--px-primary-ink)]" href={activeConversation.dealHref}>
+                    <Handshake aria-hidden size={15} /> View agreement
+                  </Link>
+                ) : null}
+                <Link className="inline-flex min-h-10 shrink-0 items-center rounded-full px-3 text-xs font-bold text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)]" href={`/app/reports/new?targetType=CONVERSATION&targetId=${encodeURIComponent(activeConversation.id)}`}>
+                  <Flag aria-hidden size={15} className="mr-1.5" /> Report
+                </Link>
+              </div>
               <div className="flex w-full min-w-0 max-w-full items-end gap-2 rounded-[26px] border-2 border-[color:var(--px-border-strong)] bg-[color:var(--px-surface-soft)] p-1.5 pl-2 focus-within:border-[color:var(--px-primary)]">
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <button aria-label="Attachment options" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]" type="button"><Plus aria-hidden size={22} /></button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content align="start" side="top" sideOffset={8} className="z-[105] min-w-52 rounded-2xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] p-2 text-[color:var(--px-text)] shadow-2xl">
+                      <DropdownMenu.Label className="px-3 py-2 text-xs font-black text-[color:var(--px-text-muted)]">Attachments</DropdownMenu.Label>
+                      <DropdownMenu.Item disabled className="flex min-h-11 cursor-not-allowed items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)]">
+                        <ImageIcon aria-hidden size={18} /> Photos <span className="ml-auto text-[10px]">Coming soon</span>
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item disabled className="flex min-h-11 cursor-not-allowed items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)]">
+                        <Mic aria-hidden size={18} /> Voice note <span className="ml-auto text-[10px]">Coming soon</span>
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+                <button aria-label="Open @ commands" aria-haspopup="dialog"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  onClick={() => setDealRoomOpen(true)} type="button" title="@deal · Make a Deal"><AtSign aria-hidden size={21} /></button>
                 <label className="sr-only" htmlFor="message-draft">
                   Message
                 </label>
@@ -2766,11 +2753,9 @@ export function MessageWorkspace({
                     }));
                     persistDraft(draftStorageKey, conversationId, nextDraft);
                     if (!isComposingRef.current && isDealComposerTrigger(nextDraft)) {
-                      if (activeConversation.dealOffer || activeConversation.dealHref || activeConversation.events?.some((entry) => entry.type.startsWith("PROPOSAL_"))) {
-                        setDealRoomOpen(true);
-                        setDrafts((current) => ({ ...current, [conversationId]: "" }));
-                        persistDraft(draftStorageKey, conversationId, "");
-                      }
+                      setDealRoomOpen(true);
+                      setDrafts((current) => ({ ...current, [conversationId]: "" }));
+                      persistDraft(draftStorageKey, conversationId, "");
                     }
                   }}
                   onCompositionEnd={() => {
@@ -2820,9 +2805,7 @@ export function MessageWorkspace({
               </div>
               <p className="hidden px-1 text-[10px] font-semibold text-[color:var(--px-text-muted)] sm:block">
                 Enter adds a new line. Ctrl+Enter or Command+Enter sends.
-                {activeConversation.dealOffer
-                  ? " Type @deal to open structured terms."
-                  : ""}
+                {" Type @deal or tap @ to open the Deal room."}
               </p>
             </div>
             {sendError ? (
@@ -2843,12 +2826,20 @@ export function MessageWorkspace({
         onRemove={() => void removeConversation()}
         open={detailsOpen}
       />
-      {activeConversation && (activeConversation.dealOffer || activeConversation.dealHref || activeConversation.events?.some((entry) => entry.type.startsWith("PROPOSAL_"))) ? (
+      {activeConversation ? (
         <ChatDealRoom
           conversation={activeConversation}
           onCreateTerms={() => {
             setDealRoomOpen(false);
-            setDealOfferOpen(true);
+            if (activeConversation.dealOffer) setDealOfferOpen(true);
+          }}
+          onRequestListing={() => {
+            const conversationId = activeConversation.id;
+            const requestText = "I'd like to make a Deal with you on PtahX. Please share your approved listing so we can submit and lock the terms securely.";
+            setDrafts((current) => ({ ...current, [conversationId]: requestText }));
+            persistDraft(draftStorageKey, conversationId, requestText);
+            setDealRoomOpen(false);
+            window.setTimeout(() => composerRef.current?.focus(), 0);
           }}
           onOpenChange={setDealRoomOpen}
           open={dealRoomOpen}

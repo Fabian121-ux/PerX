@@ -12,11 +12,13 @@ import type { WorkspaceConversation } from "@/components/messages/message-worksp
 export function ChatDealRoom({
   conversation,
   onCreateTerms,
+  onRequestListing,
   onOpenChange,
   open,
 }: {
   conversation: WorkspaceConversation;
   onCreateTerms: () => void;
+  onRequestListing?: () => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) {
@@ -76,9 +78,29 @@ export function ChatDealRoom({
               <ArrowUpRight aria-hidden size={18} />
             </button>
           ) : !conversation.deal ? (
-            <p className="mt-4 rounded-xl border border-[color:var(--px-border)] p-3 text-sm text-[color:var(--px-text-muted)]">
-              No new Deal proposal is available in this conversation. Review the existing proposal below or open a product conversation where Deal creation is allowed.
-            </p>
+            <div className="mt-4 rounded-2xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface-soft)] p-4">
+              <h3 className="text-sm font-black text-[color:var(--px-text)]">Start a Deal from this chat</h3>
+              <p className="mt-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
+                You can discuss a Deal with {conversation.participantName} here. To submit locked terms, the other person must have an approved, published listing and your conversation must be linked to it. We cannot lock a Deal against an unverified listing.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {onRequestListing ? (
+                  <button
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#1656c7] px-4 text-sm font-black text-white hover:bg-[#0f459e]"
+                    type="button"
+                    onClick={onRequestListing}
+                  >
+                    Ask for a listing
+                  </button>
+                ) : null}
+                <Link href="/app/discover" onClick={() => onOpenChange(false)} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-4 text-sm font-bold text-[color:var(--px-primary-ink)]">
+                  Browse listings
+                </Link>
+              </div>
+              <p className="mt-3 text-xs font-medium text-[color:var(--px-text-muted)]">
+                You can always open @deal here. Secure proposal submission starts when the listing is eligible.
+              </p>
+            </div>
           ) : null}
 
           <div className="mt-5">
