@@ -24,37 +24,48 @@ function readVitals(): Vital[] {
   }
 }
 
+/**
+ * Stable callback outside the component: avoids web-vitals reporting the
+ * same metric multiple times when an opt-in diagnostics overlay re-renders.
+ */
+function recordLocalVital(metric: { name: string; value: number; rating: string }) {
+  if (!NAMES.has(metric.name) || !Number.isFinite(metric.value)) return;
+  const recent = readVitals().filter((v) => v.name !== metric.name);
+  const next = [...recent, {
+    name: metric.name,
+    value: Math.round(metric.value * 1_000) / 1_000,
+    rating: metric.rating,
+  }].slice(-MAX_SAMPLES);
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    // Browsers with restricted storage still load PtahX normally.
+  }
+  if (new URLSearchParams(window.location.search).get("perf") === "1") {
+    window.dispatchEvent(new CustomEvent("ptahx:local-web-vital", { detail: next }));
+  }
+}
+
 /** Local real-user metrics with no backend, cookies, URL or personal data. */
 export function PerformanceVitals() {
   const [visible, setVisible] = useState(false);
   const [vitals, setVitals] = useState<Vital[]>([]);
 
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("perf") === "1") {
+    if (new URLSearchParams(window.location.search).get("perf") !== "1") return;
+    const onMetric = (event: Event) => setVitals((event as CustomEvent<Vital[]>).detail);
+    window.addEventListener("ptahx:local-web-vital", onMetric);
+    const timer = window.setTimeout(() => {
       setVisible(true);
       setVitals(readVitals());
-    }
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("ptahx:local-web-vital", onMetric);
+    };
   }, []);
 
-  useReportWebVitals((metric) => {
-    if (!NAMES.has(metric.name) || !Number.isFinite(metric.value)) return;
-    const recent = readVitals().filter((v) => v.name !== metric.name);
-    const next = [...recent, {
-      name: metric.name,
-      value: Math.round(metric.value * 1_000) / 1_000,
-      rating: metric.rating,
-    }].slice(-MAX_SAMPLES);
-    try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch {
-      // Browsers with restricted storage still load PtahX normally.
-    }
-    // Only local, opt-in diagnostics. Never send metrics to Supabase or a
-    // shared analytics endpoint from millions of page views by default.
-    if (new URLSearchParams(window.location.search).get("perf") === "1") {
-      setVitals(next);
-    }
-  });
+  useReportWebVitals(recordLocalVital);
 
   if (!visible) return null;
   return (

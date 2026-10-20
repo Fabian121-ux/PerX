@@ -154,7 +154,7 @@ export function ServiceWorkerRegister() {
         <div className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface-elevated)] p-3 text-[color:var(--px-text)] shadow-xl" role="status">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-black">Use PtahX like an app</p>
-            <p className="text-xs text-[color:var(--px-text-muted)]">Install for quick access. It's free.</p>
+            <p className="text-xs text-[color:var(--px-text-muted)]">Install for quick access. It&apos;s free.</p>
           </div>
           <button className="inline-flex min-h-11 items-center gap-1 rounded-xl bg-[color:var(--px-primary)] px-3 text-xs font-bold text-white" type="button" onClick={() => void install()}>
             <Download aria-hidden size={16} /> Install

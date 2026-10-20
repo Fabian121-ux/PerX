@@ -18,7 +18,10 @@ export function NavigationProgress() {
     if (fallbackTimer.current) clearTimeout(fallbackTimer.current);
     startTimer.current = null;
     fallbackTimer.current = null;
-    setPending(false);
+    // Schedule after the route changes, rather than synchronously triggering
+    // a cascading render inside an effect (React 19 lint rule).
+    const clear = window.setTimeout(() => setPending(false), 0);
+    return () => window.clearTimeout(clear);
   }, [pathname]);
 
   useEffect(() => {
