@@ -32,6 +32,9 @@ export function ConversationDealOfferDialog({
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
   const requestIdRef = useRef("");
+  // Synchronous lock closes the gap before React paints the pending state.
+  // The server also verifies the clientRequestId for idempotency.
+  const submissionLockRef = useRef(false);
 
   const closeDialog = () => {
     setError("");
@@ -81,7 +84,8 @@ export function ConversationDealOfferDialog({
             className="mt-5 grid gap-4"
             onSubmit={(submitEvent) => {
               submitEvent.preventDefault();
-              if (isPending) return;
+              if (isPending || submissionLockRef.current) return;
+              submissionLockRef.current = true;
               const form = new FormData(submitEvent.currentTarget);
               setError("");
               startTransition(async () => {
@@ -103,10 +107,14 @@ export function ConversationDealOfferDialog({
                     error: "Unable to submit this proposal. Please try again.",
                   };
                 }
+                submissionLockRef.current = false;
                 if ("error" in result) {
                   setError(result.error);
                   return;
                 }
+                // A newly opened proposal must get a fresh idempotency key;
+                // retries of a failed submission keep the same key.
+                requestIdRef.current = "";
                 onSubmitted(result.event);
                 closeDialog();
               });
