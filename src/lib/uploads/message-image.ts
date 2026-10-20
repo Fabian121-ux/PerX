@@ -71,6 +71,15 @@ export async function uploadMessageImage({
   extension: string;
 }) {
   const env = storageSettings();
+  // Fail closed if the configured bucket is missing or public: the service
+  // role can upload into public buckets too, but chat photos must be private.
+  const bucket = await fetch(`${env.base}/storage/v1/bucket/${env.bucket}`, {
+    headers: { apikey: env.key, authorization: `Bearer ${env.key}` },
+    cache: "no-store",
+  });
+  if (!bucket.ok || (await bucket.json() as { public?: boolean }).public !== false) {
+    throw new Error("Chat images require a private Storage bucket.");
+  }
   const key = `messages/${conversationId}/${userId}/${crypto.randomUUID()}.${extension}`;
   const response = await fetch(`${env.base}/storage/v1/object/${env.bucket}/${storagePath(key)}`, {
     method: "POST",
