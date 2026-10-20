@@ -29,7 +29,7 @@
   --px-active: rgba(37, 99, 235, 0.12);
   --px-muted: #eef3fb;
   --px-text: #10131a;
-  --px-text-muted: #5f6879;
+  --px-text-muted: #526174;
   --px-border: #e0e7f1;
   --px-border-strong: #c9d5e7;
   --px-success: #22c55e;
@@ -91,7 +91,7 @@
   --px-active: rgba(109, 93, 246, 0.18);
   --px-muted: #101b2e;
   --px-text: #f8fafc;
-  --px-text-muted: #aeb8ca;
+  --px-text-muted: #ced7e7;
   --px-border: #2a3a55;
   --px-border-strong: #3a4d6d;
   --px-primary: #6d5df6;
@@ -428,6 +428,33 @@ a {
     color: var(--px-navy);
   }
 
+  /*
+   * The Home discovery chip is a light control on a fixed navy gradient.
+   * Keeping its text/background paired avoids dark-mode and hover overrides
+   * making "Explore all" appear as black text on a near-black pill.
+   */
+  .ptahx-discovery-all {
+    background-color: #ffffff !important;
+    color: #092554 !important;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+  }
+  .ptahx-discovery-all:hover {
+    background-color: #e5efff !important;
+    color: #092554 !important;
+  }
+  .ptahx-discovery-all:focus-visible {
+    outline: 3px solid #fbbf24;
+    outline-offset: 2px;
+  }
+  .dark .ptahx-discovery-all {
+    background-color: #ffffff !important;
+    color: #092554 !important;
+  }
+  .dark .ptahx-discovery-all:hover {
+    background-color: #e5efff !important;
+    color: #092554 !important;
+  }
+
   .ptahx-btn-primary {
     background: var(--px-primary);
     color: #ffffff;
@@ -579,7 +606,7 @@ a {
     --px-surface-soft: #1c2a40;
     --px-muted: #101b2e;
     --px-text: #f8fafc;
-    --px-text-muted: #aeb8ca;
+    --px-text-muted: #ced7e7;
     --px-border: #2a3a55;
   }
 
@@ -594,10 +621,11 @@ a {
     color: var(--px-primary) !important;
   }
 
+  /* Do not recolour success/emerald surfaces as purple: it hides
+     status meaning and destroys foreground/background contrast. */
   .bg-blue-50,
   .bg-indigo-50,
-  .bg-purple-50,
-  .bg-emerald-50 {
+  .bg-purple-50 {
     background-color: var(--px-primary-soft) !important;
   }
 
