@@ -2701,13 +2701,20 @@ export function MessageWorkspace({
                       aria-expanded={dealOfferOpen}
                       aria-haspopup="dialog"
                       aria-label="Make a Deal"
-                      className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-amber-300 bg-[#fff4d5] px-4 text-xs font-black text-[#6b4806] transition hover:bg-[#ffe8ac] disabled:opacity-60 dark:border-amber-500/50 dark:bg-amber-500/20 dark:text-amber-100 dark:hover:bg-amber-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                      className="flex min-h-[64px] w-full items-center gap-3 rounded-2xl border border-amber-300 bg-[#fff4d5] px-4 py-3 text-left text-xs font-black text-[#6b4806] shadow-sm transition hover:border-amber-500 hover:bg-[#ffe8ac] disabled:opacity-60 dark:border-amber-500/50 dark:bg-amber-500/20 dark:text-amber-100 dark:hover:bg-amber-500/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                       disabled={!useBrowserFormatting}
                       onClick={() => setDealOfferOpen(true)}
                       type="button"
                     >
-                      <LockKeyhole aria-hidden size={16} />
-                      Make a Deal
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-100 text-[#7c510c] dark:bg-amber-500/20 dark:text-amber-100">
+                        <LockKeyhole aria-hidden size={20} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-black">Turn this conversation into a Deal</span>
+                        <span className="mt-1 block text-xs font-medium text-[#705b36] dark:text-amber-100">
+                          Agree on terms and save a deal record.
+                        </span>
+                      </span>
                     </button>
                   ) : null}
                   {activeConversation.dealHref ? (
