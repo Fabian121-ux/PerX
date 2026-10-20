@@ -2862,6 +2862,7 @@ export function MessageWorkspace({
       {activeConversation?.dealOffer && dealOfferOpen ? (
         <ConversationDealOfferDialog
           conversationId={activeConversation.id}
+          currentUserId={currentUserId}
           currency={activeConversation.dealOffer.currency}
           onOpenChange={setDealOfferOpen}
           onSubmitted={addSubmittedProposalEvent}
