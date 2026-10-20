@@ -76,6 +76,7 @@ type ReplyPreview = {
 };
 
 export type WorkspaceMessage = {
+  attachments?: { id: string; filename: string; url: string }[];
   body: string;
   canMutate?: boolean;
   /**
@@ -256,6 +257,7 @@ export function MessageWorkspace({
   const [openActionMenuMessageId, setOpenActionMenuMessageId] = useState("");
   const [dealOfferOpen, setDealOfferOpen] = useState(false);
   const [dealRoomOpen, setDealRoomOpen] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const draftStorageKey = `ptahx:messages:${currentUserId}:drafts`;
   const filterStorageKey = `ptahx:messages:${currentUserId}:filter`;
   const listScrollStorageKey = `ptahx:messages:${currentUserId}:list-scroll`;
@@ -347,6 +349,7 @@ export function MessageWorkspace({
       : {},
   );
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const conversationAuthorizationAbortRef = useRef<AbortController | null>(
     null,
   );
@@ -1985,6 +1988,58 @@ export function MessageWorkspace({
     });
   };
 
+  const uploadPhoto = async (file: File, conversationId: string) => {
+    if (imageUploading) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+        file.size < 1 || file.size > 5 * 1024 * 1024) {
+      setSendError("Choose a JPEG, PNG or WebP photo smaller than 5 MB.");
+      return;
+    }
+    setImageUploading(true);
+    setSendError("");
+    markInteraction();
+    try {
+      const data = new FormData();
+      data.set("conversationId", conversationId);
+      data.set("image", file);
+      const response = await fetch("/api/messages/images", {
+        method: "POST",
+        body: data,
+      });
+      const result = (await response.json()) as {
+        error?: string;
+        messageId?: string;
+        image?: { id: string; filename: string; url: string };
+      };
+      if (!response.ok || !result.messageId || !result.image) {
+        throw new Error(result.error ?? "Photo upload failed.");
+      }
+      const optimistic: WorkspaceMessage = {
+        id: createLocalMessageId(),
+        confirmedId: result.messageId,
+        body: "Photo",
+        attachments: [result.image],
+        createdAt: new Date().toISOString(),
+        senderId: currentUserId,
+        senderName: "You",
+        status: "sent",
+      };
+      setLocalMessages((current) => ({
+        ...current,
+        [conversationId]: [...(current[conversationId] ?? []), optimistic],
+      }));
+      window.dispatchEvent(new Event("ptahx-unread-refresh"));
+      setLiveConnectionVersion((current) => current + 1);
+      toast({ title: "Photo sent", tone: "success" });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Photo upload failed.";
+      if (activeIdRef.current === conversationId) setSendError(message);
+      toast({ title: "Photo not sent", description: message, tone: "error" });
+    } finally {
+      setImageUploading(false);
+    }
+  };
+
   const startEditing = (message: WorkspaceMessage) => {
     setEditingMessageId(message.id);
     setEditDraft(message.body);
@@ -2724,8 +2779,12 @@ export function MessageWorkspace({
                   <DropdownMenu.Portal>
                     <DropdownMenu.Content align="start" side="top" sideOffset={8} className="z-[105] min-w-52 rounded-2xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] p-2 text-[color:var(--px-text)] shadow-2xl">
                       <DropdownMenu.Label className="px-3 py-2 text-xs font-black text-[color:var(--px-text-muted)]">Attachments</DropdownMenu.Label>
-                      <DropdownMenu.Item disabled className="flex min-h-11 cursor-not-allowed items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)]">
-                        <ImageIcon aria-hidden size={18} /> Photos <span className="ml-auto text-[10px]">Coming soon</span>
+                      <DropdownMenu.Item
+                        disabled={imageUploading}
+                        onSelect={() => imageInputRef.current?.click()}
+                        className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text)] outline-none focus:bg-[color:var(--px-muted)] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <ImageIcon aria-hidden size={18} /> {imageUploading ? "Sending photo…" : "Photo"}
                       </DropdownMenu.Item>
                       <DropdownMenu.Item disabled className="flex min-h-11 cursor-not-allowed items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)]">
                         <Mic aria-hidden size={18} /> Voice note <span className="ml-auto text-[10px]">Coming soon</span>
@@ -2733,6 +2792,19 @@ export function MessageWorkspace({
                     </DropdownMenu.Content>
                   </DropdownMenu.Portal>
                 </DropdownMenu.Root>
+                <input
+                  accept="image/jpeg,image/png,image/webp"
+                  aria-label="Choose a photo to send"
+                  className="sr-only"
+                  disabled={imageUploading}
+                  onChange={(event) => {
+                    const file = event.currentTarget.files?.[0];
+                    event.currentTarget.value = "";
+                    if (file) void uploadPhoto(file, activeConversation.id);
+                  }}
+                  ref={imageInputRef}
+                  type="file"
+                />
                 <button aria-label="Open @ commands" aria-haspopup="dialog"
                   className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                   onClick={() => setDealRoomOpen(true)} type="button" title="@deal · Make a Deal"><AtSign aria-hidden size={21} /></button>
@@ -3244,6 +3316,28 @@ function MessageBubble({
             {message.body}
           </p>
         )}
+        {!message.deletedAt && !editing && message.attachments?.length ? (
+          <div className="mt-2 grid gap-2">
+            {message.attachments.map((image) => (
+              <a
+                className="block overflow-hidden rounded-xl border border-current/15 focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                href={image.url}
+                key={image.id}
+                rel="noopener noreferrer"
+                target="_blank"
+                title="Open private photo"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- authenticated images must keep the viewer's cookie (Next Image optimizer cannot). */}
+                <img
+                  alt={image.filename || "Photo attachment"}
+                  className="max-h-80 w-auto max-w-full object-contain"
+                  loading="lazy"
+                  src={image.url}
+                />
+              </a>
+            ))}
+          </div>
+        ) : null}
         <div
           className={`mt-2 flex items-center justify-end gap-1 text-[10px] ${mine ? "text-[#43725c] dark:text-emerald-200" : "text-[#64748b] dark:text-white/60"}`}
         >
