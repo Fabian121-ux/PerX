@@ -86,7 +86,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
           <div className="min-w-0">
             {authorHref ? (
               <Link
-                className="block truncate text-sm font-black text-[color:var(--px-text)] hover:text-[color:var(--px-primary)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                className="block truncate text-sm font-black text-[color:var(--px-text)] hover:text-[color:var(--px-primary-ink)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                 href={authorHref}
                 onClick={() =>
                   recordFeedEvent({
@@ -127,7 +127,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
         </span>
         {authorHref ? (
           <Link
-            className="inline-flex min-h-10 shrink-0 items-center rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-3 text-xs font-black text-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            className="inline-flex min-h-10 shrink-0 items-center rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-3 text-xs font-black text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={authorHref}
           >
             {post.type === "PRODUCT" ? "View seller" : "Connect"}
@@ -143,7 +143,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
             recordFeedEvent({ name: "post_open", position, postId: post.id })
           }
         >
-          <h3 className="break-words text-lg font-black leading-7 text-[color:var(--px-text)] transition group-hover:text-[color:var(--px-primary)] sm:text-xl">
+          <h3 className="break-words text-lg font-black leading-7 text-[color:var(--px-text)] transition group-hover:text-[color:var(--px-primary-ink)] sm:text-xl">
             {post.title}
           </h3>
           {/*
@@ -151,7 +151,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
             in a summary is the usual cause of horizontal overflow at 320px.
           */}
           {post.type === "PRODUCT" ? (
-            <p className="mt-2 text-2xl font-black tracking-tight text-[color:var(--px-primary)]">
+            <p className="mt-2 text-2xl font-black tracking-tight text-[color:var(--px-primary-ink)]">
               {formatBudgetRange(post.budgetMinMinor, post.budgetMaxMinor, post.currency)}
             </p>
           ) : null}
@@ -211,7 +211,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
               <PostedTime value={post.publishedAt} />
             </span>
           </div>
-          <span className={`font-black text-[color:var(--px-primary)] ${post.type === "PRODUCT" ? "sr-only" : ""}`}>
+          <span className={`font-black text-[color:var(--px-primary-ink)] ${post.type === "PRODUCT" ? "sr-only" : ""}`}>
             {formatBudgetRange(
               post.budgetMinMinor,
               post.budgetMaxMinor,
@@ -236,7 +236,7 @@ export function FeedPostCard(props: FeedPostCardProps) {
             />
           )}
           <Link
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)] hover:text-[color:var(--px-primary)]"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-bold text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)] hover:text-[color:var(--px-primary-ink)]"
             href={`${detailHref}#respond-to-listing`}
           >
             <MessageCircleQuestion aria-hidden size={17} />

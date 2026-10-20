@@ -136,3 +136,32 @@ test("primary mobile navigation actions meet the touch-target minimum", async ({
     await page.close();
   }
 });
+
+test("Home Explore all has readable foreground/background in dark mode on a phone", async ({ browser }) => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await signIn(page, "alice-test@ptahx.test");
+    await page.goto(`${BASE}/app`);
+    await page.waitForLoadState("domcontentloaded");
+    const chip = page.getByRole("link", { name: "Explore all" });
+    await chip.waitFor({ state: "visible" });
+    await page.evaluate(() => document.documentElement.classList.add("dark"));
+    const colours = await chip.evaluate((element) => {
+      const styles = getComputedStyle(element);
+      return { color: styles.color, background: styles.backgroundColor };
+    });
+    expect(colours.color).toBe("rgb(9, 37, 84)");
+    expect(colours.background).toBe("rgb(255, 255, 255)");
+    await chip.hover();
+    const hover = await chip.evaluate((element) => {
+      const styles = getComputedStyle(element);
+      return { color: styles.color, background: styles.backgroundColor };
+    });
+    expect(hover.color).toBe("rgb(9, 37, 84)");
+    expect(hover.background).toBe("rgb(229, 239, 255)");
+    await chip.click();
+    await expect(page).toHaveURL(/\/app\/discover/);
+  } finally {
+    await page.close();
+  }
+});

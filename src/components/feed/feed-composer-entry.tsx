@@ -36,7 +36,7 @@ export function FeedComposerEntry({
           </span>
         )}
         <Link
-          className="flex min-h-11 min-w-0 flex-1 items-center rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-muted)] px-4 text-left text-sm text-[color:var(--px-text-muted)] transition hover:border-[color:var(--px-primary)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+          className="flex min-h-11 min-w-0 flex-1 items-center rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-muted)] px-4 text-left text-sm font-medium text-[color:var(--px-text)] transition hover:border-[color:var(--px-primary)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
           href="/app/posts/new"
         >
           <span className="truncate">What&rsquo;s happening, {firstName}?</span>
@@ -70,7 +70,7 @@ function ComposerAction({
 }) {
   return (
     <Link
-      className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--px-radius-sm)] px-3 text-sm font-bold text-[color:var(--px-text-muted)] transition hover:bg-[color:var(--px-muted)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+      className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-[var(--px-radius-sm)] px-3 text-sm font-bold text-[color:var(--px-text)] transition hover:bg-[color:var(--px-primary-soft)] hover:text-[color:var(--px-primary-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
       href={href}
     >
       {icon}

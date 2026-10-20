@@ -62,7 +62,7 @@ export function HomeFeedView({
             <span className="truncate">Search products, services and more</span>
           </Link>
           <nav aria-label="Explore categories" className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
-            <Link className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full bg-white px-3 text-xs font-black text-[#092554] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/app/discover">
+            <Link className="ptahx-discovery-all inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-xs font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/app/discover">
               Explore all
             </Link>
             <Link className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" href="/app/discover?type=PRODUCT">
@@ -189,7 +189,7 @@ function ProfileCompletionCard({ value }: { value: number }) {
         />
       </div>
       <Link
-        className="mt-4 inline-flex min-h-10 items-center text-sm font-bold text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"
+        className="mt-4 inline-flex min-h-10 items-center text-sm font-bold text-[color:var(--px-primary-ink)] hover:text-[color:var(--px-primary-strong)]"
         href="/app/profile/edit"
       >
         Update profile
