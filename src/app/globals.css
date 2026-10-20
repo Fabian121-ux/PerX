@@ -458,13 +458,13 @@ a {
 
   .ptahx-icon-tile {
     background: var(--px-primary-soft);
-    color: var(--px-primary);
+    color: var(--px-primary-ink);
     border-radius: 16px;
   }
 
   .ptahx-soft-tile {
     background: var(--px-surface-soft);
-    color: var(--px-primary);
+    color: var(--px-primary-ink);
   }
 
   .ptahx-gold-soft {

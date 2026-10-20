@@ -17,8 +17,8 @@ type Position = { x: number; y: number };
 
 export function clampInstallFabPosition(position: Position, width: number, height: number): Position {
   return {
-    x: Math.max(EDGE, Math.min(width - SIZE - EDGE, position.x)),
-    y: Math.max(TOP_CLEARANCE, Math.min(height - SIZE - BOTTOM_CLEARANCE, position.y)),
+    x: Math.max(EDGE, Math.min(Math.max(EDGE, width - SIZE - EDGE), position.x)),
+    y: Math.max(EDGE, Math.min(Math.max(EDGE, height - SIZE - BOTTOM_CLEARANCE), Math.max(Math.min(TOP_CLEARANCE, height - SIZE - EDGE), position.y))),
   };
 }
 
@@ -28,6 +28,7 @@ function firstPosition(): Position {
   try {
     const saved = JSON.parse(localStorage.getItem(INSTALL_FAB_POSITION_KEY) || "null") as unknown;
     if (saved && typeof saved === "object" && "x" in saved && "y" in saved &&
+      typeof saved.x === "number" && typeof saved.y === "number" &&
       Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
       return clampInstallFabPosition({ x: Number(saved.x), y: Number(saved.y) }, width, height);
     }
