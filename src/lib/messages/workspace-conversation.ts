@@ -11,7 +11,6 @@ type PreviewConversationLike = {
   id: string;
   lastMessage?: string;
   messages: {
-    attachments?: { id: string; filename: string; status: string }[];
     body: string;
     createdAt: string;
     id: string;
@@ -36,6 +35,7 @@ type DbConversationLike = {
   }[];
   id: string;
   messages: {
+    attachments?: { id: string; filename: string; status: string }[];
     body: string;
     createdAt: Date;
     deletedAt?: Date | null;
