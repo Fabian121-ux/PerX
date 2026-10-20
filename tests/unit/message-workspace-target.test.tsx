@@ -660,6 +660,8 @@ describe("message workspace exact targets", () => {
     );
 
     fireEvent.click(view.getByRole("button", { name: "Make a Deal" }));
+    expect(view.getByRole("dialog", { name: "Deal room" })).toBeTruthy();
+    fireEvent.click(view.getByRole("button", { name: /Draft and submit locked terms/ }));
     expect(view.getByRole("dialog", { name: "Make a Deal" })).toBeTruthy();
     expect(
       view.getByText(/A Deal is created only if the other participant accepts/),
@@ -674,9 +676,10 @@ describe("message workspace exact targets", () => {
 
     const composer = view.getByLabelText("Message");
     fireEvent.change(composer, { target: { value: " @DEAL " } });
-    fireEvent.keyDown(composer, { ctrlKey: true, key: "Enter" });
-    expect(view.getByRole("dialog", { name: "Make a Deal" })).toBeTruthy();
+    expect(view.getByRole("dialog", { name: "Deal room" })).toBeTruthy();
     expect(mocks.sendMessageAction).not.toHaveBeenCalled();
+    fireEvent.click(view.getByRole("button", { name: /Draft and submit locked terms/ }));
+    expect(view.getByRole("dialog", { name: "Make a Deal" })).toBeTruthy();
 
     fireEvent.change(view.getByLabelText("Agreement amount (NGN)"), {
       target: { value: "250000" },
@@ -729,6 +732,7 @@ describe("message workspace exact targets", () => {
     const composer = view.getByLabelText("Message") as HTMLTextAreaElement;
     fireEvent.change(composer, { target: { value: "A separate chat draft" } });
     fireEvent.click(view.getByRole("button", { name: "Make a Deal" }));
+    fireEvent.click(view.getByRole("button", { name: /Draft and submit locked terms/ }));
     fireEvent.change(view.getByLabelText("Agreement amount (NGN)"), {
       target: { value: "250000" },
     });

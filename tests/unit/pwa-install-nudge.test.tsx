@@ -48,6 +48,7 @@ describe("Install PtahX pop-up and floating affordance", () => {
     act(() => vi.advanceTimersByTime(1));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Maybe later" }));
+    act(() => vi.advanceTimersByTime(0));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Install PtahX app/ })).toBeInTheDocument();
     expect(localStorage.getItem(INSTALL_STATE_KEY)).not.toBeNull();
@@ -58,6 +59,7 @@ describe("Install PtahX pop-up and floating affordance", () => {
     signalNativeInstall();
     act(() => vi.advanceTimersByTime(INSTALL_INITIAL_DELAY_MS + 2000));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(0));
     fireEvent.click(screen.getByRole("button", { name: /Install PtahX app/ }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
