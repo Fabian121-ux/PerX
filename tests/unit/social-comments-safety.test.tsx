@@ -41,7 +41,7 @@ describe("social comment safety", () => {
         <SocialCommentsList comments={comments} postId="post-1" viewerId="me" />
       </FeedbackProvider>,
     );
-    expect(screen.getByRole("link", { name: "Link to comment by Ada" })).toHaveAttribute(
+    expect(screen.getAllByRole("link", { name: "Link to comment by Ada" })[0]).toHaveAttribute(
       "href", "/posts/post-1#comment-comment-1",
     );
     const menus = screen.getAllByRole("button", { name: "More options for Ada" });
