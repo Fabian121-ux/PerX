@@ -36,7 +36,9 @@ describe("private chat image validation and storage", () => {
   });
 
   it("does not produce public URLs or expose storage secrets to clients", async () => {
-    const mockedFetch = vi.fn().mockResolvedValue({ ok: true });
+    const mockedFetch = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ public: false }) })
+      .mockResolvedValueOnce({ ok: true });
     vi.stubGlobal("fetch", mockedFetch);
     const name = await uploadMessageImage({
       file: file("photo.jpg","image/jpeg",[255,216,255,0]),
@@ -54,4 +56,17 @@ describe("private chat image validation and storage", () => {
     }));
     expect(name).not.toContain("server-secret");
   });
+  it("fails closed without uploading into a mistakenly public bucket", async () => {
+    const mockedFetch = vi.fn().mockResolvedValueOnce({
+      ok: true, json: async () => ({ public: true }),
+    });
+    vi.stubGlobal("fetch", mockedFetch);
+    await expect(uploadMessageImage({
+      file: file("private.png", "image/png", [137,80,78,71,13,10,26,10]),
+      extension: "png", conversationId: "c123", userId: "u456",
+    })).rejects.toThrow("private Storage bucket");
+    expect(mockedFetch).toHaveBeenCalledTimes(1);
+    expect(mockedFetch).not.toHaveBeenCalledWith(expect.stringContaining("/object/"), expect.anything());
+  });
+
 });
