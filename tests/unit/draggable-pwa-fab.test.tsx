@@ -6,6 +6,7 @@ import {
   clampInstallFabPosition,
   DraggableInstallButton,
   INSTALL_FAB_POSITION_KEY,
+  isInstallFabObscuredTarget,
 } from "@/components/pwa/draggable-install-button";
 
 beforeEach(() => {
@@ -52,4 +53,74 @@ describe("small draggable PtahX PWA install affordance", () => {
     expect(JSON.parse(localStorage.getItem(INSTALL_FAB_POSITION_KEY) || "{}")).toHaveProperty("x", x - 20);
     expect(onOpen).not.toHaveBeenCalled();
   });
+  it("hides while editing any text field, then restores the draggable shortcut", () => {
+    const onOpen = vi.fn();
+    render(
+      <>
+        <input aria-label="Search people" />
+        <textarea aria-label="Write a post" />
+        <div role="textbox" tabIndex={0} aria-label="Compose rich text" />
+        <DraggableInstallButton onOpen={onOpen} />
+      </>,
+    );
+    act(() => vi.advanceTimersByTime(0));
+    const fab = () => screen.queryByRole("button", { name: /Install PtahX app/ });
+    expect(fab()).toBeInTheDocument();
+
+    const input = screen.getByRole("textbox", { name: "Search people" });
+    act(() => input.focus());
+    expect(fab()).not.toBeInTheDocument();
+
+    const editor = screen.getByRole("textbox", { name: "Compose rich text" });
+    act(() => editor.focus());
+    act(() => vi.advanceTimersByTime(0));
+    expect(fab()).not.toBeInTheDocument();
+
+    act(() => (editor as HTMLElement).blur());
+    act(() => vi.advanceTimersByTime(0));
+    expect(fab()).toBeInTheDocument();
+    fireEvent.click(fab()!);
+    expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it("temporarily hides during scrolling so feed content stays readable", () => {
+    render(<DraggableInstallButton onOpen={vi.fn()} />);
+    act(() => vi.advanceTimersByTime(0));
+    expect(screen.getByRole("button", { name: /Install PtahX app/ })).toBeInTheDocument();
+    act(() => fireEvent.scroll(window));
+    expect(screen.queryByRole("button", { name: /Install PtahX app/ })).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(849));
+    expect(screen.queryByRole("button", { name: /Install PtahX app/ })).not.toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1));
+    expect(screen.getByRole("button", { name: /Install PtahX app/ })).toBeInTheDocument();
+  });
+
+  it("preserves the preferred position when the soft keyboard shrinks the viewport", () => {
+    render(<DraggableInstallButton onOpen={vi.fn()} />);
+    act(() => vi.advanceTimersByTime(0));
+    const fab = screen.getByRole("button", { name: /Install PtahX app/ });
+    fireEvent.keyDown(fab, { key: "ArrowLeft" });
+    const selectedX = Number.parseFloat(fab.style.left);
+    const selectedY = Number.parseFloat(fab.style.top);
+    const savedPosition = localStorage.getItem(INSTALL_FAB_POSITION_KEY);
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 220 });
+    Object.defineProperty(window, "innerHeight", { configurable: true, value: 380 });
+    act(() => fireEvent(window, new Event("resize")));
+    expect(Number.parseFloat(fab.style.left)).toBeLessThan(selectedX);
+    expect(localStorage.getItem(INSTALL_FAB_POSITION_KEY)).toBe(savedPosition);
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
+    Object.defineProperty(window, "innerHeight", { configurable: true, value: 844 });
+    act(() => fireEvent(window, new Event("resize")));
+    expect(Number.parseFloat(fab.style.left)).toBe(selectedX);
+    expect(Number.parseFloat(fab.style.top)).toBe(selectedY);
+  });
+
+  it("identifies editable surfaces but not ordinary feed text", () => {
+    const input = document.createElement("input");
+    const text = document.createElement("p");
+    text.textContent = "Feed";
+    expect(isInstallFabObscuredTarget(input)).toBe(true);
+    expect(isInstallFabObscuredTarget(text)).toBe(false);
+  });
+
 });
