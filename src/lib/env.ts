@@ -27,6 +27,9 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   SUPABASE_AVATAR_BUCKET: z.string().min(1).default("profile-images"),
   SUPABASE_LISTING_BUCKET: z.string().min(1).default("listing-images"),
+  // This bucket MUST remain private; chat image bytes are served only by the
+  // application after authorization, never through a public Storage URL.
+  SUPABASE_MESSAGE_BUCKET: z.string().min(1).default("message-images"),
   SESSION_COOKIE_NAME: z.string().min(1).default("ptahx_session"),
   AUTH_SESSION_DAYS: z.coerce.number().int().min(1).max(120).default(30),
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
