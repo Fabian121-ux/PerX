@@ -832,3 +832,21 @@ fieldset {
 :root[data-ptahx-keyboard="open"] .first-run-guide-launcher {
   display: none !important;
 }
+
+
+/*
+ * Narrow-screen form containment.
+ * Grid and flex children default to min-width:auto; a long value, validation
+ * message or input wrapper can otherwise force the page wider than its
+ * viewport. Keep controls and their form containers shrinkable on touch
+ * screens without changing desktop sizing.
+ */
+:where(form, fieldset, .dashboard-main, .dashboard-content) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), textarea, select) {
+  min-width: 0;
+  max-width: 100%;
+}
