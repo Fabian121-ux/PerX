@@ -849,6 +849,8 @@ fieldset {
 /* Never cover the immersive conversation composer or the software keyboard. */
 .ptahx-mobile-conversation-active .ptahx-guide-card,
 .ptahx-mobile-conversation-active .ptahx-guide-launcher,
+.ptahx-mobile-conversation-route .ptahx-guide-card,
+.ptahx-mobile-conversation-route .ptahx-guide-launcher,
 .ptahx-distraction-free-active .ptahx-guide-card,
 .ptahx-distraction-free-active .ptahx-guide-launcher,
 :root[data-ptahx-keyboard="open"] .ptahx-guide-card,
