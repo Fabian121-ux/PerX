@@ -60,7 +60,7 @@ export function AppShell({
       document.documentElement.classList.remove("ptahx-distraction-free-active");
       document.documentElement.classList.remove("ptahx-mobile-conversation-route");
     };
-  }, [distractionFreeCreate]);
+  }, [distractionFreeCreate, directMessageConversation]);
 
   useEffect(() => {
     let stopped = false;
