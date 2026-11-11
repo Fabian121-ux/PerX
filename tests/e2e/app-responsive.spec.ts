@@ -13,6 +13,7 @@ const ROUTES = [
   { name: "messages", path: "/app/messages" },
   { name: "notifications", path: "/app/notifications" },
   { name: "discover", path: "/app/discover" },
+  { name: "connections", path: "/app/connections" },
   { name: "settings", path: "/app/settings" },
   { name: "profile edit", path: "/app/profile/edit" },
 ] as const;
@@ -116,6 +117,57 @@ for (const width of WIDTHS) {
     }
   });
 }
+
+
+test("Connections guide is page-aware and can be tucked into the corner", async ({ browser }) => {
+  const page = await browser.newPage({ viewport: { width: 360, height: 780 } });
+  try {
+    await signIn(page, "alice-test@ptahx.test", { resetOnboarding: true });
+    await page.goto(`${BASE}/app/connections?tab=discover`);
+    await page.waitForLoadState("domcontentloaded");
+
+    await expect(
+      page.getByRole("heading", { name: "A good place to start." }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: /take the quick tour/i }).click();
+
+    const guide = page.getByRole("region", {
+      name: "preX getting started guide",
+    });
+    await expect(guide.getByRole("heading", { name: "Connections" })).toBeVisible();
+    await expect(guide.getByText(/You’re currently on/)).toBeVisible();
+    await expect(
+      guide.getByRole("link", { name: "Messages", exact: true }),
+    ).toHaveAttribute("href", "/app/messages");
+    await expect(
+      guide.getByText(/potential clients, customers, co-founders/),
+    ).toBeVisible();
+    
+    await guide.dispatchEvent("pointerdown", {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+    });
+    await page.waitForTimeout(850);
+    await guide.dispatchEvent("pointerup", {
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+    });
+    await expect(guide).toHaveCount(0);
+
+    const compactGuide = page.getByRole("button", {
+      name: "Expand the getting started guide",
+    });
+    await expect(compactGuide).toBeVisible();
+    const compactBounds = await compactGuide.boundingBox();
+    expect(compactBounds?.width ?? 0).toBeLessThanOrEqual(48);
+    await compactGuide.click();
+    await expect(guide.getByRole("heading", { name: "Connections" })).toBeVisible();
+  } finally {
+    await page.close();
+  }
+});
 
 test("primary mobile navigation actions meet the touch-target minimum", async ({
   browser,
