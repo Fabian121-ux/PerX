@@ -13,6 +13,8 @@ The connected Supabase project is `perx` (`qtmvausduxiqcguckfql`), healthy in `e
 - `public."PasswordResetToken"`: 15 records
 - `auth.users`: 0 records
 
+A separate read-only query against `public."_prisma_migrations"` found 20 completed, non-rolled-back Prisma migrations, with the latest finished at 2026-10-01 18:00:44 UTC. This confirms the database has Prisma-managed migration history even though the Supabase connector's own CLI migration listing is a separate inventory. No migration was applied by this work.
+
 The app's current sign-in code authenticates against the Prisma `User` model and its `passwordHash`, and its cookie sessions are checked against the Prisma `Session` model. The password recovery flow issues records in `PasswordResetToken`, hashes token values before storage, expires grants after 30 minutes, and atomically consumes a token to prevent a second redemption. This is a **custom application authentication system**, not Supabase Auth.
 
 **Do not wire `supabase.auth.resetPasswordForEmail()` into the existing password-recovery screen as a shortcut.** It would query the separate Supabase Auth user store, which currently contains zero users, and would not update `public."User".passwordHash`. Moving the existing users to Supabase Auth is a separate authentication migration and needs an explicit account migration/re-enrolment plan.
