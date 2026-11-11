@@ -86,12 +86,11 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const dismissedRef = useRef(!showWelcome);
-  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [welcomeOpen, setWelcomeOpen] = useState(showWelcome);
   const [guideOpen, setGuideOpen] = useState(false);
   const [stepOverride, setStepOverride] = useState<number | null>(null);
   const [overridePath, setOverridePath] = useState<string | null>(null);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [pending, startTransition] = useTransition();
 
   const currentStepIndex = getCurrentStepIndex(pathname);
@@ -142,21 +141,6 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
     router.push("/app/messages");
   }
 
-  function clearHoldTimer() {
-    if (holdTimerRef.current) {
-      clearTimeout(holdTimerRef.current);
-      holdTimerRef.current = null;
-    }
-  }
-
-  function beginLongPress() {
-    clearHoldTimer();
-    holdTimerRef.current = setTimeout(() => {
-      setGuideOpen(false);
-      setCollapsed(true);
-    }, 700);
-  }
-
   function expandGuide() {
     setCollapsed(false);
     setGuideOpen(true);
@@ -165,8 +149,8 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
   }
 
   function closeGuide() {
-    clearHoldTimer();
     setGuideOpen(false);
+    setCollapsed(true);
     setStepOverride(null);
     setOverridePath(null);
   }
@@ -293,17 +277,14 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
           aria-label="preX getting started guide"
           aria-live="polite"
           className="ptahx-guide-card fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+1rem)] right-3 z-[56] grid max-h-[min(62dvh,30rem)] w-[min(23rem,calc(100vw-1.5rem))] gap-4 overflow-y-auto rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4 text-[color:var(--px-text)] shadow-2xl sm:right-5 sm:p-5 lg:bottom-6 lg:right-6"
-          onPointerDown={beginLongPress}
-          onPointerUp={clearHoldTimer}
-          onPointerCancel={clearHoldTimer}
-          onPointerLeave={clearHoldTimer}
         >
           <div className="flex min-w-0 items-center justify-between gap-3">
             <p className="min-w-0 text-xs font-bold uppercase tracking-[0.12em] text-[color:var(--px-primary-ink)]">
               Page guide · {activeStepIndex + 1} of {STEPS.length}
             </p>
             <button
-              aria-label="Close guide"
+              aria-label="Tuck guide into corner"
+              title="Hide guide"
               className="grid size-10 shrink-0 place-items-center rounded-lg text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
               onClick={closeGuide}
               type="button"
@@ -398,10 +379,6 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
             </div>
           </div>
 
-          <p className="border-t border-[color:var(--px-border)] pt-3 text-center text-[11px] leading-5 text-[color:var(--px-text-muted)]">
-            Tip: press and hold this guide to tuck it into the corner. Tap the
-            arrow to bring it back.
-          </p>
         </section>
       ) : null}
     </>
