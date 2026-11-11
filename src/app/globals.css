@@ -798,40 +798,6 @@ fieldset {
   }
 }
 
-/* First-run tour: one small transform/opacity animation, no animated backdrop. */
-.first-run-guide,
-.first-run-welcome {
-  animation: ptahx-guide-enter 180ms ease-out both;
-}
-
-@keyframes ptahx-guide-enter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.first-run-welcome {
-  animation-name: ptahx-welcome-enter;
-}
-
-@keyframes ptahx-welcome-enter {
-  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); }
-  to { opacity: 1; transform: translate(-50%, -50%); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .first-run-guide,
-  .first-run-welcome {
-    animation: none;
-  }
-}
-
-/* Floating help should never cover the conversation composer or keyboard. */
-.ptahx-mobile-conversation-active .first-run-guide,
-.ptahx-mobile-conversation-active .first-run-guide-launcher,
-.ptahx-distraction-free-active .first-run-guide-launcher,
-:root[data-ptahx-keyboard="open"] .first-run-guide-launcher {
-  display: none !important;
-}
 
 
 /*
@@ -849,4 +815,43 @@ fieldset {
 :where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), textarea, select) {
   min-width: 0;
   max-width: 100%;
+}
+
+
+/* Lightweight, touch-friendly first-run guide with a single entrance motion. */
+.ptahx-guide-card,
+.ptahx-guide-launcher {
+  animation: ptahx-guide-enter 180ms ease-out both;
+}
+
+.ptahx-welcome-dialog {
+  animation: ptahx-welcome-enter 180ms ease-out both;
+}
+
+@keyframes ptahx-guide-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ptahx-welcome-enter {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ptahx-guide-card,
+  .ptahx-guide-launcher,
+  .ptahx-welcome-dialog {
+    animation: none;
+  }
+}
+
+/* Never cover the immersive conversation composer or the software keyboard. */
+.ptahx-mobile-conversation-active .ptahx-guide-card,
+.ptahx-mobile-conversation-active .ptahx-guide-launcher,
+.ptahx-distraction-free-active .ptahx-guide-card,
+.ptahx-distraction-free-active .ptahx-guide-launcher,
+:root[data-ptahx-keyboard="open"] .ptahx-guide-card,
+:root[data-ptahx-keyboard="open"] .ptahx-guide-launcher {
+  display: none !important;
 }
