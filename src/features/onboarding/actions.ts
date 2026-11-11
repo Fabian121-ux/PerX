@@ -24,22 +24,3 @@ export async function dismissOnboardingChecklistAction() {
   revalidatePath("/app");
 }
 
-
-/** Persist the first-run welcome/tour dismissal for this account. */
-export async function dismissFirstRunGuideAction() {
-  const user = await requireUser();
-
-  await getPrisma().user.update({
-    data: { onboardingDismissedAt: new Date() },
-    where: { id: user.id },
-  });
-
-  await writeAuditLog({
-    actorId: user.id,
-    action: "onboarding.first_run_guide_dismissed",
-    entityId: user.id,
-    entityType: "user",
-  });
-
-  revalidatePath("/app");
-}
