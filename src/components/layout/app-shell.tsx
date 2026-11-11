@@ -50,8 +50,16 @@ export function AppShell({
       "ptahx-distraction-free-active",
       distractionFreeCreate,
     );
-    return () =>
+    // The guide is a sibling of the shell so conversation state must be
+    // exposed at the document root for the guide's occlusion rule to apply.
+    document.documentElement.classList.toggle(
+      "ptahx-mobile-conversation-route",
+      directMessageConversation,
+    );
+    return () => {
       document.documentElement.classList.remove("ptahx-distraction-free-active");
+      document.documentElement.classList.remove("ptahx-mobile-conversation-route");
+    };
   }, [distractionFreeCreate]);
 
   useEffect(() => {
