@@ -217,7 +217,7 @@ export function FirstRunGuide({
       ) : dismissed ? (
         <button
           aria-label="Open PtahX guide"
-          className="fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+0.75rem)] right-3 z-[64] inline-flex min-h-11 items-center gap-2 rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 text-sm font-semibold text-[color:var(--px-text)] shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:bottom-5 sm:right-5"
+          className="first-run-guide-launcher fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+0.75rem)] right-3 z-[64] inline-flex min-h-11 items-center gap-2 rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 text-sm font-semibold text-[color:var(--px-text)] shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl sm:bottom-5 sm:right-5"
           onClick={() => setTourStep(0)}
           type="button"
         >
