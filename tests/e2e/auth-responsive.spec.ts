@@ -183,3 +183,35 @@ test("auth surfaces stay readable in dark mode", async ({ browser }) => {
     await page.close();
   }
 });
+
+
+test("auth inputs stay within the viewport and avoid mobile focus zoom", async ({ browser }) => {
+  for (const width of [320, 360, 390]) {
+    const page = await browser.newPage({ viewport: { width, height: 780 } });
+    try {
+      await page.goto(`${BASE}/sign-up`);
+      const controls = page.locator('form input:not([type="hidden"]):not([type="checkbox"]), form select, form textarea');
+      await expect(controls.first()).toBeVisible();
+      const boxes = await controls.evaluateAll((elements) =>
+        elements.map((element) => {
+          const rect = element.getBoundingClientRect();
+          return {
+            left: rect.left,
+            right: rect.right,
+            width: rect.width,
+            fontSize: Number.parseFloat(getComputedStyle(element).fontSize),
+          };
+        }),
+      );
+
+      for (const box of boxes) {
+        expect(box.width, `control has no width at ${width}px`).toBeGreaterThan(0);
+        expect(box.left, `control starts off-screen at ${width}px`).toBeGreaterThanOrEqual(-1);
+        expect(box.right, `control overflows at ${width}px`).toBeLessThanOrEqual(width + 1);
+        expect(box.fontSize, `mobile control font is too small at ${width}px`).toBeGreaterThanOrEqual(16);
+      }
+    } finally {
+      await page.close();
+    }
+  }
+});
