@@ -102,12 +102,12 @@ export default async function ConnectionsPage({
 
   return (
     <AppSection
-      description="Discover eligible PtahX members and manage connection requests in one place."
+      description="Find founders, partners, clients and other eligible members. Build your network and manage requests in one place."
       title="Connections"
     >
       <nav
         aria-label="Connection sections"
-        className="flex gap-2 overflow-x-auto border-b border-[color:var(--px-border)] pb-2"
+        className="grid min-w-0 grid-cols-2 gap-2 border-b border-[color:var(--px-border)] pb-3 sm:flex sm:flex-wrap"
         role="tablist"
       >
         {tabs.map((item) => {
@@ -117,10 +117,10 @@ export default async function ConnectionsPage({
             <Link
               aria-current={active ? "page" : undefined}
               aria-selected={active}
-              className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-t-[var(--px-radius-sm)] border-b-2 px-3 text-sm font-bold transition-colors ${
+              className={`inline-flex min-h-12 min-w-0 items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs font-bold leading-5 transition-colors sm:text-sm ${
                 active
-                  ? "border-[color:var(--px-primary)] text-[color:var(--px-primary)]"
-                  : "border-transparent text-[color:var(--px-text-muted)] hover:text-[color:var(--px-text)]"
+                  ? "border-[color:var(--px-primary)] bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)] sm:flex-none"
+                  : "border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text-muted)] hover:border-[color:var(--px-border-strong)] hover:text-[color:var(--px-text)] sm:flex-none"
               }`}
               href={buildConnectionsPath(
                 item.key,
@@ -129,18 +129,20 @@ export default async function ConnectionsPage({
               key={item.key}
               role="tab"
             >
-              <Icon aria-hidden size={17} />
-              {item.label}
+              <Icon aria-hidden className="shrink-0" size={17} />
+              <span className="min-w-0 break-words [overflow-wrap:anywhere]">
+                {item.label}
+              </span>
             </Link>
           );
         })}
       </nav>
 
       {tab === "discover" ? (
-        <Card>
+        <Card className="min-w-0 p-4 sm:p-5">
           <form
             action="/app/connections"
-            className="flex flex-col gap-3 sm:flex-row"
+            className="flex min-w-0 flex-col gap-3 sm:flex-row"
             role="search"
           >
             <input name="tab" type="hidden" value="discover" />
@@ -152,26 +154,29 @@ export default async function ConnectionsPage({
                 size={17}
               />
               <Input
-                className="pl-10"
+                className="min-w-0 pl-10"
                 defaultValue={q}
                 maxLength={80}
                 name="q"
                 placeholder="Search by name, username, or headline"
               />
             </label>
-            <Button type="submit" variant="secondary">
-              Search
-            </Button>
-            {q ? (
-              <ButtonLink
-                href={buildConnectionsPath("discover")}
-                variant="ghost"
-              >
-                Clear
-              </ButtonLink>
-            ) : null}
+            <div className="flex flex-wrap gap-2 sm:shrink-0">
+              <Button className="flex-1 sm:flex-none" type="submit" variant="secondary">
+                Search
+              </Button>
+              {q ? (
+                <ButtonLink
+                  className="flex-1 sm:flex-none"
+                  href={buildConnectionsPath("discover")}
+                  variant="ghost"
+                >
+                  Clear
+                </ButtonLink>
+              ) : null}
+            </div>
           </form>
-          <p className="mt-3 text-xs text-[color:var(--px-text-muted)]">
+          <p className="mt-3 text-xs leading-5 text-[color:var(--px-text-muted)]">
             Showing up to {CONNECTION_DISCOVER_LIMIT} eligible results. Refine
             your search to find a specific person.
           </p>
@@ -179,7 +184,7 @@ export default async function ConnectionsPage({
       ) : null}
 
       {entries.length ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {entries.map((entry) => (
             <ConnectionCard
               entry={entry}
@@ -196,29 +201,35 @@ export default async function ConnectionsPage({
 
 function ConnectionCard({ entry }: { entry: NetworkEntry }) {
   return (
-    <Card className="flex min-h-full flex-col gap-4">
-      <div className="flex items-start gap-3">
+    <Card className="flex h-full min-w-0 flex-col gap-4 overflow-hidden p-4 sm:p-5">
+      <div className="flex min-w-0 items-start gap-3">
         <Avatar entry={entry} />
         <div className="min-w-0 flex-1">
           <Link
-            className="block truncate font-bold text-[color:var(--px-text)] hover:underline"
+            className="block whitespace-normal break-words font-bold leading-5 text-[color:var(--px-text)] hover:underline [overflow-wrap:anywhere]"
             href={`/u/${entry.username}`}
           >
             {entry.name}
           </Link>
-          <p className="truncate text-sm font-semibold text-[color:var(--px-text-muted)]">
+          <p className="mt-1 break-all text-xs font-semibold text-[color:var(--px-text-muted)] sm:text-sm">
             @{entry.username}
           </p>
-          <p className="mt-1 line-clamp-2 text-sm leading-6 text-[color:var(--px-text-muted)]">
-            {entry.headline}
-          </p>
+          {entry.headline ? (
+            <p className="mt-2 line-clamp-3 break-words text-sm leading-5 text-[color:var(--px-text-muted)] [overflow-wrap:anywhere]">
+              {entry.headline}
+            </p>
+          ) : (
+            <p className="mt-2 text-sm text-[color:var(--px-text-muted)]">
+              preX member
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="mt-auto flex flex-wrap items-center gap-2">
+      <div className="mt-auto flex min-w-0 flex-wrap items-center gap-2 border-t border-[color:var(--px-border)] pt-3 [&>form]:min-w-0">
         {entry.relationship === "BLOCKED" ? (
           <>
-            <p className="text-xs font-semibold text-[color:var(--px-text-muted)]">
+            <p className="mr-auto text-xs font-semibold text-[color:var(--px-text-muted)]">
               Blocked {entry.blockedAt?.toLocaleDateString() ?? ""}
             </p>
             <ButtonLink href={`/u/${entry.username}`} size="sm" variant="ghost">
@@ -256,16 +267,17 @@ function ConnectionCard({ entry }: { entry: NetworkEntry }) {
                 type="submit"
                 variant="outline"
               >
-                <ShieldBan aria-hidden className="mr-1.5" size={14} />
+                <ShieldBan aria-hidden className="mr-1.5 shrink-0" size={14} />
                 {CONNECTION_COPY.block}
               </PendingSubmitButton>
             </form>
             <ButtonLink
+              className="min-w-0"
               href={`/app/reports/new?targetType=USER&targetId=${encodeURIComponent(entry.id)}`}
               size="sm"
               variant="ghost"
             >
-              <Flag aria-hidden className="mr-1.5" size={14} />
+              <Flag aria-hidden className="mr-1.5 shrink-0" size={14} />
               {CONNECTION_COPY.report}
             </ButtonLink>
           </>
@@ -280,7 +292,7 @@ function RelationshipActions({ entry }: { entry: NetworkEntry }) {
   if (entry.relationship === "CONNECTED" && entry.connectionId) {
     return (
       <>
-        <span className="inline-flex min-h-9 items-center rounded-[var(--px-radius-sm)] bg-green-50 px-3 text-xs font-black text-green-800">
+        <span className="inline-flex min-h-9 max-w-full items-center rounded-[var(--px-radius-sm)] bg-green-50 px-3 text-xs font-black text-green-800">
           {getConnectedLabel(entry.isPartner)}
         </span>
         {entry.canMessage ? (
@@ -295,7 +307,7 @@ function RelationshipActions({ entry }: { entry: NetworkEntry }) {
               size="sm"
               type="submit"
             >
-              <MessageCircle aria-hidden className="mr-1.5" size={14} />
+              <MessageCircle aria-hidden className="mr-1.5 shrink-0" size={14} />
               {CONNECTION_COPY.message}
             </PendingSubmitButton>
           </form>
@@ -358,7 +370,7 @@ function RelationshipActions({ entry }: { entry: NetworkEntry }) {
   if (entry.relationship === "PENDING_OUTGOING" && entry.connectionId) {
     return (
       <>
-        <span className="inline-flex min-h-9 items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary-soft)] px-3 text-xs font-black text-[color:var(--px-primary)]">
+        <span className="inline-flex min-h-9 max-w-full items-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary-soft)] px-3 text-xs font-black text-[color:var(--px-primary)]">
           {CONNECTION_COPY.requestSent}
         </span>
         <form
@@ -394,7 +406,7 @@ function RelationshipActions({ entry }: { entry: NetworkEntry }) {
         size="sm"
         type="submit"
       >
-        <UserRoundPlus aria-hidden className="mr-1.5" size={14} />
+        <UserRoundPlus aria-hidden className="mr-1.5 shrink-0" size={14} />
         {CONNECTION_COPY.connect}
       </PendingSubmitButton>
     </form>
@@ -410,7 +422,7 @@ function Avatar({ entry }: { entry: NetworkEntry }) {
     .toUpperCase();
 
   return (
-    <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-[color:var(--px-primary)] font-black text-white">
+    <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-[color:var(--px-primary)] font-black text-white">
       {entry.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
