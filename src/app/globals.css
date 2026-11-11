@@ -772,3 +772,55 @@ input[type="password"]::-ms-clear {
     animation: none;
   }
 }
+
+
+/*
+ * Touch form hardening: prevent min-content sizing from forcing a grid/flex
+ * column wider than the viewport, and use a 16px control font on phones to
+ * avoid iOS Safari's automatic focus zoom.
+ */
+.dashboard-content,
+.dashboard-content > *,
+form,
+fieldset {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 639px) {
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) {
+    font-size: 16px;
+  }
+}
+
+/* First-run tour: one small transform/opacity animation, no animated backdrop. */
+.first-run-guide,
+.first-run-welcome {
+  animation: ptahx-guide-enter 180ms ease-out both;
+}
+
+@keyframes ptahx-guide-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.first-run-welcome {
+  animation-name: ptahx-welcome-enter;
+}
+
+@keyframes ptahx-welcome-enter {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .first-run-guide,
+  .first-run-welcome {
+    animation: none;
+  }
+}
