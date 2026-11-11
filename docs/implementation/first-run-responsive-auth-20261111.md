@@ -3,8 +3,8 @@
 ## Implemented in this branch
 
 - First authenticated visit receives a welcome dialog.
-- The welcome dialog offers a lightweight four-step workspace tour or a direct route to Messages.
-- The tour can be reopened from a small Guide launcher, and the dismissal is stored on the authenticated user's existing `onboardingDismissedAt` field.
+- The welcome dialog offers a lightweight five-step workspace tour (Home, Discover, Messages, Deals, Settings) or a direct route to Messages.
+- The tour can be reopened from a small Guide launcher, and dismissal is stored on the authenticated user's existing `onboardingDismissedAt` field.
 - No fake system chat message is inserted. The welcome is an in-app dialog; Messages is a real navigation destination.
 - Form controls and their wrappers are constrained to their parent width. Mobile input/select/textarea font size is at least 16px to avoid iOS Safari focus zoom. Reduced-motion users do not get the guide entrance animation.
 - Responsive end-to-end coverage checks for horizontal overflow and touch-control bounds at 320px, 360px and 390px.
