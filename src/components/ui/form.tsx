@@ -87,7 +87,7 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       className={cn(
-        "min-h-11 w-full min-w-0 rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)] shadow-sm outline-none transition focus:border-[color:var(--px-focus)] focus:ring-2 focus:ring-[color:var(--px-focus)]/25 disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-[color:var(--px-error)] aria-invalid:ring-2 aria-invalid:ring-red-500/20",
+        "min-h-11 w-full min-w-0 max-w-full rounded-[var(--px-radius-sm)] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-3 py-2 text-sm text-[color:var(--px-text)] shadow-sm outline-none transition focus:border-[color:var(--px-focus)] focus:ring-2 focus:ring-[color:var(--px-focus)]/25 disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-[color:var(--px-error)] aria-invalid:ring-2 aria-invalid:ring-red-500/20",
         className,
       )}
       {...selectProps}
