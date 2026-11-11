@@ -5,63 +5,112 @@ import {
   ArrowLeft,
   ArrowRight,
   BriefcaseBusiness,
+  ChevronLeft,
   Compass,
+  LifeBuoy,
   MessageCircle,
+  Network,
   Settings2,
   Sparkles,
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { dismissOnboardingChecklistAction } from "@/features/onboarding/actions";
 
 const STEPS = [
   {
-    title: "Your home feed",
-    body: "Catch up on updates from founders, members and the wider startup ecosystem. Your feed is the starting point for activity.",
+    title: "Home",
+    body: "You’re on Home. This is your main feed: share updates, follow what founders are building and keep up with activity across the startup ecosystem.",
     href: "/app",
-    action: "Open home",
+    action: "Open Home",
     icon: Compass,
   },
   {
-    title: "Discover opportunities",
-    body: "Explore people, startups, services and opportunities. Use discovery to find relevant connections and openings.",
+    title: "Discover",
+    body: "Explore startups, opportunities, services and people. Use filters and search to find relevant openings and organisations.",
     href: "/app/discover",
-    action: "Explore discovery",
+    action: "Explore Discover",
     icon: Compass,
   },
   {
-    title: "Messages and conversations",
-    body: "Start a conversation, ask questions and discuss opportunities. Eligible conversations also give you access to Deal tools.",
+    title: "Connections",
+    body: "Meet founders, potential clients, customers, co-founders and ecosystem partners. Send connection requests; once a request is accepted, you can message eligible members.",
+    href: "/app/connections",
+    action: "Open Connections",
+    icon: Network,
+  },
+  {
+    title: "Messages",
+    body: "Continue conversations, ask questions and discuss possible collaborations. Deal and proposal actions are available from eligible conversations.",
     href: "/app/messages",
     action: "Open Messages",
     icon: MessageCircle,
   },
   {
-    title: "Deals and progress",
-    body: "Review proposals and accepted agreements. Available actions depend on the opportunity and permissions of both participants.",
+    title: "Deals",
+    body: "Review proposals, agreements and deal progress. The actions available depend on the opportunity and each participant’s permissions.",
     href: "/app/deals",
     action: "View Deals",
     icon: BriefcaseBusiness,
   },
   {
-    title: "Your account and settings",
-    body: "Manage your profile, security and preferences. Keep your email address current so recovery messages can reach you.",
+    title: "Support",
+    body: "Need help with your account, a deal, payments or a platform issue? Open a request in the Service Center and follow its progress there.",
+    href: "/app/service-center",
+    action: "Open Service Center",
+    icon: LifeBuoy,
+  },
+  {
+    title: "Settings",
+    body: "Manage your profile, security and preferences. Keep your account details current so important updates can reach you.",
     href: "/app/settings",
     action: "Open Settings",
     icon: Settings2,
   },
 ] as const;
 
+function getCurrentStepIndex(pathname: string) {
+  const index = STEPS.findIndex((step) =>
+    step.href === "/app"
+      ? pathname === "/app"
+      : pathname === step.href || pathname.startsWith(`${step.href}/`),
+  );
+  return index >= 0 ? index : 0;
+}
+
 export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
+  const pathname = usePathname();
   const router = useRouter();
   const dismissedRef = useRef(!showWelcome);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [welcomeOpen, setWelcomeOpen] = useState(showWelcome);
   const [stepIndex, setStepIndex] = useState<number | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  const currentStepIndex = getCurrentStepIndex(pathname);
+  const activeStepIndex = stepIndex ?? currentStepIndex;
+  const step = STEPS[activeStepIndex];
+  const nextStep = STEPS[Math.min(STEPS.length - 1, activeStepIndex + 1)];
+  const previousStep = STEPS[Math.max(0, activeStepIndex - 1)];
+  const StepIcon = step.icon;
+
+  useEffect(() => {
+    try {
+      setCollapsed(window.localStorage.getItem("prex-guide-collapsed") === "true");
+    } catch {
+      // Storage can be unavailable in private browsing; the guide remains usable.
+    }
+  }, []);
+
+  useEffect(() => {
+    // Keep the guide in sync when the user navigates somewhere else.
+    setStepIndex(null);
+  }, [pathname]);
 
   function persistDismissal() {
     if (dismissedRef.current) return;
@@ -84,7 +133,23 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
   function startTour() {
     setWelcomeOpen(false);
     persistDismissal();
-    setStepIndex(0);
+    setCollapsed(false);
+    try {
+      window.localStorage.removeItem("prex-guide-collapsed");
+    } catch {
+      // Ignore unavailable storage.
+    }
+    setStepIndex(currentStepIndex);
+  }
+
+  function openGuide() {
+    setCollapsed(false);
+    try {
+      window.localStorage.removeItem("prex-guide-collapsed");
+    } catch {
+      // Ignore unavailable storage.
+    }
+    setStepIndex(currentStepIndex);
   }
 
   function openMessages() {
@@ -92,8 +157,35 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
     router.push("/app/messages");
   }
 
-  const step = stepIndex === null ? null : STEPS[stepIndex];
-  const StepIcon = step?.icon;
+  function clearHoldTimer() {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  }
+
+  function beginLongPress() {
+    clearHoldTimer();
+    holdTimerRef.current = setTimeout(() => {
+      setStepIndex(null);
+      setCollapsed(true);
+      try {
+        window.localStorage.setItem("prex-guide-collapsed", "true");
+      } catch {
+        // The compact dock still works for this session without storage.
+      }
+    }, 700);
+  }
+
+  function expandGuide() {
+    setCollapsed(false);
+    setStepIndex(currentStepIndex);
+    try {
+      window.localStorage.removeItem("prex-guide-collapsed");
+    } catch {
+      // Ignore unavailable storage.
+    }
+  }
 
   return (
     <>
@@ -129,10 +221,9 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
                 A good place to start.
               </Dialog.Title>
               <Dialog.Description className="mt-3 text-sm leading-7 text-[color:var(--px-text-muted)]">
-                You’re now in the preX startup community. Explore the feed,
-                discover opportunities, connect with people and manage your
-                account from Settings. You can open Messages whenever you want
-                to ask a question or continue a discussion.
+                preX brings founders, startups and ecosystem opportunities into
+                one place. Use the guide to understand the page you’re on and
+                find a useful next step.
               </Dialog.Description>
             </div>
 
@@ -141,21 +232,21 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
                 <Compass aria-hidden className="mt-0.5 shrink-0 text-[color:var(--px-primary-ink)]" size={19} />
                 <div className="min-w-0">
                   <p className="text-sm font-bold">Explore</p>
-                  <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">Browse the feed and discover opportunities.</p>
+                  <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">Find people, startups and opportunities.</p>
                 </div>
               </div>
               <div className="flex min-w-0 items-start gap-3">
-                <MessageCircle aria-hidden className="mt-0.5 shrink-0 text-[color:var(--px-primary-ink)]" size={19} />
+                <Network aria-hidden className="mt-0.5 shrink-0 text-[color:var(--px-primary-ink)]" size={19} />
                 <div className="min-w-0">
-                  <p className="text-sm font-bold">Have a conversation</p>
-                  <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">Find your conversations in Messages.</p>
+                  <p className="text-sm font-bold">Build your network</p>
+                  <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">Connect with people and continue in Messages.</p>
                 </div>
               </div>
               <div className="flex min-w-0 items-start gap-3 sm:col-span-2">
-                <Settings2 aria-hidden className="mt-0.5 shrink-0 text-[color:var(--px-primary-ink)]" size={19} />
+                <LifeBuoy aria-hidden className="mt-0.5 shrink-0 text-[color:var(--px-primary-ink)]" size={19} />
                 <div className="min-w-0">
-                  <p className="text-sm font-bold">Make it yours</p>
-                  <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">Visit Settings to manage your account and preferences.</p>
+                  <p className="text-sm font-bold">Get support</p>
+                  <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">Use the Service Center whenever you need help.</p>
                 </div>
               </div>
             </div>
@@ -181,11 +272,23 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
         </Dialog.Portal>
       </Dialog.Root>
 
-      {!welcomeOpen && stepIndex === null ? (
+      {!welcomeOpen && collapsed ? (
+        <button
+          aria-label="Expand the getting started guide"
+          className="fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+1rem)] right-0 z-[56] grid size-11 place-items-center rounded-l-xl border border-r-0 border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-primary-ink)] shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:bottom-6"
+          onClick={expandGuide}
+          title="Show guide"
+          type="button"
+        >
+          <ChevronLeft aria-hidden size={21} />
+        </button>
+      ) : null}
+
+      {!welcomeOpen && !collapsed && stepIndex === null ? (
         <button
           aria-label="Open the preX getting started guide"
           className="ptahx-guide-launcher fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+1rem)] right-4 z-[55] inline-flex min-h-11 max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm font-bold text-[color:var(--px-text)] shadow-xl transition hover:-translate-y-0.5 hover:border-[color:var(--px-focus)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:bottom-6 lg:right-6"
-          onClick={() => setStepIndex(0)}
+          onClick={openGuide}
           type="button"
         >
           <Compass aria-hidden className="shrink-0 text-[color:var(--px-primary-ink)]" size={18} />
@@ -193,15 +296,19 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
         </button>
       ) : null}
 
-      {step && StepIcon ? (
+      {!welcomeOpen && !collapsed && stepIndex !== null ? (
         <section
           aria-label="preX getting started guide"
           aria-live="polite"
-          className="ptahx-guide-card fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+1rem)] right-3 z-[56] grid max-h-[min(62dvh,28rem)] w-[min(23rem,calc(100vw-1.5rem))] gap-4 overflow-y-auto rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4 text-[color:var(--px-text)] shadow-2xl sm:right-5 sm:p-5 lg:bottom-6 lg:right-6"
+          className="ptahx-guide-card fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+1rem)] right-3 z-[56] grid max-h-[min(62dvh,30rem)] w-[min(23rem,calc(100vw-1.5rem))] gap-4 overflow-y-auto rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4 text-[color:var(--px-text)] shadow-2xl sm:right-5 sm:p-5 lg:bottom-6 lg:right-6"
+          onPointerDown={beginLongPress}
+          onPointerUp={clearHoldTimer}
+          onPointerCancel={clearHoldTimer}
+          onPointerLeave={clearHoldTimer}
         >
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[color:var(--px-primary-ink)]">
-              Getting started · {stepIndex! + 1} of {STEPS.length}
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <p className="min-w-0 text-xs font-bold uppercase tracking-[0.12em] text-[color:var(--px-primary-ink)]">
+              Page guide · {activeStepIndex + 1} of {STEPS.length}
             </p>
             <button
               aria-label="Close guide"
@@ -217,24 +324,54 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
             <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary-ink)]">
               <StepIcon aria-hidden size={20} />
             </span>
-            <div className="min-w-0">
-              <h2 className="text-base font-extrabold">{step.title}</h2>
-              <p className="mt-1 text-sm leading-6 text-[color:var(--px-text-muted)]">{step.body}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-[color:var(--px-text-muted)]">
+                You’re currently on
+              </p>
+              <h2 className="mt-0.5 break-words text-base font-extrabold [overflow-wrap:anywhere]">
+                {step.title}
+              </h2>
+              <p className="mt-1 break-words text-sm leading-6 text-[color:var(--px-text-muted)] [overflow-wrap:anywhere]">
+                {step.body}
+              </p>
             </div>
           </div>
+
+          {activeStepIndex < STEPS.length - 1 ? (
+            <p className="break-words text-sm leading-6 text-[color:var(--px-text-muted)]">
+              Next, go to{" "}
+              <Link
+                className="font-bold text-[color:var(--px-primary-ink)] underline underline-offset-2 hover:no-underline"
+                href={nextStep.href}
+                onClick={() => setStepIndex(null)}
+              >
+                {nextStep.title}
+              </Link>{" "}
+              {activeStepIndex === 0
+                ? "to discover people, startups and opportunities."
+                : activeStepIndex === 2
+                  ? "to continue the conversation with your connections."
+                  : "to continue exploring what preX can do."}
+            </p>
+          ) : (
+            <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">
+              You’ve reached the end of the guide. You can reopen it from this
+              corner whenever you need a reminder.
+            </p>
+          )}
 
           <div className="h-1.5 overflow-hidden rounded-full bg-[color:var(--px-surface-soft)]">
             <div
               className="h-full rounded-full bg-[color:var(--px-primary)] transition-[width] duration-200"
-              style={{ width: `${((stepIndex! + 1) / STEPS.length) * 100}%` }}
+              style={{ width: `${((activeStepIndex + 1) / STEPS.length) * 100}%` }}
             />
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2">
             <button
               className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] disabled:opacity-40"
-              disabled={stepIndex === 0}
-              onClick={() => setStepIndex((current) => current === null ? null : Math.max(0, current - 1))}
+              disabled={activeStepIndex === 0}
+              onClick={() => setStepIndex(Math.max(0, activeStepIndex - 1))}
               type="button"
             >
               <ArrowLeft aria-hidden size={16} /> Back
@@ -247,9 +384,9 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
               >
                 {step.action}
               </Link>
-              {stepIndex! < STEPS.length - 1 ? (
+              {activeStepIndex < STEPS.length - 1 ? (
                 <Button
-                  onClick={() => setStepIndex((current) => current === null ? null : Math.min(STEPS.length - 1, current + 1))}
+                  onClick={() => setStepIndex(Math.min(STEPS.length - 1, activeStepIndex + 1))}
                   size="sm"
                   type="button"
                 >
@@ -262,6 +399,11 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
               )}
             </div>
           </div>
+
+          <p className="border-t border-[color:var(--px-border)] pt-3 text-center text-[11px] leading-5 text-[color:var(--px-text-muted)]">
+            Tip: press and hold this guide to tuck it into the corner. Tap the
+            arrow to bring it back.
+          </p>
         </section>
       ) : null}
     </>
