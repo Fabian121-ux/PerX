@@ -800,23 +800,11 @@ fieldset {
 
 
 
-/*
- * Narrow-screen form containment.
- * Grid and flex children default to min-width:auto; a long value, validation
- * message or input wrapper can otherwise force the page wider than its
- * viewport. Keep controls and their form containers shrinkable on touch
- * screens without changing desktop sizing.
- */
-:where(form, fieldset, .dashboard-main, .dashboard-content) {
+/* Keep the authenticated scroll container shrinkable inside the app shell. */
+.dashboard-main {
   min-width: 0;
   max-width: 100%;
 }
-
-:where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), textarea, select) {
-  min-width: 0;
-  max-width: 100%;
-}
-
 
 /* Lightweight, touch-friendly first-run guide with a single entrance motion. */
 .ptahx-guide-card,
