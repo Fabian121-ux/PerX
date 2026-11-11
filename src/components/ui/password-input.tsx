@@ -15,10 +15,10 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
     const [show, setShow] = useState(false);
 
     return (
-      <span className="relative block w-full">
+      <span className="relative block w-full min-w-0 max-w-full">
         <Input
           ref={ref}
-          className={cn("w-full pr-14 font-sans tracking-normal", className)}
+          className={cn("w-full min-w-0 max-w-full pr-14 font-sans tracking-normal", className)}
           type={show ? "text" : "password"}
           aria-invalid={Boolean(error)}
           {...props}

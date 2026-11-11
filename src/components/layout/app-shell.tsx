@@ -18,6 +18,7 @@ import { AppScrollRestoration } from "@/components/layout/app-scroll-restoration
 import { PresenceHeartbeat } from "@/components/layout/presence-heartbeat";
 import { AuthenticatedMobileNav } from "@/components/navigation/authenticated-mobile-nav";
 import { SoftwareKeyboardProvider } from "@/components/layout/software-keyboard-provider";
+import { WelcomeGuide } from "@/components/onboarding/welcome-guide";
 import { isImmersiveRoute } from "@/lib/navigation/immersive-routes";
 import type { UnreadCounts } from "@/lib/data/unread-counts";
 
@@ -49,9 +50,17 @@ export function AppShell({
       "ptahx-distraction-free-active",
       distractionFreeCreate,
     );
-    return () =>
+    // The guide is a sibling of the shell so conversation state must be
+    // exposed at the document root for the guide's occlusion rule to apply.
+    document.documentElement.classList.toggle(
+      "ptahx-mobile-conversation-route",
+      directMessageConversation,
+    );
+    return () => {
       document.documentElement.classList.remove("ptahx-distraction-free-active");
-  }, [distractionFreeCreate]);
+      document.documentElement.classList.remove("ptahx-mobile-conversation-route");
+    };
+  }, [distractionFreeCreate, directMessageConversation]);
 
   useEffect(() => {
     let stopped = false;
@@ -168,6 +177,7 @@ export function AppShell({
           userRoles={user.roles}
         />
       </div>
+      <WelcomeGuide showWelcome={!user.onboardingDismissedAt} />
     </SoftwareKeyboardProvider>
   );
 }

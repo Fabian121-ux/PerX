@@ -772,3 +772,76 @@ input[type="password"]::-ms-clear {
     animation: none;
   }
 }
+
+
+/*
+ * Touch form hardening: prevent min-content sizing from forcing a grid/flex
+ * column wider than the viewport, and use a 16px control font on phones to
+ * avoid iOS Safari's automatic focus zoom.
+ */
+.dashboard-content,
+.dashboard-content > *,
+form,
+fieldset {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 639px) {
+  :where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) {
+    font-size: 16px !important;
+  }
+}
+
+
+
+/* Keep the authenticated scroll container shrinkable inside the app shell. */
+.dashboard-main {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Lightweight, touch-friendly first-run guide with a single entrance motion. */
+.ptahx-guide-card,
+.ptahx-guide-launcher {
+  animation: ptahx-guide-enter 180ms ease-out both;
+}
+
+.ptahx-welcome-dialog {
+  animation: ptahx-welcome-enter 180ms ease-out both;
+}
+
+@keyframes ptahx-guide-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ptahx-welcome-enter {
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ptahx-guide-card,
+  .ptahx-guide-launcher,
+  .ptahx-welcome-dialog {
+    animation: none;
+  }
+}
+
+/* Never cover the immersive conversation composer or the software keyboard. */
+.ptahx-mobile-conversation-active .ptahx-guide-card,
+.ptahx-mobile-conversation-active .ptahx-guide-launcher,
+.ptahx-mobile-conversation-route .ptahx-guide-card,
+.ptahx-mobile-conversation-route .ptahx-guide-launcher,
+.ptahx-distraction-free-active .ptahx-guide-card,
+.ptahx-distraction-free-active .ptahx-guide-launcher,
+:root[data-ptahx-keyboard="open"] .ptahx-guide-card,
+:root[data-ptahx-keyboard="open"] .ptahx-guide-launcher {
+  display: none !important;
+}
