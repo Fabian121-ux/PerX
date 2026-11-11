@@ -18,6 +18,7 @@ import { AppScrollRestoration } from "@/components/layout/app-scroll-restoration
 import { PresenceHeartbeat } from "@/components/layout/presence-heartbeat";
 import { AuthenticatedMobileNav } from "@/components/navigation/authenticated-mobile-nav";
 import { SoftwareKeyboardProvider } from "@/components/layout/software-keyboard-provider";
+import { FirstRunGuide } from "@/components/onboarding/first-run-guide";
 import { isImmersiveRoute } from "@/lib/navigation/immersive-routes";
 import type { UnreadCounts } from "@/lib/data/unread-counts";
 
@@ -166,6 +167,10 @@ export function AppShell({
         <AuthenticatedMobileNav
           unreadCounts={liveUnreadCounts}
           userRoles={user.roles}
+        />
+        <FirstRunGuide
+          displayName={user.name}
+          initiallyDismissed={Boolean(user.onboardingDismissedAt)}
         />
       </div>
     </SoftwareKeyboardProvider>
