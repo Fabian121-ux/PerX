@@ -316,6 +316,7 @@ enum SponsoredContentStatus {
 model User {
   id                                String                    @id @default(cuid())
   email                             String                    @unique
+  authUserId                        String?                   @unique @db.Uuid
   passwordHash                      String
   name                              String
   username                          String                    @unique

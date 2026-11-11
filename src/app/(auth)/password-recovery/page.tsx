@@ -1,3 +1,4 @@
+import { usesSupabaseAuth } from "@/lib/auth/provider";
 import Link from "next/link";
 
 import { PasswordRecoveryForm } from "@/components/auth/password-recovery-form";
@@ -15,7 +16,8 @@ export default async function PasswordRecoveryPage({
   const requested = params.status === "requested";
   // Enumeration-safe either way: the wording never depends on whether the
   // address exists, only on whether this deployment can send mail at all.
-  const canDeliver = isPasswordResetDeliveryConfigured();
+  const supabase = usesSupabaseAuth();
+  const canDeliver = !supabase && isPasswordResetDeliveryConfigured();
 
   return (
     <PublicPageShell>
@@ -25,25 +27,26 @@ export default async function PasswordRecoveryPage({
             Recovery
           </p>
           <h1 className="mt-2 text-3xl font-bold text-[color:var(--px-text)]">
-            Recover password
+            Reset your password
           </h1>
           <p className="mt-3 text-sm leading-6 text-[color:var(--px-text-muted)]">
-            Enter the email address for your account and we&apos;ll send you a
-            link to choose a new password.
+            Enter your account email to request a password reset link.
           </p>
 
           {requested ? (
             <FormNotice className="mt-4" tone={canDeliver ? "success" : "info"}>
-              {canDeliver
-                ? "If that email exists, a password reset link is on its way. The link expires in 30 minutes."
-                : "Your request was recorded. Email delivery is not yet enabled on this environment, so contact support to finish resetting your password."}
+              {supabase
+                ? "If an account matches this email, we’ll send a reset link. Check your inbox and spam folder."
+                : canDeliver
+                  ? "If an account matches this email, we’ll send a reset link. Check your inbox and spam folder. The link expires in 30 minutes."
+                  : "We can’t send reset emails right now. Contact support to reset your password."}
             </FormNotice>
           ) : null}
 
           <PasswordRecoveryForm />
 
           <p className="mt-5 text-sm text-[color:var(--px-text-muted)]">
-            Remembered it?{" "}
+            Remember your password?{" "}
             <Link
               className="font-medium text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"
               href="/sign-in"

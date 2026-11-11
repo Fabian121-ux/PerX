@@ -15,11 +15,13 @@ import {
 } from "@/lib/registration/status";
 
 const errors: Record<string, string> = {
-  "database-not-configured": "Database configuration is missing.",
+  "database-not-configured":
+    "We can’t create your account right now. Try again later.",
   "check-fields": "Please check your details and try again.",
-  "email-taken": "An account with this email already exists.",
-  "username-taken": "This username is already taken. Please try again.",
-  "server-error": "An unexpected server error occurred. Please try again.",
+  "email-taken":
+    "An account with this email already exists. Sign in or reset your password.",
+  "username-taken": "This username is already taken. Choose another one.",
+  "server-error": "We couldn’t create your account. Try again.",
 };
 
 export default async function SignUpPage({
@@ -29,7 +31,7 @@ export default async function SignUpPage({
 }) {
   const params = await searchParams;
   const error = params.error
-    ? errors[params.error] || "An unexpected error occurred."
+    ? errors[params.error] || "We couldn’t create your account. Try again."
     : null;
 
   const currentUser = await getCurrentUser().catch(() => null);
@@ -39,15 +41,14 @@ export default async function SignUpPage({
     ? { message: error, status: "error" }
     : undefined;
   const registrationStatus = await getSafeRegistrationStatus("/sign-up");
-  const registrationClosedMessage =
-    registrationStatus.statusUnavailable
-      ? "Account creation is temporarily unavailable. Please try again shortly."
-      : registrationStatus.mode === "closed"
-        ? REGISTRATION_CLOSED_MESSAGE
-        : registrationStatus.mode === "open_beta" &&
-            !registrationStatus.registrationOpen
-          ? BETA_FULL_MESSAGE
-          : null;
+  const registrationClosedMessage = registrationStatus.statusUnavailable
+    ? "Account creation is temporarily unavailable. Please try again shortly."
+    : registrationStatus.mode === "closed"
+      ? REGISTRATION_CLOSED_MESSAGE
+      : registrationStatus.mode === "open_beta" &&
+          !registrationStatus.registrationOpen
+        ? BETA_FULL_MESSAGE
+        : null;
 
   return (
     <PublicPageShell>
@@ -62,8 +63,8 @@ export default async function SignUpPage({
               One profile for work, trust and agreements.
             </h2>
             <p className="mt-4 text-sm leading-7 text-blue-50">
-              Create a professional identity first. Activity choices come after
-              setup and do not permanently define who you are on PtahX.
+              Create your account, then add your profile. You can choose what
+              you want to do on PtahX later.
             </p>
           </div>
         </section>
@@ -76,9 +77,7 @@ export default async function SignUpPage({
               Create your PtahX account
             </h1>
             <p className="mt-3 text-sm leading-6 text-[color:var(--px-text-muted)]">
-              Start with your name, email and password. You can decide whether
-              to find work, hire, post, partner or explore after your basic
-              profile is ready.
+              Enter your name, email and password to create your account.
             </p>
             {registrationStatus.mode === "open_beta" &&
             registrationStatus.registrationOpen ? (

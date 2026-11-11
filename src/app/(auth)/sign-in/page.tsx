@@ -11,18 +11,20 @@ import { getCurrentUser } from "@/lib/auth/session";
 import type { AuthFormState } from "@/features/auth/actions";
 
 const errors: Record<string, string> = {
-  "database-not-configured": "Database configuration is missing.",
-  "invalid-credentials": "The email or password you entered is incorrect.",
-  "account-deactivated": "Your account has been deactivated.",
-  unavailable:
-    "The authentication service is temporarily unavailable. Please try again.",
-  "server-error": "An unexpected server error occurred. Please try again.",
+  "database-not-configured": "We can’t sign you in right now. Try again later.",
+  "invalid-credentials":
+    "The email or password is incorrect. Check both and try again.",
+  "account-deactivated":
+    "This account is not active. Contact support if you think this is a mistake.",
+  unavailable: "We can’t sign you in right now. Try again later.",
+  "server-error": "We couldn’t sign you in. Try again.",
 };
 
 export default async function SignInPage({
   searchParams,
 }: {
   searchParams: Promise<{
+    confirmation?: string;
     error?: string;
     next?: string;
     passwordReset?: string;
@@ -32,7 +34,7 @@ export default async function SignInPage({
 }) {
   const params = await searchParams;
   const error = params.error
-    ? errors[params.error] || "An unexpected error occurred."
+    ? errors[params.error] || "We couldn’t sign you in. Try again."
     : null;
   const nextPath = getSafeAuthRedirect(params.next || params.returnTo);
   const currentUser = await getCurrentUser().catch(() => null);
@@ -59,12 +61,10 @@ export default async function SignInPage({
                 Secure access
               </p>
               <h2 className="mt-3 text-4xl font-black">
-                Deals start with verified access.
+                Connect with people and find opportunities.
               </h2>
               <p className="mt-4 text-sm leading-7 text-blue-50">
-                Sign in to manage opportunities, proposals, messages,
-                milestones, simulated deal states and reputation from one
-                connected workspace.
+                Sign in to find work, share updates and manage your messages.
               </p>
             </div>
           </div>
@@ -84,6 +84,26 @@ export default async function SignInPage({
         </section>
         <section className="grid place-items-center">
           <Card className="w-full max-w-md">
+            {params.confirmation === "required" && (
+              <FormNotice tone="info">
+                Check your email and confirm your address before signing in.
+              </FormNotice>
+            )}
+            {params.confirmation === "invalid" && (
+              <FormNotice tone="warning">
+                This link is no longer valid. Contact support or{" "}
+                <Link className="underline" href="/password-recovery">
+                  Request a new reset link
+                </Link>
+                .
+              </FormNotice>
+            )}
+            {params.confirmation === "unavailable" && (
+              <FormNotice tone="warning">
+                We couldn’t give you access to this account. Contact support for
+                help.
+              </FormNotice>
+            )}
             <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--px-primary)]">
               Sign in
             </p>
@@ -99,17 +119,17 @@ export default async function SignInPage({
 
             {isSignedOut && !error && !didResetPassword && (
               <FormNotice className="mb-4 mt-4" tone="success">
-                You have been signed out successfully.
+                You are signed out.
               </FormNotice>
             )}
 
             <SignInForm initialState={initialState} nextPath={nextPath} />
-            <div className="mt-5 flex items-center justify-between text-sm">
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 text-sm">
               <Link
                 className="font-medium text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"
                 href="/password-recovery"
               >
-                Recover password
+                Reset password
               </Link>
               <Link
                 className="font-medium text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"

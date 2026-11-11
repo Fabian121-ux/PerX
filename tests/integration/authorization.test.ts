@@ -1,3 +1,4 @@
+import "../utils/legacy-auth";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import * as databaseModule from "@/lib/db/prisma";
@@ -81,15 +82,16 @@ function editForm() {
 describeWithTestDatabase("Server-Side Authorization Rules", () => {
   let database: ReturnType<typeof createAuthorizationDatabase>;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     database = createAuthorizationDatabase();
+    await database.$queryRaw`SELECT 1`; // Open the isolated connection before transaction acquire timing starts.
     vi.stubEnv("DATABASE_URL", testDbUrl!);
     vi.stubEnv("DIRECT_URL", process.env.TEST_DIRECT_URL || testDbUrl!);
     vi.stubEnv("PERX_DATA_MODE", "database");
     // Exercise successful registration independently of a developer's beta cap.
     vi.stubEnv("PERX_SIGNUP_MODE", "public");
     setCachedDataModeForTest("database");
-  });
+  }, 30_000);
   afterAll(async () => {
     await database?.$disconnect();
     setCachedDataModeForTest(undefined);
@@ -190,7 +192,9 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
         expect(bookmarks).not.toHaveBeenCalled();
         expect(connections).not.toHaveBeenCalled();
         for (let i = 0; i < 13; i++)
-          await f.opportunity(owner.id, { publishedAt: new Date("2050-02-01") });
+          await f.opportunity(owner.id, {
+            publishedAt: new Date("2050-02-01"),
+          });
         expect((await getPublicFeedResult()).posts).toHaveLength(12);
       } finally {
         bookmarks.mockRestore();
