@@ -794,7 +794,7 @@ fieldset {
 
 @media (max-width: 639px) {
   :where(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea) {
-    font-size: 16px;
+    font-size: 16px !important;
   }
 }
 
@@ -823,4 +823,12 @@ fieldset {
   .first-run-welcome {
     animation: none;
   }
+}
+
+/* Floating help should never cover the conversation composer or keyboard. */
+.ptahx-mobile-conversation-active .first-run-guide,
+.ptahx-mobile-conversation-active .first-run-guide-launcher,
+.ptahx-distraction-free-active .first-run-guide-launcher,
+:root[data-ptahx-keyboard="open"] .first-run-guide-launcher {
+  display: none !important;
 }
