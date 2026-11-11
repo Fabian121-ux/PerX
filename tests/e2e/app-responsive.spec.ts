@@ -119,7 +119,7 @@ for (const width of WIDTHS) {
 }
 
 
-test("Connections guide is page-aware and can be tucked into the corner", async ({ browser }) => {
+test("Connections guide starts tucked away and uses one tap to hide or reopen", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 360, height: 780 } });
   try {
     await signIn(page, "alice-test@ptahx.test", { resetOnboarding: true });
@@ -129,30 +129,10 @@ test("Connections guide is page-aware and can be tucked into the corner", async 
     await expect(
       page.getByRole("heading", { name: "A good place to start." }),
     ).toBeVisible();
-    await page.getByRole("button", { name: /take the quick tour/i }).click();
+    await page.getByRole("button", { name: /i’ll explore on my own/i }).click();
 
     const guide = page.getByRole("region", {
       name: "preX getting started guide",
-    });
-    await expect(guide.getByRole("heading", { name: "Connections" })).toBeVisible();
-    await expect(guide.getByText(/You’re currently on/)).toBeVisible();
-    await expect(
-      guide.getByRole("link", { name: "Messages", exact: true }),
-    ).toHaveAttribute("href", "/app/messages");
-    await expect(
-      guide.getByText(/potential clients, customers, co-founders/),
-    ).toBeVisible();
-    
-    await guide.dispatchEvent("pointerdown", {
-      pointerId: 1,
-      pointerType: "touch",
-      isPrimary: true,
-    });
-    await page.waitForTimeout(850);
-    await guide.dispatchEvent("pointerup", {
-      pointerId: 1,
-      pointerType: "touch",
-      isPrimary: true,
     });
     await expect(guide).toHaveCount(0);
 
@@ -162,6 +142,21 @@ test("Connections guide is page-aware and can be tucked into the corner", async 
     await expect(compactGuide).toBeVisible();
     const compactBounds = await compactGuide.boundingBox();
     expect(compactBounds?.width ?? 0).toBeLessThanOrEqual(48);
+
+    await compactGuide.click();
+    await expect(guide.getByRole("heading", { name: "Connections" })).toBeVisible();
+    await expect(guide.getByText(/You’re currently on/)).toBeVisible();
+    await expect(
+      guide.getByRole("link", { name: "Messages", exact: true }),
+    ).toHaveAttribute("href", "/app/messages");
+    await expect(
+      guide.getByText(/potential clients, customers, co-founders/),
+    ).toBeVisible();
+
+    await guide.getByRole("button", { name: "Tuck guide into corner" }).click();
+    await expect(guide).toHaveCount(0);
+    await expect(compactGuide).toBeVisible();
+
     await compactGuide.click();
     await expect(guide.getByRole("heading", { name: "Connections" })).toBeVisible();
   } finally {
