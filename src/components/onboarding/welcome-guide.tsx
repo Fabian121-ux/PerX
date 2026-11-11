@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { dismissOnboardingChecklistAction } from "@/features/onboarding/actions";
@@ -88,29 +88,20 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
   const dismissedRef = useRef(!showWelcome);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [welcomeOpen, setWelcomeOpen] = useState(showWelcome);
-  const [stepIndex, setStepIndex] = useState<number | null>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [stepOverride, setStepOverride] = useState<number | null>(null);
+  const [overridePath, setOverridePath] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const currentStepIndex = getCurrentStepIndex(pathname);
-  const activeStepIndex = stepIndex ?? currentStepIndex;
+  const activeStepIndex =
+    overridePath === pathname && stepOverride !== null
+      ? stepOverride
+      : currentStepIndex;
   const step = STEPS[activeStepIndex];
   const nextStep = STEPS[Math.min(STEPS.length - 1, activeStepIndex + 1)];
-  const previousStep = STEPS[Math.max(0, activeStepIndex - 1)];
   const StepIcon = step.icon;
-
-  useEffect(() => {
-    try {
-      setCollapsed(window.localStorage.getItem("prex-guide-collapsed") === "true");
-    } catch {
-      // Storage can be unavailable in private browsing; the guide remains usable.
-    }
-  }, []);
-
-  useEffect(() => {
-    // Keep the guide in sync when the user navigates somewhere else.
-    setStepIndex(null);
-  }, [pathname]);
 
   function persistDismissal() {
     if (dismissedRef.current) return;
@@ -134,22 +125,16 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
     setWelcomeOpen(false);
     persistDismissal();
     setCollapsed(false);
-    try {
-      window.localStorage.removeItem("prex-guide-collapsed");
-    } catch {
-      // Ignore unavailable storage.
-    }
-    setStepIndex(currentStepIndex);
+    setGuideOpen(true);
+    setOverridePath(pathname);
+    setStepOverride(currentStepIndex);
   }
 
   function openGuide() {
     setCollapsed(false);
-    try {
-      window.localStorage.removeItem("prex-guide-collapsed");
-    } catch {
-      // Ignore unavailable storage.
-    }
-    setStepIndex(currentStepIndex);
+    setGuideOpen(true);
+    setOverridePath(pathname);
+    setStepOverride(currentStepIndex);
   }
 
   function openMessages() {
@@ -167,24 +152,31 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
   function beginLongPress() {
     clearHoldTimer();
     holdTimerRef.current = setTimeout(() => {
-      setStepIndex(null);
+      setGuideOpen(false);
       setCollapsed(true);
-      try {
-        window.localStorage.setItem("prex-guide-collapsed", "true");
-      } catch {
-        // The compact dock still works for this session without storage.
-      }
     }, 700);
   }
 
   function expandGuide() {
     setCollapsed(false);
-    setStepIndex(currentStepIndex);
-    try {
-      window.localStorage.removeItem("prex-guide-collapsed");
-    } catch {
-      // Ignore unavailable storage.
-    }
+    setGuideOpen(true);
+    setOverridePath(pathname);
+    setStepOverride(currentStepIndex);
+  }
+
+  function closeGuide() {
+    clearHoldTimer();
+    setGuideOpen(false);
+    setStepOverride(null);
+    setOverridePath(null);
+  }
+
+  function navigateWithGuide(href: string) {
+    setStepOverride(null);
+    setOverridePath(null);
+    if (href !== pathname) return;
+    setStepOverride(currentStepIndex);
+    setOverridePath(pathname);
   }
 
   return (
@@ -284,7 +276,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
         </button>
       ) : null}
 
-      {!welcomeOpen && !collapsed && stepIndex === null ? (
+      {!welcomeOpen && !collapsed && !guideOpen ? (
         <button
           aria-label="Open the preX getting started guide"
           className="ptahx-guide-launcher fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+1rem)] right-4 z-[55] inline-flex min-h-11 max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm font-bold text-[color:var(--px-text)] shadow-xl transition hover:-translate-y-0.5 hover:border-[color:var(--px-focus)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:bottom-6 lg:right-6"
@@ -296,7 +288,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
         </button>
       ) : null}
 
-      {!welcomeOpen && !collapsed && stepIndex !== null ? (
+      {!welcomeOpen && !collapsed && guideOpen ? (
         <section
           aria-label="preX getting started guide"
           aria-live="polite"
@@ -313,7 +305,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
             <button
               aria-label="Close guide"
               className="grid size-10 shrink-0 place-items-center rounded-lg text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-              onClick={() => setStepIndex(null)}
+              onClick={closeGuide}
               type="button"
             >
               <X aria-hidden size={18} />
@@ -343,7 +335,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
               <Link
                 className="font-bold text-[color:var(--px-primary-ink)] underline underline-offset-2 hover:no-underline"
                 href={nextStep.href}
-                onClick={() => setStepIndex(null)}
+                onClick={() => navigateWithGuide(nextStep.href)}
               >
                 {nextStep.title}
               </Link>{" "}
@@ -371,7 +363,10 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
             <button
               className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] disabled:opacity-40"
               disabled={activeStepIndex === 0}
-              onClick={() => setStepIndex(Math.max(0, activeStepIndex - 1))}
+              onClick={() => {
+                setOverridePath(pathname);
+                setStepOverride(Math.max(0, activeStepIndex - 1));
+              }}
               type="button"
             >
               <ArrowLeft aria-hidden size={16} /> Back
@@ -380,20 +375,23 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
               <Link
                 className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-primary-soft)]"
                 href={step.href}
-                onClick={() => setStepIndex(null)}
+                onClick={() => navigateWithGuide(step.href)}
               >
                 {step.action}
               </Link>
               {activeStepIndex < STEPS.length - 1 ? (
                 <Button
-                  onClick={() => setStepIndex(Math.min(STEPS.length - 1, activeStepIndex + 1))}
+                  onClick={() => {
+                    setOverridePath(pathname);
+                    setStepOverride(Math.min(STEPS.length - 1, activeStepIndex + 1));
+                  }}
                   size="sm"
                   type="button"
                 >
                   Next <ArrowRight aria-hidden className="ml-1" size={15} />
                 </Button>
               ) : (
-                <Button onClick={() => setStepIndex(null)} size="sm" type="button">
+                <Button onClick={closeGuide} size="sm" type="button">
                   Finish
                 </Button>
               )}
