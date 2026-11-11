@@ -13,9 +13,15 @@ const ROUTES = [
   { name: "messages", path: "/app/messages" },
   { name: "notifications", path: "/app/notifications" },
   { name: "discover", path: "/app/discover" },
+  { name: "settings", path: "/app/settings" },
+  { name: "profile edit", path: "/app/profile/edit" },
 ] as const;
 
-async function signIn(page: Page, email: string) {
+async function signIn(
+  page: Page,
+  email: string,
+  options: { resetOnboarding?: boolean } = {},
+) {
   const { Pool } = await import("pg");
   const pool = new Pool({ connectionString: TEST_DB, ssl: false });
   try {
@@ -23,6 +29,12 @@ async function signIn(page: Page, email: string) {
       `SELECT id FROM "User" WHERE email = $1`,
       [email],
     );
+    if (options.resetOnboarding) {
+      await pool.query(
+        `UPDATE "User" SET "onboardingDismissedAt" = NULL WHERE id = $1`,
+        [user.rows[0].id],
+      );
+    }
     const token = crypto.randomBytes(32).toString("base64url");
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
     await pool.query(
@@ -161,6 +173,49 @@ test("Home Explore all has readable foreground/background in dark mode on a phon
     expect(hover.background).toBe("rgb(229, 239, 255)");
     await chip.click();
     await expect(page).toHaveURL(/\/app\/discover/);
+  } finally {
+    await page.close();
+  }
+});
+
+
+test("first-run welcome and guide fit a narrow touch screen", async ({ browser }) => {
+  const width = 320;
+  const page = await browser.newPage({ viewport: { width, height: 780 } });
+  try {
+    await signIn(page, "alice-test@ptahx.test", { resetOnboarding: true });
+    await page.goto(`${BASE}/app`);
+    await page.waitForLoadState("domcontentloaded");
+
+    await expect(
+      page.getByRole("heading", { name: "A good place to start." }),
+    ).toBeVisible();
+
+    const welcomeOverflow = await page.evaluate(() => ({
+      documentWidth: document.documentElement.scrollWidth,
+      viewportWidth: document.documentElement.clientWidth,
+    }));
+    expect(
+      welcomeOverflow.documentWidth - welcomeOverflow.viewportWidth,
+      "welcome modal must not force horizontal page scrolling",
+    ).toBeLessThanOrEqual(1);
+
+    await page.getByRole("button", { name: /take the quick tour/i }).click();
+    const guide = page.getByRole("region", {
+      name: "preX getting started guide",
+    });
+    await expect(guide).toBeVisible();
+
+    const bounds = await guide.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.y).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width + 1);
+
+    const next = guide.getByRole("button", { name: /next/i });
+    await expect(next).toBeVisible();
+    const nextBounds = await next.boundingBox();
+    expect(nextBounds?.height ?? 0).toBeGreaterThanOrEqual(44);
   } finally {
     await page.close();
   }
