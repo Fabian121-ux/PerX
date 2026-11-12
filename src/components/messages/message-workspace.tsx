@@ -3777,7 +3777,7 @@ function ConversationDetailsContent({
   onRemove: () => void;
 }) {
   const profileHref = conversation.participantUsername
-    ? `/u/${conversation.participantUsername}`
+    ? `/u/${encodeURIComponent(conversation.participantUsername)}`
     : null;
 
   return (
@@ -3821,12 +3821,27 @@ function ConversationDetailsContent({
       >
         <div className="grid gap-4">
           <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-5 text-center ring-1 ring-[color:var(--px-border)]">
-            <Avatar
-              imageUrl={conversation.participantImageUrl}
-              name={conversation.participantName}
-              presence={conversation.participantPresence}
-              size="lg"
-            />
+            {profileHref ? (
+              <Link
+                aria-label={`View ${conversation.participantName} profile`}
+                className="mx-auto block w-fit rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                href={profileHref}
+              >
+                <Avatar
+                  imageUrl={conversation.participantImageUrl}
+                  name={conversation.participantName}
+                  presence={conversation.participantPresence}
+                  size="lg"
+                />
+              </Link>
+            ) : (
+              <Avatar
+                imageUrl={conversation.participantImageUrl}
+                name={conversation.participantName}
+                presence={conversation.participantPresence}
+                size="lg"
+              />
+            )}
             <h3 className="mt-3 break-words font-black text-[color:var(--px-text)]">
               {conversation.participantName}
             </h3>
