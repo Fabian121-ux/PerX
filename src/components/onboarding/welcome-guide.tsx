@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, ArrowRight, BriefcaseBusiness, Handshake, MapPin,
+  ArrowLeft, ArrowRight, BriefcaseBusiness, Handshake, Headset, MapPin,
   MessageCircle, Newspaper, ShieldCheck, Sparkles, Users, X,
 } from "lucide-react";
 import { dismissOnboardingChecklistAction } from "@/features/onboarding/actions";
@@ -16,7 +16,8 @@ const steps = [
   { icon: BriefcaseBusiness, title: "Send proposals", text: "Make an offer or reply to a proposal about an opportunity.", href: "/app/proposals/sent", action: "View proposals" },
   { icon: Handshake, title: "Manage deals", text: "See your agreements and what each person needs to do next.", href: "/app/deals", action: "View deals" },
   { icon: MapPin, title: "Track progress", text: "Follow delivery updates and agreement progress in Tracking.", href: "/app/track", action: "Open tracking" },
-  { icon: ShieldCheck, title: "Build trust", text: "Complete your profile and build a good record through real work.", href: "/app/profile", action: "View profile" },\n  { icon: Headset, title: "Get help", text: "Contact the preX team if you have a problem or need support.", href: "/app/service-center", action: "Get help" },
+  { icon: ShieldCheck, title: "Build trust", text: "Complete your profile and build a good record through real work.", href: "/app/profile", action: "View profile" },
+  { icon: Headset, title: "Get help", text: "Contact the preX team if you have a problem or need support.", href: "/app/service-center", action: "Get help" },
 ];
 
 export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
