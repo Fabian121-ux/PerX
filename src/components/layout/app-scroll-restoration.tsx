@@ -29,11 +29,11 @@ export function AppScrollRestoration() {
       sessionStorage.setItem(key, String(main.scrollTop));
     };
 
-    main.addEventListener("scroll", save, { passive: true });
+    main.addEventListener("scroll", save, { passive: true });\n    document.addEventListener("click", saveDestination, true);
     window.addEventListener("pagehide", save);
     return () => {
       save();
-      main.removeEventListener("scroll", save);
+      main.removeEventListener("scroll", save);\n      document.removeEventListener("click", saveDestination, true);
       window.removeEventListener("pagehide", save);
     };
   }, [key]);
