@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   ArrowRight,
   BriefcaseBusiness,
+  Truck,
   ChevronLeft,
   Compass,
   LifeBuoy,
@@ -49,6 +50,13 @@ const STEPS = [
     href: "/app/messages",
     action: "Open Messages",
     icon: MessageCircle,
+  },
+  {
+    title: "Tracking Centre",
+    body: "Track product agreements and delivery updates here. Product agreements appear automatically after a deal is created. Select a product agreement to check whether a verified courier update is available. An agreement status does not mean a parcel has shipped.",
+    href: "/app/track",
+    action: "Open Tracking Centre",
+    icon: Truck,
   },
   {
     title: "Deals",
