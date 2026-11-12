@@ -52,9 +52,8 @@ describeWithDatabase("10-User Beta constraints and Core Workflow", () => {
       const email = `audit-${runId}-${i}@example.com`;
       const username = `audituser_${runId}_${i}`;
 
-      // Registering signs the new account in, so the next /sign-up would
-      // redirect to /app. Each iteration must start as an anonymous visitor for
-      // the loop to exercise the real registration path.
+      // Registration creates a pending account but does not issue a session.
+      // Clear cookies as a safety measure so every iteration starts anonymous.
       await page.context().clearCookies();
       await page.goto("/sign-up");
 
@@ -77,15 +76,12 @@ describeWithDatabase("10-User Beta constraints and Core Workflow", () => {
 
         // Check if successfully redirected
         await page
-          .waitForURL("**/app/profile/setup", { timeout: 10000 })
+          .waitForURL("**/verify-email?status=sent", { timeout: 10000 })
           .catch(() => {});
 
-        if (page.url().includes("/app/profile/setup")) {
+        if (page.url().includes("/verify-email?status=sent")) {
           successfulRegistrations++;
-          // No sign-out navigation here: the next iteration clears cookies
-          // before loading /sign-up, which achieves the same anonymous start
-          // without an extra round trip. Eleven of those pushed this spec past
-          // the 90s budget when the suite runs in full.
+          // No session is created before email verification; next iteration remains anonymous.
         }
       }
     }
