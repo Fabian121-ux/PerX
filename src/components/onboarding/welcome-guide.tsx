@@ -2,7 +2,7 @@
 
 import { MousePointer2, X } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { dismissOnboardingChecklistAction } from "@/features/onboarding/actions";
 
@@ -21,7 +21,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
     null,
   );
 
-  function dismissHint() {
+  const dismissHint = useCallback(() => {
     if (dismissedRef.current) return;
     dismissedRef.current = true;
     setHintVisible(false);
@@ -30,7 +30,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
       // The hint can be shown again on the next visit if saving dismissal fails.
       dismissedRef.current = false;
     });
-  }
+  }, []);
 
   useEffect(() => {
     if (!showWelcome) return;
@@ -41,7 +41,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
     }
 
     setHintVisible(true);
-  }, [pathname, showWelcome]);
+  }, [dismissHint, pathname, showWelcome]);
 
   useEffect(() => {
     if (!hintVisible || pathname === "/app/news") return;
@@ -113,7 +113,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
     <div aria-live="polite" className="pointer-events-none fixed inset-0 z-[75]">
       <MousePointer2
         aria-hidden
-        className="absolute h-9 w-9 animate-bounce fill-[color:var(--px-primary)] text-white drop-shadow-[0_3px_5px_rgba(15,23,42,0.5)]"
+        className="absolute h-9 w-9 motion-safe:animate-bounce fill-[color:var(--px-primary)] text-white drop-shadow-[0_3px_5px_rgba(15,23,42,0.5)]"
         size={36}
         style={{
           left: targetPosition.pointerLeft,
