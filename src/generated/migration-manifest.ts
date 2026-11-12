@@ -35,4 +35,5 @@ export const MIGRATION_MANIFEST: readonly string[] = [
   "20260827150000_trader_applications",
   "20260924150000_social_core",
   "20261112060000_email_verification_tokens",
+  "20261112115000_default_profiles_private",
 ];

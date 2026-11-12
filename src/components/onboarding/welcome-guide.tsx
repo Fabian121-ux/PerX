@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   ArrowRight,
   BriefcaseBusiness,
+  Truck,
   ChevronLeft,
   Compass,
   LifeBuoy,
@@ -51,6 +52,13 @@ const STEPS = [
     icon: MessageCircle,
   },
   {
+    title: "Tracking Centre",
+    body: "Track product agreements and delivery updates here. Product agreements appear automatically after a deal is created. Select a product agreement to check whether a verified courier update is available. An agreement status does not mean a parcel has shipped.",
+    href: "/app/track",
+    action: "Open Tracking Centre",
+    icon: Truck,
+  },
+  {
     title: "Deals",
     body: "Review proposals, agreements and deal progress. The actions available depend on the opportunity and each participant’s permissions.",
     href: "/app/deals",
@@ -82,6 +90,72 @@ function getCurrentStepIndex(pathname: string) {
   return index >= 0 ? index : 0;
 }
 
+
+type SmartPageInfo = { title: string; body: string; action: string; href: string; hint: string };
+
+function getSmartPageInfo(pathname: string, pageText: string, pageTitle: string): SmartPageInfo {
+  const source = `${pathname} ${pageTitle} ${pageText}`.toLowerCase();
+  const heading = pageText.split("\n").map((part) => part.trim()).find(Boolean);
+  const routeName = pathname.split("/").filter(Boolean).at(-1)?.replace(/[-_]/g, " ");
+  const label = (heading && heading.length < 70 ? heading : routeName || "this page")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+  const route = pathname.toLowerCase();
+  const currentStatus = pageText.match(/(?:status|stage|state)[:\s]+([a-z _-]{3,40})/i)?.[1]?.trim();
+  if (route === "/app/track" || route.startsWith("/app/track/") || /tracking centre|tracking center/.test(source)) return {
+    title: "Tracking Centre",
+    body: "This is your Tracking Centre. Your product agreements appear here automatically. Select an item to see its carrier update and delivery history. The agreement status is not the same as a courier update.",
+    action: "Open Tracking Centre", href: "/app/track",
+    hint: "Select a product agreement. Check the carrier, tracking number and latest update. If no carrier update is available, contact the seller or open a support request."
+  };
+  if (route.startsWith("/app/deals/") && route.endsWith("/deliveries")) return {
+    title: "Deal deliveries",
+    body: "This page is for submitting work or reviewing a delivery. If you are the provider, choose the open milestone, add a clear title and notes, then submit. If you are the client, review the submitted work before approving it.",
+    action: "Back to Deal", href: route.slice(0, -"/deliveries".length),
+    hint: currentStatus ? `Current status: ${currentStatus}. Check whether a delivery is waiting for your action.` : "Check whether you need to submit work or review a delivery."
+  };
+  if (route.startsWith("/app/deals/") && route.endsWith("/milestones")) return {
+    title: "Deal milestones",
+    body: "Milestones break the agreement into smaller pieces of work. Check each milestone, its description, amount and status so both sides know what is complete and what is next.",
+    action: "Open Deal", href: route.slice(0, -"/milestones".length),
+    hint: "Find the milestone marked in progress or awaiting review."
+  };
+  if (route.startsWith("/app/deals/") && route.endsWith("/escrow")) return {
+    title: "Agreement timeline",
+    body: "This page shows recorded agreement steps. It is not a wallet and does not mean money has been received or held. Check the latest status and its explanation.",
+    action: "Open Deal", href: route.slice(0, -"/escrow".length),
+    hint: "Review the recorded status and return to the Deal workspace for the next available action."
+  };
+  if (route.startsWith("/app/deals/")) return {
+    title: "Deal workspace",
+    body: "This is your Deal workspace. Check the agreed terms, progress and the next action shown on the page. You can open milestones, submit or review deliveries, and return to the discussion. PtahX does not hold funds.",
+    action: "View all Deals", href: "/app/deals",
+    hint: "Start with the next-action box. It tells you whether work is waiting to be submitted or reviewed."
+  };
+  if (/track|tracking|shipment|delivery|dispatch|logistics/.test(source)) return {
+    title: "Tracking", body: "You’re on the tracking page. Check the latest status, review the timeline and open a tracking item for more details. If something looks delayed, use the available support option.", action: "View tracking", href: pathname, hint: "Check the latest update and tracking history."
+  };
+  if (/deal|proposal|agreement|contract|negotiat/.test(source)) return {
+    title: "Deals", body: "You’re viewing a deal. Review the details, check the other party’s response and use the available actions to move it forward. Read the terms before you accept or make changes.", action: "Review this deal", href: pathname, hint: "Check the deal status and any action waiting for you."
+  };
+  if (/invoice|payment|payout|billing|transaction/.test(source)) return {
+    title: "Payments", body: "You’re on a payments page. Check the amount, payment status and reference details. If a payment is pending, allow time for the status to update before trying again.", action: "View this page", href: pathname, hint: "Confirm the payment status and reference."
+  };
+  if (/opportunit|startup|founder|funding|grant|job|role/.test(source)) return {
+    title: "Opportunities", body: "You’re exploring an opportunity. Read the requirements, check who can apply and follow the instructions on the page before submitting.", action: "View opportunity", href: pathname, hint: "Check the requirements and next steps."
+  };
+  if (/support|service.center|ticket|help.request/.test(source)) return {
+    title: "Support", body: "You’re in the Support area. Open a request if you need help, then return here to check replies and updates.", action: "View support request", href: pathname, hint: "Check for a reply or update to your request."
+  };
+  if (/message|conversation|chat/.test(source)) return {
+    title: "Messages", body: "You’re in Messages. Open a conversation to continue the discussion. You can discuss a possible deal with the other person when the relevant options are available.", action: "Open this page", href: pathname, hint: "Choose a conversation and check for new replies."
+  };
+  return {
+    title: label, body: `You’re on ${label}. This guide reads the page title, headings and available actions to help you understand what to do here. Review the main information, then use the buttons on this page to continue. If you tell us what you expected to find, we can improve this guide.`,
+    action: "Stay on this page", href: pathname, hint: "Start with the main heading and the primary button on this page."
+  };
+}
+
 export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -93,13 +167,40 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
   const [collapsed, setCollapsed] = useState(false);
   const [pending, startTransition] = useTransition();
 
+
+  const [pageText, setPageText] = useState("");
+  const [pageTitle, setPageTitle] = useState("");
+  useEffect(() => {
+    const readPage = () => {
+      const main = document.querySelector("main") ?? document.body;
+      const heading = main.querySelector("h1")?.textContent?.trim() || "";
+      setPageTitle(document.title || "");
+      const controls = Array.from(main.querySelectorAll("button, a, [role=button]")).map((node) => node.textContent?.trim()).filter(Boolean).slice(0, 30).join(" | ");
+      setPageText(`${heading}\n${(main.innerText || "").slice(0, 4500)}\nActions: ${controls}`);
+    };
+    readPage();
+    const main = document.querySelector("main") ?? document.body;
+    const observer = new MutationObserver(readPage);
+    observer.observe(main, { childList: true, subtree: true, characterData: true });
+    return () => observer.disconnect();
+  }, [pathname]);
+  const smartPage = getSmartPageInfo(pathname, pageText, pageTitle);
+  const knownPage = STEPS.some((item) => item.href === pathname || (item.href !== "/app" && pathname.startsWith(item.href + "/")));
   const currentStepIndex = getCurrentStepIndex(pathname);
+
   const activeStepIndex =
     overridePath === pathname && stepOverride !== null
       ? stepOverride
       : currentStepIndex;
-  const step = STEPS[activeStepIndex];
+
+  const step = knownPage ? STEPS[activeStepIndex] : {
+    ...smartPage,
+    icon: Compass,
+  };
+
+
   const nextStep = STEPS[Math.min(STEPS.length - 1, activeStepIndex + 1)];
+
   const StepIcon = step.icon;
 
   function persistDismissal() {
@@ -292,7 +393,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
         >
           <div className="flex min-w-0 items-center justify-between gap-3">
             <p className="min-w-0 text-xs font-bold uppercase tracking-[0.12em] text-[color:var(--px-primary-ink)]">
-              Page guide · {activeStepIndex + 1} of {STEPS.length}
+              {knownPage ? `Page guide · ${activeStepIndex + 1} of ${STEPS.length}` : "Page guide · This page"}
             </p>
             <button
               aria-label="Tuck guide into corner"
@@ -311,7 +412,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-bold uppercase tracking-wide text-[color:var(--px-text-muted)]">
-                You’re currently on
+                You’re on this page
               </p>
               <h2 className="mt-0.5 break-words text-base font-extrabold [overflow-wrap:anywhere]">
                 {step.title}
@@ -322,71 +423,45 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
             </div>
           </div>
 
-          {activeStepIndex < STEPS.length - 1 ? (
-            <p className="break-words text-sm leading-6 text-[color:var(--px-text-muted)]">
-              Next, go to{" "}
-              <Link
-                className="font-bold text-[color:var(--px-primary-ink)] underline underline-offset-2 hover:no-underline"
-                href={nextStep.href}
-                onClick={() => navigateWithGuide(nextStep.href)}
-              >
-                {nextStep.title}
-              </Link>{" "}
-              {activeStepIndex === 0
-                ? "to discover people, startups and opportunities."
-                : activeStepIndex === 2
-                  ? "to continue the conversation with your connections."
-                  : "to continue exploring what preX can do."}
-            </p>
+          {knownPage ? (
+            <>
+              {activeStepIndex < STEPS.length - 1 ? (
+                <p className="break-words text-sm leading-6 text-[color:var(--px-text-muted)]">
+                  Next, go to{" "}
+                  <Link className="font-bold text-[color:var(--px-primary-ink)] underline underline-offset-2 hover:no-underline" href={nextStep.href} onClick={() => navigateWithGuide(nextStep.href)}>
+                    {nextStep.title}
+                  </Link>{" "}
+                  to continue exploring preX.
+                </p>
+              ) : (
+                <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">You’ve reached the end of the guide. You can reopen it whenever you need help.</p>
+              )}
+              <div className="h-1.5 overflow-hidden rounded-full bg-[color:var(--px-surface-soft)]">
+                <div className="h-full rounded-full bg-[color:var(--px-primary)] transition-[width] duration-200" style={{ width: `${((activeStepIndex + 1) / STEPS.length) * 100}%` }} />
+              </div>
+            </>
           ) : (
-            <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">
-              You’ve reached the end of the guide. You can reopen it from this
-              corner whenever you need a reminder.
+            <p className="break-words text-sm leading-6 text-[color:var(--px-text-muted)]">
+              <span className="font-semibold text-[color:var(--px-text)]">Try this:</span> {smartPage.hint}
             </p>
           )}
 
-          <div className="h-1.5 overflow-hidden rounded-full bg-[color:var(--px-surface-soft)]">
-            <div
-              className="h-full rounded-full bg-[color:var(--px-primary)] transition-[width] duration-200"
-              style={{ width: `${((activeStepIndex + 1) / STEPS.length) * 100}%` }}
-            />
-          </div>
-
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <button
-              className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] disabled:opacity-40"
-              disabled={activeStepIndex === 0}
-              onClick={() => {
-                setOverridePath(pathname);
-                setStepOverride(Math.max(0, activeStepIndex - 1));
-              }}
-              type="button"
-            >
-              <ArrowLeft aria-hidden size={16} /> Back
-            </button>
+            {knownPage ? (
+              <button className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] disabled:opacity-40" disabled={activeStepIndex === 0} onClick={() => { setOverridePath(pathname); setStepOverride(Math.max(0, activeStepIndex - 1)); }} type="button">
+                <ArrowLeft aria-hidden size={16} /> Back
+              </button>
+            ) : <span className="text-xs text-[color:var(--px-text-muted)]">Page-aware help</span>}
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <Link
-                className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-primary-soft)]"
-                href={step.href}
-                onClick={() => navigateWithGuide(step.href)}
-              >
+              <Link className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-primary-soft)]" href={step.href} onClick={() => navigateWithGuide(step.href)}>
                 {step.action}
               </Link>
-              {activeStepIndex < STEPS.length - 1 ? (
-                <Button
-                  onClick={() => {
-                    setOverridePath(pathname);
-                    setStepOverride(Math.min(STEPS.length - 1, activeStepIndex + 1));
-                  }}
-                  size="sm"
-                  type="button"
-                >
+              {knownPage && activeStepIndex < STEPS.length - 1 ? (
+                <Button onClick={() => { setOverridePath(pathname); setStepOverride(Math.min(STEPS.length - 1, activeStepIndex + 1)); }} size="sm" type="button">
                   Next <ArrowRight aria-hidden className="ml-1" size={15} />
                 </Button>
               ) : (
-                <Button onClick={closeGuide} size="sm" type="button">
-                  Finish
-                </Button>
+                <Button onClick={closeGuide} size="sm" type="button">{knownPage ? "Finish" : "Got it"}</Button>
               )}
             </div>
           </div>

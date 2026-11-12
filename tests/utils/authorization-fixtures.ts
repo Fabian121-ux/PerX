@@ -95,6 +95,8 @@ export function authorizationFixtures(prisma: PrismaClient) {
         passwordHash: "unused-fixture-password-hash",
         accountClassification: "PUBLIC_BETA_USER",
         isActive: true,
+        emailVerifiedAt: new Date(),
+        verificationStatus: "VERIFIED",
         profile: {
           create: {
             headline: "Authorization test member",
@@ -103,6 +105,7 @@ export function authorizationFixtures(prisma: PrismaClient) {
             isDiscoverable: true,
             allowConnectionRequests: true,
             allowMessagesFromConnections: true,
+            profileCompleteness: 100,
           },
         },
         roles: { create: roleIds.map((roleId) => ({ roleId })) },
