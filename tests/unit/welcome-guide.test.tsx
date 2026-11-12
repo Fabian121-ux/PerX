@@ -51,16 +51,29 @@ describe("persistent getting started guide", () => {
     mocks.dismiss.mockResolvedValue(undefined);
     render(<WelcomeGuide showWelcome={false} />);
 
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Open the preX getting started guide" }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open the preX getting started guide" }),
+    );
+    expect(
+      screen.getByRole("region", { name: "preX getting started guide" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Home" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Tuck guide into corner" }));
+    expect(
+      screen.getByRole("button", { name: "Open the preX getting started guide" }),
+    ).toBeInTheDocument();
 
     act(() => {
       window.dispatchEvent(new Event("ptahx-open-guide"));
     });
-
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Start with News" })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Close guide" }));
-    expect(mocks.dismiss).toHaveBeenCalledTimes(1);
+    expect(
+      screen.getByRole("region", { name: "preX getting started guide" }),
+    ).toBeInTheDocument();
+    expect(mocks.dismiss).not.toHaveBeenCalled();
   });
 });

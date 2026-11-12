@@ -1,108 +1,398 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import * as Dialog from "@radix-ui/react-dialog";
 import {
-  ArrowLeft, ArrowRight, BriefcaseBusiness, Handshake, Headset, MapPin,
-  MessageCircle, Newspaper, ShieldCheck, Sparkles, Users, X,
+  ArrowLeft,
+  ArrowRight,
+  BriefcaseBusiness,
+  ChevronLeft,
+  Compass,
+  LifeBuoy,
+  MessageCircle,
+  Network,
+  Settings2,
+  Sparkles,
+  X,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
+
+import { Button } from "@/components/ui/button";
 import { dismissOnboardingChecklistAction } from "@/features/onboarding/actions";
 
-const steps = [
-  { icon: Newspaper, title: "Start with News", text: "Read updates and messages from the preX team.", href: "/app/news", action: "Open News" },
-  { icon: Users, title: "Find people", text: "Search for founders, workers, partners and other members.", href: "/app/discover?type=PEOPLE", action: "Find people" },
-  { icon: Handshake, title: "Build your network", text: "Send a connect request. Accept requests from people you know.", href: "/app/connections", action: "Open connections" },
-  { icon: MessageCircle, title: "Send messages", text: "Chat with people you are connected to. Check unread messages.", href: "/app/messages", action: "Open messages" },
-  { icon: BriefcaseBusiness, title: "Send proposals", text: "Make an offer or reply to a proposal about an opportunity.", href: "/app/proposals/sent", action: "View proposals" },
-  { icon: Handshake, title: "Manage deals", text: "See your agreements and what each person needs to do next.", href: "/app/deals", action: "View deals" },
-  { icon: MapPin, title: "Track progress", text: "Follow delivery updates and agreement progress in Tracking.", href: "/app/track", action: "Open tracking" },
-  { icon: ShieldCheck, title: "Build trust", text: "Complete your profile and build a good record through real work.", href: "/app/profile", action: "View profile" },
-  { icon: Headset, title: "Get help", text: "Contact the preX team if you have a problem or need support.", href: "/app/service-center", action: "Get help" },
-];
+const STEPS = [
+  {
+    title: "Home",
+    body: "You’re on Home. This is your main feed: share updates, follow what founders are building and keep up with activity across the startup ecosystem.",
+    href: "/app",
+    action: "Open Home",
+    icon: Compass,
+  },
+  {
+    title: "Discover",
+    body: "Explore startups, opportunities, services and people. Use filters and search to find relevant openings and organisations.",
+    href: "/app/discover",
+    action: "Explore Discover",
+    icon: Compass,
+  },
+  {
+    title: "Connections",
+    body: "Meet founders, potential clients, customers, co-founders and ecosystem partners. Send connection requests; once a request is accepted, you can message eligible members.",
+    href: "/app/connections",
+    action: "Open Connections",
+    icon: Network,
+  },
+  {
+    title: "Messages",
+    body: "Continue conversations, ask questions and discuss possible collaborations. Deal and proposal actions are available from eligible conversations.",
+    href: "/app/messages",
+    action: "Open Messages",
+    icon: MessageCircle,
+  },
+  {
+    title: "Deals",
+    body: "Review proposals, agreements and deal progress. The actions available depend on the opportunity and each participant’s permissions.",
+    href: "/app/deals",
+    action: "View Deals",
+    icon: BriefcaseBusiness,
+  },
+  {
+    title: "Support",
+    body: "Need help with your account, a deal, payments or a platform issue? Open a request in the Service Center and follow its progress there.",
+    href: "/app/service-center",
+    action: "Open Service Center",
+    icon: LifeBuoy,
+  },
+  {
+    title: "Settings",
+    body: "Manage your profile, security and preferences. Keep your account details current so important updates can reach you.",
+    href: "/app/settings",
+    action: "Open Settings",
+    icon: Settings2,
+  },
+] as const;
+
+function getCurrentStepIndex(pathname: string) {
+  const index = STEPS.findIndex((step) =>
+    step.href === "/app"
+      ? pathname === "/app"
+      : pathname === step.href || pathname.startsWith(`${step.href}/`),
+  );
+  return index >= 0 ? index : 0;
+}
 
 export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
-  const [step, setStep] = useState(0);
-  const [isOpen, setIsOpen] = useState(showWelcome);
-  const [saving, setSaving] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const dismissedRef = useRef(!showWelcome);
+  const [welcomeOpen, setWelcomeOpen] = useState(showWelcome);
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [stepOverride, setStepOverride] = useState<number | null>(null);
+  const [overridePath, setOverridePath] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  const currentStepIndex = getCurrentStepIndex(pathname);
+  const activeStepIndex =
+    overridePath === pathname && stepOverride !== null
+      ? stepOverride
+      : currentStepIndex;
+  const step = STEPS[activeStepIndex];
+  const nextStep = STEPS[Math.min(STEPS.length - 1, activeStepIndex + 1)];
+  const StepIcon = step.icon;
+
+  function persistDismissal() {
+    if (dismissedRef.current) return;
+    dismissedRef.current = true;
+    startTransition(async () => {
+      try {
+        await dismissOnboardingChecklistAction();
+      } catch {
+        // The user can keep navigating. The welcome may be shown again next visit.
+        dismissedRef.current = false;
+      }
+    });
+  }
+
+  function closeWelcome() {
+    setWelcomeOpen(false);
+    persistDismissal();
+  }
+
+  function startTour() {
+    setWelcomeOpen(false);
+    persistDismissal();
+    setCollapsed(false);
+    setGuideOpen(true);
+    setOverridePath(pathname);
+    setStepOverride(currentStepIndex);
+  }
+
+  function openGuide() {
+    setCollapsed(false);
+    setGuideOpen(true);
+    setOverridePath(pathname);
+    setStepOverride(currentStepIndex);
+  }
 
   useEffect(() => {
-    if (showWelcome) setIsOpen(true);
-  }, [showWelcome]);
-
-  useEffect(() => {
-    const openGuide = () => {
-      setStep(0);
-      setIsOpen(true);
+    const handleOpenGuide = () => {
+      setCollapsed(false);
+      setGuideOpen(true);
+      setOverridePath(pathname);
+      setStepOverride(getCurrentStepIndex(pathname));
     };
-    window.addEventListener("ptahx-open-guide", openGuide);
-    return () => window.removeEventListener("ptahx-open-guide", openGuide);
-  }, []);
+    window.addEventListener("ptahx-open-guide", handleOpenGuide);
+    return () => window.removeEventListener("ptahx-open-guide", handleOpenGuide);
+  }, [pathname]);
 
-  const finish = async () => {
-    if (saving) return;
-    setSaving(true);
-    try {
-      await dismissOnboardingChecklistAction();
-    } finally {
-      setIsOpen(false);
-      setSaving(false);
-    }
-  };
 
-  if (!isOpen) return null;
-  const current = steps[step];
-  const Icon = current.icon;
+  function openMessages() {
+    closeWelcome();
+    router.push("/app/messages");
+  }
+
+  function expandGuide() {
+    setCollapsed(false);
+    setGuideOpen(true);
+    setOverridePath(pathname);
+    setStepOverride(currentStepIndex);
+  }
+
+  function closeGuide() {
+    setGuideOpen(false);
+    setCollapsed(true);
+    setStepOverride(null);
+    setOverridePath(null);
+  }
+
+  function navigateWithGuide(href: string) {
+    setStepOverride(null);
+    setOverridePath(null);
+    if (href !== pathname) return;
+    setStepOverride(currentStepIndex);
+    setOverridePath(pathname);
+  }
 
   return (
-    <div className="fixed inset-0 z-[75] grid place-items-center overflow-y-auto bg-slate-950/65 p-3 backdrop-blur-sm sm:p-6">
-      <section
-        aria-labelledby="prex-guide-title"
-        aria-modal="true"
-        className="relative my-auto w-full max-w-lg overflow-hidden rounded-[28px] border border-white/15 bg-[color:var(--px-surface)] p-5 text-[color:var(--px-text)] shadow-[0_28px_90px_rgba(0,0,0,0.45)] motion-safe:animate-[guide-enter_380ms_cubic-bezier(.2,.8,.2,1)] sm:p-7"
-        role="dialog"
+    <>
+      <Dialog.Root
+        open={welcomeOpen}
+        onOpenChange={(open) => {
+          if (!open) closeWelcome();
+        }}
       >
-        <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-[color:var(--px-primary)]/20 blur-3xl" />
-        <div className="relative flex items-center justify-between gap-3">
-          <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[.16em] text-[color:var(--px-primary)]">
-            <Sparkles size={15} /> Your preX guide
-          </span>
-          <button aria-label="Close guide" className="grid size-9 place-items-center rounded-full text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)]" onClick={() => void finish()} type="button">
-            <X size={18} />
-          </button>
-        </div>
-        <div className="relative mt-7 [perspective:900px]">
-          <div className="mx-auto grid size-24 place-items-center rounded-[26px] border border-[color:var(--px-primary)]/30 bg-gradient-to-br from-[color:var(--px-primary)] to-indigo-700 text-white shadow-[0_18px_35px_rgba(79,70,229,.35)] transition-transform duration-500 [transform:rotateY(-8deg)_rotateX(7deg)] motion-safe:hover:[transform:rotateY(0deg)_rotateX(0deg)_translateY(-4px)]">
-            <Icon size={42} strokeWidth={1.8} />
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-[80] bg-slate-950/60 backdrop-blur-sm" />
+          <Dialog.Content className="ptahx-welcome-dialog fixed left-1/2 top-1/2 z-[81] grid max-h-[min(86dvh,42rem)] w-[min(92vw,34rem)] -translate-x-1/2 -translate-y-1/2 gap-5 overflow-y-auto rounded-3xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-5 text-[color:var(--px-text)] shadow-2xl outline-none sm:p-7">
+            <div className="flex items-start justify-between gap-4">
+              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary-ink)]">
+                <Sparkles aria-hidden size={24} />
+              </span>
+              <Dialog.Close asChild>
+                <button
+                  aria-label="Close welcome message"
+                  className="grid size-11 shrink-0 place-items-center rounded-xl text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  type="button"
+                >
+                  <X aria-hidden size={20} />
+                </button>
+              </Dialog.Close>
+            </div>
+
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--px-primary-ink)]">
+                Welcome to preX
+              </p>
+              <Dialog.Title className="mt-2 text-2xl font-black leading-tight text-[color:var(--px-text)] sm:text-3xl">
+                A good place to start.
+              </Dialog.Title>
+              <Dialog.Description className="mt-3 text-sm leading-7 text-[color:var(--px-text-muted)]">
+                preX brings founders, startups and ecosystem opportunities into
+                one place. Use the guide to understand the page you’re on and
+                find a useful next step.
+              </Dialog.Description>
+            </div>
+
+            <div className="grid gap-3 rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface-soft)] p-4 sm:grid-cols-2">
+              <div className="flex min-w-0 items-start gap-3">
+                <Compass aria-hidden className="mt-0.5 shrink-0 text-[color:var(--px-primary-ink)]" size={19} />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold">Explore</p>
+                  <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">Find people, startups and opportunities.</p>
+                </div>
+              </div>
+              <div className="flex min-w-0 items-start gap-3">
+                <Network aria-hidden className="mt-0.5 shrink-0 text-[color:var(--px-primary-ink)]" size={19} />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold">Build your network</p>
+                  <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">Connect with people and continue in Messages.</p>
+                </div>
+              </div>
+              <div className="flex min-w-0 items-start gap-3 sm:col-span-2">
+                <LifeBuoy aria-hidden className="mt-0.5 shrink-0 text-[color:var(--px-primary-ink)]" size={19} />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold">Get support</p>
+                  <p className="mt-1 text-xs leading-5 text-[color:var(--px-text-muted)]">Use the Service Center whenever you need help.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Button className="w-full" disabled={pending} onClick={startTour} type="button">
+                Take the quick tour <ArrowRight aria-hidden className="ml-2" size={17} />
+              </Button>
+              <Button className="w-full" disabled={pending} onClick={openMessages} type="button" variant="outline">
+                <MessageCircle aria-hidden className="mr-2" size={17} />
+                Go to Messages
+              </Button>
+            </div>
+            <button
+              className="min-h-11 justify-self-center px-3 text-sm font-semibold text-[color:var(--px-text-muted)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              disabled={pending}
+              onClick={closeWelcome}
+              type="button"
+            >
+              I’ll explore on my own
+            </button>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {!welcomeOpen && collapsed ? (
+        <button
+          aria-label="Expand the getting started guide"
+          className="fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+1rem)] right-0 z-[56] grid size-11 place-items-center rounded-l-xl border border-r-0 border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-primary-ink)] shadow-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:bottom-6"
+          onClick={expandGuide}
+          title="Show guide"
+          type="button"
+        >
+          <ChevronLeft aria-hidden size={21} />
+        </button>
+      ) : null}
+
+      {!welcomeOpen && !collapsed && !guideOpen ? (
+        <button
+          aria-label="Open the preX getting started guide"
+          className="ptahx-guide-launcher fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+1rem)] right-4 z-[55] inline-flex min-h-11 max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm font-bold text-[color:var(--px-text)] shadow-xl transition hover:-translate-y-0.5 hover:border-[color:var(--px-focus)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:bottom-6 lg:right-6"
+          onClick={openGuide}
+          type="button"
+        >
+          <Compass aria-hidden className="shrink-0 text-[color:var(--px-primary-ink)]" size={18} />
+          Guide
+        </button>
+      ) : null}
+
+      {!welcomeOpen && !collapsed && guideOpen ? (
+        <section
+          aria-label="preX getting started guide"
+          aria-live="polite"
+          className="ptahx-guide-card fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+1rem)] right-3 z-[56] grid max-h-[min(62dvh,30rem)] w-[min(23rem,calc(100vw-1.5rem))] gap-4 overflow-y-auto rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4 text-[color:var(--px-text)] shadow-2xl sm:right-5 sm:p-5 lg:bottom-6 lg:right-6"
+        >
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <p className="min-w-0 text-xs font-bold uppercase tracking-[0.12em] text-[color:var(--px-primary-ink)]">
+              Page guide · {activeStepIndex + 1} of {STEPS.length}
+            </p>
+            <button
+              aria-label="Tuck guide into corner"
+              title="Hide guide"
+              className="grid size-10 shrink-0 place-items-center rounded-lg text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              onClick={closeGuide}
+              type="button"
+            >
+              <X aria-hidden size={18} />
+            </button>
           </div>
-        </div>
-        <div className="relative mt-6 text-center" aria-live="polite">
-          <p className="text-xs font-bold text-[color:var(--px-text-muted)]">STEP {step + 1} OF {steps.length}</p>
-          <h2 id="prex-guide-title" className="mt-2 text-2xl font-black sm:text-3xl">{current.title}</h2>
-          <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-[color:var(--px-text-muted)]">{current.text}</p>
-        </div>
-        <div className="relative mt-6 flex justify-center gap-1.5" aria-label={`Step ${step + 1} of ${steps.length}`}>
-          {steps.map((item, index) => <span key={item.title} className={`h-1.5 rounded-full transition-all duration-300 ${index === step ? "w-7 bg-[color:var(--px-primary)]" : "w-1.5 bg-[color:var(--px-border-strong)]"}`} />)}
-        </div>
-        <div className="relative mt-7 grid grid-cols-2 gap-3">
-          <button className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-[color:var(--px-border)] px-4 text-sm font-bold disabled:opacity-40" disabled={step === 0} onClick={() => setStep((value) => Math.max(0, value - 1))} type="button">
-            <ArrowLeft size={16} /> Back
-          </button>
-          {step < steps.length - 1 ? (
-            <button className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white shadow-lg shadow-indigo-900/20" onClick={() => setStep((value) => Math.min(steps.length - 1, value + 1))} type="button">
-              Next <ArrowRight size={16} />
-            </button>
+
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary-ink)]">
+              <StepIcon aria-hidden size={20} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-[color:var(--px-text-muted)]">
+                You’re currently on
+              </p>
+              <h2 className="mt-0.5 break-words text-base font-extrabold [overflow-wrap:anywhere]">
+                {step.title}
+              </h2>
+              <p className="mt-1 break-words text-sm leading-6 text-[color:var(--px-text-muted)] [overflow-wrap:anywhere]">
+                {step.body}
+              </p>
+            </div>
+          </div>
+
+          {activeStepIndex < STEPS.length - 1 ? (
+            <p className="break-words text-sm leading-6 text-[color:var(--px-text-muted)]">
+              Next, go to{" "}
+              <Link
+                className="font-bold text-[color:var(--px-primary-ink)] underline underline-offset-2 hover:no-underline"
+                href={nextStep.href}
+                onClick={() => navigateWithGuide(nextStep.href)}
+              >
+                {nextStep.title}
+              </Link>{" "}
+              {activeStepIndex === 0
+                ? "to discover people, startups and opportunities."
+                : activeStepIndex === 2
+                  ? "to continue the conversation with your connections."
+                  : "to continue exploring what preX can do."}
+            </p>
           ) : (
-            <button className="min-h-12 rounded-xl bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white" onClick={() => void finish()} type="button">
-              Finish guide
-            </button>
+            <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">
+              You’ve reached the end of the guide. You can reopen it from this
+              corner whenever you need a reminder.
+            </p>
           )}
-        </div>
-        <div className="relative mt-3 flex items-center justify-between gap-3">
-          <Link className="text-xs font-bold text-[color:var(--px-primary)] hover:underline" href={current.href} onClick={() => void finish()}>{current.action}</Link>
-          <button className="text-xs font-semibold text-[color:var(--px-text-muted)] hover:underline" disabled={saving} onClick={() => void finish()} type="button">Skip guide</button>
-        </div>
-      </section>
-      <style jsx>{`@keyframes guide-enter { from { opacity: 0; transform: translateY(18px) scale(.96) rotateX(5deg); } to { opacity: 1; transform: translateY(0) scale(1) rotateX(0); } }`}</style>
-    </div>
+
+          <div className="h-1.5 overflow-hidden rounded-full bg-[color:var(--px-surface-soft)]">
+            <div
+              className="h-full rounded-full bg-[color:var(--px-primary)] transition-[width] duration-200"
+              style={{ width: `${((activeStepIndex + 1) / STEPS.length) * 100}%` }}
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <button
+              className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] disabled:opacity-40"
+              disabled={activeStepIndex === 0}
+              onClick={() => {
+                setOverridePath(pathname);
+                setStepOverride(Math.max(0, activeStepIndex - 1));
+              }}
+              type="button"
+            >
+              <ArrowLeft aria-hidden size={16} /> Back
+            </button>
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <Link
+                className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-primary-soft)]"
+                href={step.href}
+                onClick={() => navigateWithGuide(step.href)}
+              >
+                {step.action}
+              </Link>
+              {activeStepIndex < STEPS.length - 1 ? (
+                <Button
+                  onClick={() => {
+                    setOverridePath(pathname);
+                    setStepOverride(Math.min(STEPS.length - 1, activeStepIndex + 1));
+                  }}
+                  size="sm"
+                  type="button"
+                >
+                  Next <ArrowRight aria-hidden className="ml-1" size={15} />
+                </Button>
+              ) : (
+                <Button onClick={closeGuide} size="sm" type="button">
+                  Finish
+                </Button>
+              )}
+            </div>
+          </div>
+
+        </section>
+      ) : null}
+    </>
   );
 }
