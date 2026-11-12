@@ -26,9 +26,10 @@ export function AppScrollRestoration() {
         }
         main.scrollTo({ top: position.top ?? 0 });
         if (typeof position.navLeft === "number") {
-          const activeNav = document.querySelector<HTMLElement>(
-            "nav[role='tablist'], [data-scroll-nav='true']",
+          const activeNavs = Array.from(
+            document.querySelectorAll<HTMLElement>("nav, [role='tablist'], .dashboard-scroll, [data-scroll-nav='true']"),
           );
+          const activeNav = activeNavs.find((element) => element.scrollWidth > element.clientWidth);
           activeNav?.scrollTo({ left: position.navLeft });
         }
         sessionStorage.removeItem(key);
@@ -47,9 +48,9 @@ export function AppScrollRestoration() {
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 
       const nav = link.closest<HTMLElement>(
-        "nav[role='tablist'], [data-scroll-nav='true']",
+        "nav, [role='tablist'], .dashboard-scroll, [data-scroll-nav='true']",
       );
-      if (!nav) return;
+      if (!nav || nav.scrollWidth <= nav.clientWidth) return;
 
       const destination = new URL(link.href, window.location.href);
       if (destination.origin !== window.location.origin) return;
