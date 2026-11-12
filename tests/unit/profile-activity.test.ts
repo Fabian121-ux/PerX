@@ -32,6 +32,8 @@ describe("profile activity summary", () => {
   });
 
   it("scopes every aggregate to the viewer and reports the counts", async () => {
+    counts.connection.mockResolvedValue(0);
+    counts.conversationParticipant.mockResolvedValue(0);
     counts.dealParticipant
       .mockResolvedValueOnce(2) // active
       .mockResolvedValueOnce(5); // completed
