@@ -30,6 +30,7 @@ describe("human-readable display name validation", () => {
     "José García",
     "李小龍",
     "McDonald",
+    "J. R. R. Tolkien",
   ])("accepts a legitimate name: %s", (name) => {
     expect(personNameSchema.safeParse(name).success).toBe(true);
   });
@@ -41,6 +42,9 @@ describe("human-readable display name validation", () => {
     "bad_name",
     "user@example.com",
     "random---id",
+    "New PtahX member",
+    "Deleted member",
+    "Alex Alex",
   ])("rejects an identifier-like or invalid display name: %s", (name) => {
     expect(personNameSchema.safeParse(name).success).toBe(false);
   });
