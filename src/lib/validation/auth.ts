@@ -51,7 +51,26 @@ export const passwordSchema = z
  * or generated identifier. Keep this shared by signup, profile setup and edits.
  */
 function looksLikeGeneratedName(value: string) {
-  const compact = value.replace(/[\s'’-]/g, "");
+  const normalized = value.trim().toLocaleLowerCase();
+  const placeholderNames = new Set([
+    "deleted member",
+    "demo user",
+    "new ptahx member",
+    "ptahx member",
+    "test user",
+    "unknown user",
+  ]);
+  if (placeholderNames.has(normalized)) return true;
+
+  const tokens = value.split(/[\\s'’.-]+/).filter(Boolean);
+  if (
+    tokens.length > 1 &&
+    tokens.every((token) => token.toLocaleLowerCase() === tokens[0].toLocaleLowerCase())
+  ) {
+    return true;
+  }
+
+  const compact = value.replace(/[\\s'’.-]/g, "");
   if (compact.length < 12) return false;
 
   const uppercaseInside = [...compact.slice(1)].filter(
@@ -59,8 +78,9 @@ function looksLikeGeneratedName(value: string) {
       character !== character.toLocaleLowerCase() &&
       character === character.toLocaleUpperCase(),
   ).length;
+  const vowelRatio = (compact.match(/[aeiouy]/gi) ?? []).length / compact.length;
 
-  return uppercaseInside >= 2;
+  return uppercaseInside >= 2 || (compact.length >= 14 && vowelRatio < 0.2);
 }
 
 export const personNameSchema = z
