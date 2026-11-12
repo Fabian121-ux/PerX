@@ -17,24 +17,30 @@ export function FeedComposerEntry({
   return (
     <div className="rounded-[22px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-3 shadow-sm sm:p-4">
       <div className="flex items-center gap-3">
-        {avatarUrl ? (
-          <Image
-            alt=""
-            className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-[color:var(--px-border)]"
-            height={44}
-            /* Above the fold on every Home load. */
-            priority
-            src={avatarUrl}
-            width={44}
-          />
-        ) : (
-          <span
-            aria-hidden
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[color:var(--px-primary)] text-sm font-black text-white"
-          >
-            {getInitials(name)}
-          </span>
-        )}
+        <Link
+          aria-label="View your profile"
+          className="shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+          href="/app/profile"
+        >
+          {avatarUrl ? (
+            <Image
+              alt=""
+              className="h-11 w-11 rounded-full object-cover ring-1 ring-[color:var(--px-border)]"
+              height={44}
+              /* Above the fold on every Home load. */
+              priority
+              src={avatarUrl}
+              width={44}
+            />
+          ) : (
+            <span
+              aria-hidden
+              className="grid h-11 w-11 place-items-center rounded-full bg-[color:var(--px-primary)] text-sm font-black text-white"
+            >
+              {getInitials(name)}
+            </span>
+          )}
+        </Link>
         <Link
           className="flex min-h-11 min-w-0 flex-1 items-center rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-muted)] px-4 text-left text-sm font-medium text-[color:var(--px-text)] transition hover:border-[color:var(--px-primary)] hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
           href="/app/posts/new"
