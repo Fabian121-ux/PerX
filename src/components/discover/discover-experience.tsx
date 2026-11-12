@@ -484,7 +484,9 @@ function PersonDiscoveryCard({
     .slice(0, 2)
     .toUpperCase();
   const href =
-    mode === "preview" ? "/preview/profile" : `/u/${profile.username}`;
+    mode === "preview"
+      ? "/preview/profile"
+      : `/u/${encodeURIComponent(profile.username)}`;
 
   return (
     <Card className="flex min-h-[230px] flex-col justify-between gap-5">
