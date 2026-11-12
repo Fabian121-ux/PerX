@@ -2,6 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 
 export const networkAccountEligibilitySelect = {
   accountClassification: true,
+  emailVerifiedAt: true,
   bannedAt: true,
   deactivatedAt: true,
   id: true,
@@ -15,6 +16,7 @@ export const networkAccountEligibilitySelect = {
   },
   suspendedAt: true,
   suspendedUntil: true,
+  verificationStatus: true,
 } satisfies Prisma.UserSelect;
 
 export type NetworkAccountSnapshot = Prisma.UserGetPayload<{
@@ -34,6 +36,8 @@ export function isEligibleNetworkAccount(
 
   return (
     account.accountClassification === "PUBLIC_BETA_USER" &&
+    account.emailVerifiedAt !== null &&
+    account.verificationStatus === "VERIFIED" &&
     account.isActive &&
     !account.bannedAt &&
     !account.deactivatedAt &&
@@ -55,6 +59,8 @@ export function getEligibleNetworkUserWhere(
 ): Prisma.UserWhereInput {
   return {
     accountClassification: "PUBLIC_BETA_USER",
+    emailVerifiedAt: { not: null },
+    verificationStatus: "VERIFIED",
     bannedAt: null,
     deactivatedAt: null,
     isActive: true,
