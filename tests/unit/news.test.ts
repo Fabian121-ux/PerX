@@ -126,6 +126,37 @@ describe("News data and read ownership", () => {
     });
   });
 
+  it("keeps the personal signup welcome available in News", async () => {
+    const createdAt = new Date("2026-07-31T09:00:00.000Z");
+    mocks.findMany.mockResolvedValue([
+      {
+        actionUrl: null,
+        body: "Welcome to preX.",
+        broadcast: null,
+        broadcastId: null,
+        createdAt,
+        id: "welcome-notification",
+        readAt: null,
+        title: "Welcome to preX",
+        type: "SYSTEM",
+      },
+    ]);
+
+    await expect(getNewsForUser("current-user", now)).resolves.toEqual([
+      {
+        actionUrl: null,
+        body: "Welcome to preX.",
+        expiresAt: null,
+        id: "welcome-notification",
+        notificationId: "welcome-notification",
+        priority: "NORMAL",
+        readAt: null,
+        sentAt: createdAt,
+        title: "Welcome to preX",
+      },
+    ]);
+  });
+
   it("marks only requested, owned, active News notifications read", async () => {
     await markVisibleNewsAsReadAction([
       "notification-1",
