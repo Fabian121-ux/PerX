@@ -30,7 +30,7 @@ import { chromium } from 'playwright';
     await page.waitForURL('**/verify-email?status=sent', { timeout: 15000 });
     console.log('SUCCESS: Account created and verification step reached.');
   } catch {
-    console.error('FAILED: Did not reach /app/profile/setup within the timeout.');
+    console.error('FAILED: Did not reach the email verification step within the timeout.');
     const errorText = await page.evaluate(() => document.body.innerText);
     console.error('Page text:', errorText);
     process.exit(1);
