@@ -14,6 +14,18 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
+vi.mock("next/server", () => ({
+  after: vi.fn((callback: () => Promise<void>) => {
+    void callback();
+  }),
+}));
+
+vi.mock("@/lib/auth/email-verification-delivery", () => ({
+  buildEmailVerificationUrl: vi.fn((token: string) => `https://ptahx.test/verify-email?token=${token}`),
+  deliverEmailVerification: vi.fn(async () => ({ provider: "resend", status: "delivered" })),
+  isEmailVerificationDeliveryConfigured: vi.fn(() => true),
+}));
+
 vi.mock("@/lib/env", () => ({
   getResolvedDataMode: vi.fn(),
   getSignupConfig: vi.fn(),
@@ -148,6 +160,9 @@ describe("Auth Actions", () => {
 
     it("creates user and redirects to setup on success", async () => {
       const tx = {
+        emailVerificationToken: {
+          create: vi.fn().mockResolvedValue({ id: "verification_1" }),
+        },
         $executeRawUnsafe: vi.fn().mockResolvedValue(1),
         role: {
           upsert: vi
@@ -169,12 +184,6 @@ describe("Auth Actions", () => {
         },
         $transaction: vi.fn((callback) => callback(tx)),
       } as never);
-      vi.mocked(session.createSessionRecord).mockResolvedValue({
-        maxAge: 60,
-        name: "ptahx_session",
-        value: "session-token",
-      });
-
       const formData = new FormData();
       formData.set("email", "test@test.com");
       formData.set("name", "Test User");
@@ -186,14 +195,19 @@ describe("Auth Actions", () => {
       formData.set("roles", "ADMIN");
 
       await expect(signUpAction(idleState, formData)).rejects.toThrow(
-        "REDIRECT:/app/profile/setup",
+        "REDIRECT:/verify-email?status=sent",
       );
-      expect(session.createSessionRecord).toHaveBeenCalledWith("user_1", tx);
-      expect(session.setSessionCookie).toHaveBeenCalledWith({
-        maxAge: 60,
-        name: "ptahx_session",
-        value: "session-token",
-      });
+      expect(tx.emailVerificationToken.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            userId: "user_1",
+            tokenHash: expect.any(String),
+            expiresAt: expect.any(Date),
+          }),
+        }),
+      );
+      expect(session.createSessionRecord).not.toHaveBeenCalled();
+      expect(session.setSessionCookie).not.toHaveBeenCalled();
       expect(tx.role.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           create: expect.objectContaining({ name: "MEMBER" }),
@@ -204,6 +218,8 @@ describe("Auth Actions", () => {
         expect.objectContaining({
           data: expect.objectContaining({
             accountClassification: "PUBLIC_BETA_USER",
+            emailVerifiedAt: null,
+            verificationStatus: "PENDING",
             roles: { create: [{ roleId: "role_member" }] },
           }),
         }),
@@ -262,6 +278,9 @@ describe("Auth Actions", () => {
         mode: "public",
       });
       const tx = {
+        emailVerificationToken: {
+          create: vi.fn().mockResolvedValue({ id: "verification_2" }),
+        },
         $executeRawUnsafe: vi.fn(),
         role: {
           upsert: vi.fn().mockResolvedValueOnce({ id: "role_member" }),
@@ -279,12 +298,6 @@ describe("Auth Actions", () => {
           findFirst: vi.fn().mockResolvedValue(null),
         },
       } as never);
-      vi.mocked(session.createSessionRecord).mockResolvedValue({
-        maxAge: 60,
-        name: "ptahx_session",
-        value: "session-token",
-      });
-
       const formData = new FormData();
       formData.set("email", "test@test.com");
       formData.set("name", "Test User");
@@ -294,8 +307,9 @@ describe("Auth Actions", () => {
       formData.set("terms", "on");
 
       await expect(signUpAction(idleState, formData)).rejects.toThrow(
-        "REDIRECT:/app/profile/setup",
+        "REDIRECT:/verify-email?status=sent",
       );
+      expect(tx.emailVerificationToken.create).toHaveBeenCalled();
       expect(tx.$executeRawUnsafe).not.toHaveBeenCalled();
       expect(tx.user.count).not.toHaveBeenCalled();
     });
@@ -389,6 +403,7 @@ describe("Auth Actions", () => {
             .fn()
             .mockResolvedValue({
               id: "user_1",
+              emailVerifiedAt: new Date(),
               passwordHash: "hashed_validpass",
               isActive: false,
             }),
@@ -415,6 +430,7 @@ describe("Auth Actions", () => {
             connectionRequestsRestrictedUntil: null,
             deactivatedAt: null,
             enforcementReasonPublic: "Internal case note must not leak",
+            emailVerifiedAt: new Date(),
             isActive: true,
             messagingRestrictedUntil: null,
             passwordHash: "hashed_validpass",
@@ -436,6 +452,30 @@ describe("Auth Actions", () => {
       expect(session.createSession).not.toHaveBeenCalled();
     });
 
+    it("requires verified email before public sign-in", async () => {
+      vi.mocked(getPrisma).mockReturnValue({
+        user: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: "user_2",
+            accountClassification: "PUBLIC_BETA_USER",
+            emailVerifiedAt: null,
+            passwordHash: "hashed_validpass",
+            isActive: true,
+          }),
+        },
+      } as never);
+
+      const formData = new FormData();
+      formData.set("email", "newuser@test.com");
+      formData.set("password", "validpass");
+
+      await expect(signInAction(idleState, formData)).resolves.toMatchObject({
+        message: "Verify your email address before signing in. You can request a new verification link below.",
+        status: "error",
+      });
+      expect(session.createSession).not.toHaveBeenCalled();
+    });
+
     it("creates session and redirects to /app on success", async () => {
       vi.mocked(getPrisma).mockReturnValue({
         user: {
@@ -443,6 +483,7 @@ describe("Auth Actions", () => {
             .fn()
             .mockResolvedValue({
               id: "user_1",
+              emailVerifiedAt: new Date(),
               passwordHash: "hashed_validpass",
               isActive: true,
             }),
