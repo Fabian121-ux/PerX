@@ -204,7 +204,7 @@ describe("Auth Actions", () => {
       );
       expect(tx.notification.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          title: "Welcome to preX",
+          title: "Welcome to PtahX",
           type: "SYSTEM",
           userId: "user_1",
         }),
