@@ -290,6 +290,9 @@ describe("Auth Actions", () => {
         mode: "public",
       });
       const tx = {
+        notification: {
+          create: vi.fn().mockResolvedValue({ id: "welcome_notification_2" }),
+        },
         emailVerificationToken: {
           create: vi.fn().mockResolvedValue({ id: "verification_2" }),
         },
