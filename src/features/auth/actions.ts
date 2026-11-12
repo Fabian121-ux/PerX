@@ -303,6 +303,7 @@ export async function signUpAction(
               biography: "Profile setup is in progress.",
               headline: "New PtahX member",
               location: "Remote",
+              isDiscoverable: false,
               profileCompleteness: 30,
             },
           },
