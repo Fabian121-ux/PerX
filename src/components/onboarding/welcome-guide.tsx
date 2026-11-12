@@ -90,10 +90,10 @@ function getSmartPageInfo(pathname: string, pageText: string, pageTitle: string)
   const heading = pageText.split("\n").map((part) => part.trim()).find(Boolean);
   const routeName = pathname.split("/").filter(Boolean).at(-1)?.replace(/[-_]/g, " ");
   const label = (heading && heading.length < 70 ? heading : routeName || "this page")
-    .replace(/\\b\\w/g, (letter) => letter.toUpperCase());
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
   const route = pathname.toLowerCase();
-  const currentStatus = pageText.match(/(?:status|stage|state)[:\\s]+([a-z _-]{3,40})/i)?.[1]?.trim();
+  const currentStatus = pageText.match(/(?:status|stage|state)[:\s]+([a-z _-]{3,40})/i)?.[1]?.trim();
   if (route === "/app/track" || route.startsWith("/app/track/") || /tracking centre|tracking center/.test(source)) return {
     title: "Tracking Centre",
     body: "This is your Tracking Centre. Your product agreements appear here automatically. Select an item to see its carrier update and delivery history. The agreement status is not the same as a courier update.",
@@ -166,7 +166,8 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
     const readPage = () => {
       const main = document.querySelector("main") ?? document.body;
       const heading = main.querySelector("h1")?.textContent?.trim() || "";
-      setPageTitle(document.title || "");\n      const controls = Array.from(main.querySelectorAll("button, a, [role=button]")).map((node) => node.textContent?.trim()).filter(Boolean).slice(0, 30).join(" | ");
+      setPageTitle(document.title || "");
+      const controls = Array.from(main.querySelectorAll("button, a, [role=button]")).map((node) => node.textContent?.trim()).filter(Boolean).slice(0, 30).join(" | ");
       setPageText(`${heading}\n${(main.innerText || "").slice(0, 4500)}\nActions: ${controls}`);
     };
     readPage();
