@@ -49,6 +49,7 @@ export function SignUpForm({ initialState }: SignUpFormProps) {
       <TextField
         autoComplete="name"
         error={state.fieldErrors?.name}
+        hint="Use your real name. Letters, spaces, apostrophes and hyphens are supported."
         label="Full name"
         name="name"
         required
