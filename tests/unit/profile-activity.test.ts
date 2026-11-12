@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const counts = {
-  connection: vi.fn(),\n  conversationParticipant: vi.fn(),\n  dealParticipant: vi.fn(),
+  connection: vi.fn(),
+  conversationParticipant: vi.fn(),
+  dealParticipant: vi.fn(),
   opportunity: vi.fn(),
   opportunityBookmark: vi.fn(),
   proposal: vi.fn(),
@@ -9,14 +11,20 @@ const counts = {
 
 vi.mock("@/lib/db/prisma", () => ({
   getPrisma: () => ({
-    connection: { count: counts.connection },\n    conversationParticipant: { count: counts.conversationParticipant },\n    dealParticipant: { count: counts.dealParticipant },
+    connection: { count: counts.connection },
+    conversationParticipant: { count: counts.conversationParticipant },
+    dealParticipant: { count: counts.dealParticipant },
     opportunity: { count: counts.opportunity },
     opportunityBookmark: { count: counts.opportunityBookmark },
     proposal: { count: counts.proposal },
   }),
 }));
 
-vi.mock("@/lib/data/unread-counts", () => ({\n  getUnreadCounts: vi.fn().mockResolvedValue({ unreadConversations: 2 }),\n}));\n\nconst { getProfileActivity } = await import("@/lib/data/profile-activity");
+vi.mock("@/lib/data/unread-counts", () => ({
+  getUnreadCounts: vi.fn().mockResolvedValue({ unreadConversations: 2 }),
+}));
+
+const { getProfileActivity } = await import("@/lib/data/profile-activity");
 
 describe("profile activity summary", () => {
   beforeEach(() => {
@@ -38,9 +46,14 @@ describe("profile activity summary", () => {
     const activity = await getProfileActivity("user-1");
 
     expect(activity).toEqual({
-      activeAgreements: 2,\n      connections: 0,\n      conversations: 0,
+      activeAgreements: 2,
+      connections: 0,
+      conversations: 0,
       completedAgreements: 5,
-      degraded: false,\n      requestsReceived: 0,\n      requestsSent: 0,\n      unreadConversations: 2,
+      degraded: false,
+      requestsReceived: 0,
+      requestsSent: 0,
+      unreadConversations: 2,
       drafts: 4,
       proposalsReceived: 3,
       proposalsSent: 7,
@@ -57,7 +70,9 @@ describe("profile activity summary", () => {
   });
 
   it("separates drafts from published rather than counting all owned posts", async () => {
-    counts.connection.mockResolvedValue(0);\n    counts.conversationParticipant.mockResolvedValue(0);\n    counts.dealParticipant.mockResolvedValue(0);
+    counts.connection.mockResolvedValue(0);
+    counts.conversationParticipant.mockResolvedValue(0);
+    counts.dealParticipant.mockResolvedValue(0);
     counts.proposal.mockResolvedValue(0);
     counts.opportunity.mockResolvedValue(0);
     counts.opportunityBookmark.mockResolvedValue(0);
@@ -72,7 +87,9 @@ describe("profile activity summary", () => {
 
   it("degrades individual counts instead of failing the whole profile", async () => {
     // Saved items fails; everything else succeeds. Profile must still render.
-    counts.connection.mockResolvedValue(0);\n    counts.conversationParticipant.mockResolvedValue(0);\n    counts.dealParticipant.mockResolvedValueOnce(1).mockResolvedValueOnce(2);
+    counts.connection.mockResolvedValue(0);
+    counts.conversationParticipant.mockResolvedValue(0);
+    counts.dealParticipant.mockResolvedValueOnce(1).mockResolvedValueOnce(2);
     counts.proposal.mockResolvedValueOnce(3).mockResolvedValueOnce(4);
     counts.opportunity.mockResolvedValueOnce(5).mockResolvedValueOnce(6);
     counts.opportunityBookmark.mockRejectedValueOnce(
