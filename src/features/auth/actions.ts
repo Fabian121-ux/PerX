@@ -1,7 +1,5 @@
 "use server";
 
-import crypto from "node:crypto";
-
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 
@@ -10,10 +8,8 @@ import { evaluateAccountAccess } from "@/lib/account/enforcement";
 import { writeAuditLog } from "@/lib/logging/audit";
 import {
   createSession,
-  createSessionRecord,
   destroySession,
   getCurrentUser,
-  setSessionCookie,
 } from "@/lib/auth/session";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 import {
@@ -52,7 +48,6 @@ import {
   MAX_EMAIL_VERIFICATION_REQUESTS_PER_WINDOW,
 } from "@/lib/auth/email-verification";
 import {
-  buildEmailVerificationUrl,
   deliverEmailVerification,
   isEmailVerificationDeliveryConfigured,
 } from "@/lib/auth/email-verification-delivery";
