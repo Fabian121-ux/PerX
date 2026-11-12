@@ -1,7 +1,7 @@
 "use client";
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { UserRound, Settings, LogOut, Sun, Moon, Monitor, ChevronRight } from "lucide-react";
+import { UserRound, Settings, LogOut, Sun, Moon, Monitor, ChevronRight, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "next-themes";
@@ -28,37 +28,42 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
     username ? username.charAt(0).toUpperCase() : "";
   
 
+  const profileHref = previewMode ? "/preview/profile" : "/app/profile";
+
   return (
-    <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <button
-          className="flex h-10 w-10 overflow-hidden shrink-0 items-center justify-center rounded-full bg-[color:var(--px-primary)] font-bold text-white ring-2 ring-[color:var(--px-surface)] transition-shadow hover:ring-[color:var(--px-primary)] focus:outline-none focus:ring-[color:var(--px-primary)]"
-          aria-label="Open account menu"
-        >
-          {user.imageUrl ? (
-            <Image
-              alt={user.name}
-              className="h-full w-full object-cover"
-              height={40}
-              /*
-                Rendered at 40px in the topbar. Requesting 80px covers 2x
-                displays; previously this was the untouched upload, which for a
-                5 MB original was downloaded in full on every page.
-              */
-              sizes="80px"
-              src={user.imageUrl}
-              width={40}
-            />
-          ) : user.name ? (
-            getInitials(user.name)
-          ) : user.username ? (
-            getUsernameInitial(user.username)
-          ) : (
-            <UserRound size={20} />
-          )}
-        </button>
-      </DropdownMenu.Trigger>
-      
+    <div className="flex items-center gap-1">
+      <Link
+        aria-label="View your profile"
+        className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[color:var(--px-primary)] font-bold text-white ring-2 ring-[color:var(--px-surface)] transition-shadow hover:ring-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+        href={profileHref}
+      >
+        {user.imageUrl ? (
+          <Image
+            alt={user.name}
+            className="h-full w-full object-cover"
+            height={40}
+            sizes="80px"
+            src={user.imageUrl}
+            width={40}
+          />
+        ) : user.name ? (
+          getInitials(user.name)
+        ) : user.username ? (
+          getUsernameInitial(user.username)
+        ) : (
+          <UserRound size={20} />
+        )}
+      </Link>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button
+            aria-label="Open account menu"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[color:var(--px-text-muted)] transition hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-text)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+            type="button"
+          >
+            <ChevronDown aria-hidden size={16} />
+          </button>
+        </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="z-[100] w-64 rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-1 shadow-lg animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2"
@@ -78,7 +83,7 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
           <DropdownMenu.Separator className="my-1 h-px bg-[color:var(--px-border)]" />
           
           <DropdownMenu.Item asChild>
-            <Link href="/app/profile" className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
+            <Link href={profileHref} className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
               <UserRound size={16} className="text-[color:var(--px-text-muted)]" />
               View profile
             </Link>
@@ -154,6 +159,7 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
 
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+      </DropdownMenu.Root>
+    </div>
   );
 }
