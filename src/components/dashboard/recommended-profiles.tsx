@@ -40,9 +40,11 @@ export function RecommendedProfiles({
       {profiles.length ? (
         <div className="dashboard-scroll relative -mx-6 mt-6 flex gap-4 overflow-x-auto px-6 pb-4 scrollbar-hide">
           {profiles.map((profile) => (
-            <div
+            <Link
+              aria-label={`View ${profile.name} profile`}
+              href={`/u/${profile.username}`}
               key={profile.id}
-              className="flex w-[240px] shrink-0 snap-start flex-col items-center justify-center rounded-2xl bg-[color:var(--px-surface-soft)] p-5 text-center backdrop-blur-sm ring-1 ring-[color:var(--px-border)] transition-colors hover:ring-[color:var(--px-primary)]/55"
+              className="flex w-[240px] shrink-0 snap-start flex-col items-center justify-center rounded-2xl bg-[color:var(--px-surface-soft)] p-5 text-center backdrop-blur-sm ring-1 ring-[color:var(--px-border)] transition-all hover:-translate-y-1 hover:ring-[color:var(--px-primary)]/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             >
               <div className="relative mb-3">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--px-primary)] text-xl font-bold text-white ring-2 ring-[color:var(--px-primary)]/35">
@@ -73,13 +75,8 @@ export function RecommendedProfiles({
               >
                 {profile.trust.shortLabel}
               </span>
-              <Link
-                className="mt-4 w-full rounded-full bg-[color:var(--px-primary)] px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                href={`/u/${profile.username}`}
-              >
-                View profile
-              </Link>
-            </div>
+              <span className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-full bg-[color:var(--px-primary)] px-4 py-2 text-xs font-bold text-white">View profile</span>
+            </Link>
           ))}
         </div>
       ) : (

@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const counts = {
+  connection: vi.fn(),
+  conversationParticipant: vi.fn(),
   dealParticipant: vi.fn(),
   opportunity: vi.fn(),
   opportunityBookmark: vi.fn(),
@@ -9,11 +11,17 @@ const counts = {
 
 vi.mock("@/lib/db/prisma", () => ({
   getPrisma: () => ({
+    connection: { count: counts.connection },
+    conversationParticipant: { count: counts.conversationParticipant },
     dealParticipant: { count: counts.dealParticipant },
     opportunity: { count: counts.opportunity },
     opportunityBookmark: { count: counts.opportunityBookmark },
     proposal: { count: counts.proposal },
   }),
+}));
+
+vi.mock("@/lib/data/unread-counts", () => ({
+  getUnreadCounts: vi.fn().mockResolvedValue({ unreadConversations: 2 }),
 }));
 
 const { getProfileActivity } = await import("@/lib/data/profile-activity");
@@ -24,6 +32,8 @@ describe("profile activity summary", () => {
   });
 
   it("scopes every aggregate to the viewer and reports the counts", async () => {
+    counts.connection.mockResolvedValue(0);
+    counts.conversationParticipant.mockResolvedValue(0);
     counts.dealParticipant
       .mockResolvedValueOnce(2) // active
       .mockResolvedValueOnce(5); // completed
@@ -39,8 +49,13 @@ describe("profile activity summary", () => {
 
     expect(activity).toEqual({
       activeAgreements: 2,
+      connections: 0,
+      conversations: 0,
       completedAgreements: 5,
       degraded: false,
+      requestsReceived: 0,
+      requestsSent: 0,
+      unreadConversations: 2,
       drafts: 4,
       proposalsReceived: 3,
       proposalsSent: 7,
@@ -57,6 +72,8 @@ describe("profile activity summary", () => {
   });
 
   it("separates drafts from published rather than counting all owned posts", async () => {
+    counts.connection.mockResolvedValue(0);
+    counts.conversationParticipant.mockResolvedValue(0);
     counts.dealParticipant.mockResolvedValue(0);
     counts.proposal.mockResolvedValue(0);
     counts.opportunity.mockResolvedValue(0);
@@ -72,6 +89,8 @@ describe("profile activity summary", () => {
 
   it("degrades individual counts instead of failing the whole profile", async () => {
     // Saved items fails; everything else succeeds. Profile must still render.
+    counts.connection.mockResolvedValue(0);
+    counts.conversationParticipant.mockResolvedValue(0);
     counts.dealParticipant.mockResolvedValueOnce(1).mockResolvedValueOnce(2);
     counts.proposal.mockResolvedValueOnce(3).mockResolvedValueOnce(4);
     counts.opportunity.mockResolvedValueOnce(5).mockResolvedValueOnce(6);
