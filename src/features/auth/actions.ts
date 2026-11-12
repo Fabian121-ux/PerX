@@ -536,8 +536,12 @@ export async function verifyEmailAction(
 
   const tokenHash = hashEmailVerificationToken(token);
   const now = new Date();
+  type VerificationResult =
+    | { ok: false }
+    | { ok: true; userId: string; alreadyVerified: boolean };
+  let result: VerificationResult;
   try {
-    const result = await getPrisma().$transaction(async (tx) => {
+    result = await getPrisma().$transaction(async (tx) => {
       const grant = await tx.emailVerificationToken.findUnique({
         select: { id: true, userId: true },
         where: { tokenHash },
@@ -579,29 +583,34 @@ export async function verifyEmailAction(
       return { ok: true as const, userId: grant.userId, alreadyVerified: false };
     });
 
-    if (!result.ok) {
-      return { message: "This verification link is invalid or has expired. Request a new one below.", status: "error" };
-    }
-
-    if (!result.alreadyVerified) {
-      await writeAuditLog({
-        action: "auth.email_verified",
-        actorId: result.userId,
-        entityId: result.userId,
-        entityType: "user",
-      });
-    }
-    redirect("/sign-in?verified=1");
   } catch (error) {
-    // Next redirect throws a control-flow exception; let it pass through.
-    if (error instanceof Error && error.message.startsWith("NEXT_REDIRECT")) throw error;
     logServerDataError({
       error,
       operation: "auth.email_verification",
       route: "/verify-email",
     });
-    return { message: "We could not verify this email right now. Please try again.", status: "error" };
+    return {
+      message: "We could not verify this email right now. Please try again.",
+      status: "error",
+    };
   }
+
+  if (!result.ok) {
+    return {
+      message: "This verification link is invalid or has expired. Request a new one below.",
+      status: "error",
+    };
+  }
+
+  if (!result.alreadyVerified) {
+    await writeAuditLog({
+      action: "auth.email_verified",
+      actorId: result.userId,
+      entityId: result.userId,
+      entityType: "user",
+    });
+  }
+  redirect("/sign-in?verified=1");
 }
 
 /**
