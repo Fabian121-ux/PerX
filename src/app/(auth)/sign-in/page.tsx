@@ -26,6 +26,7 @@ export default async function SignInPage({
     error?: string;
     next?: string;
     passwordReset?: string;
+    verified?: string;
     returnTo?: string;
     signedOut?: string;
   }>;
@@ -43,6 +44,7 @@ export default async function SignInPage({
   // session and no other cue that it worked. Without this the flow ends in an
   // unexplained bounce to a blank form.
   const didResetPassword = params.passwordReset === "1";
+  const didVerifyEmail = params.verified === "1";
 
   const initialState: AuthFormState | undefined = error
     ? { message: error, status: "error" }
@@ -91,6 +93,12 @@ export default async function SignInPage({
               Welcome back to PtahX
             </h1>
 
+            {didVerifyEmail && !error && (
+              <FormNotice className="mb-4 mt-4" tone="success">
+                Your email is verified. You can now sign in.
+              </FormNotice>
+            )}
+
             {didResetPassword && !error && (
               <FormNotice className="mb-4 mt-4" tone="success">
                 Your password has been updated. Sign in with your new password.
@@ -110,6 +118,12 @@ export default async function SignInPage({
                 href="/password-recovery"
               >
                 Recover password
+              </Link>
+              <Link
+                className="font-medium text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"
+                href="/verify-email"
+              >
+                Verify or resend email
               </Link>
               <Link
                 className="font-medium text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"
