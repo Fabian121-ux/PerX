@@ -318,8 +318,8 @@ export async function signUpAction(
       // also surfaced in the member's News log after the welcome dialog closes.
       await tx.notification.create({
         data: {
-          body: "Welcome to preX. Explore the ecosystem, discover opportunities, build meaningful connections and use the Service Center whenever you need help. Your getting-started guide is always available from the app.",
-          title: "Welcome to preX",
+          body: "Welcome to PtahX. Explore the ecosystem, discover opportunities, build meaningful connections and use the Service Center whenever you need help. Your getting-started guide is always available from the app.",
+          title: "Welcome to PtahX",
           type: "SYSTEM",
           userId: user.id,
         },
