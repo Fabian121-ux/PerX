@@ -82,6 +82,40 @@ function getCurrentStepIndex(pathname: string) {
   return index >= 0 ? index : 0;
 }
 
+
+type SmartPageInfo = { title: string; body: string; action: string; href: string; hint: string };
+
+function getSmartPageInfo(pathname: string, pageText: string, pageTitle: string): SmartPageInfo {
+  const source = `${pathname} ${pageTitle} ${pageText}`.toLowerCase();
+  const heading = pageText.split("\\n").map((part) => part.trim()).find(Boolean);
+  const routeName = pathname.split("/").filter(Boolean).at(-1)?.replace(/[-_]/g, " ");
+  const label = (heading && heading.length < 70 ? heading : routeName || "this page")
+    .replace(/\\b\\w/g, (letter) => letter.toUpperCase());
+
+  if (/track|tracking|shipment|delivery|dispatch|logistics/.test(source)) return {
+    title: "Tracking", body: "You’re on the tracking page. Check the latest status, review the timeline and open a tracking item for more details. If something looks delayed, use the available support option.", action: "View tracking", href: pathname, hint: "Check the latest update and tracking history."
+  };
+  if (/deal|proposal|agreement|contract|negotiat/.test(source)) return {
+    title: "Deals", body: "You’re viewing a deal. Review the details, check the other party’s response and use the available actions to move it forward. Read the terms before you accept or make changes.", action: "Review this deal", href: pathname, hint: "Check the deal status and any action waiting for you."
+  };
+  if (/invoice|payment|payout|billing|transaction/.test(source)) return {
+    title: "Payments", body: "You’re on a payments page. Check the amount, payment status and reference details. If a payment is pending, allow time for the status to update before trying again.", action: "View this page", href: pathname, hint: "Confirm the payment status and reference."
+  };
+  if (/opportunit|startup|founder|funding|grant|job|role/.test(source)) return {
+    title: "Opportunities", body: "You’re exploring an opportunity. Read the requirements, check who can apply and follow the instructions on the page before submitting.", action: "View opportunity", href: pathname, hint: "Check the requirements and next steps."
+  };
+  if (/support|service.center|ticket|help.request/.test(source)) return {
+    title: "Support", body: "You’re in the Support area. Open a request if you need help, then return here to check replies and updates.", action: "View support request", href: pathname, hint: "Check for a reply or update to your request."
+  };
+  if (/message|conversation|chat/.test(source)) return {
+    title: "Messages", body: "You’re in Messages. Open a conversation to continue the discussion. You can discuss a possible deal with the other person when the relevant options are available.", action: "Open this page", href: pathname, hint: "Choose a conversation and check for new replies."
+  };
+  return {
+    title: label, body: `You’re on ${label}. This guide reads the page title, headings and available actions to help you understand what to do here. Review the main information, then use the buttons on this page to continue. If you tell us what you expected to find, we can improve this guide.`,
+    action: "Stay on this page", href: pathname, hint: "Start with the main heading and the primary button on this page."
+  };
+}
+
 export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -93,13 +127,36 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
   const [collapsed, setCollapsed] = useState(false);
   const [pending, startTransition] = useTransition();
 
+
+  const [pageText, setPageText] = useState("");
+  useEffect(() => {
+    const readPage = () => {
+      const main = document.querySelector("main") ?? document.body;
+      setPageText((main.innerText || "").slice(0, 5000));
+    };
+    readPage();
+    const main = document.querySelector("main") ?? document.body;
+    const observer = new MutationObserver(readPage);
+    observer.observe(main, { childList: true, subtree: true, characterData: true });
+    return () => observer.disconnect();
+  }, [pathname]);
+  const smartPage = getSmartPageInfo(pathname, pageText, document.title);
+  const knownPage = STEPS.some((item) => item.href === pathname || (item.href !== "/app" && pathname.startsWith(item.href + "/")));
   const currentStepIndex = getCurrentStepIndex(pathname);
+
   const activeStepIndex =
     overridePath === pathname && stepOverride !== null
       ? stepOverride
       : currentStepIndex;
-  const step = STEPS[activeStepIndex];
+
+  const step = knownPage ? STEPS[activeStepIndex] : {
+    ...smartPage,
+    icon: Compass,
+  };
+
+
   const nextStep = STEPS[Math.min(STEPS.length - 1, activeStepIndex + 1)];
+
   const StepIcon = step.icon;
 
   function persistDismissal() {
@@ -292,7 +349,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
         >
           <div className="flex min-w-0 items-center justify-between gap-3">
             <p className="min-w-0 text-xs font-bold uppercase tracking-[0.12em] text-[color:var(--px-primary-ink)]">
-              Page guide · {activeStepIndex + 1} of {STEPS.length}
+              {knownPage ? `Page guide · ${activeStepIndex + 1} of ${STEPS.length}` : "Page guide · This page"}
             </p>
             <button
               aria-label="Tuck guide into corner"
@@ -311,7 +368,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-[11px] font-bold uppercase tracking-wide text-[color:var(--px-text-muted)]">
-                You’re currently on
+                You’re on this page
               </p>
               <h2 className="mt-0.5 break-words text-base font-extrabold [overflow-wrap:anywhere]">
                 {step.title}
@@ -324,7 +381,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
 
           {activeStepIndex < STEPS.length - 1 ? (
             <p className="break-words text-sm leading-6 text-[color:var(--px-text-muted)]">
-              Next, go to{" "}
+              {knownPage ? "Next, go to " : "A useful next step: "}{knownPage ? null : smartPage.hint}{" "}{knownPage ? null : null}
               <Link
                 className="font-bold text-[color:var(--px-primary-ink)] underline underline-offset-2 hover:no-underline"
                 href={nextStep.href}
@@ -345,7 +402,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
             </p>
           )}
 
-          <div className="h-1.5 overflow-hidden rounded-full bg-[color:var(--px-surface-soft)]">
+          {knownPage ? <div className="h-1.5 overflow-hidden rounded-full bg-[color:var(--px-surface-soft)]">
             <div
               className="h-full rounded-full bg-[color:var(--px-primary)] transition-[width] duration-200"
               style={{ width: `${((activeStepIndex + 1) / STEPS.length) * 100}%` }}
@@ -372,7 +429,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
               >
                 {step.action}
               </Link>
-              {activeStepIndex < STEPS.length - 1 ? (
+              {knownPage && activeStepIndex < STEPS.length - 1 ? (
                 <Button
                   onClick={() => {
                     setOverridePath(pathname);
