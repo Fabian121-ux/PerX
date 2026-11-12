@@ -18,7 +18,13 @@ export function PeopleResultCard({ person }: { person: PeopleDirectoryEntry }) {
   return (
     <Card className="flex min-h-full flex-col gap-4">
       <div className="flex items-start gap-3">
-        <PersonAvatar person={person} />
+        <Link
+          aria-label={`View ${person.name} profile`}
+          className="shrink-0 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+          href={`/u/${encodeURIComponent(person.username)}`}
+        >
+          <PersonAvatar person={person} />
+        </Link>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             <Link
