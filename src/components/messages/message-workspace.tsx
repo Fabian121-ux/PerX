@@ -2510,29 +2510,47 @@ export function MessageWorkspace({
                   <ArrowLeft aria-hidden size={19} />
                 </button>
               )}
-              <button
-                aria-label={`Open profile preview for ${activeConversation.participantName}`}
-                className="flex min-w-0 items-center gap-3 overflow-hidden rounded-xl text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                onClick={() => setDetailsOpen(true)}
-                type="button"
-              >
-                <Avatar
-                  imageUrl={activeConversation.participantImageUrl}
-                  name={activeConversation.participantName}
-                  presence={activeConversation.participantPresence}
-                />
-                <span className="min-w-0 overflow-hidden">
-                  <span className="block truncate text-sm font-black text-[color:var(--px-text)]">
-                    {activeConversation.participantName}
-                  </span>
+              <div className="flex min-w-0 items-center gap-3 overflow-hidden">
+                {activeConversation.participantUsername ? (
+                  <Link
+                    aria-label={`View ${activeConversation.participantName} profile`}
+                    className="shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    href={`/u/${encodeURIComponent(activeConversation.participantUsername)}`}
+                  >
+                    <Avatar
+                      imageUrl={activeConversation.participantImageUrl}
+                      name={activeConversation.participantName}
+                      presence={activeConversation.participantPresence}
+                    />
+                  </Link>
+                ) : (
+                  <Avatar
+                    imageUrl={activeConversation.participantImageUrl}
+                    name={activeConversation.participantName}
+                    presence={activeConversation.participantPresence}
+                  />
+                )}
+                <div className="min-w-0 overflow-hidden">
+                  {activeConversation.participantUsername ? (
+                    <Link
+                      className="block truncate rounded-sm text-left text-sm font-black text-[color:var(--px-text)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                      href={`/u/${encodeURIComponent(activeConversation.participantUsername)}`}
+                    >
+                      {activeConversation.participantName}
+                    </Link>
+                  ) : (
+                    <p className="truncate text-sm font-black text-[color:var(--px-text)]">
+                      {activeConversation.participantName}
+                    </p>
+                  )}
                   <span className="block truncate text-xs text-[color:var(--px-text-muted)]">
                     {presenceLabel(activeConversation.participantPresence) ??
                       activeConversation.participantRole ??
                       activeConversation.opportunityTitle ??
                       "PtahX conversation"}
                   </span>
-                </span>
-              </button>
+                </div>
+              </div>
             </div>
             <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
               {userRoles !== undefined ? (
