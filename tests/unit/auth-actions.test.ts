@@ -162,6 +162,9 @@ describe("Auth Actions", () => {
 
     it("creates a pending user and redirects to email verification", async () => {
       const tx = {
+        notification: {
+          create: vi.fn().mockResolvedValue({ id: "welcome_notification_1" }),
+        },
         emailVerificationToken: {
           create: vi.fn().mockResolvedValue({ id: "verification_1" }),
         },
