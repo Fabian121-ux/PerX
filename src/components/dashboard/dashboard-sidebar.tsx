@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { BookOpen } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { BrandLogo } from "@/components/brand-logo";
@@ -161,6 +162,19 @@ export function SidebarNavigation({
           </section>
         );
       })}
+      <div className="border-t border-white/10 pt-3">
+        <button
+          className="group flex min-h-11 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-left text-[13px] font-semibold text-[color:var(--px-text-muted)] transition hover:bg-white/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+          onClick={() => {
+            window.dispatchEvent(new Event("ptahx-open-guide"));
+            onNavigate?.();
+          }}
+          type="button"
+        >
+          <BookOpen aria-hidden className="h-[18px] w-[18px] shrink-0" />
+          <span>Getting started guide</span>
+        </button>
+      </div>
     </nav>
   );
 }
