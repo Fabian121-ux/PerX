@@ -1,4 +1,4 @@
-import { getPrisma } from "@/lib/db/prisma";
+import { getPrisma } from "@/lib/db/prisma";\nimport { getUnreadCounts } from "@/lib/data/unread-counts";
 
 /**
  * Personal activity counts shown on the viewer's own Profile.
@@ -11,7 +11,7 @@ import { getPrisma } from "@/lib/db/prisma";
  * Every field is therefore individually degradable - see `getProfileActivity`.
  */
 export type ProfileActivity = {
-  activeAgreements: number;
+  activeAgreements: number;\n  connections: number;\n  requestsReceived: number;\n  requestsSent: number;\n  conversations: number;\n  unreadConversations: number;
   completedAgreements: number;
   drafts: number;
   proposalsReceived: number;
@@ -25,7 +25,7 @@ export type ProfileActivity = {
 export type ProfileActivityValue = number | null;
 
 const EMPTY: ProfileActivity = {
-  activeAgreements: 0,
+  activeAgreements: 0,\n  connections: 0,\n  requestsReceived: 0,\n  requestsSent: 0,\n  conversations: 0,\n  unreadConversations: 0,
   completedAgreements: 0,
   degraded: false,
   drafts: 0,
@@ -62,7 +62,7 @@ export async function getProfileActivity(
 ): Promise<ProfileActivity> {
   if (!userId) return EMPTY;
 
-  const prisma = getPrisma();
+  const prisma = getPrisma();\n  const unreadCountsPromise = getUnreadCounts(userId);
 
   const results = await Promise.allSettled([
     prisma.dealParticipant.count({
@@ -77,7 +77,7 @@ export async function getProfileActivity(
     prisma.opportunity.count({
       where: { ownerId: userId, status: "PUBLISHED" },
     }),
-    prisma.opportunityBookmark.count({ where: { userId } }),
+    prisma.opportunityBookmark.count({ where: { userId } }),\n    prisma.connection.count({ where: { status: "ACCEPTED", OR: [{ requesterId: userId }, { receiverId: userId }] } }),\n    prisma.connection.count({ where: { requesterId: userId, status: "PENDING" } }),\n    prisma.connection.count({ where: { receiverId: userId, status: "PENDING" } }),\n    prisma.conversationParticipant.count({ where: { userId, removedAt: null, conversation: { status: "ACTIVE" } } }),
   ]);
 
   const [
