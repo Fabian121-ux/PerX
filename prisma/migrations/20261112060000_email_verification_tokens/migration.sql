@@ -12,12 +12,10 @@ CREATE TABLE "EmailVerificationToken" (
 
 CREATE UNIQUE INDEX "EmailVerificationToken_tokenHash_key"
     ON "EmailVerificationToken"("tokenHash");
-CREATE INDEX "EmailVerificationToken_userId_idx"
-    ON "EmailVerificationToken"("userId");
 CREATE INDEX "EmailVerificationToken_expiresAt_idx"
     ON "EmailVerificationToken"("expiresAt");
-CREATE INDEX "EmailVerificationToken_createdAt_idx"
-    ON "EmailVerificationToken"("createdAt");
+CREATE INDEX "EmailVerificationToken_userId_createdAt_idx"
+    ON "EmailVerificationToken"("userId", "createdAt");
 
 ALTER TABLE "EmailVerificationToken"
     ADD CONSTRAINT "EmailVerificationToken_userId_fkey"
