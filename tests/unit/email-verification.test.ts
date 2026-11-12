@@ -30,12 +30,12 @@ describe("email verification grants", () => {
       verificationUrl,
     });
 
-    expect(message.subject).toBe("Verify your preX email address");
-    expect(message.text).toContain("Welcome to preX");
+    expect(message.subject).toBe("Verify your PtahX email address");
+    expect(message.text).toContain("Welcome to PtahX");
     expect(message.text).toContain(verificationUrl);
     expect(message.html).toContain("Verify email address");
     expect(message.html).toContain("https://www.ptahx.com/icons/favicon-48x48.png");
-    expect(message.html).toContain('>preX</td>');
+    expect(message.html).toContain('>PtahX</td>');
     expect(message.html).toContain("&amp;source=signup");
     expect(message.html).not.toContain('href="' + verificationUrl + '"');
     expect(message.text).toContain("used once");
