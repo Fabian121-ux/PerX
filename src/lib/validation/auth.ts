@@ -62,7 +62,7 @@ function looksLikeGeneratedName(value: string) {
   ]);
   if (placeholderNames.has(normalized)) return true;
 
-  const tokens = value.split(/[\\s'’.-]+/).filter(Boolean);
+  const tokens = value.split(/[\s'’.-]+/).filter(Boolean);
   if (
     tokens.length > 1 &&
     tokens.every((token) => token.toLocaleLowerCase() === tokens[0].toLocaleLowerCase())
@@ -70,7 +70,7 @@ function looksLikeGeneratedName(value: string) {
     return true;
   }
 
-  const compact = value.replace(/[\\s'’.-]/g, "");
+  const compact = value.replace(/[\s'’.-]/g, "");
   if (compact.length < 12) return false;
 
   const uppercaseInside = [...compact.slice(1)].filter(
@@ -89,7 +89,7 @@ export const personNameSchema = z
   .min(2, "Enter your name.")
   .max(120, "Name must be 120 characters or fewer.")
   .regex(
-    /^[\p{L}\p{M}]+(?:[ '\u2019-][\p{L}\p{M}]+)*$/u,
+    /^[\p{L}\p{M}]+\.?(?:[ '\u2019-][\p{L}\p{M}]+\.?)*$/u,
     "Use letters, spaces, apostrophes or hyphens in your name.",
   )
   .refine((value) => !looksLikeGeneratedName(value), {
