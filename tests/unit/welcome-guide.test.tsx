@@ -5,7 +5,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  dismiss: vi.fn(),
+  dismiss: vi.fn(),\n  pathname: "/app",
 }));
 
 vi.mock("@/features/onboarding/actions", () => ({
@@ -28,7 +28,7 @@ vi.mock("next/link", async () => {
 });
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/app",
+  usePathname: () => mocks.pathname,
 }));
 
 import { WelcomeGuide } from "@/components/onboarding/welcome-guide";
