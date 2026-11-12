@@ -525,7 +525,8 @@ describe("Auth Actions", () => {
 
       await expect(
         verifyEmailAction({ status: "idle" }, formData),
-      ).rejects.toThrow("REDIRECT:/sign-in?verified=1");
+      ).rejects.toThrow("REDIRECT:/app");
+      expect(session.createSession).toHaveBeenCalledWith("user_1");
 
       expect(tokenStore.updateMany).toHaveBeenCalledTimes(2);
       expect(tx.user.update).toHaveBeenCalledWith(
@@ -537,6 +538,35 @@ describe("Auth Actions", () => {
           where: { id: "user_1" },
         }),
       );
+    });
+
+    it("does not create a session from a previously consumed verification link", async () => {
+      const tx = {
+        emailVerificationToken: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: "verification_1",
+            userId: "user_1",
+          }),
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+        },
+        user: {
+          findUnique: vi.fn().mockResolvedValue({
+            emailVerifiedAt: new Date(),
+          }),
+          update: vi.fn(),
+        },
+      };
+      vi.mocked(getPrisma).mockReturnValue({
+        $transaction: vi.fn((callback) => callback(tx)),
+      } as never);
+
+      const formData = new FormData();
+      formData.set("token", "already-consumed-token");
+
+      await expect(
+        verifyEmailAction({ status: "idle" }, formData),
+      ).rejects.toThrow("REDIRECT:/sign-in?verified=1");
+      expect(session.createSession).not.toHaveBeenCalled();
     });
 
     it("rejects an unknown or already-consumed verification token", async () => {
