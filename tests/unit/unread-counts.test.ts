@@ -69,15 +69,20 @@ describe("unread count query contract", () => {
     });
     expect(mocks.notificationCount).toHaveBeenNthCalledWith(1, {
       where: {
-        broadcast: {
-          is: {
-            OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-            sentAt: { not: null },
+        OR: [
+          {
+            broadcast: {
+              is: {
+                OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+                sentAt: { not: null },
+              },
+            },
+            broadcastId: { not: null },
+            type: "BROADCAST",
           },
-        },
-        broadcastId: { not: null },
+          { broadcastId: null, type: "SYSTEM" },
+        ],
         readAt: null,
-        type: "BROADCAST",
         userId: "user-1",
       },
     });
