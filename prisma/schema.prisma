@@ -338,6 +338,7 @@ model User {
   updatedAt                         DateTime                  @updatedAt
   sessions                          Session[]
   passwordResetTokens               PasswordResetToken[]
+  emailVerificationTokens            EmailVerificationToken[]
   traderApplication                 TraderApplication?
   roles                             UserRole[]
   profile                           Profile?
@@ -1409,4 +1410,20 @@ model PostComment {
 
   @@index([postId, deletedAt, moderationStatus, createdAt, id])
   @@index([authorId, createdAt])
+}
+
+
+/// Single-use email verification grant. Only the SHA-256 hash of the raw token
+/// is persisted. Grants expire after 24 hours and are consumed atomically.
+model EmailVerificationToken {
+  id         String    @id @default(cuid())
+  tokenHash  String    @unique
+  userId     String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
 }

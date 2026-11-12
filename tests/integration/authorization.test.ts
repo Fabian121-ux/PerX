@@ -47,6 +47,10 @@ vi.mock("next/headers", () => ({
     new Headers({ "user-agent": "PtahX authorization integration" }),
 }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+// Direct action integration tests run outside Next's request runtime. Keep the
+// after-response delivery callback out of this authorization-only test; unit
+// tests separately exercise the delivery scheduling contract.
+vi.mock("next/server", () => ({ after: vi.fn(() => undefined) }));
 
 const testDbUrl = getIsolatedTestDatabaseUrl();
 // Existing contract: absent TEST_DATABASE_URL skips; invalid/unreachable DB fails.
@@ -264,19 +268,23 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
 
       await expectRedirect(
         signUpAction({ status: "idle" }, form),
-        "/app/profile/setup",
+        "/verify-email?status=sent",
       );
       const user = await f.prisma.user.findUniqueOrThrow({
         where: { email },
-        include: { roles: { include: { role: true } }, sessions: true },
+        include: {
+          roles: { include: { role: true } },
+          sessions: true,
+          emailVerificationTokens: true,
+        },
       });
       f.userIds.push(user.id);
       expect(user.roles.map(({ role }) => role.name)).toEqual(["MEMBER"]);
-      expect(user.sessions).toHaveLength(1);
-      expect(await getCurrentUser()).toMatchObject({
-        id: user.id,
-        roles: ["MEMBER"],
-      });
+      expect(user.sessions).toHaveLength(0);
+      expect(user.emailVerifiedAt).toBeNull();
+      expect(user.verificationStatus).toBe("PENDING");
+      expect(user.emailVerificationTokens).toHaveLength(1);
+      expect(await getCurrentUser()).toBeNull();
       expect(
         await f.prisma.auditLog.count({
           where: { actorId: user.id, action: "auth.sign_up" },

@@ -25,12 +25,12 @@ import { chromium } from 'playwright';
   console.log('Submitting form...');
   await page.click('button[type="submit"]');
 
-  console.log('Waiting for navigation to /app/profile/setup...');
+  console.log('Waiting for navigation to /verify-email...');
   try {
-    await page.waitForURL('**/app/profile/setup', { timeout: 15000 });
-    console.log('SUCCESS: Reached /app/profile/setup. Real user registered successfully.');
+    await page.waitForURL('**/verify-email?status=sent', { timeout: 15000 });
+    console.log('SUCCESS: Account created and verification step reached.');
   } catch {
-    console.error('FAILED: Did not reach /app/profile/setup within the timeout.');
+    console.error('FAILED: Did not reach the email verification step within the timeout.');
     const errorText = await page.evaluate(() => document.body.innerText);
     console.error('Page text:', errorText);
     process.exit(1);
