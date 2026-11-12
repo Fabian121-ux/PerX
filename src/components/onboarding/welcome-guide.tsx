@@ -128,11 +128,11 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
   const [pending, startTransition] = useTransition();
 
 
-  const [pageText, setPageText] = useState("");
+  const [pageText, setPageText] = useState("");\n  const [pageTitle, setPageTitle] = useState("");
   useEffect(() => {
     const readPage = () => {
       const main = document.querySelector("main") ?? document.body;
-      setPageText((main.innerText || "").slice(0, 5000));
+      const heading = main.querySelector("h1")?.textContent?.trim() || "";\n      setPageTitle(document.title || "");\n      setPageText(`${heading}\\n${(main.innerText || "").slice(0, 5000)}`);
     };
     readPage();
     const main = document.querySelector("main") ?? document.body;
@@ -140,7 +140,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
     observer.observe(main, { childList: true, subtree: true, characterData: true });
     return () => observer.disconnect();
   }, [pathname]);
-  const smartPage = getSmartPageInfo(pathname, pageText, document.title);
+  const smartPage = getSmartPageInfo(pathname, pageText, pageTitle);
   const knownPage = STEPS.some((item) => item.href === pathname || (item.href !== "/app" && pathname.startsWith(item.href + "/")));
   const currentStepIndex = getCurrentStepIndex(pathname);
 
