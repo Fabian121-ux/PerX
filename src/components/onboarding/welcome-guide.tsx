@@ -40,7 +40,6 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
       return;
     }
 
-    setHintVisible(true);
   }, [dismissHint, pathname, showWelcome]);
 
   useEffect(() => {
