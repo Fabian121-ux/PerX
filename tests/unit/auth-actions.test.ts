@@ -3,6 +3,8 @@ import {
   signUpAction,
   signInAction,
   signOutAction,
+  verifyEmailAction,
+  resendEmailVerificationAction,
 } from "@/features/auth/actions";
 import { getResolvedDataMode, getSignupConfig, hasDatabaseUrl } from "@/lib/env";
 import { getPrisma } from "@/lib/db/prisma";
@@ -498,6 +500,88 @@ describe("Auth Actions", () => {
         "REDIRECT:/app",
       );
       expect(session.createSession).toHaveBeenCalledWith("user_1");
+    });
+  });
+
+  describe("email verification", () => {
+    it("consumes a valid verification token and activates the matching email", async () => {
+      const tokenStore = {
+        findUnique: vi.fn().mockResolvedValue({
+          id: "verification_1",
+          userId: "user_1",
+        }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      };
+      const tx = {
+        emailVerificationToken: tokenStore,
+        user: { update: vi.fn().mockResolvedValue({ id: "user_1" }) },
+      };
+      vi.mocked(getPrisma).mockReturnValue({
+        $transaction: vi.fn((callback) => callback(tx)),
+      } as never);
+
+      const formData = new FormData();
+      formData.set("token", "single-use-token");
+
+      await expect(
+        verifyEmailAction({ status: "idle" }, formData),
+      ).rejects.toThrow("REDIRECT:/sign-in?verified=1");
+
+      expect(tokenStore.updateMany).toHaveBeenCalledTimes(2);
+      expect(tx.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            emailVerifiedAt: expect.any(Date),
+            verificationStatus: "VERIFIED",
+          }),
+          where: { id: "user_1" },
+        }),
+      );
+    });
+
+    it("rejects an unknown or already-consumed verification token", async () => {
+      const tx = {
+        emailVerificationToken: {
+          findUnique: vi.fn().mockResolvedValue(null),
+          updateMany: vi.fn(),
+        },
+        user: { update: vi.fn() },
+      };
+      vi.mocked(getPrisma).mockReturnValue({
+        $transaction: vi.fn((callback) => callback(tx)),
+      } as never);
+
+      const formData = new FormData();
+      formData.set("token", "not-a-real-token");
+
+      await expect(
+        verifyEmailAction({ status: "idle" }, formData),
+      ).resolves.toMatchObject({
+        message: "This verification link is invalid or has expired. Request a new one below.",
+        status: "error",
+      });
+      expect(tx.user.update).not.toHaveBeenCalled();
+    });
+
+    it("does not reveal whether an address exists when a link is resent", async () => {
+      const tx = {
+        user: {
+          findUnique: vi.fn().mockResolvedValue(null),
+        },
+      };
+      vi.mocked(getPrisma).mockReturnValue({
+        $transaction: vi.fn((callback) => callback(tx)),
+      } as never);
+
+      const formData = new FormData();
+      formData.set("email", "unknown@test.com");
+
+      await expect(
+        resendEmailVerificationAction({ status: "idle" }, formData),
+      ).resolves.toMatchObject({
+        message: "If this email belongs to an active account that still needs verification, a new link will be sent.",
+        status: "success",
+      });
     });
   });
 
