@@ -203,11 +203,17 @@ function ConnectionCard({ entry }: { entry: NetworkEntry }) {
   return (
     <Card className="flex h-full min-w-0 flex-col gap-4 overflow-hidden p-4 sm:p-5">
       <div className="flex min-w-0 items-start gap-3">
-        <Avatar entry={entry} />
+        <Link
+          aria-label={`View ${entry.name} profile`}
+          className="shrink-0 rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+          href={`/u/${encodeURIComponent(entry.username)}`}
+        >
+          <Avatar entry={entry} />
+        </Link>
         <div className="min-w-0 flex-1">
           <Link
             className="block whitespace-normal break-words font-bold leading-5 text-[color:var(--px-text)] hover:underline [overflow-wrap:anywhere]"
-            href={`/u/${entry.username}`}
+            href={`/u/${encodeURIComponent(entry.username)}`}
           >
             {entry.name}
           </Link>
