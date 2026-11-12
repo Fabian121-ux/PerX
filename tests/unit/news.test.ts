@@ -39,7 +39,7 @@ describe("News data and read ownership", () => {
     vi.useRealTimers();
   });
 
-  it("queries only current-user BROADCAST notifications backed by sent, unexpired broadcasts", async () => {
+  it("queries current-user News notifications, including personal SYSTEM announcements", async () => {
     const sentAt = new Date("2026-07-31T10:00:00.000Z");
     mocks.findMany.mockResolvedValue([
       {
@@ -85,11 +85,10 @@ describe("News data and read ownership", () => {
       },
     ]);
     expect(mocks.findMany).toHaveBeenCalledWith({
-      orderBy: [
-        { broadcast: { sentAt: "desc" } },
-        { createdAt: "desc" },
-      ],
+      orderBy: [{ createdAt: "desc" }],
       select: {
+        actionUrl: true,
+        body: true,
         broadcast: {
           select: {
             actionUrl: true,
@@ -101,18 +100,27 @@ describe("News data and read ownership", () => {
             title: true,
           },
         },
+        broadcastId: true,
+        createdAt: true,
         id: true,
         readAt: true,
+        title: true,
+        type: true,
       },
       where: {
-        broadcast: {
+        OR: [
+          {
+            broadcast: {
           is: {
             OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
             sentAt: { not: null },
           },
         },
-        broadcastId: { not: null },
-        type: "BROADCAST",
+            broadcastId: { not: null },
+            type: "BROADCAST",
+          },
+          { broadcastId: null, type: "SYSTEM" },
+        ],
         userId: "current-user",
       },
     });
@@ -134,10 +142,21 @@ describe("News data and read ownership", () => {
             sentAt: { not: null },
           },
         },
-        broadcastId: { not: null },
+        OR: [
+          {
+            broadcast: {
+              is: {
+                OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+                sentAt: { not: null },
+              },
+            },
+            broadcastId: { not: null },
+            type: "BROADCAST",
+          },
+          { broadcastId: null, type: "SYSTEM" },
+        ],
         id: { in: ["notification-1", "notification-2"] },
         readAt: null,
-        type: "BROADCAST",
         userId: "current-user",
       },
     });
