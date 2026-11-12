@@ -13,7 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 const SENTINEL_KEY = "NOT-A-REAL-KEY-sentinel-value-for-tests-only";
-const SENTINEL_FROM = "PtahX <sentinel-from@example.invalid>";
+const SENTINEL_FROM = "PtahX <hello@ptahx.com>";
 const SENTINEL_TO = "sentinel-recipient@example.invalid";
 const SENTINEL_URL =
   "https://app.example.invalid/reset-password?token=SENTINEL_TOKEN_VALUE";
@@ -79,24 +79,17 @@ describe("provider selection", () => {
     expect(isEmailDeliveryConfigured()).toBe(false);
   });
 
-  it("selects resend only when BOTH key and from-address are present", async () => {
-    setConfig({ from: SENTINEL_FROM, key: SENTINEL_KEY });
+  it("selects resend when the API key is present and uses the canonical PtahX sender", async () => {
+    setConfig({ key: SENTINEL_KEY });
     const { getEmailProvider } = await import("@/lib/email/service");
 
     expect(getEmailProvider().id).toBe("resend");
+    const { PTAHX_EMAIL_FROM, getEmailConfiguration } = await import("@/lib/email/service");
+    expect(PTAHX_EMAIL_FROM).toBe("PtahX <hello@ptahx.com>");
+    expect(getEmailConfiguration()?.from).toBe("PtahX <hello@ptahx.com>");
   });
 
-  it("stays disabled with an API key but no EMAIL_FROM", async () => {
-    setConfig({ key: SENTINEL_KEY });
-    const { getEmailProvider, isEmailDeliveryConfigured } = await import(
-      "@/lib/email/service"
-    );
-
-    expect(getEmailProvider().id).toBe("disabled");
-    expect(isEmailDeliveryConfigured()).toBe(false);
-  });
-
-  it("stays disabled with EMAIL_FROM but no API key", async () => {
+  it("stays disabled without an API key, regardless of EMAIL_FROM", async () => {
     setConfig({ from: SENTINEL_FROM });
     const { getEmailProvider, isEmailDeliveryConfigured } = await import(
       "@/lib/email/service"
@@ -106,8 +99,8 @@ describe("provider selection", () => {
     expect(isEmailDeliveryConfigured()).toBe(false);
   });
 
-  it("treats blank/whitespace configuration as absent", async () => {
-    setConfig({ from: "   ", key: "   " });
+  it("treats a blank API key as absent", async () => {
+    setConfig({ key: "   " });
     const { getEmailProvider, isEmailDeliveryConfigured } = await import(
       "@/lib/email/service"
     );
@@ -121,7 +114,7 @@ describe("provider selection", () => {
     expect(unconfigured.isEmailDeliveryConfigured()).toBe(false);
 
     vi.resetModules();
-    setConfig({ from: SENTINEL_FROM, key: SENTINEL_KEY });
+    setConfig({ key: SENTINEL_KEY });
     const configured = await import("@/lib/email/service");
     expect(configured.isEmailDeliveryConfigured()).toBe(true);
   });
@@ -140,7 +133,7 @@ describe("disabled provider", () => {
 
 describe("resend provider", () => {
   beforeEach(() => {
-    setConfig({ from: SENTINEL_FROM, key: SENTINEL_KEY });
+    setConfig({ key: SENTINEL_KEY });
   });
 
   it("returns delivered on a 2xx and sends exactly once", async () => {
