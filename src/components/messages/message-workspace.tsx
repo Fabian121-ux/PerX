@@ -2373,27 +2373,45 @@ export function MessageWorkspace({
           {visibleConversations.map((conversation) => {
             const active = conversation.id === activeConversation?.id;
             return (
-              <button
-                aria-current={active ? "true" : undefined}
-                className={`flex min-h-[92px] w-full min-w-0 items-start gap-3 rounded-2xl border p-3 text-left shadow-[0_2px_12px_rgba(10,25,55,0.04)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${
+              <div
+                className={`flex min-h-[92px] w-full min-w-0 items-start gap-3 rounded-2xl border p-3 text-left shadow-[0_2px_12px_rgba(10,25,55,0.04)] transition ${
                   active
                     ? "border-[color:var(--px-primary)] bg-[color:var(--px-primary-soft)] ring-1 ring-[color:var(--px-primary)]/20"
                     : "border-[color:var(--px-border)] bg-[color:var(--px-surface)] hover:border-[color:var(--px-primary)]/35 hover:bg-[color:var(--px-surface-soft)]"
                 }`}
                 data-conversation-id={conversation.id}
                 key={conversation.id}
-                onClick={() => void openMobileConversation(conversation.id)}
-                ref={(node) => {
-                  conversationButtonRefs.current[conversation.id] = node;
-                }}
-                type="button"
               >
-                <Avatar
-                  imageUrl={conversation.participantImageUrl}
-                  name={conversation.participantName}
-                  presence={conversation.participantPresence}
-                />
-                <div className="min-w-0 flex-1">
+                {conversation.participantUsername ? (
+                  <Link
+                    aria-label={`View ${conversation.participantName} profile`}
+                    className="shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    href={`/u/${encodeURIComponent(conversation.participantUsername)}`}
+                  >
+                    <Avatar
+                      imageUrl={conversation.participantImageUrl}
+                      name={conversation.participantName}
+                      presence={conversation.participantPresence}
+                    />
+                  </Link>
+                ) : (
+                  <Avatar
+                    imageUrl={conversation.participantImageUrl}
+                    name={conversation.participantName}
+                    presence={conversation.participantPresence}
+                  />
+                )}
+                <button
+                  aria-current={active ? "true" : undefined}
+                  aria-label={`Open conversation with ${conversation.participantName}`}
+                  className="flex min-w-0 flex-1 items-start gap-2 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  onClick={() => void openMobileConversation(conversation.id)}
+                  ref={(node) => {
+                    conversationButtonRefs.current[conversation.id] = node;
+                  }}
+                  type="button"
+                >
+                  <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-[14px] font-black text-[color:var(--px-text)]">
                       {conversation.participantName}
@@ -2439,7 +2457,8 @@ export function MessageWorkspace({
                       : conversation.unreadCount}
                   </span>
                 ) : null}
-              </button>
+                </button>
+              </div>
             );
           })}
           {!visibleConversations.length ? (
