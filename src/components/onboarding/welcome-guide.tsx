@@ -87,11 +87,43 @@ type SmartPageInfo = { title: string; body: string; action: string; href: string
 
 function getSmartPageInfo(pathname: string, pageText: string, pageTitle: string): SmartPageInfo {
   const source = `${pathname} ${pageTitle} ${pageText}`.toLowerCase();
-  const heading = pageText.split("\\n").map((part) => part.trim()).find(Boolean);
+  const heading = pageText.split("\n").map((part) => part.trim()).find(Boolean);
   const routeName = pathname.split("/").filter(Boolean).at(-1)?.replace(/[-_]/g, " ");
   const label = (heading && heading.length < 70 ? heading : routeName || "this page")
     .replace(/\\b\\w/g, (letter) => letter.toUpperCase());
 
+  const route = pathname.toLowerCase();
+  const currentStatus = pageText.match(/(?:status|stage|state)[:\\s]+([a-z _-]{3,40})/i)?.[1]?.trim();
+  if (route === "/app/track" || route.startsWith("/app/track/") || /tracking centre|tracking center/.test(source)) return {
+    title: "Tracking Centre",
+    body: "This is your Tracking Centre. Your product agreements appear here automatically. Select an item to see its carrier update and delivery history. The agreement status is not the same as a courier update.",
+    action: "Open Tracking Centre", href: "/app/track",
+    hint: "Select a product agreement. Check the carrier, tracking number and latest update. If no carrier update is available, contact the seller or open a support request."
+  };
+  if (/\\/app\\/deals\\/[^/]+\\/deliveries/.test(route)) return {
+    title: "Deal deliveries",
+    body: "This page is for submitting work or reviewing a delivery. If you are the provider, choose the open milestone, add a clear title and notes, then submit. If you are the client, review the submitted work before approving it.",
+    action: "Back to Deal", href: route.replace(/\\/deliveries$/, ""),
+    hint: currentStatus ? `Current status: ${currentStatus}. Check whether a delivery is waiting for your action.` : "Check whether you need to submit work or review a delivery."
+  };
+  if (/\\/app\\/deals\\/[^/]+\\/milestones/.test(route)) return {
+    title: "Deal milestones",
+    body: "Milestones break the agreement into smaller pieces of work. Check each milestone, its description, amount and status so both sides know what is complete and what is next.",
+    action: "Open Deal", href: route.replace(/\\/milestones$/, ""),
+    hint: "Find the milestone marked in progress or awaiting review."
+  };
+  if (/\\/app\\/deals\\/[^/]+\\/escrow/.test(route)) return {
+    title: "Agreement timeline",
+    body: "This page shows recorded agreement steps. It is not a wallet and does not mean money has been received or held. Check the latest status and its explanation.",
+    action: "Open Deal", href: route.replace(/\\/escrow$/, ""),
+    hint: "Review the recorded status and return to the Deal workspace for the next available action."
+  };
+  if (/\\/app\\/deals\\/[^/]+/.test(route)) return {
+    title: "Deal workspace",
+    body: "This is your Deal workspace. Check the agreed terms, progress and the next action shown on the page. You can open milestones, submit or review deliveries, and return to the discussion. PtahX does not hold funds.",
+    action: "View all Deals", href: "/app/deals",
+    hint: "Start with the next-action box. It tells you whether work is waiting to be submitted or reviewed."
+  };
   if (/track|tracking|shipment|delivery|dispatch|logistics/.test(source)) return {
     title: "Tracking", body: "You’re on the tracking page. Check the latest status, review the timeline and open a tracking item for more details. If something looks delayed, use the available support option.", action: "View tracking", href: pathname, hint: "Check the latest update and tracking history."
   };
@@ -132,7 +164,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
   useEffect(() => {
     const readPage = () => {
       const main = document.querySelector("main") ?? document.body;
-      const heading = main.querySelector("h1")?.textContent?.trim() || "";\n      setPageTitle(document.title || "");\n      setPageText(`${heading}\\n${(main.innerText || "").slice(0, 5000)}`);
+      const heading = main.querySelector("h1")?.textContent?.trim() || "";\n      setPageTitle(document.title || "");\n      setPageText(`${heading}\n${(main.innerText || "").slice(0, 5000)}`);
     };
     readPage();
     const main = document.querySelector("main") ?? document.body;
