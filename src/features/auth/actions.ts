@@ -603,13 +603,38 @@ export async function verifyEmailAction(
   }
 
   if (!result.alreadyVerified) {
-    await writeAuditLog({
-      action: "auth.email_verified",
-      actorId: result.userId,
-      entityId: result.userId,
-      entityType: "user",
-    });
+    try {
+      await writeAuditLog({
+        action: "auth.email_verified",
+        actorId: result.userId,
+        entityId: result.userId,
+        entityType: "user",
+      });
+    } catch (error) {
+      // Audit availability must not prevent a newly verified user from entering the app.
+      logServerDataError({
+        error,
+        operation: "auth.email_verified.audit",
+        route: "/verify-email",
+      });
+    }
+
+    try {
+      await createSession(result.userId);
+    } catch (error) {
+      logServerDataError({
+        error,
+        operation: "auth.email_verification.session",
+        route: "/verify-email",
+      });
+      // The address is verified; allow a normal sign-in if session creation is unavailable.
+      redirect("/sign-in?verified=1");
+    }
+
+    redirect("/app");
   }
+
+  // A previously consumed link must not create another authenticated session.
   redirect("/sign-in?verified=1");
 }
 
