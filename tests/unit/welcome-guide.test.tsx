@@ -5,7 +5,8 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  dismiss: vi.fn(),\n  pathname: "/app",
+  dismiss: vi.fn(),
+  pathname: "/app",
 }));
 
 vi.mock("@/features/onboarding/actions", () => ({
@@ -76,4 +77,23 @@ describe("persistent getting started guide", () => {
     ).toBeInTheDocument();
     expect(mocks.dismiss).not.toHaveBeenCalled();
   });
+  it("recognises the Tracking Centre and gives tracking-specific next steps", () => {
+    mocks.pathname = "/app/track";
+    render(<WelcomeGuide showWelcome={false} />);
+    fireEvent.click(screen.getByRole("button", { name: "Open the preX getting started guide" }));
+    expect(screen.getByRole("heading", { name: "Tracking Centre" })).toBeInTheDocument();
+    expect(screen.getByText(/product agreements appear here automatically/i)).toBeInTheDocument();
+    expect(screen.getByText(/Select a product agreement/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open Tracking Centre" })).toHaveAttribute("href", "/app/track");
+  });
+
+  it("recognises Deal delivery pages and explains submit or review actions", () => {
+    mocks.pathname = "/app/deals/deal_123/deliveries";
+    render(<WelcomeGuide showWelcome={false} />);
+    fireEvent.click(screen.getByRole("button", { name: "Open the preX getting started guide" }));
+    expect(screen.getByRole("heading", { name: "Deal deliveries" })).toBeInTheDocument();
+    expect(screen.getByText(/submitting work or reviewing a delivery/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to Deal" })).toHaveAttribute("href", "/app/deals/deal_123");
+  });
+
 });
