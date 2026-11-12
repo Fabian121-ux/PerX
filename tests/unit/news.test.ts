@@ -136,12 +136,6 @@ describe("News data and read ownership", () => {
     expect(mocks.updateMany).toHaveBeenCalledWith({
       data: { readAt: now },
       where: {
-        broadcast: {
-          is: {
-            OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-            sentAt: { not: null },
-          },
-        },
         OR: [
           {
             broadcast: {
