@@ -304,13 +304,13 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
 
             <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--px-primary-ink)]">
-                Welcome to preX
+                Welcome to PtahX
               </p>
               <Dialog.Title className="mt-2 text-2xl font-black leading-tight text-[color:var(--px-text)] sm:text-3xl">
                 A good place to start.
               </Dialog.Title>
               <Dialog.Description className="mt-3 text-sm leading-7 text-[color:var(--px-text-muted)]">
-                preX brings founders, startups and ecosystem opportunities into
+                PtahX brings founders, startups and ecosystem opportunities into
                 one place. Use the guide to understand the page you’re on and
                 find a useful next step.
               </Dialog.Description>
@@ -375,7 +375,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
 
       {!welcomeOpen && !collapsed && !guideOpen ? (
         <button
-          aria-label="Open the preX getting started guide"
+          aria-label="Open the PtahX getting started guide"
           className="ptahx-guide-launcher fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+1rem)] right-4 z-[55] inline-flex min-h-11 max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full border border-[color:var(--px-border)] bg-[color:var(--px-surface)] px-4 py-3 text-sm font-bold text-[color:var(--px-text)] shadow-xl transition hover:-translate-y-0.5 hover:border-[color:var(--px-focus)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] lg:bottom-6 lg:right-6"
           onClick={openGuide}
           type="button"
@@ -387,7 +387,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
 
       {!welcomeOpen && !collapsed && guideOpen ? (
         <section
-          aria-label="preX getting started guide"
+          aria-label="PtahX getting started guide"
           aria-live="polite"
           className="ptahx-guide-card fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+1rem)] right-3 z-[56] grid max-h-[min(62dvh,30rem)] w-[min(23rem,calc(100vw-1.5rem))] gap-4 overflow-y-auto rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4 text-[color:var(--px-text)] shadow-2xl sm:right-5 sm:p-5 lg:bottom-6 lg:right-6"
         >
@@ -431,7 +431,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
                   <Link className="font-bold text-[color:var(--px-primary-ink)] underline underline-offset-2 hover:no-underline" href={nextStep.href} onClick={() => navigateWithGuide(nextStep.href)}>
                     {nextStep.title}
                   </Link>{" "}
-                  to continue exploring preX.
+                  to continue exploring PtahX.
                 </p>
               ) : (
                 <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">You’ve reached the end of the guide. You can reopen it whenever you need help.</p>
