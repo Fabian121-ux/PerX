@@ -12,6 +12,9 @@ export const networkAccountEligibilitySelect = {
       allowConnectionRequests: true,
       allowMessagesFromConnections: true,
       isDiscoverable: true,
+      profileCompleteness: true,
+      headline: true,
+      biography: true,
     },
   },
   suspendedAt: true,
@@ -50,7 +53,11 @@ export function isDiscoverableNetworkTarget(
   now = new Date(),
 ) {
   return Boolean(
-    isEligibleNetworkAccount(account, now) && account?.profile?.isDiscoverable,
+    isEligibleNetworkAccount(account, now) &&
+      account?.profile?.isDiscoverable &&
+      account.profile.profileCompleteness >= 50 &&
+      account.profile.headline !== "New PtahX member" &&
+      account.profile.biography !== "Profile setup is in progress.",
   );
 }
 
@@ -80,6 +87,13 @@ export function getDiscoverableNetworkTargetWhere(
     blocksMade: { none: { blockedUserId: viewerId } },
     blocksReceived: { none: { blockerUserId: viewerId } },
     id: { not: viewerId },
-    profile: { is: { isDiscoverable: true } },
+    profile: {
+      is: {
+        isDiscoverable: true,
+        profileCompleteness: { gte: 50 },
+        headline: { not: "New PtahX member" },
+        biography: { not: "Profile setup is in progress." },
+      },
+    },
   };
 }
