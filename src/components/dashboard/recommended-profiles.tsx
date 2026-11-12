@@ -42,7 +42,7 @@ export function RecommendedProfiles({
           {profiles.map((profile) => (
             <Link
               aria-label={`View ${profile.name} profile`}
-              href={`/u/${profile.username}`}
+              href={`/u/${encodeURIComponent(profile.username)}`}
               key={profile.id}
               className="flex w-[240px] shrink-0 snap-start flex-col items-center justify-center rounded-2xl bg-[color:var(--px-surface-soft)] p-5 text-center backdrop-blur-sm ring-1 ring-[color:var(--px-border)] transition-all hover:-translate-y-1 hover:ring-[color:var(--px-primary)]/55 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             >
