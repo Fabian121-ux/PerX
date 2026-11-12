@@ -182,11 +182,16 @@ export async function getPeopleDirectory(
     take: pageSize + 1,
     where: {
       accountClassification: "PUBLIC_BETA_USER",
+      emailVerifiedAt: { not: null },
+      verificationStatus: "VERIFIED",
       id: { notIn: [...excludedIds] },
       isActive: true,
       profile: {
         is: {
           isDiscoverable: true,
+          profileCompleteness: { gte: 50 },
+          headline: { not: "New PtahX member" },
+          biography: { not: "Profile setup is in progress." },
           ...(location
             ? {
                 showLocation: true,
@@ -295,10 +300,15 @@ export async function getPublicPeopleDirectory(
     take: take + 1,
     where: {
       accountClassification: "PUBLIC_BETA_USER",
+      emailVerifiedAt: { not: null },
+      verificationStatus: "VERIFIED",
       isActive: true,
       profile: {
         is: {
           isDiscoverable: true,
+          profileCompleteness: { gte: 50 },
+          headline: { not: "New PtahX member" },
+          biography: { not: "Profile setup is in progress." },
           ...(location
             ? {
                 showLocation: true,

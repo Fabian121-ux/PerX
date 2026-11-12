@@ -2373,27 +2373,45 @@ export function MessageWorkspace({
           {visibleConversations.map((conversation) => {
             const active = conversation.id === activeConversation?.id;
             return (
-              <button
-                aria-current={active ? "true" : undefined}
-                className={`flex min-h-[92px] w-full min-w-0 items-start gap-3 rounded-2xl border p-3 text-left shadow-[0_2px_12px_rgba(10,25,55,0.04)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] ${
+              <div
+                className={`flex min-h-[92px] w-full min-w-0 items-start gap-3 rounded-2xl border p-3 text-left shadow-[0_2px_12px_rgba(10,25,55,0.04)] transition ${
                   active
                     ? "border-[color:var(--px-primary)] bg-[color:var(--px-primary-soft)] ring-1 ring-[color:var(--px-primary)]/20"
                     : "border-[color:var(--px-border)] bg-[color:var(--px-surface)] hover:border-[color:var(--px-primary)]/35 hover:bg-[color:var(--px-surface-soft)]"
                 }`}
                 data-conversation-id={conversation.id}
                 key={conversation.id}
-                onClick={() => void openMobileConversation(conversation.id)}
-                ref={(node) => {
-                  conversationButtonRefs.current[conversation.id] = node;
-                }}
-                type="button"
               >
-                <Avatar
-                  imageUrl={conversation.participantImageUrl}
-                  name={conversation.participantName}
-                  presence={conversation.participantPresence}
-                />
-                <div className="min-w-0 flex-1">
+                {conversation.participantUsername ? (
+                  <Link
+                    aria-label={`View ${conversation.participantName} profile`}
+                    className="shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    href={`/u/${encodeURIComponent(conversation.participantUsername)}`}
+                  >
+                    <Avatar
+                      imageUrl={conversation.participantImageUrl}
+                      name={conversation.participantName}
+                      presence={conversation.participantPresence}
+                    />
+                  </Link>
+                ) : (
+                  <Avatar
+                    imageUrl={conversation.participantImageUrl}
+                    name={conversation.participantName}
+                    presence={conversation.participantPresence}
+                  />
+                )}
+                <button
+                  aria-current={active ? "true" : undefined}
+                  aria-label={`Open conversation with ${conversation.participantName}`}
+                  className="flex min-w-0 flex-1 items-start gap-2 rounded-lg text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  onClick={() => void openMobileConversation(conversation.id)}
+                  ref={(node) => {
+                    conversationButtonRefs.current[conversation.id] = node;
+                  }}
+                  type="button"
+                >
+                  <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-[14px] font-black text-[color:var(--px-text)]">
                       {conversation.participantName}
@@ -2439,7 +2457,8 @@ export function MessageWorkspace({
                       : conversation.unreadCount}
                   </span>
                 ) : null}
-              </button>
+                </button>
+              </div>
             );
           })}
           {!visibleConversations.length ? (
@@ -2510,29 +2529,47 @@ export function MessageWorkspace({
                   <ArrowLeft aria-hidden size={19} />
                 </button>
               )}
-              <button
-                aria-label={`Open profile preview for ${activeConversation.participantName}`}
-                className="flex min-w-0 items-center gap-3 overflow-hidden rounded-xl text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                onClick={() => setDetailsOpen(true)}
-                type="button"
-              >
-                <Avatar
-                  imageUrl={activeConversation.participantImageUrl}
-                  name={activeConversation.participantName}
-                  presence={activeConversation.participantPresence}
-                />
-                <span className="min-w-0 overflow-hidden">
-                  <span className="block truncate text-sm font-black text-[color:var(--px-text)]">
-                    {activeConversation.participantName}
-                  </span>
+              <div className="flex min-w-0 items-center gap-3 overflow-hidden">
+                {activeConversation.participantUsername ? (
+                  <Link
+                    aria-label={`View ${activeConversation.participantName} profile`}
+                    className="shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    href={`/u/${encodeURIComponent(activeConversation.participantUsername)}`}
+                  >
+                    <Avatar
+                      imageUrl={activeConversation.participantImageUrl}
+                      name={activeConversation.participantName}
+                      presence={activeConversation.participantPresence}
+                    />
+                  </Link>
+                ) : (
+                  <Avatar
+                    imageUrl={activeConversation.participantImageUrl}
+                    name={activeConversation.participantName}
+                    presence={activeConversation.participantPresence}
+                  />
+                )}
+                <div className="min-w-0 overflow-hidden">
+                  {activeConversation.participantUsername ? (
+                    <Link
+                      className="block truncate rounded-sm text-left text-sm font-black text-[color:var(--px-text)] hover:text-[color:var(--px-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                      href={`/u/${encodeURIComponent(activeConversation.participantUsername)}`}
+                    >
+                      {activeConversation.participantName}
+                    </Link>
+                  ) : (
+                    <p className="truncate text-sm font-black text-[color:var(--px-text)]">
+                      {activeConversation.participantName}
+                    </p>
+                  )}
                   <span className="block truncate text-xs text-[color:var(--px-text-muted)]">
                     {presenceLabel(activeConversation.participantPresence) ??
                       activeConversation.participantRole ??
                       activeConversation.opportunityTitle ??
                       "PtahX conversation"}
                   </span>
-                </span>
-              </button>
+                </div>
+              </div>
             </div>
             <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
               {userRoles !== undefined ? (
@@ -3759,7 +3796,7 @@ function ConversationDetailsContent({
   onRemove: () => void;
 }) {
   const profileHref = conversation.participantUsername
-    ? `/u/${conversation.participantUsername}`
+    ? `/u/${encodeURIComponent(conversation.participantUsername)}`
     : null;
 
   return (
@@ -3803,12 +3840,27 @@ function ConversationDetailsContent({
       >
         <div className="grid gap-4">
           <div className="rounded-3xl bg-[color:var(--px-surface-soft)] p-5 text-center ring-1 ring-[color:var(--px-border)]">
-            <Avatar
-              imageUrl={conversation.participantImageUrl}
-              name={conversation.participantName}
-              presence={conversation.participantPresence}
-              size="lg"
-            />
+            {profileHref ? (
+              <Link
+                aria-label={`View ${conversation.participantName} profile`}
+                className="mx-auto block w-fit rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                href={profileHref}
+              >
+                <Avatar
+                  imageUrl={conversation.participantImageUrl}
+                  name={conversation.participantName}
+                  presence={conversation.participantPresence}
+                  size="lg"
+                />
+              </Link>
+            ) : (
+              <Avatar
+                imageUrl={conversation.participantImageUrl}
+                name={conversation.participantName}
+                presence={conversation.participantPresence}
+                size="lg"
+              />
+            )}
             <h3 className="mt-3 break-words font-black text-[color:var(--px-text)]">
               {conversation.participantName}
             </h3>

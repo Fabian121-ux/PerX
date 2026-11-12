@@ -472,7 +472,7 @@ model Profile {
   websiteUrl                   String?
   profileImageUrl              String?
   profileImageStorageKey       String?
-  isDiscoverable               Boolean               @default(true)
+  isDiscoverable               Boolean               @default(false)
   showLocation                 Boolean               @default(true)
   showSkills                   Boolean               @default(true)
   allowConnectionRequests      Boolean               @default(true)

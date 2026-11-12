@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft, ArrowRight, BriefcaseBusiness, Handshake, Headset, MapPin,
@@ -22,21 +22,34 @@ const steps = [
 
 export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
   const [step, setStep] = useState(0);
-  const [closed, setClosed] = useState(false);
+  const [isOpen, setIsOpen] = useState(showWelcome);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (showWelcome) setIsOpen(true);
+  }, [showWelcome]);
+
+  useEffect(() => {
+    const openGuide = () => {
+      setStep(0);
+      setIsOpen(true);
+    };
+    window.addEventListener("ptahx-open-guide", openGuide);
+    return () => window.removeEventListener("ptahx-open-guide", openGuide);
+  }, []);
 
   const finish = async () => {
     if (saving) return;
     setSaving(true);
     try {
       await dismissOnboardingChecklistAction();
-      setClosed(true);
     } finally {
+      setIsOpen(false);
       setSaving(false);
     }
   };
 
-  if (!showWelcome || closed) return null;
+  if (!isOpen) return null;
   const current = steps[step];
   const Icon = current.icon;
 

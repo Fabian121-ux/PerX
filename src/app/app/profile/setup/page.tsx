@@ -144,7 +144,7 @@ export default async function ProfileSetupPage({
                 Profile privacy
               </h2>
               <CheckboxRow
-                defaultChecked={profile?.isDiscoverable ?? true}
+                defaultChecked={profile?.isDiscoverable ?? false}
                 label="Show my profile in people discovery"
                 name="isDiscoverable"
               />

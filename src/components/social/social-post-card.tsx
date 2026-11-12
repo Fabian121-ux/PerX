@@ -33,7 +33,14 @@ export function SocialPostCard({
       className="min-w-0 overflow-hidden rounded-[22px] border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4 shadow-sm sm:p-5"
     >
       <header className="mb-3 flex min-w-0 items-center gap-3">
-        <Avatar name={post.author.name} src={post.author.imageUrl} size={44} />
+        <Link
+          aria-label={`View ${post.author.name} profile`}
+          className="shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+          href={`/u/${encodeURIComponent(post.author.username)}`}
+          prefetch={false}
+        >
+          <Avatar name={post.author.name} src={post.author.imageUrl} size={44} />
+        </Link>
         <div className="min-w-0">
           <Link
             className="block truncate text-sm font-bold text-[color:var(--px-text)] hover:text-[color:var(--px-primary)]"

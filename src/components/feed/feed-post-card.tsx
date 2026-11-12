@@ -77,12 +77,28 @@ export function FeedPostCard(props: FeedPostCardProps) {
             eager, so a long scroll never fetches avatars the viewer has not
             reached.
           */}
-          <Avatar
-            className="ring-1 ring-[color:var(--px-border)]"
-            name={post.authorName}
-            size={44}
-            src={post.authorAvatarUrl}
-          />
+          {authorHref ? (
+            <Link
+              aria-label={`View ${post.authorName} profile`}
+              className="shrink-0 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+              href={authorHref}
+              prefetch={false}
+            >
+              <Avatar
+                className="ring-1 ring-[color:var(--px-border)]"
+                name={post.authorName}
+                size={44}
+                src={post.authorAvatarUrl}
+              />
+            </Link>
+          ) : (
+            <Avatar
+              className="ring-1 ring-[color:var(--px-border)]"
+              name={post.authorName}
+              size={44}
+              src={post.authorAvatarUrl}
+            />
+          )}
           <div className="min-w-0">
             {authorHref ? (
               <Link

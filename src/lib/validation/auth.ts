@@ -46,11 +46,61 @@ export const passwordSchema = z
   .regex(/[A-Za-z]/, "Password must include at least one letter.")
   .regex(/[0-9]/, "Password must include at least one number.");
 
+/**
+ * A display name is a human-readable name, not a username, email local-part,
+ * or generated identifier. Keep this shared by signup, profile setup and edits.
+ */
+function looksLikeGeneratedName(value: string) {
+  const normalized = value.trim().toLocaleLowerCase();
+  const placeholderNames = new Set([
+    "deleted member",
+    "demo user",
+    "new ptahx member",
+    "ptahx member",
+    "test user",
+    "unknown user",
+  ]);
+  if (placeholderNames.has(normalized)) return true;
+
+  const tokens = value.split(/[\s'’.-]+/).filter(Boolean);
+  if (
+    tokens.length > 1 &&
+    tokens.every((token) => token.toLocaleLowerCase() === tokens[0].toLocaleLowerCase())
+  ) {
+    return true;
+  }
+
+  const compact = value.replace(/[\s'’.-]/g, "");
+  if (compact.length < 12) return false;
+
+  const uppercaseInside = [...compact.slice(1)].filter(
+    (character) =>
+      character !== character.toLocaleLowerCase() &&
+      character === character.toLocaleUpperCase(),
+  ).length;
+  const vowelRatio = (compact.match(/[aeiouy]/gi) ?? []).length / compact.length;
+
+  return uppercaseInside >= 2 || (compact.length >= 14 && vowelRatio < 0.2);
+}
+
+export const personNameSchema = z
+  .string()
+  .trim()
+  .min(2, "Enter your name.")
+  .max(120, "Name must be 120 characters or fewer.")
+  .regex(
+    /^[\p{L}\p{M}]+\.?(?:[ '\u2019-][\p{L}\p{M}]+\.?)*$/u,
+    "Use letters, spaces, apostrophes or hyphens in your name.",
+  )
+  .refine((value) => !looksLikeGeneratedName(value), {
+    message: "Enter a human-readable name, not an ID or random string.",
+  });
+
 export const signUpSchema = z
   .object({
     confirmPassword: z.string().min(1, "Confirm your password."),
     email: emailSchema,
-    name: z.string().trim().min(2).max(120),
+    name: personNameSchema,
     password: passwordSchema,
     termsAccepted: z.literal(true, {
       error: "You must accept the terms to create an account.",
@@ -85,6 +135,6 @@ export const profileSchema = z.object({
 });
 
 export const profileSetupSchema = profileSchema.extend({
-  name: z.string().trim().min(2).max(120),
+  name: personNameSchema,
   username: usernameSchema,
 });

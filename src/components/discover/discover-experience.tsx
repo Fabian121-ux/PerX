@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   Building2,
   BriefcaseBusiness,
@@ -409,9 +410,11 @@ export function DiscoverExperience({
               </div>
               <div className="mt-4 grid gap-3">
                 {profiles.slice(0, 4).map((profile) => (
-                  <div
-                    className="flex items-center gap-3 rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface-soft)] p-3"
+                  <Link
+                    className="flex items-center gap-3 rounded-[var(--px-radius-sm)] bg-[color:var(--px-surface-soft)] p-3 transition hover:bg-[color:var(--px-muted)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    href={mode === "preview" ? "/preview/profile" : `/u/${encodeURIComponent(profile.username)}`}
                     key={profile.username}
+                    aria-label={`View ${profile.name} profile`}
                   >
                     <div className="grid h-10 w-10 place-items-center rounded-full bg-[color:var(--px-primary)] text-xs font-black text-white">
                       {profile.name
@@ -425,13 +428,13 @@ export function DiscoverExperience({
                         {profile.name}
                       </p>
                       <p className="truncate text-xs text-[color:var(--px-text-muted)]">
-                      {profile.role}
+                        {profile.role}
                       </p>
                     </div>
                     <Badge className={trustBadgeClassName(profile.trust.level)}>
                       {profile.trust.shortLabel}
                     </Badge>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </Card>
@@ -481,12 +484,18 @@ function PersonDiscoveryCard({
     .slice(0, 2)
     .toUpperCase();
   const href =
-    mode === "preview" ? "/preview/profile" : `/u/${profile.username}`;
+    mode === "preview"
+      ? "/preview/profile"
+      : `/u/${encodeURIComponent(profile.username)}`;
 
   return (
     <Card className="flex min-h-[230px] flex-col justify-between gap-5">
       <div>
-        <div className="flex items-start gap-3">
+        <Link
+          className="flex items-start gap-3 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+          href={href}
+          aria-label={`View ${profile.name} profile`}
+        >
           {profile.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -507,7 +516,7 @@ function PersonDiscoveryCard({
               {profile.headline}
             </p>
           </div>
-        </div>
+        </Link>
         <div className="mt-4 flex flex-wrap gap-2">
           <Badge>{profile.role}</Badge>
           <Badge className={trustBadgeClassName(profile.trust.level)}>
@@ -516,12 +525,12 @@ function PersonDiscoveryCard({
           </Badge>
         </div>
       </div>
-      <a
+      <Link
         className="inline-flex min-h-11 items-center justify-center rounded-[var(--px-radius-sm)] bg-[color:var(--px-primary)] px-4 text-sm font-bold text-white transition hover:bg-[color:var(--px-primary-strong)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
         href={href}
       >
         View profile
-      </a>
+      </Link>
     </Card>
   );
 }
