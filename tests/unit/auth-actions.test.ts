@@ -202,6 +202,13 @@ describe("Auth Actions", () => {
       await expect(signUpAction(idleState, formData)).rejects.toThrow(
         "REDIRECT:/verify-email?status=sent",
       );
+      expect(tx.notification.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          title: "Welcome to preX",
+          type: "SYSTEM",
+          userId: "user_1",
+        }),
+      });
       expect(tx.emailVerificationToken.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
