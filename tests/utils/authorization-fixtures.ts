@@ -105,6 +105,7 @@ export function authorizationFixtures(prisma: PrismaClient) {
             isDiscoverable: true,
             allowConnectionRequests: true,
             allowMessagesFromConnections: true,
+            profileCompleteness: 100,
           },
         },
         roles: { create: roleIds.map((roleId) => ({ roleId })) },
