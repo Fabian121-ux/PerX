@@ -37,6 +37,7 @@ import { SidebarNavigation } from "@/components/dashboard/dashboard-sidebar";
 
 afterEach(() => {
   cleanup();
+  mocks.pathname = "/app";
   vi.clearAllMocks();
 });
 
