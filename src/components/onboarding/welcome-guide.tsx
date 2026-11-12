@@ -160,11 +160,14 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
   const [pending, startTransition] = useTransition();
 
 
-  const [pageText, setPageText] = useState("");\n  const [pageTitle, setPageTitle] = useState("");
+  const [pageText, setPageText] = useState("");
+  const [pageTitle, setPageTitle] = useState("");
   useEffect(() => {
     const readPage = () => {
       const main = document.querySelector("main") ?? document.body;
-      const heading = main.querySelector("h1")?.textContent?.trim() || "";\n      setPageTitle(document.title || "");\n      setPageText(`${heading}\n${(main.innerText || "").slice(0, 5000)}`);
+      const heading = main.querySelector("h1")?.textContent?.trim() || "";
+      setPageTitle(document.title || "");\n      const controls = Array.from(main.querySelectorAll("button, a, [role=button]")).map((node) => node.textContent?.trim()).filter(Boolean).slice(0, 30).join(" | ");
+      setPageText(`${heading}\n${(main.innerText || "").slice(0, 4500)}\nActions: ${controls}`);
     };
     readPage();
     const main = document.querySelector("main") ?? document.body;
