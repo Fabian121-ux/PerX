@@ -173,7 +173,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
       >
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[80] bg-slate-950/60 backdrop-blur-sm" />
-          <Dialog.Content className="ptahx-welcome-dialog fixed left-1/2 top-1/2 z-[81] grid max-h-[min(86dvh,42rem)] w-[min(92vw,34rem)] -translate-x-1/2 -translate-y-1/2 gap-5 overflow-y-auto rounded-3xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-5 text-[color:var(--px-text)] shadow-2xl outline-none sm:p-7">
+          <Dialog.Content className="ptahx-welcome-dialog fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] top-auto z-[81] grid min-h-0 max-h-[calc(100dvh-1.5rem-env(safe-area-inset-bottom))] w-auto translate-y-0 gap-4 overflow-y-auto overscroll-contain rounded-3xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4 text-[color:var(--px-text)] shadow-2xl outline-none sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[min(86dvh,42rem)] sm:w-[min(92vw,34rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:gap-5 sm:p-7">
             <div className="flex items-start justify-between gap-4">
               <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary-ink)]">
                 <Sparkles aria-hidden size={24} />
@@ -276,7 +276,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
         <section
           aria-label="preX getting started guide"
           aria-live="polite"
-          className="ptahx-guide-card fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+1rem)] right-3 z-[56] grid max-h-[min(62dvh,30rem)] w-[min(23rem,calc(100vw-1.5rem))] gap-4 overflow-y-auto rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4 text-[color:var(--px-text)] shadow-2xl sm:right-5 sm:p-5 lg:bottom-6 lg:right-6"
+          className="ptahx-guide-card fixed bottom-[calc(var(--mobile-nav-height)+env(safe-area-inset-bottom)+1rem)] left-3 right-3 z-[56] grid min-h-0 max-h-[min(68dvh,30rem)] w-auto gap-4 overflow-y-auto overscroll-contain rounded-2xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-4 text-[color:var(--px-text)] shadow-2xl sm:left-auto sm:right-5 sm:w-[min(23rem,calc(100vw-2.5rem))] sm:p-5 lg:bottom-6 lg:right-6"
         >
           <div className="flex min-w-0 items-center justify-between gap-3">
             <p className="min-w-0 text-xs font-bold uppercase tracking-[0.12em] text-[color:var(--px-primary-ink)]">
