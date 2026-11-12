@@ -20,7 +20,7 @@ describe("email verification grants", () => {
     );
   });
 
-  it("builds a plain-text and HTML email with a one-time verification link", () => {
+  it("builds a branded plain-text and HTML email with a one-time verification link", () => {
     const verificationUrl =
       "https://www.ptahx.com/verify-email?token=abc123&source=signup";
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -30,12 +30,16 @@ describe("email verification grants", () => {
       verificationUrl,
     });
 
-    expect(message.subject).toBe("Verify your PtahX email address");
+    expect(message.subject).toBe("Verify your preX email address");
+    expect(message.text).toContain("Welcome to preX");
     expect(message.text).toContain(verificationUrl);
     expect(message.html).toContain("Verify email address");
+    expect(message.html).toContain("https://www.ptahx.com/icons/favicon-48x48.png");
+    expect(message.html).toContain('>preX</td>');
     expect(message.html).toContain("&amp;source=signup");
     expect(message.html).not.toContain('href="' + verificationUrl + '"');
     expect(message.text).toContain("used once");
+    expect(message.html).toContain("Your account will not be activated");
   });
 
   it("escapes user-controlled URL content before rendering HTML", () => {
