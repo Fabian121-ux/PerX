@@ -95,6 +95,8 @@ export function authorizationFixtures(prisma: PrismaClient) {
         passwordHash: "unused-fixture-password-hash",
         accountClassification: "PUBLIC_BETA_USER",
         isActive: true,
+        emailVerifiedAt: new Date(),
+        verificationStatus: "VERIFIED",
         profile: {
           create: {
             headline: "Authorization test member",
