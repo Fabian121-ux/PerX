@@ -379,71 +379,45 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
             </div>
           </div>
 
-          {activeStepIndex < STEPS.length - 1 ? (
-            <p className="break-words text-sm leading-6 text-[color:var(--px-text-muted)]">
-              {knownPage ? "Next, go to " : "A useful next step: "}{knownPage ? null : smartPage.hint}{" "}{knownPage ? null : null}
-              <Link
-                className="font-bold text-[color:var(--px-primary-ink)] underline underline-offset-2 hover:no-underline"
-                href={nextStep.href}
-                onClick={() => navigateWithGuide(nextStep.href)}
-              >
-                {nextStep.title}
-              </Link>{" "}
-              {activeStepIndex === 0
-                ? "to discover people, startups and opportunities."
-                : activeStepIndex === 2
-                  ? "to continue the conversation with your connections."
-                  : "to continue exploring what preX can do."}
-            </p>
+          {knownPage ? (
+            <>
+              {activeStepIndex < STEPS.length - 1 ? (
+                <p className="break-words text-sm leading-6 text-[color:var(--px-text-muted)]">
+                  Next, go to{" "}
+                  <Link className="font-bold text-[color:var(--px-primary-ink)] underline underline-offset-2 hover:no-underline" href={nextStep.href} onClick={() => navigateWithGuide(nextStep.href)}>
+                    {nextStep.title}
+                  </Link>{" "}
+                  to continue exploring preX.
+                </p>
+              ) : (
+                <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">You’ve reached the end of the guide. You can reopen it whenever you need help.</p>
+              )}
+              <div className="h-1.5 overflow-hidden rounded-full bg-[color:var(--px-surface-soft)]">
+                <div className="h-full rounded-full bg-[color:var(--px-primary)] transition-[width] duration-200" style={{ width: `${((activeStepIndex + 1) / STEPS.length) * 100}%` }} />
+              </div>
+            </>
           ) : (
-            <p className="text-sm leading-6 text-[color:var(--px-text-muted)]">
-              You’ve reached the end of the guide. You can reopen it from this
-              corner whenever you need a reminder.
+            <p className="break-words text-sm leading-6 text-[color:var(--px-text-muted)]">
+              <span className="font-semibold text-[color:var(--px-text)]">Try this:</span> {smartPage.hint}
             </p>
           )}
 
-          {knownPage ? <div className="h-1.5 overflow-hidden rounded-full bg-[color:var(--px-surface-soft)]">
-            <div
-              className="h-full rounded-full bg-[color:var(--px-primary)] transition-[width] duration-200"
-              style={{ width: `${((activeStepIndex + 1) / STEPS.length) * 100}%` }}
-            />
-          </div>
-
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <button
-              className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] disabled:opacity-40"
-              disabled={activeStepIndex === 0}
-              onClick={() => {
-                setOverridePath(pathname);
-                setStepOverride(Math.max(0, activeStepIndex - 1));
-              }}
-              type="button"
-            >
-              <ArrowLeft aria-hidden size={16} /> Back
-            </button>
+            {knownPage ? (
+              <button className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-surface-soft)] disabled:opacity-40" disabled={activeStepIndex === 0} onClick={() => { setOverridePath(pathname); setStepOverride(Math.max(0, activeStepIndex - 1)); }} type="button">
+                <ArrowLeft aria-hidden size={16} /> Back
+              </button>
+            ) : <span className="text-xs text-[color:var(--px-text-muted)]">Page-aware help</span>}
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <Link
-                className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-primary-soft)]"
-                href={step.href}
-                onClick={() => navigateWithGuide(step.href)}
-              >
+              <Link className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-primary-soft)]" href={step.href} onClick={() => navigateWithGuide(step.href)}>
                 {step.action}
               </Link>
               {knownPage && activeStepIndex < STEPS.length - 1 ? (
-                <Button
-                  onClick={() => {
-                    setOverridePath(pathname);
-                    setStepOverride(Math.min(STEPS.length - 1, activeStepIndex + 1));
-                  }}
-                  size="sm"
-                  type="button"
-                >
+                <Button onClick={() => { setOverridePath(pathname); setStepOverride(Math.min(STEPS.length - 1, activeStepIndex + 1)); }} size="sm" type="button">
                   Next <ArrowRight aria-hidden className="ml-1" size={15} />
                 </Button>
               ) : (
-                <Button onClick={closeGuide} size="sm" type="button">
-                  Finish
-                </Button>
+                <Button onClick={closeGuide} size="sm" type="button">{knownPage ? "Finish" : "Got it"}</Button>
               )}
             </div>
           </div>
