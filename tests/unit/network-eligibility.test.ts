@@ -21,7 +21,10 @@ function account(
     profile: {
       allowConnectionRequests: true,
       allowMessagesFromConnections: true,
+      biography: "A complete profile biography with enough detail.",
+      headline: "Product founder",
       isDiscoverable: true,
+      profileCompleteness: 80,
     },
     suspendedAt: null,
     suspendedUntil: null,
@@ -54,7 +57,24 @@ describe("network account eligibility", () => {
           profile: {
             allowConnectionRequests: true,
             allowMessagesFromConnections: true,
+            biography: "A complete profile biography with enough detail.",
+            headline: "Product founder",
             isDiscoverable: false,
+            profileCompleteness: 80,
+          },
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      isDiscoverableNetworkTarget(
+        account({
+          profile: {
+            allowConnectionRequests: true,
+            allowMessagesFromConnections: true,
+            biography: "Profile setup is in progress.",
+            headline: "New PtahX member",
+            isDiscoverable: true,
+            profileCompleteness: 30,
           },
         }),
       ),
