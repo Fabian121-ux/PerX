@@ -222,7 +222,13 @@ export async function signUpAction(
   }
 
   // Never create a public account that cannot receive its activation link.
-  if (!isEmailVerificationDeliveryConfigured()) {
+  // A production registration must not create an account that cannot
+  // receive its activation link. Local development can use the console mail
+  // provider so browser tests can exercise the registration workflow offline.
+  if (
+    process.env.NODE_ENV === "production" &&
+    !isEmailVerificationDeliveryConfigured()
+  ) {
     return {
       message: "Email verification is temporarily unavailable. Please try again later.",
       status: "error",
