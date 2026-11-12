@@ -313,6 +313,17 @@ export async function signUpAction(
         select: { id: true },
       });
 
+      // Persist the signup welcome as a personal system notification. It is
+      // also surfaced in the member's News log after the welcome dialog closes.
+      await tx.notification.create({
+        data: {
+          body: "Welcome to preX. Explore the ecosystem, discover opportunities, build meaningful connections and use the Service Center whenever you need help. Your getting-started guide is always available from the app.",
+          title: "Welcome to preX",
+          type: "SYSTEM",
+          userId: user.id,
+        },
+      });
+
       const token = createEmailVerificationToken();
       const expiresAt = new Date(
         Date.now() + EMAIL_VERIFICATION_TOKEN_TTL_HOURS * 60 * 60 * 1000,
