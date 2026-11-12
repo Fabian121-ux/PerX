@@ -149,6 +149,7 @@ export function DashboardTopbar({
 
           <Link
             aria-label={hasUnreadNews ? "News, unread" : "News"}
+            data-onboarding-news-target="true"
             className="relative grid h-11 w-11 place-items-center rounded-xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] text-[color:var(--px-text)] transition hover:bg-[color:var(--px-surface-soft)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={newsHref}
           >
@@ -197,6 +198,7 @@ export function DashboardTopbar({
             aria-label={
               hasUnreadNews ? "News, unread" : "News"
             }
+            data-onboarding-news-target="true"
             className="relative grid h-11 w-11 place-items-center rounded-full text-[color:var(--px-text-muted)] transition-colors hover:bg-[color:var(--px-surface-soft)] hover:text-[color:var(--px-primary-ink)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
             href={newsHref}
             title="News"

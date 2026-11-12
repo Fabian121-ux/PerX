@@ -53,6 +53,7 @@ function SidebarLink({
     <Link
       aria-current={active ? "page" : undefined}
       aria-label={dot ? `${item.label}, unread` : item.label}
+      data-onboarding-news-target={item.href === "/app/news" ? "true" : undefined}
       className={`group flex min-h-10 w-full items-center gap-3 rounded-[10px] px-3 py-2 text-[13px] font-semibold leading-tight transition duration-150 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--px-sidebar)] ${
         active
           ? "bg-[color:var(--px-primary)] text-white shadow-[0_10px_22px_rgba(37,99,235,0.32)]"
