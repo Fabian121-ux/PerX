@@ -160,7 +160,7 @@ describe("Auth Actions", () => {
       });
     });
 
-    it("creates user and redirects to setup on success", async () => {
+    it("creates a pending user and redirects to email verification", async () => {
       const tx = {
         emailVerificationToken: {
           create: vi.fn().mockResolvedValue({ id: "verification_1" }),
