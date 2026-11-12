@@ -189,6 +189,9 @@ export async function getPeopleDirectory(
       profile: {
         is: {
           isDiscoverable: true,
+          profileCompleteness: { gte: 50 },
+          headline: { not: "New PtahX member" },
+          biography: { not: "Profile setup is in progress." },
           ...(location
             ? {
                 showLocation: true,
@@ -303,6 +306,9 @@ export async function getPublicPeopleDirectory(
       profile: {
         is: {
           isDiscoverable: true,
+          profileCompleteness: { gte: 50 },
+          headline: { not: "New PtahX member" },
+          biography: { not: "Profile setup is in progress." },
           ...(location
             ? {
                 showLocation: true,
