@@ -285,9 +285,10 @@ async function getIncomingEntries(viewerId: string) {
     },
   });
 
-  return rows.map((row) =>
-    { ...toNetworkEntry(row.requester, "PENDING_INCOMING", row.id, new Set()), requestCreatedAt: row.createdAt },
-  );
+  return rows.map((row) => ({
+    ...toNetworkEntry(row.requester, "PENDING_INCOMING", row.id, new Set()),
+    requestCreatedAt: row.createdAt,
+  }));
 }
 
 async function getSentEntries(viewerId: string) {
@@ -310,9 +311,10 @@ async function getSentEntries(viewerId: string) {
     },
   });
 
-  return rows.map((row) =>
-    { ...toNetworkEntry(row.receiver, "PENDING_OUTGOING", row.id, new Set()), requestCreatedAt: row.createdAt },
-  );
+  return rows.map((row) => ({
+    ...toNetworkEntry(row.receiver, "PENDING_OUTGOING", row.id, new Set()),
+    requestCreatedAt: row.createdAt,
+  }));
 }
 
 async function getBlockedEntries(viewerId: string) {
