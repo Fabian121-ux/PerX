@@ -226,7 +226,7 @@ function ConnectionCard({ entry }: { entry: NetworkEntry }) {
             </p>
           ) : (
             <p className="mt-2 text-sm text-[color:var(--px-text-muted)]">
-              preX member
+              PtahX member
             </p>
           )}
         </div>
