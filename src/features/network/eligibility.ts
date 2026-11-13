@@ -54,10 +54,7 @@ export function isDiscoverableNetworkTarget(
 ) {
   return Boolean(
     isEligibleNetworkAccount(account, now) &&
-      account?.profile?.isDiscoverable &&
-      account.profile.profileCompleteness >= 50 &&
-      account.profile.headline !== "New PtahX member" &&
-      account.profile.biography !== "Profile setup is in progress.",
+      account?.profile?.isDiscoverable,
   );
 }
 
@@ -90,9 +87,6 @@ export function getDiscoverableNetworkTargetWhere(
     profile: {
       is: {
         isDiscoverable: true,
-        profileCompleteness: { gte: 50 },
-        headline: { not: "New PtahX member" },
-        biography: { not: "Profile setup is in progress." },
       },
     },
   };
