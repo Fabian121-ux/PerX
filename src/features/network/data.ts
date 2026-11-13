@@ -43,6 +43,7 @@ export type NetworkEntry = {
   relationship: NetworkRelationshipState;
   username: string;
   blockedAt?: Date | null;
+  requestCreatedAt?: Date | null;
 };
 
 const publicNetworkUserSelect = {
@@ -272,6 +273,7 @@ async function getIncomingEntries(viewerId: string) {
   const rows = await getPrisma().connection.findMany({
     orderBy: [{ createdAt: "desc" }, { id: "asc" }],
     select: {
+      createdAt: true,
       id: true,
       requester: { select: publicNetworkUserSelect },
     },
@@ -284,7 +286,7 @@ async function getIncomingEntries(viewerId: string) {
   });
 
   return rows.map((row) =>
-    toNetworkEntry(row.requester, "PENDING_INCOMING", row.id, new Set()),
+    { ...toNetworkEntry(row.requester, "PENDING_INCOMING", row.id, new Set()), requestCreatedAt: row.createdAt },
   );
 }
 
@@ -296,6 +298,7 @@ async function getSentEntries(viewerId: string) {
   const rows = await getPrisma().connection.findMany({
     orderBy: [{ createdAt: "desc" }, { id: "asc" }],
     select: {
+      createdAt: true,
       id: true,
       receiver: { select: publicNetworkUserSelect },
     },
@@ -308,7 +311,7 @@ async function getSentEntries(viewerId: string) {
   });
 
   return rows.map((row) =>
-    toNetworkEntry(row.receiver, "PENDING_OUTGOING", row.id, new Set()),
+    { ...toNetworkEntry(row.receiver, "PENDING_OUTGOING", row.id, new Set()), requestCreatedAt: row.createdAt },
   );
 }
 
@@ -362,6 +365,37 @@ async function getAcceptedEntries(viewerId: string) {
   return rows.map((row, index) =>
     toNetworkEntry(people[index]!, "CONNECTED", row.id, partnerUserIds),
   );
+}
+
+export type ConnectionTabCounts = {
+  incoming: number;
+  sent: number;
+  connected: number;
+  blocked: number;
+};
+
+export async function getConnectionTabCounts(viewerId: string): Promise<ConnectionTabCounts> {
+  const now = new Date();
+  const eligibleTargetWhere = getDiscoverableNetworkTargetWhere(viewerId, now);
+  const [incoming, sent, connected, blocked] = await Promise.all([
+    getPrisma().connection.count({
+      where: { receiverId: viewerId, requester: eligibleTargetWhere, status: "PENDING" },
+    }),
+    getPrisma().connection.count({
+      where: { requesterId: viewerId, receiver: eligibleTargetWhere, status: "PENDING" },
+    }),
+    getPrisma().connection.count({
+      where: {
+        status: "ACCEPTED",
+        OR: [
+          { requesterId: viewerId, receiver: eligibleTargetWhere },
+          { receiverId: viewerId, requester: eligibleTargetWhere },
+        ],
+      },
+    }),
+    getPrisma().blockedUser.count({ where: { blockerUserId: viewerId } }),
+  ]);
+  return { incoming, sent, connected, blocked };
 }
 
 export async function getConnectionsTabData(
