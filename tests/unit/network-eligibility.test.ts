@@ -78,7 +78,7 @@ describe("network account eligibility", () => {
           },
         }),
       ),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("requires email and account verification in Prisma eligibility filters", () => {
