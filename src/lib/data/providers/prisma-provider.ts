@@ -876,9 +876,6 @@ export const prismaProvider: PtahXDataProvider = {
           profile: {
             is: {
               isDiscoverable: true,
-              profileCompleteness: { gte: 50 },
-              headline: { not: "New PtahX member" },
-              biography: { not: "Profile setup is in progress." },
             },
           },
           username,
