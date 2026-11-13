@@ -113,7 +113,7 @@ export default async function ProfileEditPage({
               Profile privacy
             </h2>
             <CheckboxRow
-              defaultChecked={profile?.isDiscoverable ?? false}
+              defaultChecked={profile?.isDiscoverable ?? true}
               label="Show my profile in people discovery"
               name="isDiscoverable"
             />
