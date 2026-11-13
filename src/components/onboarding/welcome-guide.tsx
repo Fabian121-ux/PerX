@@ -286,7 +286,7 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
       >
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-[80] bg-slate-950/60 backdrop-blur-sm" />
-          <Dialog.Content className="ptahx-welcome-dialog fixed left-1/2 top-1/2 z-[81] grid max-h-[min(86dvh,42rem)] w-[min(92vw,34rem)] -translate-x-1/2 -translate-y-1/2 gap-5 overflow-y-auto rounded-3xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-5 text-[color:var(--px-text)] shadow-2xl outline-none sm:p-7">
+          <Dialog.Content className="ptahx-welcome-dialog fixed z-[81] grid max-h-[min(86dvh,42rem)] w-[min(92vw,34rem)] gap-5 overflow-y-auto rounded-3xl border border-[color:var(--px-border)] bg-[color:var(--px-surface)] p-5 text-[color:var(--px-text)] shadow-2xl outline-none sm:p-7" style={{ position: "fixed", left: "50vw", top: "50dvh", transform: "translate(-50%, -50%)", boxSizing: "border-box", maxWidth: "calc(100vw - 2rem)" }}>
             <div className="flex items-start justify-between gap-4">
               <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary-ink)]">
                 <Sparkles aria-hidden size={24} />
