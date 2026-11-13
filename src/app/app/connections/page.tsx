@@ -30,6 +30,7 @@ import {
   CONNECTION_COPY,
   CONNECTION_DISCOVER_LIMIT,
   getConnectedLabel,
+  getConnectionTabCounts,
   getConnectionsTabData,
   normalizeConnectionsQuery,
   type NetworkEntry,
@@ -98,7 +99,10 @@ export default async function ConnectionsPage({
   }
 
   const q = normalizeConnectionsQuery(params.q);
-  const entries = await getConnectionsTabData(user.id, tab, { q });
+  const [entries, counts] = await Promise.all([
+    getConnectionsTabData(user.id, tab, { q }),
+    getConnectionTabCounts(user.id),
+  ]);
 
   return (
     <AppSection
@@ -133,6 +137,18 @@ export default async function ConnectionsPage({
               <span className="min-w-0 break-words [overflow-wrap:anywhere]">
                 {item.label}
               </span>
+              {getTabCount(item.key, counts) > 0 ? (
+                <span
+                  aria-label={getTabCountLabel(item.key, counts)}
+                  className={`ml-auto grid h-5 min-w-5 shrink-0 place-items-center rounded-full px-1.5 text-[10px] font-black ${
+                    active
+                      ? "bg-[color:var(--px-primary)] text-white"
+                      : "bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary)]"
+                  }`}
+                >
+                  {getTabCount(item.key, counts)}
+                </span>
+              ) : null}
             </Link>
           );
         })}
@@ -199,6 +215,22 @@ export default async function ConnectionsPage({
   );
 }
 
+function getTabCount(key: ConnectionTab, counts: { incoming: number; sent: number; connected: number; blocked: number }) {
+  if (key === "requests") return counts.incoming;
+  if (key === "sent") return counts.sent;
+  if (key === "connections") return counts.connected;
+  if (key === "blocked") return counts.blocked;
+  return 0;
+}
+
+function getTabCountLabel(key: ConnectionTab, counts: { incoming: number; sent: number; connected: number; blocked: number }) {
+  const count = getTabCount(key, counts);
+  if (key === "requests") return `${count} incoming requests`;
+  if (key === "sent") return `${count} pending sent requests`;
+  if (key === "connections") return `${count} connections`;
+  return `${count} blocked members`;
+}
+
 function ConnectionCard({ entry }: { entry: NetworkEntry }) {
   return (
     <Card className="flex h-full min-w-0 flex-col gap-4 overflow-hidden p-4 sm:p-5">
@@ -233,6 +265,12 @@ function ConnectionCard({ entry }: { entry: NetworkEntry }) {
       </div>
 
       <div className="mt-auto flex min-w-0 flex-wrap items-center gap-2 border-t border-[color:var(--px-border)] pt-3 [&>form]:min-w-0">
+        {entry.requestCreatedAt ? (
+          <p className="mr-auto w-full text-xs text-[color:var(--px-text-muted)]">
+            {entry.relationship === "PENDING_INCOMING" ? "Received" : "Sent"}{" "}
+            {entry.requestCreatedAt.toLocaleDateString()}
+          </p>
+        ) : null}
         {entry.relationship === "BLOCKED" ? (
           <>
             <p className="mr-auto text-xs font-semibold text-[color:var(--px-text-muted)]">
