@@ -318,7 +318,7 @@ export function DiscoverExperience({
               </div>
             ) : (
               <EmptyState
-                body="People results will appear after members complete searchable profiles."
+                body="People appear here only after they verify their email, complete at least 50% of their profile, and enable “Show my profile in people discovery” under Profile settings. Your own profile is never listed to you."
                 title="No matching people"
               />
             )
