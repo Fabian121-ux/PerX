@@ -7,6 +7,7 @@ import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 import { getAdminListPage } from "@/lib/data/admin";
 
 type DisputeRow = {
+  deal: { id: string; status: string; proposal: { opportunity: { title: string } } };
   id: string;
   openedBy: { id: string; name: string; username: string };
   reason: string;
@@ -48,9 +49,18 @@ export default async function AdminDisputesPage({
                   Updated {dispute.updatedAt.toLocaleDateString()}
                 </time>
               </div>
-              <p className="text-sm font-semibold text-slate-900">
-                {dispute.reason}
-              </p>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  {dispute.reason}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Deal: {dispute.deal.proposal.opportunity.title} ·{" "}
+                  {dispute.deal.status.toLocaleLowerCase().replaceAll("_", " ")}
+                </p>
+                <p className="mt-1 break-all text-xs text-slate-500">
+                  Deal reference: {dispute.deal.id}
+                </p>
+              </div>
               {dispute.resolution ? (
                 <p className="text-sm text-slate-600">
                   Resolution: {dispute.resolution}
