@@ -84,7 +84,9 @@ export default async function SocialModerationPage({
   };
   const commentWhere: Prisma.PostCommentWhereInput = {
     deletedAt: null,
-    ...statusFilter,
+    ...(exactId
+      ? {}
+      : { moderationStatus: { in: ["PENDING", "FLAGGED"] } }),
     ...(exactId ? { id: exactId } : {}),
     ...(afterCursor("comment")
       ? { AND: [afterCursor("comment") as Prisma.PostCommentWhereInput] }
