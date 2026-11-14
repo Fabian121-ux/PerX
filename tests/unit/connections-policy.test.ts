@@ -21,6 +21,7 @@ function account(
     accountClassification: "PUBLIC_BETA_USER",
     bannedAt: null,
     deactivatedAt: null,
+    emailVerifiedAt: new Date("2026-07-01T00:00:00.000Z"),
     id: "target-user",
     isActive: true,
     profile: {
@@ -33,6 +34,7 @@ function account(
     },
     suspendedAt: null,
     suspendedUntil: null,
+    verificationStatus: "VERIFIED",
     ...overrides,
   };
 }
@@ -42,6 +44,8 @@ describe("network account eligibility", () => {
 
   it("allows only active public accounts without current enforcement", () => {
     expect(isEligibleNetworkAccount(account(), now)).toBe(true);
+    expect(isEligibleNetworkAccount(account({ emailVerifiedAt: null }), now)).toBe(false);
+    expect(isEligibleNetworkAccount(account({ verificationStatus: "PENDING" }), now)).toBe(false);
     expect(
       isEligibleNetworkAccount(
         account({
