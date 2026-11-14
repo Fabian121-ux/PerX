@@ -59,6 +59,11 @@ const routes = [
     Page: AdminDisputesPage,
     item: {
       id: "dispute-1",
+      deal: {
+        id: "deal-dispute",
+        status: "DISPUTED",
+        proposal: { opportunity: { title: "Laptop delivery contract" } },
+      },
       openedBy: { id: "user-opener", name: "Dispute Opener", username: "dispute-opener" },
       reason: "Milestone disagreement",
       resolution: null,
@@ -67,6 +72,7 @@ const routes = [
     },
     href: "/admin/disputes?cursor=next-token",
     relatedHref: "/admin/users/user-opener",
+    relatedTitle: "Laptop delivery contract",
     capability: "deals:review",
   },
   {
@@ -93,6 +99,10 @@ const routes = [
       author: { id: "user-author", name: "Review Author", username: "review-author" },
       body: "Reliable and clear communication.",
       createdAt: updatedAt,
+      deal: {
+        status: "RELEASED",
+        proposal: { opportunity: { title: "Website redesign" } },
+      },
       dealId: "deal-reference",
       id: "review-1",
       rating: 5,
@@ -102,6 +112,7 @@ const routes = [
     },
     href: "/admin/reviews?cursor=next-token",
     relatedHref: "/admin/users/user-author",
+    relatedTitle: "Website redesign",
     capability: "reports:review",
   },
 ] as const;
@@ -137,6 +148,7 @@ describe("admin operational list pagination", () => {
       });
       expect(markup).toContain(route.href);
       expect(markup).toContain(route.relatedHref);
+      if ("relatedTitle" in route) expect(markup).toContain(route.relatedTitle);
       expect(markup).toContain("Next");
     }
   });
