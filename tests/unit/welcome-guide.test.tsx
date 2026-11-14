@@ -68,7 +68,7 @@ describe("persistent getting started guide", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Tuck guide into corner" }));
     expect(
-      screen.getByRole("button", { name: "Open the PtahX getting started guide" }),
+      screen.getByRole("button", { name: "Expand the getting started guide" }),
     ).toBeInTheDocument();
 
     act(() => {
