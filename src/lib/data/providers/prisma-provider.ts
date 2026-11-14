@@ -593,6 +593,14 @@ async function getAdminListPage(
           author: { select: { id: true, name: true, username: true } },
           body: true,
           createdAt: true,
+          deal: {
+            select: {
+              status: true,
+              proposal: {
+                select: { opportunity: { select: { title: true } } },
+              },
+            },
+          },
           dealId: true,
           id: true,
           rating: true,
@@ -613,6 +621,15 @@ async function getAdminListPage(
         orderBy: [{ createdAt: "desc" }, { id: "desc" }],
         select: {
           createdAt: true,
+          deal: {
+            select: {
+              id: true,
+              status: true,
+              proposal: {
+                select: { opportunity: { select: { title: true } } },
+              },
+            },
+          },
           id: true,
           openedBy: { select: { id: true, name: true, username: true } },
           reason: true,
