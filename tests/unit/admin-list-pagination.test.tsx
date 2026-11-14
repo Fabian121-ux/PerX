@@ -3,6 +3,7 @@ import { AdminList } from "@/components/admin-section";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  getAdminDealsPage: vi.fn(),
   getAdminListPage: vi.fn(),
   requireCapabilityOrNotFound: vi.fn(),
 }));
@@ -19,6 +20,7 @@ import AdminOpportunitiesPage from "@/app/admin/opportunities/page";
 import AdminDisputesPage from "@/app/admin/disputes/page";
 import AdminVerificationPage from "@/app/admin/verification/page";
 import AdminReviewsPage from "@/app/admin/reviews/page";
+import AdminDealsPage from "@/app/admin/deals/page";
 
 const updatedAt = new Date("2026-11-01T12:00:00.000Z");
 
@@ -121,6 +123,27 @@ describe("admin operational list pagination", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.requireCapabilityOrNotFound.mockResolvedValue({ id: "admin-1" });
+    mocks.getAdminDealsPage.mockResolvedValue({
+      cursor: null,
+      items: [{
+        currency: "NGN",
+        id: "deal-1",
+        milestoneCount: 2,
+        participantCount: 1,
+        participantPreview: [{
+          role: "CLIENT",
+          user: { id: "deal-user-1", name: "Deal User", username: "deal-user" },
+        }],
+        settlementMode: "SIMULATED",
+        status: "IN_PROGRESS",
+        title: "Admin deal context",
+        unresolvedDisputeCount: 0,
+        updatedAt,
+        valueMinor: 2500000n,
+      }],
+      nextCursor: null,
+      pageSize: 20,
+    });
     mocks.getAdminListPage.mockImplementation(async (kind: string) => {
       const item = routes.find((route) => route.kind === kind)?.item;
       return {
@@ -151,6 +174,17 @@ describe("admin operational list pagination", () => {
       if ("relatedTitle" in route) expect(markup).toContain(route.relatedTitle);
       expect(markup).toContain("Next");
     }
+  });
+
+  it("links deal participants to their administrative account records", async () => {
+    const markup = renderToStaticMarkup(
+      await AdminDealsPage({ searchParams: Promise.resolve({}) }),
+    );
+
+    expect(mocks.requireCapabilityOrNotFound).toHaveBeenCalledWith("deals:review");
+    expect(markup).toContain("/admin/users/deal-user-1");
+    expect(markup).toContain("@deal-user");
+    expect(markup).toContain("Admin deal context");
   });
 
   it("uses a neutral empty state instead of suggesting production needs seeding", () => {
