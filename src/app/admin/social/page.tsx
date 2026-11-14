@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AdminSection } from "@/components/admin-section";
+import { SocialModerationForm } from "@/components/social/moderation-form";
 import { CursorPagination } from "@/components/cursor-pagination";
 import { requireCapabilityOrNotFound } from "@/lib/auth/session";
 import { getPrisma } from "@/lib/db/prisma";
