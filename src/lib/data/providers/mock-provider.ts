@@ -174,6 +174,7 @@ function getMockAdminRows(kind: AdminListKind): any[] {
         participantPreview: deal.participants.slice(0, 6).map((participant: any) => ({
           role: participant.role,
           user: {
+            id: participant.id,
             name: participant.name,
             username: participant.username,
           },

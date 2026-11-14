@@ -456,7 +456,7 @@ async function getAdminDealsPage(
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: {
           role: true,
-          user: { select: { name: true, username: true } },
+          user: { select: { id: true, name: true, username: true } },
         },
         take: 6,
       },
