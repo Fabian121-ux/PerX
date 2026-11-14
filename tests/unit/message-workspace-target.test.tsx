@@ -1035,7 +1035,7 @@ describe("message workspace exact targets", () => {
     });
 
     const rows = view.container.querySelectorAll(
-      '[data-conversation-list-scroll="true"] > button',
+      '[data-conversation-list-scroll="true"] > [data-conversation-id]',
     );
     expect(rows).toHaveLength(2);
     expect(rows[0]?.textContent).toContain("Promoted User");
