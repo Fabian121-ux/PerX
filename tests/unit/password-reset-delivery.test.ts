@@ -121,12 +121,12 @@ describe("isPasswordResetDeliveryConfigured", () => {
     expect(m.isPasswordResetDeliveryConfigured()).toBe(true);
   });
 
-  it("is false for partial configuration in either environment", async () => {
+  it("requires the provider API key and uses the canonical sender identity", async () => {
     for (const nodeEnv of ["development", "production"]) {
       vi.resetModules();
       configure({ key: SENTINEL_KEY, nodeEnv });
       const keyOnly = await import("@/lib/auth/password-reset-delivery");
-      expect(keyOnly.isPasswordResetDeliveryConfigured()).toBe(false);
+      expect(keyOnly.isPasswordResetDeliveryConfigured()).toBe(true);
 
       vi.resetModules();
       configure({ from: SENTINEL_FROM, nodeEnv });
