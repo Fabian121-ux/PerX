@@ -69,15 +69,36 @@ $function$;
 
 -- The event trigger remains owned by postgres and continues to run on DDL.
 -- Application roles must not be able to invoke its SECURITY DEFINER function.
+-- PUBLIC always exists; API roles may not exist in a plain PostgreSQL
+-- database used by CI. Revoke from each role only when it is present.
+REVOKE ALL ON FUNCTION public.enforce_proposal_version_immutability() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.enforce_proposal_version_milestone_immutability() FROM PUBLIC;
+
 DO $block$
+DECLARE
+  role_name text;
 BEGIN
+  FOREACH role_name IN ARRAY ARRAY['anon', 'authenticated', 'service_role'] LOOP
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = role_name) THEN
+      EXECUTE format(
+        'REVOKE ALL ON FUNCTION public.enforce_proposal_version_immutability() FROM %I',
+        role_name
+      );
+      EXECUTE format(
+        'REVOKE ALL ON FUNCTION public.enforce_proposal_version_milestone_immutability() FROM %I',
+        role_name
+      );
+      IF to_regprocedure('public.rls_auto_enable()') IS NOT NULL THEN
+        EXECUTE format(
+          'REVOKE ALL ON FUNCTION public.rls_auto_enable() FROM %I',
+          role_name
+        );
+      END IF;
+    END IF;
+  END LOOP;
+
   IF to_regprocedure('public.rls_auto_enable()') IS NOT NULL THEN
-    EXECUTE 'REVOKE ALL ON FUNCTION public.rls_auto_enable() FROM PUBLIC, anon, authenticated, service_role';
+    REVOKE ALL ON FUNCTION public.rls_auto_enable() FROM PUBLIC;
   END IF;
 END;
 $block$;
-
--- Trigger functions are invoked by PostgreSQL's trigger machinery; direct
--- invocation by API roles is unnecessary and can bypass intended call paths.
-REVOKE ALL ON FUNCTION public.enforce_proposal_version_immutability() FROM PUBLIC, anon, authenticated, service_role;
-REVOKE ALL ON FUNCTION public.enforce_proposal_version_milestone_immutability() FROM PUBLIC, anon, authenticated, service_role;
