@@ -185,7 +185,17 @@ export function WelcomeGuide({ showWelcome }: { showWelcome: boolean }) {
     return () => observer.disconnect();
   }, [pathname]);
   const smartPage = getSmartPageInfo(pathname, pageText, pageTitle);
-  const knownPage = STEPS.some((item) => item.href === pathname || (item.href !== "/app" && pathname.startsWith(item.href + "/")));
+  // Deep workspaces and the Tracking Centre need route-specific guidance;
+  // the generic sidebar step must not shadow their more useful instructions.
+  const useRouteSpecificGuide =
+    pathname === "/app/track" || pathname.startsWith("/app/deals/");
+  const knownPage =
+    !useRouteSpecificGuide &&
+    STEPS.some(
+      (item) =>
+        item.href === pathname ||
+        (item.href !== "/app" && pathname.startsWith(item.href + "/")),
+    );
   const currentStepIndex = getCurrentStepIndex(pathname);
 
   const activeStepIndex =

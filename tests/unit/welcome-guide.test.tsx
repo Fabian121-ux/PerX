@@ -30,6 +30,7 @@ vi.mock("next/link", async () => {
 
 vi.mock("next/navigation", () => ({
   usePathname: () => mocks.pathname,
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
 }));
 
 import { WelcomeGuide } from "@/components/onboarding/welcome-guide";
@@ -67,7 +68,7 @@ describe("persistent getting started guide", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Tuck guide into corner" }));
     expect(
-      screen.getByRole("button", { name: "Open the PtahX getting started guide" }),
+      screen.getByRole("button", { name: "Expand the getting started guide" }),
     ).toBeInTheDocument();
 
     act(() => {
