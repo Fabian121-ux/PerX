@@ -89,7 +89,7 @@ describe("admin operational list pagination", () => {
     // The shared AdminList copy is asserted separately through the component's
     // rendered empty state because an empty queue is a valid production state.
     const markup = renderToStaticMarkup(
-      <AdminList
+      <AdminList<{ id: string }>
         empty="No profiles"
         items={[]}
         render={(item) => <p>{item.id}</p>}
