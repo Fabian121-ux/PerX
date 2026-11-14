@@ -20,6 +20,7 @@ import {
 } from "@/lib/admin/operational-summaries";
 import type { Prisma } from "@/generated/prisma/client";
 import type {
+  AdminActivitySummary,
   AdminDealSummary,
   AdminListKind,
   AdminUserSummary,
@@ -906,6 +907,46 @@ export const prismaProvider: PtahXDataProvider = {
     },
   },
   admin: {
+    getAdminActivitySummary: async (): Promise<AdminActivitySummary> => {
+      const [counts, recentEvents] = await Promise.all([
+        getPrisma().$queryRaw<Array<{
+          eventsLast24Hours: string;
+          eventsLast7Days: string;
+          eventsLast30Days: string;
+          activeActorsLast7Days: string;
+        }>>`
+          SELECT
+            COUNT(*) FILTER (WHERE "createdAt" >= NOW() - INTERVAL '24 hours')::text AS "eventsLast24Hours",
+            COUNT(*) FILTER (WHERE "createdAt" >= NOW() - INTERVAL '7 days')::text AS "eventsLast7Days",
+            COUNT(*) FILTER (WHERE "createdAt" >= NOW() - INTERVAL '30 days')::text AS "eventsLast30Days",
+            COUNT(DISTINCT "actorId") FILTER (
+              WHERE "createdAt" >= NOW() - INTERVAL '7 days' AND "actorId" IS NOT NULL
+            )::text AS "activeActorsLast7Days"
+          FROM "AuditLog"
+        `,
+        getPrisma().auditLog.findMany({
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          select: {
+            action: true,
+            actor: { select: { id: true, name: true, username: true } },
+            createdAt: true,
+            entityId: true,
+            entityType: true,
+            id: true,
+          },
+          take: 12,
+        }),
+      ]);
+      const row = counts[0];
+      if (!row) throw new Error("Admin activity summary query returned no result.");
+      return {
+        activeActorsLast7Days: Number(row.activeActorsLast7Days),
+        eventsLast24Hours: Number(row.eventsLast24Hours),
+        eventsLast7Days: Number(row.eventsLast7Days),
+        eventsLast30Days: Number(row.eventsLast30Days),
+        recentEvents,
+      };
+    },
     getAdminDealsPage,
     getAdminMetrics: async () => {
       // Keep the dashboard's seven independent COUNT round-trips to one
