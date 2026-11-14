@@ -229,6 +229,9 @@ describe("Auth Actions", () => {
       expect(tx.user.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
+            profile: {
+              create: expect.objectContaining({ isDiscoverable: true }),
+            },
             accountClassification: "PUBLIC_BETA_USER",
             emailVerifiedAt: null,
             verificationStatus: "PENDING",
