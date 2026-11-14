@@ -908,31 +908,40 @@ export const prismaProvider: PtahXDataProvider = {
   admin: {
     getAdminDealsPage,
     getAdminMetrics: async () => {
-      const [
-        users,
-        opportunities,
-        reports,
-        reviews,
-        disputes,
-        verification,
-        auditLogs,
-      ] = await Promise.all([
-        getPrisma().user.count(),
-        getPrisma().opportunity.count(),
-        getPrisma().opportunityReport.count({ where: { status: "OPEN" } }),
-        getPrisma().review.count(),
-        getPrisma().dispute.count(),
-        getPrisma().verificationRequest.count({ where: { status: "PENDING" } }),
-        getPrisma().auditLog.count(),
-      ]);
+      // Keep the dashboard's seven independent COUNT round-trips to one
+      // database query. Text counts avoid PostgreSQL int overflow; the UI
+      // consumes JavaScript numbers, so convert at the provider boundary.
+      const [row] = await getPrisma().$queryRaw<
+        Array<{
+          auditLogs: string;
+          disputes: string;
+          opportunities: string;
+          reports: string;
+          reviews: string;
+          users: string;
+          verification: string;
+        }>
+      >`
+        SELECT
+          (SELECT COUNT(*)::text FROM "AuditLog") AS "auditLogs",
+          (SELECT COUNT(*)::text FROM "Dispute") AS "disputes",
+          (SELECT COUNT(*)::text FROM "Opportunity") AS "opportunities",
+          (SELECT COUNT(*)::text FROM "OpportunityReport" WHERE "status" = 'OPEN') AS "reports",
+          (SELECT COUNT(*)::text FROM "Review") AS "reviews",
+          (SELECT COUNT(*)::text FROM "User") AS "users",
+          (SELECT COUNT(*)::text FROM "VerificationRequest" WHERE "status" = 'PENDING') AS "verification"
+      `;
+      if (!row) {
+        throw new Error("Admin dashboard metrics query returned no result.");
+      }
       return {
-        auditLogs,
-        disputes,
-        opportunities,
-        reports,
-        reviews,
-        users,
-        verification,
+        auditLogs: Number(row.auditLogs),
+        disputes: Number(row.disputes),
+        opportunities: Number(row.opportunities),
+        reports: Number(row.reports),
+        reviews: Number(row.reviews),
+        users: Number(row.users),
+        verification: Number(row.verification),
       };
     },
     getAdminList: async (kind) =>
