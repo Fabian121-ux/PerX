@@ -76,7 +76,7 @@ describe("Auth Actions", () => {
       vi.mocked(getResolvedDataMode).mockReturnValue("mock");
       const formData = new FormData();
       formData.set("email", "test@test.com");
-      formData.set("name", "Test User");
+      formData.set("name", "Ada Lovelace");
       formData.set("username", "test");
       formData.set("password", "validpassword1");
       formData.set("confirmPassword", "validpassword1");
@@ -112,7 +112,7 @@ describe("Auth Actions", () => {
 
       const formData = new FormData();
       formData.set("email", "test@test.com");
-      formData.set("name", "Test User");
+      formData.set("name", "Ada Lovelace");
       formData.set("username", "test");
       formData.set("password", "validpassword1");
       formData.set("confirmPassword", "validpassword1");
@@ -148,7 +148,7 @@ describe("Auth Actions", () => {
 
       const formData = new FormData();
       formData.set("email", "test@test.com");
-      formData.set("name", "Test User");
+      formData.set("name", "Ada Lovelace");
       formData.set("username", "test");
       formData.set("password", "validpassword1");
       formData.set("confirmPassword", "validpassword1");
@@ -191,7 +191,7 @@ describe("Auth Actions", () => {
       } as never);
       const formData = new FormData();
       formData.set("email", "test@test.com");
-      formData.set("name", "Test User");
+      formData.set("name", "Ada Lovelace");
       formData.set("username", "test");
       formData.set("password", "validpassword1");
       formData.set("confirmPassword", "validpassword1");
@@ -271,7 +271,7 @@ describe("Auth Actions", () => {
 
       const formData = new FormData();
       formData.set("email", "test@test.com");
-      formData.set("name", "Test User");
+      formData.set("name", "Ada Lovelace");
       formData.set("username", "test");
       formData.set("password", "validpassword1");
       formData.set("confirmPassword", "validpassword1");
@@ -315,7 +315,7 @@ describe("Auth Actions", () => {
       } as never);
       const formData = new FormData();
       formData.set("email", "test@test.com");
-      formData.set("name", "Test User");
+      formData.set("name", "Ada Lovelace");
       formData.set("username", "test");
       formData.set("password", "validpassword1");
       formData.set("confirmPassword", "validpassword1");
@@ -332,7 +332,7 @@ describe("Auth Actions", () => {
     it("returns an inline error when confirmation does not match", async () => {
       const formData = new FormData();
       formData.set("email", "test@test.com");
-      formData.set("name", "Test User");
+      formData.set("name", "Ada Lovelace");
       formData.set("username", "test");
       formData.set("password", "validpassword1");
       formData.set("confirmPassword", "differentpassword1");
@@ -343,7 +343,7 @@ describe("Auth Actions", () => {
         status: "error",
         values: {
           email: "test@test.com",
-          name: "Test User",
+          name: "Ada Lovelace",
           username: "test",
         },
       });
@@ -353,7 +353,7 @@ describe("Auth Actions", () => {
     it("requires terms acceptance before hitting the database", async () => {
       const formData = new FormData();
       formData.set("email", "test@test.com");
-      formData.set("name", "Test User");
+      formData.set("name", "Ada Lovelace");
       formData.set("username", "test");
       formData.set("password", "validpassword1");
       formData.set("confirmPassword", "validpassword1");
@@ -372,7 +372,7 @@ describe("Auth Actions", () => {
 
       const formData = new FormData();
       formData.set("email", "test@test.com");
-      formData.set("name", "Test User");
+      formData.set("name", "Ada Lovelace");
       formData.set("username", "test");
       formData.set("password", "validpassword1");
       formData.set("confirmPassword", "validpassword1");
