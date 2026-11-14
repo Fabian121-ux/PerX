@@ -30,6 +30,7 @@ vi.mock("next/link", async () => {
 
 vi.mock("next/navigation", () => ({
   usePathname: () => mocks.pathname,
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
 }));
 
 import { WelcomeGuide } from "@/components/onboarding/welcome-guide";
