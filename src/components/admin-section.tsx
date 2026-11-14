@@ -32,7 +32,7 @@ export function AdminList<T extends { id: string }>({
   render: (item: T) => ReactNode;
 }) {
   if (!items.length) {
-    return <EmptyState body="Connect PostgreSQL and seed data to populate this operational queue." title={empty} />;
+    return <EmptyState body="There are no records to display in this view right now. New records will appear here as the platform receives activity." title={empty} />;
   }
 
   return <div className="grid gap-3">{items.map((item) => <Card key={item.id}>{render(item)}</Card>)}</div>;
