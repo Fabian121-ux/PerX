@@ -1,10 +1,19 @@
 import { AdminList, AdminSection } from "@/components/admin-section";
-import { getAdminList } from "@/lib/data/admin";
+import { CursorPagination } from "@/components/cursor-pagination";
 import { requireCapabilityOrNotFound } from "@/lib/auth/session";
+import { getAdminListPage } from "@/lib/data/admin";
 
-export default async function AdminReviewsPage() {
+export default async function AdminReviewsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cursor?: string }>;
+}) {
   await requireCapabilityOrNotFound("reports:review");
-  const reviews = await getAdminList("reviews");
+  const params = await searchParams;
+  const page = await getAdminListPage("reviews", {
+    cursor: params.cursor,
+    pageSize: 20,
+  });
 
   return (
     <AdminSection
@@ -13,12 +22,18 @@ export default async function AdminReviewsPage() {
     >
       <AdminList
         empty="No reviews"
-        items={reviews}
+        items={page.items}
         render={(item) => (
           <p className="text-sm text-slate-700">
             {(item as { title?: string }).title ?? "Review"}
           </p>
         )}
+      />
+      <CursorPagination
+        basePath="/admin/reviews"
+        cursor={page.cursor}
+        label="Reviews pagination"
+        nextCursor={page.nextCursor}
       />
     </AdminSection>
   );
