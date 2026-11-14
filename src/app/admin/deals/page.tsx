@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { AdminSection } from "@/components/admin-section";
 import { CursorPagination } from "@/components/cursor-pagination";
 import { Card, EmptyState } from "@/components/ui/card";
@@ -65,12 +67,13 @@ export default async function AdminDealsPage({
                   </p>
                   <div className="flex flex-wrap gap-2 text-xs text-[color:var(--px-text-muted)]">
                     {deal.participantPreview.map((participant) => (
-                      <span
-                        className="rounded-full border border-[color:var(--px-border)] px-2.5 py-1"
-                        key={`${participant.user.username}:${participant.role}`}
+                      <Link
+                        className="rounded-full border border-[color:var(--px-border)] px-2.5 py-1 transition hover:border-[color:var(--px-primary)] hover:text-[color:var(--px-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-primary)]"
+                        href={`/admin/users/${participant.user.id}`}
+                        key={`${participant.user.id}:${participant.role}`}
                       >
                         @{participant.user.username} · {humanize(participant.role)}
-                      </span>
+                      </Link>
                     ))}
                     {hiddenParticipants ? (
                       <span className="rounded-full bg-[color:var(--px-muted)] px-2.5 py-1 font-bold">
