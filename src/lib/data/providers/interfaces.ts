@@ -55,7 +55,7 @@ export type AdminDealSummary = {
   participantCount: number;
   participantPreview: Array<{
     role: string;
-    user: { name: string; username: string };
+    user: { id: string; name: string; username: string };
   }>;
   settlementMode: DealSettlementMode;
   status: DealStatus;
