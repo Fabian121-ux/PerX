@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
+import { AdminList } from "@/components/admin-section";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -88,8 +89,13 @@ describe("admin operational list pagination", () => {
     // The shared AdminList copy is asserted separately through the component's
     // rendered empty state because an empty queue is a valid production state.
     const markup = renderToStaticMarkup(
-      <AdminProfilesPage searchParams={Promise.resolve({})} />,
+      <AdminList
+        empty="No profiles"
+        items={[]}
+        render={(item) => <p>{item.id}</p>}
+      />,
     );
     expect(markup).not.toContain("Connect PostgreSQL");
+    expect(markup).toContain("There are no records to display in this view right now.");
   });
 });
