@@ -30,7 +30,11 @@ function NavigationLinks({
   return (
     <div className="grid gap-5">
       {groups.map((group) => (
-        <section aria-label={group.title} className="grid gap-1" key={group.title}>
+        <section
+          aria-label={group.title}
+          className="grid gap-1"
+          key={group.title}
+        >
           <h2 className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
             {group.title}
           </h2>
@@ -44,14 +48,18 @@ function NavigationLinks({
                     "flex min-h-10 items-center rounded-xl px-3 py-2 text-sm font-semibold transition",
                     active
                       ? "bg-cyan-400/15 text-cyan-200 ring-1 ring-inset ring-cyan-300/20"
-                      : "text-slate-300 hover:bg-white/8 hover:text-white",
+                      : "text-slate-300 hover:bg-white/5 hover:text-white",
                   ].join(" ")}
                   href={link.href}
                   key={link.href}
                 >
                   <span
                     aria-hidden="true"
-                    className={active ? "mr-2 h-1.5 w-1.5 rounded-full bg-cyan-300" : "mr-2 h-1.5 w-1.5 rounded-full bg-transparent"}
+                    className={
+                      active
+                        ? "mr-2 h-1.5 w-1.5 rounded-full bg-cyan-300"
+                        : "mr-2 h-1.5 w-1.5 rounded-full bg-transparent"
+                    }
                   />
                   {link.label}
                 </Link>
@@ -91,7 +99,10 @@ export function AdminNavigation({
             ▼
           </span>
         </summary>
-        <nav aria-label="Admin navigation" className="mt-4 border-t border-white/10 pt-4">
+        <nav
+          aria-label="Admin navigation"
+          className="mt-4 border-t border-white/10 pt-4"
+        >
           <NavigationLinks groups={groups} pathname={pathname} />
         </nav>
       </details>
