@@ -69,7 +69,13 @@ $function$;
 
 -- The event trigger remains owned by postgres and continues to run on DDL.
 -- Application roles must not be able to invoke its SECURITY DEFINER function.
-REVOKE ALL ON FUNCTION public.rls_auto_enable() FROM PUBLIC, anon, authenticated, service_role;
+DO $block$
+BEGIN
+  IF to_regprocedure('public.rls_auto_enable()') IS NOT NULL THEN
+    EXECUTE 'REVOKE ALL ON FUNCTION public.rls_auto_enable() FROM PUBLIC, anon, authenticated, service_role';
+  END IF;
+END;
+$block$;
 
 -- Trigger functions are invoked by PostgreSQL's trigger machinery; direct
 -- invocation by API roles is unnecessary and can bypass intended call paths.
