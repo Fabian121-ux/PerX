@@ -82,11 +82,16 @@ export default async function SocialModerationPage({
       ? { AND: [afterCursor("post") as Prisma.PostWhereInput] }
       : {}),
   };
+  const commentStatusFilter: Pick<
+    Prisma.PostCommentWhereInput,
+    "moderationStatus"
+  > = exactId
+    ? {}
+    : { moderationStatus: { in: ["PENDING", "FLAGGED"] } };
+
   const commentWhere: Prisma.PostCommentWhereInput = {
     deletedAt: null,
-    ...(exactId
-      ? {}
-      : { moderationStatus: { in: ["PENDING", "FLAGGED"] } }),
+    ...commentStatusFilter,
     ...(exactId ? { id: exactId } : {}),
     ...(afterCursor("comment")
       ? { AND: [afterCursor("comment") as Prisma.PostCommentWhereInput] }
