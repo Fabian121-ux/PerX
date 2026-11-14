@@ -90,7 +90,7 @@ export function AccountMenu({ user, previewMode = false }: AccountMenuProps) {
           </DropdownMenu.Item>
 
           <DropdownMenu.Item asChild>
-            <Link href="/app/settings" className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
+            <Link href={previewMode ? "/preview/settings" : "/app/settings"} className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[color:var(--px-text)] outline-none transition-colors hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]">
               <Settings size={16} className="text-[color:var(--px-text-muted)]" />
               Settings
             </Link>
