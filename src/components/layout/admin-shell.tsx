@@ -1,77 +1,121 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { AdminNavigation, type AdminNavigationGroup } from "@/components/admin/admin-navigation";
 import { BrandLogo } from "@/components/brand-logo";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import type { CurrentUser } from "@/lib/auth/session";
+import { hasCapability, type Capability, type RoleName } from "@/lib/permissions/capabilities";
 
-const adminLinks = [
-  ["/admin", "Dashboard"],
-  ["/admin/users", "Users"],
-  ["/admin/trader-applications", "Trader applications"],
-  ["/admin/opportunities", "Opportunities"],
-  // The Real Estate vertical was retired from the member experience, but
-  // existing PROPERTY listings still need moderating, so this admin-only
-  // console is deliberately retained and relabelled as legacy.
-  ["/admin/real-estate", "Property (legacy)"],
-  ["/admin/messages", "Messages"],
-  ["/admin/moderation", "Moderation"],
-  ["/admin/broadcasts", "Broadcasts"],
-  ["/admin/reports", "Reports"],
-  ["/admin/support", "Support"],
-  ["/admin/deals", "Deals"],
-  ["/admin/audit", "Audit"],
-  ["/admin/policies", "Policies"],
-  ["/admin/schema", "Schema status"],
-  ["/admin/settings", "Settings"],
+type AdminNavigationItem = {
+  capability: Capability;
+  href: string;
+  label: string;
+};
+
+const navigationGroups: Array<{
+  title: string;
+  links: AdminNavigationItem[];
+}> = [
+  {
+    title: "Overview",
+    links: [
+      { href: "/admin", label: "Dashboard", capability: "admin:access" },
+      { href: "/admin/activity", label: "Activity", capability: "admin:access" },
+    ],
+  },
+  {
+    title: "People & marketplace",
+    links: [
+      { href: "/admin/users", label: "Users", capability: "users:read" },
+      { href: "/admin/trader-applications", label: "Trader applications", capability: "users:manage" },
+      { href: "/admin/profiles", label: "Profiles", capability: "users:read" },
+      { href: "/admin/verification", label: "Verification", capability: "admin:moderate" },
+      { href: "/admin/opportunities", label: "Opportunities", capability: "opportunity:moderate" },
+      // Existing property listings still need moderation after the member-facing vertical was retired.
+      { href: "/admin/real-estate", label: "Property (legacy)", capability: "opportunity:moderate" },
+      { href: "/admin/deals", label: "Deals", capability: "deals:review" },
+      { href: "/admin/disputes", label: "Disputes", capability: "deals:review" },
+    ],
+  },
+  {
+    title: "Trust & safety",
+    links: [
+      { href: "/admin/messages", label: "Messages", capability: "messages:moderate" },
+      { href: "/admin/moderation", label: "Moderation cases", capability: "admin:moderate" },
+      { href: "/admin/social", label: "Social moderation", capability: "admin:moderate" },
+      { href: "/admin/reports", label: "Reports", capability: "reports:review" },
+      { href: "/admin/reviews", label: "Reviews", capability: "reports:review" },
+    ],
+  },
+  {
+    title: "Administration",
+    links: [
+      { href: "/admin/broadcasts", label: "Broadcasts", capability: "broadcasts:create" },
+      { href: "/admin/support", label: "Support", capability: "support:manage" },
+      { href: "/admin/audit", label: "Audit trail", capability: "audit:read" },
+      { href: "/admin/policies", label: "Policies", capability: "policies:manage" },
+      { href: "/admin/schema", label: "Schema status", capability: "settings:manage" },
+      { href: "/admin/settings", label: "Settings", capability: "settings:manage" },
+    ],
+  },
 ];
+
+export function getAdminNavigationGroups(roles: RoleName[]): AdminNavigationGroup[] {
+  return navigationGroups
+    .map((group) => ({
+      title: group.title,
+      links: group.links
+        .filter((link) => hasCapability(roles, link.capability))
+        .map(({ href, label }) => ({ href, label })),
+    }))
+    .filter((group) => group.links.length > 0);
+}
 
 export function AdminShell({
   children,
+  user,
 }: {
   children: ReactNode;
   user: CurrentUser;
 }) {
+  const groups = getAdminNavigationGroups(user.roles);
+
   return (
     <div className="min-h-dvh bg-slate-950 text-white">
-      <header className="admin-header border-b border-white/10 bg-slate-950">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/95 backdrop-blur">
+        <div className="mx-auto flex min-h-16 max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link
-            className="inline-flex items-center gap-3"
+            className="inline-flex min-w-0 items-center gap-3"
             href="/admin"
-            aria-label="PtahX admin"
+            aria-label="PtahX admin dashboard"
           >
             <BrandLogo className="h-10" dark />
-            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white/80">
+            <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-bold text-cyan-100">
               Admin
             </span>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
+            <div className="hidden text-right sm:block">
+              <p className="max-w-48 truncate text-xs font-semibold text-white">{user.name}</p>
+              <p className="max-w-48 truncate text-[11px] text-slate-400">@{user.username}</p>
+            </div>
             <Link
-              className="text-sm font-medium text-slate-300 hover:text-white"
+              className="rounded-xl border border-white/10 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
               href="/app"
             >
               User app
             </Link>
-            <SignOutButton className="inline-flex items-center gap-2 rounded-[var(--px-radius-sm)] border border-white/15 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 disabled:opacity-70" />
+            <SignOutButton className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-70" />
           </div>
         </div>
       </header>
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[240px_1fr] lg:px-8">
-        <aside className="rounded-[24px] border border-white/10 bg-white/5 p-3 shadow-[var(--px-shadow-strong)] lg:sticky lg:top-20 lg:self-start">
-          <nav className="grid gap-1">
-            {adminLinks.map(([href, label]) => (
-              <Link
-                className="rounded-[var(--px-radius-sm)] px-3 py-2 text-sm font-semibold text-slate-300 hover:bg-white/10 hover:text-white"
-                href={href}
-                key={href}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-        </aside>
-        <main>{children}</main>
+
+      <div className="mx-auto grid max-w-[1600px] gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[248px_minmax(0,1fr)] lg:gap-7 lg:px-8 lg:py-7">
+        <AdminNavigation groups={groups} />
+        <main className="min-w-0" id="admin-main">
+          {children}
+        </main>
       </div>
     </div>
   );
