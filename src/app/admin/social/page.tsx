@@ -66,9 +66,10 @@ export default async function SocialModerationPage({
     };
   };
 
-  const statusFilter = exactId
-    ? {}
-    : { moderationStatus: { in: ["PENDING", "FLAGGED"] as const } };
+  const statusFilter: Pick<Prisma.PostWhereInput, "moderationStatus"> =
+    exactId
+      ? {}
+      : { moderationStatus: { in: ["PENDING", "FLAGGED"] } };
 
   // Keep the queue bounded and narrow. Do not fetch every column, reactions,
   // comments, or arbitrary related data for a moderation summary.
