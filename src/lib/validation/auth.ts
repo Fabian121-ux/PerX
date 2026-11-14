@@ -70,7 +70,12 @@ function looksLikeGeneratedName(value: string) {
     return true;
   }
 
-  const compact = value.replace(/[\s'’.-]/g, "");
+  // Mixed capitals are normal in compound names (e.g. Jean-Luc Picard,
+  // Mary-Jane O’Connor). Apply the generated-ID heuristic only to a single
+  // uninterrupted token; placeholder and repeated-token checks still apply.
+  if (/[\s'’.-]/.test(value)) return false;
+
+  const compact = value;
   if (compact.length < 12) return false;
 
   const uppercaseInside = [...compact.slice(1)].filter(
