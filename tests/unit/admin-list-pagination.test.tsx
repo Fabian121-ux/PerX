@@ -12,6 +12,7 @@ vi.mock("@/lib/auth/session", () => ({
   requireCapabilityOrNotFound: mocks.requireCapabilityOrNotFound,
 }));
 vi.mock("@/lib/data/admin", () => ({
+  getAdminDealsPage: mocks.getAdminDealsPage,
   getAdminListPage: mocks.getAdminListPage,
 }));
 
