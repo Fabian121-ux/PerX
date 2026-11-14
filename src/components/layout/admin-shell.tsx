@@ -83,6 +83,12 @@ export function AdminShell({
 
   return (
     <div className="min-h-dvh bg-slate-950 text-white">
+      <a
+        className="sr-only fixed left-4 top-4 z-50 rounded-lg bg-white px-4 py-2 text-sm font-bold text-slate-950 focus:not-sr-only focus:outline-none focus:ring-2 focus:ring-cyan-300"
+        href="#admin-main"
+      >
+        Skip to admin content
+      </a>
       <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/95 backdrop-blur">
         <div className="mx-auto flex min-h-16 max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link
@@ -113,7 +119,7 @@ export function AdminShell({
 
       <div className="mx-auto grid max-w-[1600px] gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[248px_minmax(0,1fr)] lg:gap-7 lg:px-8 lg:py-7">
         <AdminNavigation groups={groups} />
-        <main className="min-w-0" id="admin-main">
+        <main className="min-w-0 scroll-mt-24" id="admin-main">
           {children}
         </main>
       </div>
