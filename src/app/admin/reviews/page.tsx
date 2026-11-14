@@ -10,6 +10,7 @@ type ReviewRow = {
   author: { id: string; name: string; username: string };
   body: string;
   createdAt: Date;
+  deal: { status: string; proposal: { opportunity: { title: string } } };
   dealId: string;
   id: string;
   rating: number;
@@ -72,9 +73,15 @@ export default async function AdminReviewsPage({
               >
                 Created {review.createdAt.toLocaleDateString()}
               </time>
-              <p className="break-all text-xs text-slate-500">
-                Deal reference: {review.dealId}
-              </p>
+              <div className="grid gap-1">
+                <p className="text-xs text-slate-600">
+                  Deal: {review.deal.proposal.opportunity.title} ·{" "}
+                  {review.deal.status.toLocaleLowerCase().replaceAll("_", " ")}
+                </p>
+                <p className="break-all text-xs text-slate-500">
+                  Deal reference: {review.dealId}
+                </p>
+              </div>
             </article>
           );
         }}
