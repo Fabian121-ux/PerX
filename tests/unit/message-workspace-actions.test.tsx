@@ -154,6 +154,49 @@ describe("message workspace gestures and actions", () => {
     expect(view.getAllByText("Zee Stitches").length).toBeGreaterThan(0);
   });
 
+
+  it("marks the initially opened conversation as read after it is positioned", async () => {
+    render(workspace());
+
+    await waitFor(() => {
+      expect(mocks.markConversationReadAction).toHaveBeenCalledWith(
+        "conversation-1",
+        expect.any(String),
+        expect.any(String),
+      );
+    });
+  });
+
+  it("shows a live typing label when the other participant is typing", async () => {
+    let typingListener: ((event: MessageEvent) => void) | undefined;
+    vi.stubGlobal(
+      "EventSource",
+      class {
+        addEventListener(name: string, listener: (event: MessageEvent) => void) {
+          if (name === "typing") typingListener = listener;
+        }
+        close() {}
+      },
+    );
+
+    const view = render(workspace());
+    await act(async () => {});
+    expect(typingListener).toBeTypeOf("function");
+
+    act(() => {
+      typingListener?.({
+        data: JSON.stringify({
+          conversationId: "conversation-1",
+          isTyping: true,
+          name: "Other User",
+          userId: "user-2",
+        }),
+      } as MessageEvent);
+    });
+
+    expect(view.getByText("Other User is typing…")).toBeTruthy();
+  });
+
   it("opens on long press and never also replies", async () => {
     const view = render(workspace());
     await act(async () => {});
