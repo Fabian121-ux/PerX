@@ -27,6 +27,13 @@ export type ConversationRealtimeChange =
       messageId: string;
     };
 
+export type ConversationTypingEvent = {
+  conversationId: string;
+  isTyping: boolean;
+  name: string;
+  userId: string;
+};
+
 export type ConversationRealtimeStatus = "closed" | "error" | "subscribed";
 
 export type ConversationRealtimeSubscription = {
@@ -54,11 +61,13 @@ export async function subscribeToConversationRealtime({
   conversationId,
   onChange,
   onStatus,
+  onTyping,
   userId,
 }: {
   conversationId: string | null;
   onChange: (change: ConversationRealtimeChange) => void;
   onStatus: (status: ConversationRealtimeStatus) => void;
+  onTyping?: (event: ConversationTypingEvent) => void;
   userId: string;
 }): Promise<ConversationRealtimeSubscription> {
   const env = getServerEnv();
@@ -98,6 +107,36 @@ export async function subscribeToConversationRealtime({
   const channel = client.channel(
     `messages:${conversationId ?? "list"}:${userId}:${randomUUID()}`,
   );
+  let typingChannel: RealtimeChannel | null = null;
+  if (conversationId && onTyping) {
+    typingChannel = client.channel(
+      `conversation:${conversationId}:typing`,
+      { config: { private: true } },
+    );
+    typingChannel.on("broadcast", { event: "typing" }, (message: { payload?: unknown }) => {
+      const payload = message.payload;
+      if (!payload || typeof payload !== "object") return;
+      const event = payload as Record<string, unknown>;
+      if (
+        event.conversationId !== conversationId ||
+        typeof event.userId !== "string" ||
+        event.userId === userId ||
+        typeof event.name !== "string" ||
+        typeof event.isTyping !== "boolean"
+      ) {
+        return;
+      }
+      onTyping({
+        conversationId,
+        isTyping: event.isTyping,
+        name: event.name.slice(0, 80),
+        userId: event.userId,
+      });
+    });
+    // Typing is an enhancement, not a dependency of message delivery. A
+    // typing-channel outage must never take down the primary chat stream.
+    typingChannel.subscribe();
+  }
 
   const handleMessage = (
     payload: RealtimePostgresChangesPayload<RealtimeRow>,
@@ -222,7 +261,12 @@ export async function subscribeToConversationRealtime({
   try {
     await waitForSubscription(channel, onStatus);
   } catch (error) {
-    await client.removeChannel(channel).catch(() => undefined);
+    await Promise.all([
+      client.removeChannel(channel).catch(() => undefined),
+      typingChannel
+        ? client.removeChannel(typingChannel).catch(() => undefined)
+        : Promise.resolve(),
+    ]);
     throw error;
   }
 
@@ -231,7 +275,10 @@ export async function subscribeToConversationRealtime({
     close: async () => {
       if (closed) return;
       closed = true;
-      await client.removeChannel(channel);
+      await Promise.all([
+        client.removeChannel(channel),
+        typingChannel ? client.removeChannel(typingChannel) : Promise.resolve(),
+      ]);
     },
   };
 }
