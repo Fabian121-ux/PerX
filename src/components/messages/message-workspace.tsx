@@ -1198,7 +1198,7 @@ export function MessageWorkspace({
       eventSource?.close();
       stopFallback({ resetBackoff: true });
     };
-  }, [activeId, documentVisible, liveConnectionVersion]);
+  }, [activeId, currentUserId, documentVisible, liveConnectionVersion]);
 
   const activeConversation =
     syncedConversations.find((conversation) => conversation.id === activeId) ??
@@ -3056,6 +3056,16 @@ export function MessageWorkspace({
                   ref={imageInputRef}
                   type="file"
                 />
+                <button
+                  aria-label="Open @ commands"
+                  aria-haspopup="dialog"
+                  className="grid h-11 w-9 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  onClick={() => setDealRoomOpen(true)}
+                  title="@deal · Make a Deal"
+                  type="button"
+                >
+                  <AtSign aria-hidden size={20} />
+                </button>
                 <label className="sr-only" htmlFor="message-draft">
                   Message
                 </label>
