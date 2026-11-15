@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       "/realtime/v1/api/broadcast?private=true",
       env.NEXT_PUBLIC_SUPABASE_URL,
     );
-    const response = await fetch(endpoint, {
+    const response = await fetch(endpoint.toString(), {
       method: "POST",
       headers: {
         apikey: env.SUPABASE_SERVICE_ROLE_KEY,
