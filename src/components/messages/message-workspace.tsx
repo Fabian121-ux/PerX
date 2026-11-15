@@ -2975,23 +2975,70 @@ export function MessageWorkspace({
                   <Flag aria-hidden size={15} className="mr-1.5" /> Report
                 </Link>
               </div>
-              <div className="flex w-full min-w-0 max-w-full items-end gap-2 rounded-[26px] border-2 border-[color:var(--px-border-strong)] bg-[color:var(--px-surface-soft)] p-1.5 pl-2 focus-within:border-[color:var(--px-primary)]">
+              <div className="relative flex w-full min-w-0 max-w-full items-end gap-1.5 rounded-full border-2 border-[color:var(--px-border-strong)] bg-[color:var(--px-surface-soft)] p-1.5 focus-within:border-[color:var(--px-primary)]">
+                {emojiPickerOpen ? (
+                  <div
+                    aria-label="Emoji picker"
+                    className="absolute bottom-full left-0 z-[110] mb-2 flex max-w-[min(92vw,22rem)] flex-wrap gap-1 rounded-2xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] p-2 shadow-2xl"
+                    role="group"
+                  >
+                    {["😀", "🙂", "😂", "👍", "🙏", "🚀", "❤️", "🎉", "🤝", "✨"].map((emoji) => (
+                      <button
+                        aria-label={`Insert ${emoji}`}
+                        className="grid h-10 w-10 place-items-center rounded-xl text-xl hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                        key={emoji}
+                        onClick={() => insertEmoji(emoji)}
+                        type="button"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                <button
+                  aria-expanded={emojiPickerOpen}
+                  aria-label="Open emoji picker"
+                  className="grid h-11 w-10 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  onClick={() => setEmojiPickerOpen((open) => !open)}
+                  type="button"
+                >
+                  <Smile aria-hidden size={22} />
+                </button>
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
-                    <button aria-label="Attachment options" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]" type="button"><Plus aria-hidden size={22} /></button>
+                    <button
+                      aria-label="Add attachment"
+                      className="grid h-11 w-9 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                      type="button"
+                    >
+                      <Paperclip aria-hidden size={21} />
+                    </button>
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Portal>
-                    <DropdownMenu.Content align="start" side="top" sideOffset={8} className="z-[105] min-w-52 rounded-2xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] p-2 text-[color:var(--px-text)] shadow-2xl">
-                      <DropdownMenu.Label className="px-3 py-2 text-xs font-black text-[color:var(--px-text-muted)]">Attachments</DropdownMenu.Label>
+                    <DropdownMenu.Content
+                      align="start"
+                      className="z-[105] min-w-52 rounded-2xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] p-2 text-[color:var(--px-text)] shadow-2xl"
+                      side="top"
+                      sideOffset={8}
+                    >
+                      <DropdownMenu.Label className="px-3 py-2 text-xs font-black text-[color:var(--px-text-muted)]">
+                        Attachments
+                      </DropdownMenu.Label>
                       <DropdownMenu.Item
+                        className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text)] outline-none focus:bg-[color:var(--px-muted)] disabled:cursor-not-allowed disabled:opacity-50"
                         disabled={imageUploading}
                         onSelect={() => imageInputRef.current?.click()}
-                        className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text)] outline-none focus:bg-[color:var(--px-muted)] disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <ImageIcon aria-hidden size={18} /> {imageUploading ? "Sending photo…" : "Photo"}
+                        <ImageIcon aria-hidden size={18} />
+                        {imageUploading ? "Sending photo…" : "Photo"}
                       </DropdownMenu.Item>
-                      <DropdownMenu.Item disabled className="flex min-h-11 cursor-not-allowed items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)]">
-                        <Mic aria-hidden size={18} /> Voice note <span className="ml-auto text-[10px]">Coming soon</span>
+                      <DropdownMenu.Item
+                        className="flex min-h-11 cursor-not-allowed items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)]"
+                        disabled
+                      >
+                        <Mic aria-hidden size={18} />
+                        Voice note
+                        <span className="ml-auto text-[10px]">Coming soon</span>
                       </DropdownMenu.Item>
                     </DropdownMenu.Content>
                   </DropdownMenu.Portal>
@@ -3009,14 +3056,11 @@ export function MessageWorkspace({
                   ref={imageInputRef}
                   type="file"
                 />
-                <button aria-label="Open @ commands" aria-haspopup="dialog"
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                  onClick={() => setDealRoomOpen(true)} type="button" title="@deal · Make a Deal"><AtSign aria-hidden size={21} /></button>
                 <label className="sr-only" htmlFor="message-draft">
                   Message
                 </label>
                 <textarea
-                  className="max-h-36 min-h-11 w-full min-w-0 flex-1 resize-none overflow-x-hidden overflow-y-hidden whitespace-pre-wrap bg-transparent px-2 py-2 text-sm text-[color:var(--px-text)] [overflow-wrap:anywhere] [word-break:break-word] outline-none placeholder:text-[color:var(--px-text-muted)]"
+                  className="max-h-36 min-h-11 w-full min-w-0 flex-1 resize-none overflow-x-hidden overflow-y-hidden whitespace-pre-wrap bg-transparent px-1.5 py-2 text-sm text-[color:var(--px-text)] [overflow-wrap:anywhere] [word-break:break-word] outline-none placeholder:text-[color:var(--px-text-muted)]"
                   id="message-draft"
                   maxLength={2000}
                   onChange={(event) => {
@@ -3041,16 +3085,13 @@ export function MessageWorkspace({
                   onCompositionStart={() => {
                     isComposingRef.current = true;
                   }}
-                  onInput={(event) =>
-                    resizeMessageComposer(event.currentTarget)
-                  }
+                  onInput={(event) => resizeMessageComposer(event.currentTarget)}
                   onKeyDown={(event) => {
                     if (
                       shouldSubmitMessage({
                         ctrlKey: event.ctrlKey,
                         isComposing:
-                          isComposingRef.current ||
-                          event.nativeEvent.isComposing,
+                          isComposingRef.current || event.nativeEvent.isComposing,
                         key: event.key,
                         keyCode: event.keyCode,
                         metaKey: event.metaKey,
@@ -3068,17 +3109,38 @@ export function MessageWorkspace({
                   wrap="soft"
                 />
                 <button
-                  aria-label="Send message"
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#07866c] text-white transition hover:bg-[#056650] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                  disabled={!draft.trim() || isPending}
-                  type="submit"
+                  aria-label="Open camera"
+                  className="grid h-11 w-9 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] disabled:opacity-50"
+                  disabled={imageUploading}
+                  onClick={() => imageInputRef.current?.click()}
+                  type="button"
                 >
-                  {isPending ? (
-                    <Loader2 className="animate-spin" size={18} />
-                  ) : (
-                    <Send size={18} />
-                  )}
+                  <Camera aria-hidden size={21} />
                 </button>
+                {draft.trim() ? (
+                  <button
+                    aria-label="Send message"
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#07866c] text-white transition hover:bg-[#056650] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    disabled={isPending}
+                    type="submit"
+                  >
+                    {isPending ? (
+                      <Loader2 className="animate-spin" size={18} />
+                    ) : (
+                      <Send size={18} />
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    aria-label="Voice notes coming soon"
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[color:var(--px-text-muted)]"
+                    disabled
+                    title="Voice notes coming soon"
+                    type="button"
+                  >
+                    <Mic aria-hidden size={21} />
+                  </button>
+                )}
               </div>
               <p className="hidden px-1 text-[10px] font-semibold text-[color:var(--px-text-muted)] sm:block">
                 Enter adds a new line. Ctrl+Enter or Command+Enter sends.
