@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   conversationFindFirst: vi.fn(),
   conversationFindMany: vi.fn(),
   createClient: vi.fn(),
+  createChannel: vi.fn(),
   env: {
     NEXT_PUBLIC_SUPABASE_URL: "https://realtime.ptahx.test",
     SUPABASE_SERVICE_ROLE_KEY: "service-role-key",
@@ -45,9 +46,10 @@ describe("message realtime subscriptions", () => {
       listener("SUBSCRIBED"),
     );
     mocks.channel = channel;
+    mocks.createChannel.mockReturnValue(channel);
     mocks.removeChannel.mockResolvedValue(undefined);
     mocks.createClient.mockReturnValue({
-      channel: vi.fn(() => channel),
+      channel: mocks.createChannel,
       removeChannel: mocks.removeChannel,
     });
     mocks.conversationFindFirst.mockResolvedValue({
@@ -114,6 +116,64 @@ describe("message realtime subscriptions", () => {
     await subscription.close();
     await subscription.close();
     expect(mocks.removeChannel).toHaveBeenCalledTimes(1);
+  });
+
+
+  it("receives private typing broadcasts only from another participant in the selected conversation", async () => {
+    const onTyping = vi.fn();
+    const subscription = await subscribeToConversationRealtime({
+      conversationId: "conversation-selected",
+      onChange: vi.fn(),
+      onStatus: vi.fn(),
+      onTyping,
+      userId: "user-1",
+    });
+
+    expect(mocks.createChannel).toHaveBeenCalledWith(
+      "conversation:conversation-selected:typing",
+      { config: { private: true } },
+    );
+    const typingRegistration = mocks.channel.on.mock.calls.find(
+      (call) => call[0] === "broadcast" && call[1]?.event === "typing",
+    );
+    expect(typingRegistration).toBeTruthy();
+    const receiveTyping = typingRegistration?.[2] as (message: { payload: unknown }) => void;
+
+    receiveTyping({
+      payload: {
+        conversationId: "conversation-selected",
+        isTyping: true,
+        name: "Other User",
+        userId: "user-2",
+      },
+    });
+    receiveTyping({
+      payload: {
+        conversationId: "conversation-selected",
+        isTyping: true,
+        name: "Current User",
+        userId: "user-1",
+      },
+    });
+    receiveTyping({
+      payload: {
+        conversationId: "another-conversation",
+        isTyping: true,
+        name: "Other User",
+        userId: "user-2",
+      },
+    });
+
+    expect(onTyping).toHaveBeenCalledTimes(1);
+    expect(onTyping).toHaveBeenCalledWith({
+      conversationId: "conversation-selected",
+      isTyping: true,
+      name: "Other User",
+      userId: "user-2",
+    });
+
+    await subscription.close();
+    expect(mocks.removeChannel).toHaveBeenCalledTimes(2);
   });
 
   it("removes the channel when startup fails", async () => {
