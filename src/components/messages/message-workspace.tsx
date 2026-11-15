@@ -262,10 +262,15 @@ export function MessageWorkspace({
   const [imageUploading, setImageUploading] = useState(false);
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [remoteTyping, setRemoteTyping] = useState<{
+    conversationId: string;
     name: string;
     userId: string;
   } | null>(null);
-  const remoteTypingRef = useRef<{ name: string; userId: string } | null>(null);
+  const remoteTypingRef = useRef<{
+    conversationId: string;
+    name: string;
+    userId: string;
+  } | null>(null);
   const remoteTypingTimerRef = useRef<number | null>(null);
   const localTypingRef = useRef<{
     conversationId: string;
@@ -1117,6 +1122,7 @@ export function MessageWorkspace({
 
         if (incoming.isTyping) {
           const nextTyping = {
+            conversationId: activeId,
             name: incoming.name.slice(0, 80),
             userId: incoming.userId,
           };
@@ -1126,13 +1132,19 @@ export function MessageWorkspace({
             window.clearTimeout(remoteTypingTimerRef.current);
           }
           remoteTypingTimerRef.current = window.setTimeout(() => {
-            if (remoteTypingRef.current?.userId === nextTyping.userId) {
+            if (
+              remoteTypingRef.current?.conversationId === nextTyping.conversationId &&
+              remoteTypingRef.current.userId === nextTyping.userId
+            ) {
               remoteTypingRef.current = null;
               setRemoteTyping(null);
             }
             remoteTypingTimerRef.current = null;
           }, 5000);
-        } else if (remoteTypingRef.current?.userId === incoming.userId) {
+        } else if (
+          remoteTypingRef.current?.conversationId === incoming.conversationId &&
+          remoteTypingRef.current.userId === incoming.userId
+        ) {
           remoteTypingRef.current = null;
           setRemoteTyping(null);
           if (remoteTypingTimerRef.current !== null) {
@@ -1389,22 +1401,10 @@ export function MessageWorkspace({
     );
   }, [sendTypingSignal, stopLocalTyping]);
 
-  useEffect(() => {
-    remoteTypingRef.current = null;
-    setRemoteTyping(null);
-    if (remoteTypingTimerRef.current !== null) {
-      window.clearTimeout(remoteTypingTimerRef.current);
-      remoteTypingTimerRef.current = null;
-    }
-    return () => {
-      stopLocalTyping(activeId);
-      if (remoteTypingTimerRef.current !== null) {
-        window.clearTimeout(remoteTypingTimerRef.current);
-        remoteTypingTimerRef.current = null;
-      }
-      remoteTypingRef.current = null;
-    };
-  }, [activeId, stopLocalTyping]);
+  useEffect(
+    () => () => stopLocalTyping(activeId),
+    [activeId, stopLocalTyping],
+  );
 
   const insertEmoji = (emoji: string) => {
     if (!activeConversation) return;
@@ -2728,7 +2728,7 @@ export function MessageWorkspace({
                     aria-live="polite"
                     className="block truncate text-xs text-[color:var(--px-text-muted)]"
                   >
-                    {remoteTyping
+                    {remoteTyping?.conversationId === activeConversation.id
                       ? `${remoteTyping.name} is typing…`
                       : presenceLabel(activeConversation.participantPresence) ??
                         activeConversation.participantRole ??
