@@ -71,6 +71,7 @@ type DbConversationLike = {
     } | null;
     userId: string;
     lastReadAt?: Date | null;
+    typingUntil?: Date | null;
   }[];
   proposals?: {
     deal?: {
@@ -218,6 +219,14 @@ export function toWorkspaceConversation(
       otherParticipant?.name ??
       dbConversation.opportunity?.title ??
       "Conversation",
+    participantIsTyping: Boolean(
+      dbConversation.participants.find(
+        (participant) => participant.userId !== user.id,
+      )?.typingUntil &&
+      dbConversation.participants.find(
+        (participant) => participant.userId !== user.id,
+      )!.typingUntil!.getTime() > Date.now(),
+    ),
     participantPresence: getPresenceState(
       Boolean(otherParticipant?.profile?.showPresence),
       otherParticipant?.sessions?.[0]?.lastSeenAt ?? null,
