@@ -303,6 +303,15 @@ function formatMessageSnapshot(
           other?.imageUrl ?? other?.profile?.profileImageUrl ?? null,
         participantId: other?.id ?? null,
         participantName: other?.name ?? "Conversation",
+        participantIsTyping: Boolean(
+          other &&
+          conversation.participants.find(
+            (entry) => entry.userId !== userId,
+          )?.typingUntil &&
+          conversation.participants.find(
+            (entry) => entry.userId !== userId,
+          )!.typingUntil!.getTime() > Date.now(),
+        ),
         participantPresence: getPresenceState(
           other?.profile?.showPresence ?? false,
           other?.sessions[0]?.lastSeenAt ?? null,

@@ -61,6 +61,7 @@ describe("message snapshot history bounds", () => {
           },
           {
             lastReadAt: null,
+            typingUntil: new Date(Date.now() + 5_000),
             user: {
               id: "user-2",
               imageUrl: null,
@@ -83,9 +84,11 @@ describe("message snapshot history bounds", () => {
     });
     const conversation = snapshot.conversations?.[0] as {
       messages: { id: string }[];
+      participantIsTyping: boolean;
       olderMessagesCursor?: string | null;
     };
 
+    expect(conversation.participantIsTyping).toBe(true);
     expect(conversation.messages).toHaveLength(50);
     expect(conversation.messages[0]?.id).toBe("message-01");
     expect(conversation.messages.at(-1)?.id).toBe("message-50");
