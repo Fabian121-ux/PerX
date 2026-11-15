@@ -813,6 +813,7 @@ model ConversationParticipant {
   conversationId String
   userId         String
   lastReadAt     DateTime?
+  typingUntil    DateTime?
   removedAt      DateTime?
   createdAt      DateTime     @default(now())
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)

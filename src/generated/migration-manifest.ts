@@ -38,4 +38,5 @@ export const MIGRATION_MANIFEST: readonly string[] = [
   "20261112115000_default_profiles_private",
   "20261113100000_profiles_discoverable_by_default",
   "20261114120000_harden_public_trigger_functions",
+  "20261115100000_conversation_typing_presence",
 ];

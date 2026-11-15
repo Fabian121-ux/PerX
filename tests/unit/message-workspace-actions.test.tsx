@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   markConversationReadAction: vi.fn(),
   removeConversationForMeAction: vi.fn(),
   sendMessageAction: vi.fn(),
+  setConversationTypingAction: vi.fn(),
 }));
 
 vi.mock("@/features/messages/actions", () => ({
@@ -26,6 +27,7 @@ vi.mock("@/features/messages/actions", () => ({
   markConversationReadAction: mocks.markConversationReadAction,
   removeConversationForMeAction: mocks.removeConversationForMeAction,
   sendMessageAction: mocks.sendMessageAction,
+  setConversationTypingAction: mocks.setConversationTypingAction,
 }));
 vi.mock("@/features/network/actions", () => ({
   blockUserAction: mocks.blockUserAction,
