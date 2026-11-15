@@ -19,9 +19,11 @@ import {
 import {
   ArrowDown,
   AtSign,
-  Plus,
+  Camera,
   Image as ImageIcon,
   Mic,
+  Paperclip,
+  Smile,
   ArrowLeft,
   Check,
   CheckCheck,
@@ -220,7 +222,7 @@ export function MessageWorkspace({
     defaultConversationId ?? conversations[0]?.id ?? "",
   );
   const [activatedConversationId, setActivatedConversationId] = useState(
-    defaultConversationId ?? "",
+    defaultConversationId ?? conversations[0]?.id ?? "",
   );
   const [mobileDetailOpen, setMobileDetailOpen] = useState(
     Boolean(defaultConversationId),
@@ -258,6 +260,18 @@ export function MessageWorkspace({
   const [dealOfferOpen, setDealOfferOpen] = useState(false);
   const [dealRoomOpen, setDealRoomOpen] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [remoteTyping, setRemoteTyping] = useState<{
+    name: string;
+    userId: string;
+  } | null>(null);
+  const remoteTypingRef = useRef<{ name: string; userId: string } | null>(null);
+  const remoteTypingTimerRef = useRef<number | null>(null);
+  const localTypingRef = useRef<{
+    conversationId: string;
+    lastSentAt: number;
+    stopTimer: number | null;
+  }>({ conversationId: "", lastSentAt: 0, stopTimer: null });
   const draftStorageKey = `ptahx:messages:${currentUserId}:drafts`;
   const filterStorageKey = `ptahx:messages:${currentUserId}:filter`;
   const listScrollStorageKey = `ptahx:messages:${currentUserId}:list-scroll`;
@@ -1078,6 +1092,55 @@ export function MessageWorkspace({
           window.dispatchEvent(new Event("ptahx-unread-refresh"));
         }
       });
+      eventSource.addEventListener("typing", (event) => {
+        if (!active) return;
+        let incoming: {
+          conversationId?: unknown;
+          isTyping?: unknown;
+          name?: unknown;
+          userId?: unknown;
+        };
+        try {
+          incoming = JSON.parse((event as MessageEvent).data) as typeof incoming;
+        } catch {
+          return;
+        }
+        if (
+          incoming.conversationId !== activeId ||
+          typeof incoming.userId !== "string" ||
+          incoming.userId === currentUserId ||
+          typeof incoming.name !== "string" ||
+          typeof incoming.isTyping !== "boolean"
+        ) {
+          return;
+        }
+
+        if (incoming.isTyping) {
+          const nextTyping = {
+            name: incoming.name.slice(0, 80),
+            userId: incoming.userId,
+          };
+          remoteTypingRef.current = nextTyping;
+          setRemoteTyping(nextTyping);
+          if (remoteTypingTimerRef.current !== null) {
+            window.clearTimeout(remoteTypingTimerRef.current);
+          }
+          remoteTypingTimerRef.current = window.setTimeout(() => {
+            if (remoteTypingRef.current?.userId === nextTyping.userId) {
+              remoteTypingRef.current = null;
+              setRemoteTyping(null);
+            }
+            remoteTypingTimerRef.current = null;
+          }, 5000);
+        } else if (remoteTypingRef.current?.userId === incoming.userId) {
+          remoteTypingRef.current = null;
+          setRemoteTyping(null);
+          if (remoteTypingTimerRef.current !== null) {
+            window.clearTimeout(remoteTypingTimerRef.current);
+            remoteTypingTimerRef.current = null;
+          }
+        }
+      });
       eventSource.addEventListener("conversation-message", (event) => {
         if (!active) return;
         let incoming: WorkspaceRealtimeMessageEnvelope | null = null;
@@ -1265,6 +1328,103 @@ export function MessageWorkspace({
   }, [activeConversation?.id, highlightedMessageId, historyVisible]);
 
   const draft = drafts[activeConversation?.id ?? activeId] ?? "";
+
+  const sendTypingSignal = useCallback((conversationId: string, isTyping: boolean) => {
+    void fetch("/api/messages/typing", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ conversationId, isTyping }),
+      keepalive: !isTyping,
+    }).catch(() => undefined);
+  }, []);
+
+  const stopLocalTyping = useCallback((conversationId?: string) => {
+    const current = localTypingRef.current;
+    if (
+      !current.conversationId ||
+      (conversationId && current.conversationId !== conversationId)
+    ) {
+      return;
+    }
+    if (current.stopTimer !== null) window.clearTimeout(current.stopTimer);
+    localTypingRef.current = {
+      conversationId: "",
+      lastSentAt: 0,
+      stopTimer: null,
+    };
+    sendTypingSignal(current.conversationId, false);
+  }, [sendTypingSignal]);
+
+  const updateLocalTyping = useCallback((conversationId: string, value: string) => {
+    if (!value.trim()) {
+      stopLocalTyping(conversationId);
+      return;
+    }
+
+    if (
+      localTypingRef.current.conversationId &&
+      localTypingRef.current.conversationId !== conversationId
+    ) {
+      stopLocalTyping();
+    }
+
+    let current = localTypingRef.current;
+    if (current.conversationId !== conversationId) {
+      sendTypingSignal(conversationId, true);
+      localTypingRef.current = {
+        conversationId,
+        lastSentAt: Date.now(),
+        stopTimer: null,
+      };
+    } else if (Date.now() - current.lastSentAt >= 2500) {
+      sendTypingSignal(conversationId, true);
+      current.lastSentAt = Date.now();
+    }
+
+    current = localTypingRef.current;
+    if (current.stopTimer !== null) window.clearTimeout(current.stopTimer);
+    current.stopTimer = window.setTimeout(
+      () => stopLocalTyping(conversationId),
+      1800,
+    );
+  }, [sendTypingSignal, stopLocalTyping]);
+
+  useEffect(() => {
+    remoteTypingRef.current = null;
+    setRemoteTyping(null);
+    if (remoteTypingTimerRef.current !== null) {
+      window.clearTimeout(remoteTypingTimerRef.current);
+      remoteTypingTimerRef.current = null;
+    }
+    return () => {
+      stopLocalTyping(activeId);
+      if (remoteTypingTimerRef.current !== null) {
+        window.clearTimeout(remoteTypingTimerRef.current);
+        remoteTypingTimerRef.current = null;
+      }
+      remoteTypingRef.current = null;
+    };
+  }, [activeId, stopLocalTyping]);
+
+  const insertEmoji = (emoji: string) => {
+    if (!activeConversation) return;
+    const textarea = composerRef.current;
+    const start = textarea?.selectionStart ?? draft.length;
+    const end = textarea?.selectionEnd ?? draft.length;
+    const nextDraft = `${draft.slice(0, start)}${emoji}${draft.slice(end)}`;
+    setDrafts((current) => ({
+      ...current,
+      [activeConversation.id]: nextDraft,
+    }));
+    persistDraft(draftStorageKey, activeConversation.id, nextDraft);
+    updateLocalTyping(activeConversation.id, nextDraft);
+    setEmojiPickerOpen(false);
+    window.requestAnimationFrame(() => {
+      const nextPosition = start + emoji.length;
+      composerRef.current?.focus();
+      composerRef.current?.setSelectionRange(nextPosition, nextPosition);
+    });
+  };
 
   useLayoutEffect(() => {
     resizeMessageComposer(composerRef.current);
@@ -1863,6 +2023,8 @@ export function MessageWorkspace({
     // Sending marks the thread active, so a degraded session reconciles at the
     // responsive interval instead of the backed-off one.
     markInteraction();
+    stopLocalTyping(activeConversation.id);
+    setEmojiPickerOpen(false);
     if (isDealComposerTrigger(draft) && !isComposingRef.current) {
       setDealRoomOpen(true);
       const conversationId = activeConversation.id;
@@ -2562,11 +2724,16 @@ export function MessageWorkspace({
                       {activeConversation.participantName}
                     </p>
                   )}
-                  <span className="block truncate text-xs text-[color:var(--px-text-muted)]">
-                    {presenceLabel(activeConversation.participantPresence) ??
-                      activeConversation.participantRole ??
-                      activeConversation.opportunityTitle ??
-                      "PtahX conversation"}
+                  <span
+                    aria-live="polite"
+                    className="block truncate text-xs text-[color:var(--px-text-muted)]"
+                  >
+                    {remoteTyping
+                      ? `${remoteTyping.name} is typing…`
+                      : presenceLabel(activeConversation.participantPresence) ??
+                        activeConversation.participantRole ??
+                        activeConversation.opportunityTitle ??
+                        "PtahX conversation"}
                   </span>
                 </div>
               </div>
@@ -2860,10 +3027,12 @@ export function MessageWorkspace({
                       [conversationId]: nextDraft,
                     }));
                     persistDraft(draftStorageKey, conversationId, nextDraft);
+                    updateLocalTyping(conversationId, nextDraft);
                     if (!isComposingRef.current && isDealComposerTrigger(nextDraft)) {
                       setDealRoomOpen(true);
                       setDrafts((current) => ({ ...current, [conversationId]: "" }));
                       persistDraft(draftStorageKey, conversationId, "");
+                      stopLocalTyping(conversationId);
                     }
                   }}
                   onCompositionEnd={() => {
@@ -2892,7 +3061,7 @@ export function MessageWorkspace({
                       event.currentTarget.form?.requestSubmit();
                     }
                   }}
-                  placeholder="Type a message..."
+                  placeholder="Message"
                   ref={composerRef}
                   rows={1}
                   value={draft}
@@ -3174,7 +3343,7 @@ function MessageBubble({
       ref={refCallback}
     >
       <div
-        className={`group min-w-0 max-w-[min(82%,42rem)] touch-pan-y overflow-visible rounded-3xl px-4 py-3 shadow-sm transition motion-reduce:transform-none ${
+        className={`group min-w-0 max-w-[min(86%,42rem)] touch-pan-y overflow-visible rounded-2xl px-4 py-3 shadow-sm transition motion-reduce:transform-none ${
           swipeOffset > 0 ? "relative" : ""
         } ${
           mine
@@ -3187,12 +3356,8 @@ function MessageBubble({
             : undefined
         }
       >
-        <div className="mb-1 flex items-center justify-between gap-3">
-          <p
-            className={`truncate text-[10px] font-black uppercase tracking-wide ${mine ? "text-[#28624c] dark:text-emerald-200" : "text-[color:var(--px-primary-ink)]"}`}
-          >
-            {message.senderName}
-          </p>
+        <div className="mb-0 flex items-center justify-between gap-3">
+          <p className="sr-only">{message.senderName}</p>
           {canUseActions ? (
             <div className="relative flex items-center gap-1">
               <div
