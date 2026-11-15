@@ -56,6 +56,7 @@ import {
   markConversationReadAction,
   removeConversationForMeAction,
   sendMessageAction,
+  setConversationTypingAction,
 } from "@/features/messages/actions";
 import { blockUserAction } from "@/features/network/actions";
 import { shouldSubmitMessage } from "@/lib/messages/composer-keyboard";
@@ -149,6 +150,7 @@ export type WorkspaceConversation = {
   participantImageUrl?: string | null;
   participantName: string;
   participantPresence?: "hidden" | "online" | "recent" | "offline";
+  participantIsTyping?: boolean;
   participantProfile?: {
     biography: string;
     headline: string;
@@ -258,6 +260,8 @@ export function MessageWorkspace({
   const [dealOfferOpen, setDealOfferOpen] = useState(false);
   const [dealRoomOpen, setDealRoomOpen] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  const typingStopTimerRef = useRef<number | null>(null);
+  const typingLastSentAtRef = useRef(0);
   const draftStorageKey = `ptahx:messages:${currentUserId}:drafts`;
   const filterStorageKey = `ptahx:messages:${currentUserId}:filter`;
   const listScrollStorageKey = `ptahx:messages:${currentUserId}:list-scroll`;
@@ -1857,12 +1861,53 @@ export function MessageWorkspace({
     setMobileDetailOpen(false);
   };
 
+  const stopTyping = useCallback((conversationId: string) => {
+    if (typingStopTimerRef.current !== null) {
+      window.clearTimeout(typingStopTimerRef.current);
+      typingStopTimerRef.current = null;
+    }
+    typingLastSentAtRef.current = 0;
+    void setConversationTypingAction(conversationId, false);
+  }, []);
+
+  const updateTyping = useCallback((conversationId: string, value: string) => {
+    if (!value.trim()) {
+      stopTyping(conversationId);
+      return;
+    }
+    const now = Date.now();
+    if (now - typingLastSentAtRef.current >= 2_000) {
+      typingLastSentAtRef.current = now;
+      void setConversationTypingAction(conversationId, true);
+    }
+    if (typingStopTimerRef.current !== null) {
+      window.clearTimeout(typingStopTimerRef.current);
+    }
+    typingStopTimerRef.current = window.setTimeout(() => {
+      typingStopTimerRef.current = null;
+      typingLastSentAtRef.current = 0;
+      void setConversationTypingAction(conversationId, false);
+    }, 2_500);
+  }, [stopTyping]);
+
+  useEffect(() => {
+    const conversationId = activeConversation?.id;
+    return () => {
+      if (typingStopTimerRef.current !== null) {
+        window.clearTimeout(typingStopTimerRef.current);
+        typingStopTimerRef.current = null;
+      }
+      if (conversationId) void setConversationTypingAction(conversationId, false);
+    };
+  }, [activeConversation?.id]);
+
   const sendMessage = (event?: FormEvent) => {
     event?.preventDefault();
     if (!draft.trim() || !activeConversation || isPending) return;
     // Sending marks the thread active, so a degraded session reconciles at the
     // responsive interval instead of the backed-off one.
     markInteraction();
+    stopTyping(activeConversation.id);
     if (isDealComposerTrigger(draft) && !isComposingRef.current) {
       setDealRoomOpen(true);
       const conversationId = activeConversation.id;
@@ -2563,7 +2608,9 @@ export function MessageWorkspace({
                     </p>
                   )}
                   <span className="block truncate text-xs text-[color:var(--px-text-muted)]">
-                    {presenceLabel(activeConversation.participantPresence) ??
+                    {activeConversation.participantIsTyping
+                      ? "typing…"
+                      : presenceLabel(activeConversation.participantPresence) ??
                       activeConversation.participantRole ??
                       activeConversation.opportunityTitle ??
                       "PtahX conversation"}
@@ -2860,6 +2907,7 @@ export function MessageWorkspace({
                       [conversationId]: nextDraft,
                     }));
                     persistDraft(draftStorageKey, conversationId, nextDraft);
+                    updateTyping(conversationId, nextDraft);
                     if (!isComposingRef.current && isDealComposerTrigger(nextDraft)) {
                       setDealRoomOpen(true);
                       setDrafts((current) => ({ ...current, [conversationId]: "" }));
@@ -4819,7 +4867,7 @@ function MessageStateIcon({ message }: { message: WorkspaceMessage }) {
   }
   if (message.readByOtherParticipants) {
     return (
-      <CheckCheck aria-label="Read" className="text-[#0a9378] dark:text-emerald-300" size={14} />
+      <CheckCheck aria-label="Read" className="text-[#2563eb] dark:text-blue-300" size={14} />
     );
   }
   return <Check aria-label="Sent" size={13} />;
