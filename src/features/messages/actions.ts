@@ -508,3 +508,29 @@ export async function markConversationReadAction(
   revalidatePath("/app/notifications");
   return { success: true };
 }
+
+
+export async function setConversationTypingAction(
+  conversationId: string,
+  isTyping: boolean,
+) {
+  const user = await requireUser();
+  const parsed = z.string().cuid().safeParse(conversationId);
+  if (!parsed.success) return { error: "Invalid conversation." };
+  if (getResolvedDataMode() === "mock") return { success: true };
+  if (!hasDatabaseUrl()) return { error: "Database not configured." };
+
+  const updated = await getPrisma().conversationParticipant.updateMany({
+    data: {
+      typingUntil: isTyping ? new Date(Date.now() + 7_000) : null,
+    },
+    where: {
+      conversationId: parsed.data,
+      conversation: { status: "ACTIVE" },
+      removedAt: null,
+      userId: user.id,
+    },
+  });
+  if (!updated.count) return { error: "Conversation not found." };
+  return { success: true };
+}
