@@ -167,7 +167,7 @@ describe("message events route", () => {
 
     expect(output).toContain("event: typing");
     expect(output).toContain('"name":"Other User"');
-    expect(output).toContain('"isTyping":true);
+    expect(output).toContain('"isTyping":true');
     await reader.cancel();
   });
 
