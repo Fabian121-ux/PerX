@@ -191,11 +191,18 @@ export function toWorkspaceConversation(
             id: latestMessage.id,
             readByOtherParticipants:
               otherParticipantIds.length > 0 &&
-              otherParticipantIds.every((participantId) =>
-                latestMessage.readReceipts?.some(
-                  (receipt) => receipt.userId === participantId,
-                ),
-              ),
+              otherParticipantIds.every((participantId) => {
+                const participant = dbConversation.participants.find(
+                  (entry) => entry.userId === participantId,
+                );
+                return Boolean(
+                  latestMessage.readReceipts?.some(
+                    (receipt) => receipt.userId === participantId,
+                  ) ||
+                    (participant?.lastReadAt &&
+                      latestMessage.createdAt <= participant.lastReadAt),
+                );
+              }),
             replyTo: toWorkspaceReply(latestMessage.replyTo),
             senderId: latestMessage.senderId,
             senderName:

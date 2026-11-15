@@ -13,6 +13,7 @@ import {
   subscribeToConversationRealtime,
   type ConversationRealtimeChange,
   type ConversationRealtimeSubscription,
+  type ConversationTypingEvent,
 } from "@/lib/messages/realtime";
 import { getRealtimeWorkspaceMessage } from "@/lib/messages/realtime-message";
 import { getMessageSnapshot } from "@/lib/messages/snapshot";
@@ -292,6 +293,9 @@ export async function GET(request: Request) {
         realtimeStart = subscribeToConversationRealtime({
           conversationId,
           onChange: handleRealtimeChange,
+          onTyping: (typing: ConversationTypingEvent) => {
+            sendEvent("typing", typing);
+          },
           onStatus: (status) => {
             if (closed || generation !== realtimeGeneration) return;
             if (status === "subscribed") {

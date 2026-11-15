@@ -19,9 +19,11 @@ import {
 import {
   ArrowDown,
   AtSign,
-  Plus,
+  Camera,
   Image as ImageIcon,
   Mic,
+  Paperclip,
+  Smile,
   ArrowLeft,
   Check,
   CheckCheck,
@@ -220,7 +222,7 @@ export function MessageWorkspace({
     defaultConversationId ?? conversations[0]?.id ?? "",
   );
   const [activatedConversationId, setActivatedConversationId] = useState(
-    defaultConversationId ?? "",
+    defaultConversationId ?? conversations[0]?.id ?? "",
   );
   const [mobileDetailOpen, setMobileDetailOpen] = useState(
     Boolean(defaultConversationId),
@@ -258,6 +260,23 @@ export function MessageWorkspace({
   const [dealOfferOpen, setDealOfferOpen] = useState(false);
   const [dealRoomOpen, setDealRoomOpen] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [remoteTyping, setRemoteTyping] = useState<{
+    conversationId: string;
+    name: string;
+    userId: string;
+  } | null>(null);
+  const remoteTypingRef = useRef<{
+    conversationId: string;
+    name: string;
+    userId: string;
+  } | null>(null);
+  const remoteTypingTimerRef = useRef<number | null>(null);
+  const localTypingRef = useRef<{
+    conversationId: string;
+    lastSentAt: number;
+    stopTimer: number | null;
+  }>({ conversationId: "", lastSentAt: 0, stopTimer: null });
   const draftStorageKey = `ptahx:messages:${currentUserId}:drafts`;
   const filterStorageKey = `ptahx:messages:${currentUserId}:filter`;
   const listScrollStorageKey = `ptahx:messages:${currentUserId}:list-scroll`;
@@ -1078,6 +1097,62 @@ export function MessageWorkspace({
           window.dispatchEvent(new Event("ptahx-unread-refresh"));
         }
       });
+      eventSource.addEventListener("typing", (event) => {
+        if (!active) return;
+        let incoming: {
+          conversationId?: unknown;
+          isTyping?: unknown;
+          name?: unknown;
+          userId?: unknown;
+        };
+        try {
+          incoming = JSON.parse((event as MessageEvent).data) as typeof incoming;
+        } catch {
+          return;
+        }
+        if (
+          incoming.conversationId !== activeId ||
+          typeof incoming.userId !== "string" ||
+          incoming.userId === currentUserId ||
+          typeof incoming.name !== "string" ||
+          typeof incoming.isTyping !== "boolean"
+        ) {
+          return;
+        }
+
+        if (incoming.isTyping) {
+          const nextTyping = {
+            conversationId: activeId,
+            name: incoming.name.slice(0, 80),
+            userId: incoming.userId,
+          };
+          remoteTypingRef.current = nextTyping;
+          setRemoteTyping(nextTyping);
+          if (remoteTypingTimerRef.current !== null) {
+            window.clearTimeout(remoteTypingTimerRef.current);
+          }
+          remoteTypingTimerRef.current = window.setTimeout(() => {
+            if (
+              remoteTypingRef.current?.conversationId === nextTyping.conversationId &&
+              remoteTypingRef.current.userId === nextTyping.userId
+            ) {
+              remoteTypingRef.current = null;
+              setRemoteTyping(null);
+            }
+            remoteTypingTimerRef.current = null;
+          }, 5000);
+        } else if (
+          remoteTypingRef.current?.conversationId === incoming.conversationId &&
+          remoteTypingRef.current.userId === incoming.userId
+        ) {
+          remoteTypingRef.current = null;
+          setRemoteTyping(null);
+          if (remoteTypingTimerRef.current !== null) {
+            window.clearTimeout(remoteTypingTimerRef.current);
+            remoteTypingTimerRef.current = null;
+          }
+        }
+      });
       eventSource.addEventListener("conversation-message", (event) => {
         if (!active) return;
         let incoming: WorkspaceRealtimeMessageEnvelope | null = null;
@@ -1135,7 +1210,7 @@ export function MessageWorkspace({
       eventSource?.close();
       stopFallback({ resetBackoff: true });
     };
-  }, [activeId, documentVisible, liveConnectionVersion]);
+  }, [activeId, currentUserId, documentVisible, liveConnectionVersion]);
 
   const activeConversation =
     syncedConversations.find((conversation) => conversation.id === activeId) ??
@@ -1265,6 +1340,91 @@ export function MessageWorkspace({
   }, [activeConversation?.id, highlightedMessageId, historyVisible]);
 
   const draft = drafts[activeConversation?.id ?? activeId] ?? "";
+
+  const sendTypingSignal = useCallback((conversationId: string, isTyping: boolean) => {
+    void fetch("/api/messages/typing", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ conversationId, isTyping }),
+      keepalive: !isTyping,
+    }).catch(() => undefined);
+  }, []);
+
+  const stopLocalTyping = useCallback((conversationId?: string) => {
+    const current = localTypingRef.current;
+    if (
+      !current.conversationId ||
+      (conversationId && current.conversationId !== conversationId)
+    ) {
+      return;
+    }
+    if (current.stopTimer !== null) window.clearTimeout(current.stopTimer);
+    localTypingRef.current = {
+      conversationId: "",
+      lastSentAt: 0,
+      stopTimer: null,
+    };
+    sendTypingSignal(current.conversationId, false);
+  }, [sendTypingSignal]);
+
+  const updateLocalTyping = useCallback((conversationId: string, value: string) => {
+    if (!value.trim()) {
+      stopLocalTyping(conversationId);
+      return;
+    }
+
+    if (
+      localTypingRef.current.conversationId &&
+      localTypingRef.current.conversationId !== conversationId
+    ) {
+      stopLocalTyping();
+    }
+
+    let current = localTypingRef.current;
+    if (current.conversationId !== conversationId) {
+      sendTypingSignal(conversationId, true);
+      localTypingRef.current = {
+        conversationId,
+        lastSentAt: Date.now(),
+        stopTimer: null,
+      };
+    } else if (Date.now() - current.lastSentAt >= 2500) {
+      sendTypingSignal(conversationId, true);
+      current.lastSentAt = Date.now();
+    }
+
+    current = localTypingRef.current;
+    if (current.stopTimer !== null) window.clearTimeout(current.stopTimer);
+    current.stopTimer = window.setTimeout(
+      () => stopLocalTyping(conversationId),
+      1800,
+    );
+  }, [sendTypingSignal, stopLocalTyping]);
+
+  useEffect(
+    () => () => stopLocalTyping(activeId),
+    [activeId, stopLocalTyping],
+  );
+
+  const insertEmoji = (emoji: string) => {
+    if (!activeConversation) return;
+    const textarea = composerRef.current;
+    const start = textarea?.selectionStart ?? draft.length;
+    const end = textarea?.selectionEnd ?? draft.length;
+    const nextDraft = `${draft.slice(0, start)}${emoji}${draft.slice(end)}`;
+    setDrafts((current) => ({
+      ...current,
+      [activeConversation.id]: nextDraft,
+    }));
+    persistDraft(draftStorageKey, activeConversation.id, nextDraft);
+    updateLocalTyping(activeConversation.id, nextDraft);
+    setEmojiPickerOpen(false);
+    window.requestAnimationFrame(() => {
+      const nextPosition = start + emoji.length;
+      composerRef.current?.focus();
+      composerRef.current?.setSelectionRange(nextPosition, nextPosition);
+    });
+  };
 
   useLayoutEffect(() => {
     resizeMessageComposer(composerRef.current);
@@ -1863,6 +2023,8 @@ export function MessageWorkspace({
     // Sending marks the thread active, so a degraded session reconciles at the
     // responsive interval instead of the backed-off one.
     markInteraction();
+    stopLocalTyping(activeConversation.id);
+    setEmojiPickerOpen(false);
     if (isDealComposerTrigger(draft) && !isComposingRef.current) {
       setDealRoomOpen(true);
       const conversationId = activeConversation.id;
@@ -2562,11 +2724,16 @@ export function MessageWorkspace({
                       {activeConversation.participantName}
                     </p>
                   )}
-                  <span className="block truncate text-xs text-[color:var(--px-text-muted)]">
-                    {presenceLabel(activeConversation.participantPresence) ??
-                      activeConversation.participantRole ??
-                      activeConversation.opportunityTitle ??
-                      "PtahX conversation"}
+                  <span
+                    aria-live="polite"
+                    className="block truncate text-xs text-[color:var(--px-text-muted)]"
+                  >
+                    {remoteTyping?.conversationId === activeConversation.id
+                      ? `${remoteTyping.name} is typing…`
+                      : presenceLabel(activeConversation.participantPresence) ??
+                        activeConversation.participantRole ??
+                        activeConversation.opportunityTitle ??
+                        "PtahX conversation"}
                   </span>
                 </div>
               </div>
@@ -2808,23 +2975,70 @@ export function MessageWorkspace({
                   <Flag aria-hidden size={15} className="mr-1.5" /> Report
                 </Link>
               </div>
-              <div className="flex w-full min-w-0 max-w-full items-end gap-2 rounded-[26px] border-2 border-[color:var(--px-border-strong)] bg-[color:var(--px-surface-soft)] p-1.5 pl-2 focus-within:border-[color:var(--px-primary)]">
+              <div className="relative flex w-full min-w-0 max-w-full items-end gap-1.5 rounded-full border-2 border-[color:var(--px-border-strong)] bg-[color:var(--px-surface-soft)] p-1.5 focus-within:border-[color:var(--px-primary)]">
+                {emojiPickerOpen ? (
+                  <div
+                    aria-label="Emoji picker"
+                    className="absolute bottom-full left-0 z-[110] mb-2 flex max-w-[min(92vw,22rem)] flex-wrap gap-1 rounded-2xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] p-2 shadow-2xl"
+                    role="group"
+                  >
+                    {["😀", "🙂", "😂", "👍", "🙏", "🚀", "❤️", "🎉", "🤝", "✨"].map((emoji) => (
+                      <button
+                        aria-label={`Insert ${emoji}`}
+                        className="grid h-10 w-10 place-items-center rounded-xl text-xl hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                        key={emoji}
+                        onClick={() => insertEmoji(emoji)}
+                        type="button"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                <button
+                  aria-expanded={emojiPickerOpen}
+                  aria-label="Open emoji picker"
+                  className="grid h-11 w-10 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  onClick={() => setEmojiPickerOpen((open) => !open)}
+                  type="button"
+                >
+                  <Smile aria-hidden size={22} />
+                </button>
                 <DropdownMenu.Root>
                   <DropdownMenu.Trigger asChild>
-                    <button aria-label="Attachment options" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]" type="button"><Plus aria-hidden size={22} /></button>
+                    <button
+                      aria-label="Add attachment"
+                      className="grid h-11 w-9 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                      type="button"
+                    >
+                      <Paperclip aria-hidden size={21} />
+                    </button>
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Portal>
-                    <DropdownMenu.Content align="start" side="top" sideOffset={8} className="z-[105] min-w-52 rounded-2xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] p-2 text-[color:var(--px-text)] shadow-2xl">
-                      <DropdownMenu.Label className="px-3 py-2 text-xs font-black text-[color:var(--px-text-muted)]">Attachments</DropdownMenu.Label>
+                    <DropdownMenu.Content
+                      align="start"
+                      className="z-[105] min-w-52 rounded-2xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] p-2 text-[color:var(--px-text)] shadow-2xl"
+                      side="top"
+                      sideOffset={8}
+                    >
+                      <DropdownMenu.Label className="px-3 py-2 text-xs font-black text-[color:var(--px-text-muted)]">
+                        Attachments
+                      </DropdownMenu.Label>
                       <DropdownMenu.Item
+                        className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text)] outline-none focus:bg-[color:var(--px-muted)] disabled:cursor-not-allowed disabled:opacity-50"
                         disabled={imageUploading}
                         onSelect={() => imageInputRef.current?.click()}
-                        className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text)] outline-none focus:bg-[color:var(--px-muted)] disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <ImageIcon aria-hidden size={18} /> {imageUploading ? "Sending photo…" : "Photo"}
+                        <ImageIcon aria-hidden size={18} />
+                        {imageUploading ? "Sending photo…" : "Photo"}
                       </DropdownMenu.Item>
-                      <DropdownMenu.Item disabled className="flex min-h-11 cursor-not-allowed items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)]">
-                        <Mic aria-hidden size={18} /> Voice note <span className="ml-auto text-[10px]">Coming soon</span>
+                      <DropdownMenu.Item
+                        className="flex min-h-11 cursor-not-allowed items-center gap-3 rounded-xl px-3 text-sm font-semibold text-[color:var(--px-text-muted)]"
+                        disabled
+                      >
+                        <Mic aria-hidden size={18} />
+                        Voice note
+                        <span className="ml-auto text-[10px]">Coming soon</span>
                       </DropdownMenu.Item>
                     </DropdownMenu.Content>
                   </DropdownMenu.Portal>
@@ -2842,14 +3056,21 @@ export function MessageWorkspace({
                   ref={imageInputRef}
                   type="file"
                 />
-                <button aria-label="Open @ commands" aria-haspopup="dialog"
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                  onClick={() => setDealRoomOpen(true)} type="button" title="@deal · Make a Deal"><AtSign aria-hidden size={21} /></button>
+                <button
+                  aria-label="Open @ commands"
+                  aria-haspopup="dialog"
+                  className="grid h-11 w-9 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                  onClick={() => setDealRoomOpen(true)}
+                  title="@deal · Make a Deal"
+                  type="button"
+                >
+                  <AtSign aria-hidden size={20} />
+                </button>
                 <label className="sr-only" htmlFor="message-draft">
                   Message
                 </label>
                 <textarea
-                  className="max-h-36 min-h-11 w-full min-w-0 flex-1 resize-none overflow-x-hidden overflow-y-hidden whitespace-pre-wrap bg-transparent px-2 py-2 text-sm text-[color:var(--px-text)] [overflow-wrap:anywhere] [word-break:break-word] outline-none placeholder:text-[color:var(--px-text-muted)]"
+                  className="max-h-36 min-h-11 w-full min-w-0 flex-1 resize-none overflow-x-hidden overflow-y-hidden whitespace-pre-wrap bg-transparent px-1.5 py-2 text-sm text-[color:var(--px-text)] [overflow-wrap:anywhere] [word-break:break-word] outline-none placeholder:text-[color:var(--px-text-muted)]"
                   id="message-draft"
                   maxLength={2000}
                   onChange={(event) => {
@@ -2860,10 +3081,12 @@ export function MessageWorkspace({
                       [conversationId]: nextDraft,
                     }));
                     persistDraft(draftStorageKey, conversationId, nextDraft);
+                    updateLocalTyping(conversationId, nextDraft);
                     if (!isComposingRef.current && isDealComposerTrigger(nextDraft)) {
                       setDealRoomOpen(true);
                       setDrafts((current) => ({ ...current, [conversationId]: "" }));
                       persistDraft(draftStorageKey, conversationId, "");
+                      stopLocalTyping(conversationId);
                     }
                   }}
                   onCompositionEnd={() => {
@@ -2872,16 +3095,13 @@ export function MessageWorkspace({
                   onCompositionStart={() => {
                     isComposingRef.current = true;
                   }}
-                  onInput={(event) =>
-                    resizeMessageComposer(event.currentTarget)
-                  }
+                  onInput={(event) => resizeMessageComposer(event.currentTarget)}
                   onKeyDown={(event) => {
                     if (
                       shouldSubmitMessage({
                         ctrlKey: event.ctrlKey,
                         isComposing:
-                          isComposingRef.current ||
-                          event.nativeEvent.isComposing,
+                          isComposingRef.current || event.nativeEvent.isComposing,
                         key: event.key,
                         keyCode: event.keyCode,
                         metaKey: event.metaKey,
@@ -2892,24 +3112,45 @@ export function MessageWorkspace({
                       event.currentTarget.form?.requestSubmit();
                     }
                   }}
-                  placeholder="Type a message..."
+                  placeholder="Message"
                   ref={composerRef}
                   rows={1}
                   value={draft}
                   wrap="soft"
                 />
                 <button
-                  aria-label="Send message"
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#07866c] text-white transition hover:bg-[#056650] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
-                  disabled={!draft.trim() || isPending}
-                  type="submit"
+                  aria-label="Open camera"
+                  className="grid h-11 w-9 shrink-0 place-items-center rounded-full text-[color:var(--px-primary-ink)] hover:bg-[color:var(--px-muted)] focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] disabled:opacity-50"
+                  disabled={imageUploading}
+                  onClick={() => imageInputRef.current?.click()}
+                  type="button"
                 >
-                  {isPending ? (
-                    <Loader2 className="animate-spin" size={18} />
-                  ) : (
-                    <Send size={18} />
-                  )}
+                  <Camera aria-hidden size={21} />
                 </button>
+                {draft.trim() ? (
+                  <button
+                    aria-label="Send message"
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#07866c] text-white transition hover:bg-[#056650] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                    disabled={isPending}
+                    type="submit"
+                  >
+                    {isPending ? (
+                      <Loader2 className="animate-spin" size={18} />
+                    ) : (
+                      <Send size={18} />
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    aria-label="Voice notes coming soon"
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-[color:var(--px-text-muted)]"
+                    disabled
+                    title="Voice notes coming soon"
+                    type="button"
+                  >
+                    <Mic aria-hidden size={21} />
+                  </button>
+                )}
               </div>
               <p className="hidden px-1 text-[10px] font-semibold text-[color:var(--px-text-muted)] sm:block">
                 Enter adds a new line. Ctrl+Enter or Command+Enter sends.
@@ -3174,7 +3415,7 @@ function MessageBubble({
       ref={refCallback}
     >
       <div
-        className={`group min-w-0 max-w-[min(82%,42rem)] touch-pan-y overflow-visible rounded-3xl px-4 py-3 shadow-sm transition motion-reduce:transform-none ${
+        className={`group min-w-0 max-w-[min(86%,42rem)] touch-pan-y overflow-visible rounded-2xl px-4 py-3 shadow-sm transition motion-reduce:transform-none ${
           swipeOffset > 0 ? "relative" : ""
         } ${
           mine
@@ -3187,12 +3428,8 @@ function MessageBubble({
             : undefined
         }
       >
-        <div className="mb-1 flex items-center justify-between gap-3">
-          <p
-            className={`truncate text-[10px] font-black uppercase tracking-wide ${mine ? "text-[#28624c] dark:text-emerald-200" : "text-[color:var(--px-primary-ink)]"}`}
-          >
-            {message.senderName}
-          </p>
+        <div className="mb-0 flex items-center justify-between gap-3">
+          <p className="sr-only">{message.senderName}</p>
           {canUseActions ? (
             <div className="relative flex items-center gap-1">
               <div
