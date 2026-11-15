@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   markConversationReadAction: vi.fn(),
   removeConversationForMeAction: vi.fn(),
   sendMessageAction: vi.fn(),
+  setConversationTypingAction: vi.fn(),
   submitConversationProposalAction: vi.fn(),
 }));
 
@@ -26,6 +27,7 @@ vi.mock("@/features/messages/actions", () => ({
   markConversationReadAction: mocks.markConversationReadAction,
   removeConversationForMeAction: mocks.removeConversationForMeAction,
   sendMessageAction: mocks.sendMessageAction,
+  setConversationTypingAction: mocks.setConversationTypingAction,
 }));
 vi.mock("@/features/network/actions", () => ({
   blockUserAction: mocks.blockUserAction,
@@ -102,6 +104,7 @@ describe("message workspace delivery", () => {
     EventSourceMock.instances = [];
     mocks.markConversationReadAction.mockResolvedValue({ success: true });
     mocks.sendMessageAction.mockResolvedValue({ success: true });
+    mocks.setConversationTypingAction.mockResolvedValue({ success: true });
     vi.stubGlobal("EventSource", EventSourceMock);
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
       json: async () => ({ conversations: [] }),
@@ -128,6 +131,46 @@ describe("message workspace delivery", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+  });
+
+  it("sends typing presence and renders the other participant typing state", async () => {
+    const view = render(
+      <MessageWorkspace
+        conversations={[
+          {
+            id: "conversation-1",
+            messages: [otherUserMessage],
+            participantName: "Other User",
+          },
+        ]}
+        currentUserId="user-1"
+      />,
+    );
+
+    fireEvent.change(view.getByLabelText("Message"), {
+      target: { value: "Hello" },
+    });
+    await waitFor(() =>
+      expect(mocks.setConversationTypingAction).toHaveBeenCalledWith(
+        "conversation-1",
+        true,
+      ),
+    );
+
+    await act(async () => {
+      EventSourceMock.current?.emit("conversations", {
+        conversations: [
+          {
+            id: "conversation-1",
+            messages: [otherUserMessage],
+            participantIsTyping: true,
+            participantName: "Other User",
+          },
+        ],
+      });
+      await Promise.resolve();
+    });
+    expect(view.getByText("typing…")).toBeTruthy();
   });
 
   describe("older history reachability", () => {
