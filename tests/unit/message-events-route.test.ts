@@ -128,6 +128,49 @@ describe("message events route", () => {
     expect(mocks.getMessageSnapshot).not.toHaveBeenCalled();
   });
 
+
+  it("forwards private typing updates to the authorized conversation stream", async () => {
+    let onTyping:
+      | ((event: {
+          conversationId: string;
+          isTyping: boolean;
+          name: string;
+          userId: string;
+        }) => void)
+      | undefined;
+    mocks.subscribeToConversationRealtime.mockImplementation(
+      async (options: {
+        onStatus: (status: string) => void;
+        onTyping?: (event: {
+          conversationId: string;
+          isTyping: boolean;
+          name: string;
+          userId: string;
+        }) => void;
+      }) => {
+        onTyping = options.onTyping;
+        options.onStatus("subscribed");
+        return { close: mocks.closeRealtime };
+      },
+    );
+
+    const response = await GET(request());
+    const reader = response.body!.getReader();
+    await readUntil(reader, "event: conversations");
+    onTyping?.({
+      conversationId: "conversation-1",
+      isTyping: true,
+      name: "Other User",
+      userId: "user-2",
+    });
+    const output = await readUntil(reader, "event: typing");
+
+    expect(output).toContain("event: typing");
+    expect(output).toContain('"name":"Other User"');
+    expect(output).toContain('"isTyping":true);
+    await reader.cancel();
+  });
+
   it("cancels a pending retry when the stream closes", async () => {
     vi.useFakeTimers();
     try {
