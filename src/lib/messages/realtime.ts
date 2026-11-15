@@ -135,7 +135,11 @@ export async function subscribeToConversationRealtime({
     });
     // Typing is an enhancement, not a dependency of message delivery. A
     // typing-channel outage must never take down the primary chat stream.
-    typingChannel.subscribe();
+    typingChannel.subscribe((status) => {
+      // Ignore typing-channel state changes; the primary message stream owns
+      // connection health and remains available if typing degrades.
+      if (status !== "SUBSCRIBED") return;
+    });
   }
 
   const handleMessage = (
