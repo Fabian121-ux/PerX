@@ -35,13 +35,16 @@ export function PushNotificationManager({ mode = "banner" }: { mode?: "banner" |
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const available = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-    setSupported(available);
-    setInstalled(isInstalledPwa());
-    if (!available) return;
-    setPermission(Notification.permission);
     let active = true;
-    (async () => {
+    const initialize = async () => {
+      // Defer browser capability state until after the first hydration pass.
+      await Promise.resolve();
+      if (!active) return;
+      const available = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+      setSupported(available);
+      setInstalled(isInstalledPwa());
+      if (!available) return;
+      setPermission(Notification.permission);
       try {
         const registration = await navigator.serviceWorker.ready;
         const current = await registration.pushManager.getSubscription();
@@ -64,7 +67,8 @@ export function PushNotificationManager({ mode = "banner" }: { mode?: "banner" |
       } catch {
         // Push support is optional and must never block app navigation.
       }
-    })();
+    };
+    void initialize();
     return () => { active = false; };
   }, []);
 
