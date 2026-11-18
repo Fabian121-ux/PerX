@@ -47,6 +47,11 @@ export function PushNotificationManager({ mode = "banner" }: { mode?: "banner" |
         if (!active || !data) return;
         setPublicKey(data.publicKey);
         setEnabled(Boolean(data.enabled));
+        if (Array.isArray(data.categories)) {
+          setSelected(data.categories.filter((item: string): item is Category =>
+            categories.some((category) => category.id === item),
+          ));
+        }
         if (data.enabled) {
           const registration = await navigator.serviceWorker.ready;
           const subscription = await registration.pushManager.getSubscription();
