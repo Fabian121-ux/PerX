@@ -38,12 +38,16 @@ export async function GET() {
   if (getResolvedDataMode() === "mock") {
     return NextResponse.json({ enabled: false, publicKey: null, supported: false });
   }
-  const [publicKey, count] = await Promise.all([
+  const [publicKey, subscription] = await Promise.all([
     Promise.resolve(getPushPublicKey()),
-    getPrisma().pushSubscription.count({ where: { userId: user.id } }),
+    getPrisma().pushSubscription.findFirst({
+      select: { categories: true },
+      where: { userId: user.id },
+    }),
   ]);
   return NextResponse.json({
-    enabled: count > 0,
+    categories: subscription?.categories ?? [...categories],
+    enabled: Boolean(subscription),
     publicKey,
     supported: Boolean(publicKey),
   });
