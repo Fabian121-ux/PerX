@@ -127,7 +127,7 @@ function encryptPayload(subscription: SubscriptionRecord, payload: PushPayload) 
   ]);
 }
 
-async function sendOne(subscription: SubscriptionRecord, payload: PushPayload) {
+export async function sendPushToSubscription(subscription: SubscriptionRecord, payload: PushPayload) {
   const url = new URL(subscription.endpoint);
   if (url.protocol !== "https:" || !allowedPushHosts.has(url.hostname)) {
     await getPrisma().pushSubscription.deleteMany({ where: { id: subscription.id } });
@@ -153,15 +153,3 @@ async function sendOne(subscription: SubscriptionRecord, payload: PushPayload) {
   }
 }
 
-export async function sendPushToUsers(
-  userIds: string[],
-  category: string,
-  payload: PushPayload,
-) {
-  if (!getVapidConfig() || !userIds.length) return;
-  const subscriptions = await getPrisma().pushSubscription.findMany({
-    select: { auth: true, endpoint: true, id: true, p256dh: true },
-    where: { categories: { has: category }, userId: { in: [...new Set(userIds)] } },
-  });
-  await Promise.allSettled(subscriptions.map((subscription) => sendOne(subscription, payload)));
-}
