@@ -45,6 +45,9 @@ const envSchema = z.object({
    * missing, `src/lib/email/service.ts` stays on the disabled provider and
    * nothing is sent. Email configuration must never be able to fail a boot.
    */
+  VAPID_PUBLIC_KEY: z.string().min(1).optional(),
+  VAPID_PRIVATE_KEY: z.string().min(1).optional(),
+  VAPID_SUBJECT: z.string().min(1).default("mailto:support@ptahx.com"),
   RESEND_API_KEY: z.string().min(1).optional(),
   EMAIL_FROM: z.string().min(1).optional(),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
