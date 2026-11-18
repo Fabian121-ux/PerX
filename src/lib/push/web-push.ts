@@ -153,3 +153,21 @@ export async function sendPushToSubscription(subscription: SubscriptionRecord, p
   }
 }
 
+
+export async function sendPushToUsers(
+  userIds: string[],
+  category: string,
+  payload: PushPayload,
+) {
+  if (!getVapidConfig() || !userIds.length) return;
+  const subscriptions = await getPrisma().pushSubscription.findMany({
+    select: { auth: true, endpoint: true, id: true, p256dh: true },
+    where: {
+      categories: { has: category },
+      userId: { in: [...new Set(userIds)] },
+    },
+  });
+  await Promise.allSettled(
+    subscriptions.map((subscription) => sendPushToSubscription(subscription, payload)),
+  );
+}
