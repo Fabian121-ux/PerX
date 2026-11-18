@@ -208,7 +208,7 @@ export async function requestConnectionAction(targetUserId: string) {
       tag: `connection-request-${targetUserId}`,
       title: "New connection request",
       url: "/app/connections?tab=requests",
-    });
+    }).catch((error) => console.warn("Connection push delivery failed:", error));
     await writeAuditLog({
       actorId: user.id,
       action: "connection.request",
