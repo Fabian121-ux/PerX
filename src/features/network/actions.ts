@@ -348,7 +348,7 @@ export async function acceptConnectionAction(connectionId: string) {
     tag: `connection-accepted-${connectionId}`,
     title: "Connection accepted",
     url: "/app/connections?tab=connections",
-  });
+  }).catch((error) => console.warn("Connection push delivery failed:", error));
   await writeAuditLog({
     actorId: user.id,
     action: "connection.accept",
@@ -485,7 +485,7 @@ export async function rejectConnectionAction(connectionId: string) {
     tag: `connection-declined-${connectionId}`,
     title: "Connection request declined",
     url: "/app/connections?tab=sent",
-  });
+  }).catch((error) => console.warn("Connection push delivery failed:", error));
   await writeAuditLog({
     actorId: user.id,
     action: "connection.decline",
