@@ -18,6 +18,7 @@ import { messageMutationTransactionTimeoutMs } from "@/lib/messages/mutations";
 import { markConversationReadForUser } from "@/lib/messages/read-state";
 import { lockUserAccount, lockUserPairs } from "@/lib/network/pair-lock";
 import { evaluatePolicy, isPolicyBlocking } from "@/lib/policy/enforcement";
+import { sendPushToUsers } from "@/lib/push/web-push";
 
 const sendMessageSchema = z.object({
   conversationId: z.string().cuid(),
@@ -270,6 +271,25 @@ export async function sendMessageAction(
 
     if ("error" in result) return { error: result.error };
     if ("duplicate" in result) return { success: true };
+
+    const recipients = await getPrisma().conversationParticipant.findMany({
+      select: { userId: true },
+      where: {
+        conversationId: parsed.data.conversationId,
+        removedAt: null,
+        userId: { not: user.id },
+      },
+    });
+    await sendPushToUsers(
+      recipients.map((participant) => participant.userId),
+      "messages",
+      {
+        body: "You have a new message.",
+        tag: `message-${parsed.data.conversationId}`,
+        title: `New message from ${user.name}`,
+        url: `/app/messages/${parsed.data.conversationId}?message=${result.messageId}`,
+      },
+    );
 
     revalidatePath("/app/messages");
     revalidatePath(`/app/messages/${parsed.data.conversationId}`);
