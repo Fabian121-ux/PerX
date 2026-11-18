@@ -289,7 +289,7 @@ export async function sendMessageAction(
         title: `New message from ${user.name}`,
         url: `/app/messages/${parsed.data.conversationId}?message=${result.messageId}`,
       },
-    );
+    ).catch((error) => console.warn("Message push delivery failed:", error));
 
     revalidatePath("/app/messages");
     revalidatePath(`/app/messages/${parsed.data.conversationId}`);
