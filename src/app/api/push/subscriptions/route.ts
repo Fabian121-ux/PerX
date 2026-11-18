@@ -33,17 +33,23 @@ function validEndpoint(value: string) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const user = await requireUser();
   if (getResolvedDataMode() === "mock") {
     return NextResponse.json({ enabled: false, publicKey: null, supported: false });
   }
+  const endpoint = new URL(request.url).searchParams.get("endpoint");
   const [publicKey, subscription] = await Promise.all([
     Promise.resolve(getPushPublicKey()),
-    getPrisma().pushSubscription.findFirst({
-      select: { categories: true },
-      where: { userId: user.id },
-    }),
+    endpoint
+      ? getPrisma().pushSubscription.findFirst({
+          select: { categories: true },
+          where: { endpoint, userId: user.id },
+        })
+      : getPrisma().pushSubscription.findFirst({
+          select: { categories: true },
+          where: { userId: user.id },
+        }),
   ]);
   return NextResponse.json({
     categories: subscription?.categories ?? [...categories],
@@ -72,7 +78,7 @@ export async function POST(request: Request) {
   if (existing && existing.userId !== user.id) {
     return NextResponse.json({ error: "This device subscription is already linked to another account." }, { status: 409 });
   }
-  const categoriesValue = parsed.data.categories?.length
+  const categoriesValue = parsed.data.categories
     ? [...new Set(parsed.data.categories)]
     : [...categories];
   await getPrisma().pushSubscription.upsert({
