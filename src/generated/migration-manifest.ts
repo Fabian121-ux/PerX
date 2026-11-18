@@ -40,5 +40,4 @@ export const MIGRATION_MANIFEST: readonly string[] = [
   "20261114120000_harden_public_trigger_functions",
   "20261115100000_conversation_typing_presence",
   "20261118170000_pwa_push_subscriptions",
-  "20261118173000_push_delivery_queue",
 ];
