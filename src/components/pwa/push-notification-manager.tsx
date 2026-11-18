@@ -41,29 +41,30 @@ export function PushNotificationManager({ mode = "banner" }: { mode?: "banner" |
     if (!available) return;
     setPermission(Notification.permission);
     let active = true;
-    fetch("/api/push/subscriptions", { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : null)
-      .then(async (data) => {
+    (async () => {
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const current = await registration.pushManager.getSubscription();
+        const endpoint = current?.endpoint;
+        const response = await fetch(
+          endpoint
+            ? `/api/push/subscriptions?endpoint=${encodeURIComponent(endpoint)}`
+            : "/api/push/subscriptions",
+          { cache: "no-store" },
+        );
+        const data = response.ok ? await response.json() : null;
         if (!active || !data) return;
         setPublicKey(data.publicKey);
-        setEnabled(Boolean(data.enabled));
+        setEnabled(Boolean(endpoint && data.enabled));
         if (Array.isArray(data.categories)) {
           setSelected(data.categories.filter((item: string): item is Category =>
             categories.some((category) => category.id === item),
           ));
         }
-        if (data.enabled) {
-          const registration = await navigator.serviceWorker.ready;
-          const subscription = await registration.pushManager.getSubscription();
-          if (subscription) {
-            const current = await subscription.toJSON();
-            if (current.keys?.p256dh && current.keys.auth) {
-              // Keep this device's category selection aligned with account settings.
-            }
-          }
-        }
-      })
-      .catch(() => undefined);
+      } catch {
+        // Push support is optional and must never block app navigation.
+      }
+    })();
     return () => { active = false; };
   }, []);
 
