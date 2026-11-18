@@ -477,6 +477,7 @@ export async function rejectConnectionAction(connectionId: string) {
         },
       });
     }
+    return candidate;
   });
 
   await sendPushToUsers([candidate.requesterId], "connections", {
