@@ -90,29 +90,30 @@ export function AdminShell({
         Skip to admin content
       </a>
       <header className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/95 backdrop-blur">
-        <div className="mx-auto flex min-h-16 max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex min-h-16 min-w-0 max-w-[1600px] items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
           <Link
-            className="inline-flex min-w-0 items-center gap-3"
+            className="inline-flex min-w-0 shrink-0 items-center gap-2 sm:gap-3"
             href="/admin"
             aria-label="PtahX admin dashboard"
           >
-            <BrandLogo className="h-10" dark />
-            <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-bold text-cyan-100">
+            <BrandLogo className="h-9 w-auto sm:hidden" compact dark />
+            <BrandLogo className="hidden h-10 w-auto sm:block" dark />
+            <span className="hidden rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-bold text-cyan-100 sm:inline-flex">
               Admin
             </span>
           </Link>
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
             <div className="hidden text-right sm:block">
               <p className="max-w-48 truncate text-xs font-semibold text-white">{user.name}</p>
               <p className="max-w-48 truncate text-[11px] text-slate-400">@{user.username}</p>
             </div>
             <Link
-              className="rounded-xl border border-white/10 px-3 py-2 text-sm font-semibold text-slate-300 transition hover:border-white/20 hover:bg-white/5 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
+              className="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-white/20 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:border-cyan-300/50 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 sm:text-sm"
               href="/app"
             >
               User app
             </Link>
-            <SignOutButton className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-70" />
+            <SignOutButton className="inline-flex min-h-11 max-w-36 shrink-0 items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap rounded-xl border border-white/20 bg-white/5 px-3 py-2 text-xs font-semibold text-white transition hover:border-cyan-300/50 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 disabled:opacity-70 sm:max-w-none sm:text-sm" />
           </div>
         </div>
       </header>
