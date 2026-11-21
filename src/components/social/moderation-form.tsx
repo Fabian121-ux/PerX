@@ -19,7 +19,7 @@ export function SocialModerationForm({
       <label className="grid gap-1">
         Moderation reason
         <input
-          className="min-w-0 rounded border p-2"
+          className="min-h-11 min-w-0 rounded-xl border border-white/20 bg-slate-900 px-3 py-2 text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
           name="reason"
           minLength={8}
           maxLength={1000}
