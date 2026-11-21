@@ -199,8 +199,8 @@ function ReactionControls({
             key={kind}
             name="kind"
             type="submit"
-            value={post.viewerReaction === kind ? "" : kind}
-            aria-pressed={post.viewerReaction === kind}
+            value={currentReaction === kind ? "" : kind}
+            aria-pressed={currentReaction === kind}
             aria-label={reactionLabels[kind]}
             title={reactionLabels[kind]}
             disabled={pending}
