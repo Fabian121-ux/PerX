@@ -28,16 +28,24 @@ export const reservedUsernames = new Set([
 ]);
 export const usernameSchema = z
   .string()
-  .transform(normalizeUsernameInput)
-  .pipe(
-    z.string()
-      .min(3, "Use at least 3 characters for your username.")
-      .max(30, "Use 30 characters or fewer for your username.")
-      .regex(/^[a-z0-9_-]+$/, "Use letters, numbers, spaces, underscores or hyphens."),
+  .trim()
+  .min(3)
+  .max(30)
+  .regex(
+    /^[a-zA-Z0-9_-]+$/,
+    "Username can only contain letters, numbers, underscores, and hyphens.",
   )
+  .toLowerCase()
   .refine((value) => !reservedUsernames.has(value), {
     message: "This username is reserved.",
   });
+
+// Signup accepts spaces, but other profile-edit flows retain their strict
+// username validation until their UI is updated to communicate normalization.
+export const signupUsernameSchema = z
+  .string()
+  .transform(normalizeUsernameInput)
+  .pipe(usernameSchema);
 
 export const passwordSchema = z
   .string()
@@ -110,7 +118,7 @@ export const signUpSchema = z
     termsAccepted: z.literal(true, {
       error: "You must accept the terms to create an account.",
     }),
-    username: usernameSchema,
+    username: signupUsernameSchema,
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match.",
