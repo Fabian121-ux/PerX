@@ -41,7 +41,8 @@ describe("mobile social reaction controls", () => {
     expect(screen.getAllByRole("button", { name: /^(Like|Celebrate|Support|Insightful)$/ })).toHaveLength(4);
   });
   it("renders guest reactions as accessible icon links to sign in", () => {
-    const { viewerReaction: _viewerReaction, ...guestPost } = post;
+    const guestPost: SocialPostView = { ...post };
+    delete guestPost.viewerReaction;
     render(<SocialPostCard post={guestPost} />);
     const link = screen.getByRole("link", { name: "Celebrate" });
     expect(link).toHaveAttribute("title", "Celebrate");
