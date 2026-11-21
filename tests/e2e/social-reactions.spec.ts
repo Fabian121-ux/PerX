@@ -31,9 +31,9 @@ test("post reactions persist, switch, and toggle from the authenticated feed", a
     await db.query(
       `INSERT INTO "User"
         (id, email, username, name, "passwordHash", "accountClassification",
-         "emailVerifiedAt", "verificationStatus", "updatedAt")
+         "emailVerifiedAt", "verificationStatus", "onboardingDismissedAt", "updatedAt")
        VALUES ($1, $2, $3, 'Reaction Fixture', $4, 'PUBLIC_BETA_USER',
-               NOW(), 'VERIFIED', NOW())`,
+               NOW(), 'VERIFIED', NOW(), NOW())`,
       [userId, email, `reaction_${userId.replaceAll("-", "").slice(0, 20)}`, hash],
     );
     await db.query(
