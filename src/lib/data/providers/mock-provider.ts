@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
+  AdminActivitySummary,
   AdminDealSummary,
   AdminUserSummary,
   PtahXDataProvider,
@@ -331,6 +332,13 @@ export const mockProvider: PtahXDataProvider = {
     },
   },
   admin: {
+    getAdminActivitySummary: async (): Promise<AdminActivitySummary> => ({
+      activeActorsLast7Days: 0,
+      eventsLast24Hours: 0,
+      eventsLast7Days: 0,
+      eventsLast30Days: 0,
+      recentEvents: [],
+    }),
     getAdminDealsPage: async (params?: CursorPageParams) =>
       paginateMockRows(
         getMockAdminRows("deals") as AdminDealSummary[],
