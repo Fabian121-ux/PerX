@@ -5,15 +5,29 @@ import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { ShareButton } from "@/components/feed/share-button";
 import { SocialAuthorActions } from "@/components/social/social-author-actions";
-import { MessageCircle } from "lucide-react";
+import { HandHeart, Lightbulb, MessageCircle, PartyPopper, ThumbsUp } from "lucide-react";
 import { setPostReactionAction } from "@/features/social/actions";
 import {
   reactionKinds,
   reactionLabels,
   socialPostPath,
   socialSignInPath,
+  type ReactionKind,
   type SocialPostView,
 } from "@/lib/social/contracts";
+
+const reactionIcons = {
+  LIKE: ThumbsUp,
+  CELEBRATE: PartyPopper,
+  SUPPORT: HandHeart,
+  INSIGHTFUL: Lightbulb,
+} satisfies Record<ReactionKind, typeof ThumbsUp>;
+
+function ReactionIcon({ kind }: { kind: ReactionKind }) {
+  const Icon = reactionIcons[kind];
+  return <Icon aria-hidden="true" size={21} strokeWidth={2.25} />;
+}
+
 export function SocialPostCard({
   post,
   viewerId,
@@ -86,14 +100,16 @@ export function SocialPostCard({
         {authenticated ? (
           <ReactionControls post={post} />
         ) : (
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
             {reactionKinds.map((kind) => (
               <Link
                 key={kind}
-                className="inline-flex min-h-12 min-w-0 items-center justify-center rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-4 py-3 text-sm font-bold text-[color:var(--px-text)] shadow-sm transition hover:border-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
+                className="inline-flex min-h-12 min-w-0 w-full items-center justify-center rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] p-2 text-[color:var(--px-text)] shadow-sm transition motion-safe:hover:-translate-y-0.5 hover:border-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] motion-reduce:transform-none"
+                aria-label={reactionLabels[kind]}
+                title={reactionLabels[kind]}
                 href={socialSignInPath(post.id)}
               >
-                {reactionLabels[kind]}
+                <ReactionIcon kind={kind} />
               </Link>
             ))}
           </div>
@@ -124,12 +140,12 @@ function ReactionControls({ post }: { post: SocialPostView }) {
   return (
     <form action={submit}>
       <input type="hidden" name="postId" value={post.id} />
-      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
         {reactionKinds.map((kind) => (
           <button
-            className={`inline-flex min-h-12 min-w-0 items-center justify-center rounded-xl border px-4 py-3 text-sm font-bold shadow-sm transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] disabled:cursor-not-allowed disabled:opacity-50 ${
+            className={`inline-flex min-h-12 min-w-0 w-full items-center justify-center rounded-xl border p-2 shadow-sm transition motion-safe:hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none ${
               post.viewerReaction === kind
-                ? "border-[color:var(--px-primary)] bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary-ink)]"
+                ? "border-[color:var(--px-primary)] bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary-ink)] ring-1 ring-inset ring-[color:var(--px-primary)]"
                 : "border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] text-[color:var(--px-text)] hover:border-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)]"
             }`}
             key={kind}
@@ -137,9 +153,11 @@ function ReactionControls({ post }: { post: SocialPostView }) {
             type="submit"
             value={post.viewerReaction === kind ? "" : kind}
             aria-pressed={post.viewerReaction === kind}
+            aria-label={reactionLabels[kind]}
+            title={reactionLabels[kind]}
             disabled={pending}
           >
-            {reactionLabels[kind]}
+            <ReactionIcon kind={kind} />
           </button>
         ))}
       </div>

@@ -3711,7 +3711,7 @@ function MessageActionMenu({
           aria-label="Message actions"
           className={`grid h-11 w-11 shrink-0 place-items-center rounded-full focus:outline-none focus-visible:ring-2 ${
             mine
-              ? "text-blue-100 hover:bg-white/10 focus-visible:ring-white"
+              ? "text-[#205741] hover:bg-[#bfecc7] focus-visible:ring-[#2b8364] dark:text-emerald-100 dark:hover:bg-white/10 dark:focus-visible:ring-emerald-200"
               : "text-[color:var(--px-text-muted)] hover:bg-[color:var(--px-muted)] focus-visible:ring-[color:var(--px-focus)]"
           }`}
           type="button"
@@ -3727,7 +3727,7 @@ function MessageActionMenu({
         >
           <DropdownMenu.Item asChild>
             <button
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+              className="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
               onClick={onReply}
               type="button"
             >
@@ -3737,7 +3737,7 @@ function MessageActionMenu({
           </DropdownMenu.Item>
           <DropdownMenu.Item asChild>
             <button
-              className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+              className="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
               onClick={() => void onCopy()}
               type="button"
             >
@@ -3748,7 +3748,7 @@ function MessageActionMenu({
           {canEdit ? (
             <DropdownMenu.Item asChild>
               <button
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+                className="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
                 onClick={onStartEdit}
                 type="button"
               >
@@ -3760,7 +3760,7 @@ function MessageActionMenu({
           {canEdit ? (
             <DropdownMenu.Item asChild>
               <button
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-[color:var(--px-error)] outline-none hover:bg-red-50 focus:bg-red-50 dark:hover:bg-red-950/30 dark:focus:bg-red-950/30"
+                className="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold text-[color:var(--px-error)] outline-none hover:bg-red-50 focus:bg-red-50 dark:hover:bg-red-950/30 dark:focus:bg-red-950/30"
                 onClick={onDelete}
                 type="button"
               >
@@ -3772,7 +3772,7 @@ function MessageActionMenu({
           {!mine && !message.id.startsWith("local-") ? (
             <DropdownMenu.Item asChild>
               <Link
-                className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
+                className="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-bold outline-none hover:bg-[color:var(--px-muted)] focus:bg-[color:var(--px-muted)]"
                 href={reportHref}
               >
                 <Flag aria-hidden size={14} />

@@ -253,6 +253,7 @@ describe("message workspace gestures and actions", () => {
     act(() => incoming.dispatchEvent(firstContext));
     expect(firstContext.defaultPrevented).toBe(true);
     expect(within(incoming).getByRole("button", { name: "Reply" })).toBeTruthy();
+    expect(within(own).getByLabelText("Message actions").className).toContain("text-[#205741]");
     expect(
       (
         await view.findByRole("menuitem", { name: "Report" })
@@ -261,6 +262,7 @@ describe("message workspace gestures and actions", () => {
       "/app/reports/new?targetType=MESSAGE&targetId=message-incoming&conversationId=conversation-1&messageId=message-incoming",
     );
     expect(within(incoming).queryByRole("button", { name: "Edit" })).toBeNull();
+    expect((await view.findByRole("menuitem", { name: "Report" })).className).toContain("min-h-11");
 
     const secondContext = new MouseEvent("contextmenu", {
       bubbles: true,

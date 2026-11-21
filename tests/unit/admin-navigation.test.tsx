@@ -30,6 +30,9 @@ describe("admin navigation component", () => {
     expect(markup).toContain('href="/admin/users"');
     expect(markup).toContain('aria-current="page"');
     expect(markup).toContain("Admin navigation");
+    expect(markup).toContain("min-h-11");
+    expect(markup).toContain("focus-visible:ring-cyan-300");
+    expect(markup).toContain("border-cyan-300/30");
   });
 
   it("does not mark the dashboard active on another admin route", () => {

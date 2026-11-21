@@ -45,10 +45,10 @@ function NavigationLinks({
                 <Link
                   aria-current={active ? "page" : undefined}
                   className={[
-                    "flex min-h-10 items-center rounded-xl px-3 py-2 text-sm font-semibold transition",
+                    "flex min-h-11 items-center rounded-xl border px-3 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300",
                     active
-                      ? "bg-cyan-400/15 text-cyan-200 ring-1 ring-inset ring-cyan-300/20"
-                      : "text-slate-300 hover:bg-white/5 hover:text-white",
+                      ? "border-cyan-300/30 bg-cyan-400/15 text-cyan-100 ring-1 ring-inset ring-cyan-300/20"
+                      : "border-transparent text-slate-300 hover:border-white/20 hover:bg-white/10 hover:text-white",
                   ].join(" ")}
                   href={link.href}
                   key={link.href}
@@ -90,7 +90,7 @@ export function AdminNavigation({
       </aside>
 
       <details className="group rounded-2xl border border-white/10 bg-slate-900/90 p-3 shadow-lg shadow-black/10 lg:hidden">
-        <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-2 text-sm font-bold text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 [&::-webkit-details-marker]:hidden">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-2 text-sm font-bold text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 [&::-webkit-details-marker]:hidden">
           <span>Admin navigation</span>
           <span
             aria-hidden="true"
