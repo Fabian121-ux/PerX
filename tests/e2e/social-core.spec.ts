@@ -45,6 +45,17 @@ test("real social persistence, guest return, ownership, moderation and narrow la
     expect((await db.query(`SELECT "authorId",body FROM "Post" WHERE id=$1`,[postId])).rows).toEqual([{authorId:users[0].id,body}]);
     await noOverflow(page);
     await page.goto('/app'); await expect(card).toBeVisible();
+    // This is the real client-stream surface that previously kept stale
+    // reaction props after a successful server mutation.
+    await card.getByRole('button',{name:'Celebrate',exact:true}).click();
+    await expect(card.getByTestId('reaction-count')).toHaveText('1 reactions');
+    await expect(card.getByRole('button',{name:'Celebrate',exact:true})).toHaveAttribute('aria-pressed','true');
+    expect((await db.query('SELECT "userId",kind FROM "PostReaction" WHERE "postId"=$1',[postId])).rows).toEqual([{userId:users[0].id,kind:'CELEBRATE'}]);
+    await page.reload();
+    await expect(card.getByRole('button',{name:'Celebrate',exact:true})).toHaveAttribute('aria-pressed','true');
+    await card.getByRole('button',{name:'Celebrate',exact:true}).click();
+    await expect(card.getByTestId('reaction-count')).toHaveText('0 reactions');
+    expect((await db.query('SELECT count(*)::int AS count FROM "PostReaction" WHERE "postId"=$1',[postId])).rows[0].count).toBe(0);
     const guestContext=await browser.newContext({viewport:{width:testInfo.project.name==="mobile-chrome"?320:1280,height:800}});contexts.push(guestContext);
     const guest=await guestContext.newPage();
     await guest.goto('/');await expect(guest.locator(`[data-social-post-id="${postId}"]`)).toBeVisible();await noOverflow(guest);
@@ -63,6 +74,7 @@ test("real social persistence, guest return, ownership, moderation and narrow la
     await guest.getByRole('button',{name:'Like',exact:true}).click();
     await expect(guest.getByTestId('reaction-count')).toHaveText('1 reactions');
     await expect(guest.getByRole('button',{name:'Like',exact:true})).toHaveAttribute('aria-pressed','true');
+    expect((await db.query('SELECT "userId",kind FROM "PostReaction" WHERE "postId"=$1',[postId])).rows).toEqual([{userId:users[1].id,kind:'LIKE'}]);
     await guest.getByRole('button',{name:'Like',exact:true}).click();
     await expect(guest.getByTestId('reaction-count')).toHaveText('0 reactions');
     await guest.getByRole('button',{name:'Support',exact:true}).click();
