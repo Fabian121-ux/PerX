@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
 import { SocialPostCard } from "@/components/social/social-post-card";
@@ -18,7 +18,14 @@ export function SocialFeedStream({
   moreHref?: string;
   viewerId?: string;
 }) {
-  const [items, setItems] = useState(initialItems);
+  // Server-refreshed first-page rows are authoritative. Keep only additional
+  // cursor-loaded rows in local state, so a reaction refresh updates the
+  // visible icons/counts without throwing away the rest of the feed.
+  const [loadedItems, setLoadedItems] = useState<SocialPostView[]>([]);
+  const items = useMemo(() => {
+    const firstPageIds = new Set(initialItems.map((post) => post.id));
+    return [...initialItems, ...loadedItems.filter((post) => !firstPageIds.has(post.id))];
+  }, [initialItems, loadedItems]);
   const [cursor, setCursor] = useState(initialNextCursor);
   const [blockedAuthors, setBlockedAuthors] = useState<ReadonlySet<string>>(() => new Set());
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "end">(
@@ -47,7 +54,7 @@ export function SocialFeedStream({
       if (!Array.isArray(data.items)) throw new Error("Invalid response");
       const next = typeof data.nextCursor === "string" ? data.nextCursor : null;
       // Merge by stable server IDs; never pretend the same posts are new.
-      setItems((current) => {
+      setLoadedItems((current) => {
         const seen = new Set(current.map((post) => post.id));
         return [...current, ...data.items!.filter((post) => !seen.has(post.id) && seen.add(post.id))];
       });

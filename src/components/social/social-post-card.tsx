@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { ShareButton } from "@/components/feed/share-button";
@@ -13,6 +13,7 @@ import {
   socialPostPath,
   socialSignInPath,
   type ReactionKind,
+  type SocialFormState,
   type SocialPostView,
 } from "@/lib/social/contracts";
 
@@ -38,6 +39,39 @@ export function SocialPostCard({
   onBlocked?: (authorId: string) => void;
 }) {
   const [hidden, setHidden] = useState(false);
+  // Server props are authoritative. A confirmed local mutation overlays only
+  // the server snapshot that produced it; a refreshed snapshot wins naturally
+  // without syncing props into state in an effect.
+  const [confirmed, setConfirmed] = useState<{
+    postId: string;
+    baseReaction: ReactionKind | null;
+    baseCount: number;
+    reaction: ReactionKind | null;
+    count: number;
+  } | null>(null);
+  const serverReaction = post.viewerReaction ?? null;
+  const currentSnapshot = confirmed?.postId === post.id &&
+    confirmed.baseReaction === serverReaction &&
+    confirmed.baseCount === post.reactionCount;
+  const engagement = currentSnapshot
+    ? { reaction: confirmed.reaction, count: confirmed.count }
+    : { reaction: serverReaction, count: post.reactionCount };
+  const onReactionCommitted = useCallback((next: ReactionKind | null) => {
+    setConfirmed((previous) => {
+      const matches = previous?.postId === post.id &&
+        previous.baseReaction === serverReaction &&
+        previous.baseCount === post.reactionCount;
+      const previousReaction = matches ? previous.reaction : serverReaction;
+      const previousCount = matches ? previous.count : post.reactionCount;
+      return {
+        postId: post.id,
+        baseReaction: serverReaction,
+        baseCount: post.reactionCount,
+        reaction: next,
+        count: Math.max(0, previousCount + Number(next !== null) - Number(previousReaction !== null)),
+      };
+    });
+  }, [post.id, post.reactionCount, serverReaction]);
   const authenticated = "viewerReaction" in post;
   if (hidden) return null;
   const path = socialPostPath(post.id);
@@ -91,14 +125,14 @@ export function SocialPostCard({
         </p>
       </Link>
       <div className="mt-4 flex flex-wrap gap-4 text-xs text-[color:var(--px-text-muted)]">
-        <span data-testid="reaction-count">{post.reactionCount} reactions</span>
+        <span data-testid="reaction-count" aria-live="polite">{engagement.count} reactions</span>
         <Link href={`${path}#comments`} prefetch={false} data-testid="comment-count">
           {post.commentCount} comments
         </Link>
       </div>
       <div className="mt-3 border-t border-[color:var(--px-border)] pt-3">
         {authenticated ? (
-          <ReactionControls post={post} />
+          <ReactionControls post={post} currentReaction={engagement.reaction} onCommitted={onReactionCommitted} />
         ) : (
           <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
             {reactionKinds.map((kind) => (
@@ -129,10 +163,24 @@ export function SocialPostCard({
     </article>
   );
 }
-function ReactionControls({ post }: { post: SocialPostView }) {
-  const [state, submit, pending] = useActionState(setPostReactionAction, {
-    status: "idle",
-  });
+function ReactionControls({
+  post,
+  currentReaction,
+  onCommitted,
+}: {
+  post: SocialPostView;
+  currentReaction: ReactionKind | null;
+  onCommitted: (next: ReactionKind | null) => void;
+}) {
+  const [state, submit, pending] = useActionState(async (previous: SocialFormState, form: FormData) => {
+    const result = await setPostReactionAction(previous, form);
+    // Update the visible reaction only after the server confirms the write.
+    if (result.status === "success") {
+      const kind = form.get("kind");
+      onCommitted(kind === "" ? null : kind as ReactionKind);
+    }
+    return result;
+  }, { status: "idle" });
   const router = useRouter();
   useEffect(() => {
     if (state.status === "success") router.refresh();
@@ -144,15 +192,15 @@ function ReactionControls({ post }: { post: SocialPostView }) {
         {reactionKinds.map((kind) => (
           <button
             className={`inline-flex min-h-12 min-w-0 w-full items-center justify-center rounded-xl border p-2 shadow-sm transition motion-safe:hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transform-none ${
-              post.viewerReaction === kind
+              currentReaction === kind
                 ? "border-[color:var(--px-primary)] bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary-ink)] ring-1 ring-inset ring-[color:var(--px-primary)]"
                 : "border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] text-[color:var(--px-text)] hover:border-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)]"
             }`}
             key={kind}
             name="kind"
             type="submit"
-            value={post.viewerReaction === kind ? "" : kind}
-            aria-pressed={post.viewerReaction === kind}
+            value={currentReaction === kind ? "" : kind}
+            aria-pressed={currentReaction === kind}
             aria-label={reactionLabels[kind]}
             title={reactionLabels[kind]}
             disabled={pending}
