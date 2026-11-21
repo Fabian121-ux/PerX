@@ -9,6 +9,7 @@ import { signUpAction, type AuthFormState } from "@/features/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/form";
 import { PasswordInput } from "@/components/ui/password-input";
+import { normalizeUsernameInput } from "@/lib/validation/username";
 
 type SignUpFormProps = {
   initialState?: AuthFormState;
@@ -59,11 +60,13 @@ export function SignUpForm({ initialState }: SignUpFormProps) {
         autoCapitalize="none"
         autoComplete="username"
         error={state.fieldErrors?.username}
-        hint="Use 3-30 letters, numbers, underscores or hyphens."
+        hint="Spaces automatically become hyphens. Choose a unique username (3–30 characters)."
         inputMode="text"
         label="Username"
         name="username"
-        pattern="[A-Za-z0-9_\-]+"
+        onBlur={(event) => {
+          event.currentTarget.value = normalizeUsernameInput(event.currentTarget.value);
+        }}
         required
         value={state.values?.username}
       />
