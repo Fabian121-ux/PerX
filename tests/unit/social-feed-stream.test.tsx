@@ -4,8 +4,12 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/social/social-post-card", () => ({
-  SocialPostCard: ({ post }: { post: { body: string; id: string } }) =>
-    <article data-testid={post.id}>{post.body}</article>,
+  SocialPostCard: ({ post }: { post: { body: string; id: string; reactionCount: number; viewerReaction?: string | null } }) =>
+    <article data-testid={post.id}>
+      {post.body}
+      <span data-testid={`reaction-count-${post.id}`}>{post.reactionCount}</span>
+      <span data-testid={`viewer-reaction-${post.id}`}>{post.viewerReaction ?? "none"}</span>
+    </article>,
 }));
 
 import { SocialFeedStream } from "@/components/social/social-feed-stream";
@@ -49,6 +53,32 @@ describe("community feed loops through actual paginated posts", () => {
     expect(screen.getAllByText("Original update")).toHaveLength(1);
     expect(screen.getByText("Second real update")).toBeInTheDocument();
     expect(screen.getByText(/up to date with community posts/i)).toBeInTheDocument();
+  });
+
+  it("uses refreshed server reactions without discarding already-loaded cursor posts", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        items: [{ ...posts[0], id: "b", body: "Second page", reactionCount: 0 }],
+        nextCursor: null,
+      }),
+    });
+    vi.stubGlobal("fetch", fetcher);
+    const { rerender } = render(
+      <SocialFeedStream initialItems={posts} initialNextCursor="page-2" viewerId="viewer-1" />,
+    );
+    await act(async () => {
+      notify?.([{ isIntersecting: true }]);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getAllByRole("article")).toHaveLength(2);
+    const updated = [{ ...posts[0], viewerReaction: "INSIGHTFUL" as const, reactionCount: 1 }];
+    rerender(<SocialFeedStream initialItems={updated} initialNextCursor="page-2" viewerId="viewer-1" />);
+    expect(screen.getByTestId("reaction-count-a")).toHaveTextContent("1");
+    expect(screen.getByTestId("viewer-reaction-a")).toHaveTextContent("INSIGHTFUL");
+    expect(screen.getByText("Second page")).toBeInTheDocument();
+    expect(screen.getAllByRole("article")).toHaveLength(2);
   });
 
   it("keeps current posts visible when a page request fails", async () => {
