@@ -39,27 +39,39 @@ export function SocialPostCard({
   onBlocked?: (authorId: string) => void;
 }) {
   const [hidden, setHidden] = useState(false);
-  // The server remains authoritative, but the confirmed result must be visible
-  // even in an infinitely paginated client feed whose props may not refresh.
-  const [engagement, setEngagement] = useState(() => ({
-    reaction: post.viewerReaction ?? null,
-    count: post.reactionCount,
-  }));
-  useEffect(() => {
-    setEngagement({
-      reaction: post.viewerReaction ?? null,
-      count: post.reactionCount,
-    });
-  }, [post.id, post.viewerReaction, post.reactionCount]);
+  // Server props are authoritative. A confirmed local mutation overlays only
+  // the server snapshot that produced it; a refreshed snapshot wins naturally
+  // without syncing props into state in an effect.
+  const [confirmed, setConfirmed] = useState<{
+    postId: string;
+    baseReaction: ReactionKind | null;
+    baseCount: number;
+    reaction: ReactionKind | null;
+    count: number;
+  } | null>(null);
+  const serverReaction = post.viewerReaction ?? null;
+  const currentSnapshot = confirmed?.postId === post.id &&
+    confirmed.baseReaction === serverReaction &&
+    confirmed.baseCount === post.reactionCount;
+  const engagement = currentSnapshot
+    ? { reaction: confirmed.reaction, count: confirmed.count }
+    : { reaction: serverReaction, count: post.reactionCount };
   const onReactionCommitted = useCallback((next: ReactionKind | null) => {
-    setEngagement((current) => ({
-      reaction: next,
-      count: Math.max(
-        0,
-        current.count + Number(next !== null) - Number(current.reaction !== null),
-      ),
-    }));
-  }, []);
+    setConfirmed((previous) => {
+      const matches = previous?.postId === post.id &&
+        previous.baseReaction === serverReaction &&
+        previous.baseCount === post.reactionCount;
+      const previousReaction = matches ? previous.reaction : serverReaction;
+      const previousCount = matches ? previous.count : post.reactionCount;
+      return {
+        postId: post.id,
+        baseReaction: serverReaction,
+        baseCount: post.reactionCount,
+        reaction: next,
+        count: Math.max(0, previousCount + Number(next !== null) - Number(previousReaction !== null)),
+      };
+    });
+  }, [post.id, post.reactionCount, serverReaction]);
   const authenticated = "viewerReaction" in post;
   if (hidden) return null;
   const path = socialPostPath(post.id);
