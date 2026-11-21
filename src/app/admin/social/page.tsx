@@ -165,21 +165,21 @@ export default async function SocialModerationPage({
         <label className="grid gap-1 text-sm">
           Find content by ID
           <input
-            className="min-h-11 min-w-0 rounded-lg border p-2"
+            className="min-h-11 w-full min-w-0 rounded-lg border border-white/20 bg-slate-900 px-3 py-2 text-white outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 sm:w-auto"
             name="id"
             maxLength={128}
             defaultValue={exactId}
           />
         </label>
         <button
-          className="min-h-11 rounded-lg border px-4 font-semibold"
+          className="min-h-11 rounded-lg border border-cyan-300/30 bg-cyan-300/10 px-4 font-semibold text-white transition hover:bg-cyan-300/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
           type="submit"
         >
           Find content
         </button>
         {exactId ? (
           <Link
-            className="inline-flex min-h-11 items-center rounded-lg border px-4 text-sm font-semibold"
+            className="inline-flex min-h-11 items-center rounded-lg border border-white/20 bg-white/5 px-4 text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300"
             href="/admin/social"
           >
             Clear search
@@ -209,7 +209,7 @@ export default async function SocialModerationPage({
                   {item.createdAt.toLocaleString()}
                 </time>
               </div>
-              <p className="mt-1 text-xs text-[color:var(--px-text-muted)]">
+              <p className="mt-1 break-words text-xs text-[color:var(--px-text-muted)] [overflow-wrap:anywhere]">
                 <Link
                   className="font-semibold hover:underline"
                   href={`/admin/users/${item.author.id}`}
