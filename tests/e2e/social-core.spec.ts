@@ -25,7 +25,7 @@ test("real social persistence, guest return, ownership, moderation and narrow la
   async function noOverflow(target:Page) {expect(await target.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);}
   try {
     for(const [index,user] of users.entries()) {
-      await db.query(`INSERT INTO "User" (id,email,username,name,"passwordHash","accountClassification","emailVerifiedAt","verificationStatus","updatedAt") VALUES ($1,$2,$3,$4,$5,'PUBLIC_BETA_USER',NOW(),'VERIFIED',NOW())`,[user.id,`social-${user.id}@ptahx.test`,`social_${user.id.replaceAll('-','').slice(0,20)}`,user.name,hash]);
+      await db.query(`INSERT INTO "User" (id,email,username,name,"passwordHash","accountClassification","emailVerifiedAt","verificationStatus","onboardingDismissedAt","updatedAt") VALUES ($1,$2,$3,$4,$5,'PUBLIC_BETA_USER',NOW(),'VERIFIED',NOW(),NOW())`,[user.id,`social-${user.id}@ptahx.test`,`social_${user.id.replaceAll('-','').slice(0,20)}`,user.name,hash]);
       await db.query(`INSERT INTO "Profile" (id,"userId",headline,biography,location,"isDiscoverable","updatedAt") VALUES ($1,$2,'Social fixture','Browser acceptance','Lagos',true,NOW())`,[randomUUID(),user.id]);
       if(index===3) {
         await db.query(`INSERT INTO "Role" (id,name,label,description) VALUES ($1,'ADMIN','Administrator','Fixture role') ON CONFLICT (name) DO NOTHING`,[randomUUID()]);
