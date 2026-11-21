@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeUsernameInput } from "@/lib/validation/username";
 
 export const emailSchema = z.string().email().max(255).toLowerCase();
 export const reservedUsernames = new Set([
@@ -38,6 +39,13 @@ export const usernameSchema = z
   .refine((value) => !reservedUsernames.has(value), {
     message: "This username is reserved.",
   });
+
+// Signup accepts spaces, but other profile-edit flows retain their strict
+// username validation until their UI is updated to communicate normalization.
+export const signupUsernameSchema = z
+  .string()
+  .transform(normalizeUsernameInput)
+  .pipe(usernameSchema);
 
 export const passwordSchema = z
   .string()
@@ -110,7 +118,7 @@ export const signUpSchema = z
     termsAccepted: z.literal(true, {
       error: "You must accept the terms to create an account.",
     }),
-    username: usernameSchema,
+    username: signupUsernameSchema,
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match.",

@@ -9,6 +9,10 @@ test.describe("auth form experience", () => {
     await expect(page.getByLabel("Full name")).toBeVisible();
     await expect(page.getByLabel("Username")).toBeVisible();
     await expect(page.getByLabel("Email address")).toBeVisible();
+    await page.getByLabel("Username").fill("Urama Chigozie");
+    await page.getByLabel("Email address").click();
+    await expect(page.getByLabel("Username")).toHaveValue("urama-chigozie");
+    await expect(page.getByLabel("Username")).not.toHaveAttribute("pattern");
     await expect(
       page.getByText("PtahX is currently open to a limited number of beta users."),
     ).toBeVisible();

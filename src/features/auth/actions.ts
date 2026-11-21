@@ -19,6 +19,7 @@ import {
   isProductionMockModeError,
 } from "@/lib/env";
 import { getSafeAuthRedirect } from "@/lib/auth/redirects";
+import { normalizeUsernameInput } from "@/lib/validation/username";
 import { classifyError } from "@/lib/errors/taxonomy";
 import { logServerDataError } from "@/lib/logging/runtime";
 import {
@@ -95,7 +96,7 @@ function getSignUpValues(formData: FormData) {
   return {
     email: formValue(formData, "email").toLowerCase(),
     name: formValue(formData, "name"),
-    username: formValue(formData, "username").toLowerCase(),
+    username: normalizeUsernameInput(formValue(formData, "username")),
   };
 }
 

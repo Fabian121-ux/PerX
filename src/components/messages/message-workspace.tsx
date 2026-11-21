@@ -3222,7 +3222,7 @@ function MessageBubble({
       ref={refCallback}
     >
       <div
-        className={`group min-w-0 max-w-[min(82%,42rem)] touch-pan-y overflow-visible rounded-3xl px-4 py-3 shadow-sm transition motion-reduce:transform-none ${
+        className={`group min-w-0 max-w-[min(88%,40rem)] touch-pan-y overflow-visible rounded-[20px] px-3.5 py-2.5 shadow-sm transition motion-reduce:transform-none ${
           swipeOffset > 0 ? "relative" : ""
         } ${
           mine

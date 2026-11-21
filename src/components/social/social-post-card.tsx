@@ -86,11 +86,11 @@ export function SocialPostCard({
         {authenticated ? (
           <ReactionControls post={post} />
         ) : (
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             {reactionKinds.map((kind) => (
               <Link
                 key={kind}
-                className="inline-flex min-h-11 items-center rounded-lg px-2 text-sm font-semibold text-[color:var(--px-text)] hover:bg-[color:var(--px-muted)]"
+                className="inline-flex min-h-12 min-w-0 items-center justify-center rounded-xl border border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] px-4 py-3 text-sm font-bold text-[color:var(--px-text)] shadow-sm transition hover:border-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)]"
                 href={socialSignInPath(post.id)}
               >
                 {reactionLabels[kind]}
@@ -124,10 +124,14 @@ function ReactionControls({ post }: { post: SocialPostView }) {
   return (
     <form action={submit}>
       <input type="hidden" name="postId" value={post.id} />
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         {reactionKinds.map((kind) => (
           <button
-            className="min-h-11 rounded-lg px-2 text-sm font-semibold text-[color:var(--px-text)] aria-pressed:bg-[color:var(--px-primary-soft)] disabled:opacity-50"
+            className={`inline-flex min-h-12 min-w-0 items-center justify-center rounded-xl border px-4 py-3 text-sm font-bold shadow-sm transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--px-focus)] disabled:cursor-not-allowed disabled:opacity-50 ${
+              post.viewerReaction === kind
+                ? "border-[color:var(--px-primary)] bg-[color:var(--px-primary-soft)] text-[color:var(--px-primary-ink)]"
+                : "border-[color:var(--px-border-strong)] bg-[color:var(--px-surface)] text-[color:var(--px-text)] hover:border-[color:var(--px-primary)] hover:bg-[color:var(--px-primary-soft)]"
+            }`}
             key={kind}
             name="kind"
             type="submit"
