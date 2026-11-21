@@ -52,6 +52,14 @@ test("real social persistence, guest return, ownership, moderation and narrow la
     await guest.getByRole('link',{name:'Like',exact:true}).click();
     expect(new URL(guest.url()).searchParams.get('next')).toBe(path);
     await submitSignIn(guest,1,path);
+    const reactionButtons = guest.locator(`[data-social-post-id="${postId}"] button[name="kind"]`);
+    await expect(reactionButtons).toHaveCount(4);
+    const hitAreas = await reactionButtons.evaluateAll((buttons) => buttons.map((button) => {
+      const rect = button.getBoundingClientRect();
+      return { width: rect.width, height: rect.height, hasIcon: !!button.querySelector('svg'), label: button.getAttribute('aria-label') };
+    }));
+    expect(hitAreas.every((area) => area.width >= 44 && area.height >= 44 && area.hasIcon && area.label)).toBe(true);
+    await noOverflow(guest);
     await guest.getByRole('button',{name:'Like',exact:true}).click();
     await expect(guest.getByTestId('reaction-count')).toHaveText('1 reactions');
     await expect(guest.getByRole('button',{name:'Like',exact:true})).toHaveAttribute('aria-pressed','true');
@@ -76,7 +84,10 @@ test("real social persistence, guest return, ownership, moderation and narrow la
     for(const name of ['Delete post','Delete comment']) await expect(c.getByRole('button',{name,exact:true})).toHaveCount(0);
     await expect(c.getByText('Edit post',{exact:true})).toHaveCount(0);await expect(c.getByText('Edit comment',{exact:true})).toHaveCount(0);
     const adminContext=await browser.newContext();contexts.push(adminContext);const admin=await adminContext.newPage();await signIn(admin,3,'/admin/social');
-    await admin.goto(`/admin/social?id=${postId}`);await admin.getByLabel('Moderation reason').fill('Browser acceptance safety review');await admin.getByRole('button',{name:'Hide post',exact:true}).click();
+    if (testInfo.project.name === "mobile-chrome") await admin.setViewportSize({ width: 320, height: 740 });
+    await admin.goto(`/admin/social?id=${postId}`);
+    await noOverflow(admin);
+    await admin.getByLabel('Moderation reason').fill('Browser acceptance safety review');await admin.getByRole('button',{name:'Hide post',exact:true}).click();
     await expect.poll(async()=> (await db.query(`SELECT "moderationStatus" FROM "Post" WHERE id=$1`,[postId])).rows[0].moderationStatus).toBe('REJECTED');
     await guestContext.clearCookies();await guest.goto('/');await expect(guest.locator(`[data-social-post-id="${postId}"]`)).toHaveCount(0);
     expect((await guest.goto(path))?.status()).toBe(404);
