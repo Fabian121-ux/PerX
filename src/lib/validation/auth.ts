@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeUsernameInput } from "@/lib/validation/username";
 
 export const emailSchema = z.string().email().max(255).toLowerCase();
 export const reservedUsernames = new Set([
@@ -27,14 +28,13 @@ export const reservedUsernames = new Set([
 ]);
 export const usernameSchema = z
   .string()
-  .trim()
-  .min(3)
-  .max(30)
-  .regex(
-    /^[a-zA-Z0-9_-]+$/,
-    "Username can only contain letters, numbers, underscores, and hyphens.",
+  .transform(normalizeUsernameInput)
+  .pipe(
+    z.string()
+      .min(3, "Use at least 3 characters for your username.")
+      .max(30, "Use 30 characters or fewer for your username.")
+      .regex(/^[a-z0-9_-]+$/, "Use letters, numbers, spaces, underscores or hyphens."),
   )
-  .toLowerCase()
   .refine((value) => !reservedUsernames.has(value), {
     message: "This username is reserved.",
   });
