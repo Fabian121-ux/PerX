@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ptahx</string>
+    <string name="offline_title">Can't reach ptahx</string>
+    <string name="offline_details">Check your connection and try again.</string>
+    <string name="retry">Try again</string>
+</resources>
