@@ -177,7 +177,9 @@ function scheduleEmailVerificationDelivery(
  * an email exists; callers use the same neutral feedback for every outcome.
  */
 async function issueVerificationCode(email: string, force = false): Promise<PendingEmailVerification> {
-  if (!hasDatabaseUrl() || !isEmailVerificationDeliveryConfigured()) return null;
+  if (!hasDatabaseUrl() || (
+    process.env.NODE_ENV === "production" && !isEmailVerificationDeliveryConfigured()
+  )) return null;
   return getPrisma().$transaction(async (tx) => {
     const user = await tx.user.findUnique({
       select: { id: true, email: true, emailVerifiedAt: true, isActive: true },
