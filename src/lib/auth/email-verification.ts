@@ -4,7 +4,7 @@ import { compare, hash } from "bcryptjs";
 // Short-lived, one-time email codes. Keep resend and guess throttles separate.
 export const EMAIL_VERIFICATION_CODE_TTL_MINUTES = 5;
 export const EMAIL_VERIFICATION_CODE_LENGTH = 6;
-export const MAX_EMAIL_VERIFICATION_REQUESTS_PER_WINDOW = 3;
+export const MAX_EMAIL_VERIFICATION_REQUESTS_PER_WINDOW = 6;
 export const EMAIL_VERIFICATION_RATE_WINDOW_MINUTES = 30;
 export const MAX_EMAIL_VERIFICATION_ATTEMPTS_PER_WINDOW = 5;
 export const EMAIL_VERIFICATION_ATTEMPT_WINDOW_MINUTES = 5;
