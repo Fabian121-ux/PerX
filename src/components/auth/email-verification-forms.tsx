@@ -13,86 +13,88 @@ import { Input } from "@/components/ui/form";
 
 const initialState: EmailVerificationFormState = { status: "idle" };
 
-export function VerifyEmailForm({ token }: { token: string }) {
+export function VerifyEmailForm({
+  email = "",
+  token,
+}: {
+  email?: string;
+  token?: string;
+}) {
   const [state, formAction] = useActionState(verifyEmailAction, initialState);
-
   return (
     <form action={formAction} className="mt-5 grid gap-4">
-      <input name="token" type="hidden" value={token} />
-      {state.message ? (
-        <p
-          className="rounded-[var(--px-radius-sm)] bg-red-50 p-3 text-sm font-semibold text-red-700"
-          role="alert"
-        >
+      {token ? (
+        <input name="token" type="hidden" value={token} />
+      ) : (
+        <>
+          <label className="grid gap-2 text-sm font-semibold text-[color:var(--px-text)]">
+            Email address
+            <Input
+              autoCapitalize="none"
+              autoComplete="email"
+              defaultValue={email}
+              name="email"
+              required
+              type="email"
+            />
+          </label>
+          <label className="grid gap-2 text-sm font-semibold text-[color:var(--px-text)]">
+            Verification code
+            <Input
+              autoComplete="one-time-code"
+              autoFocus={!token}
+              className="w-full text-center text-xl font-bold tracking-[0.3em]"
+              inputMode="numeric"
+              maxLength={6}
+              minLength={6}
+              name="code"
+              pattern="[0-9]{6}"
+              placeholder="000000"
+              required
+              type="text"
+            />
+          </label>
+        </>
+      )}
+      {state.message && (
+        <p role="alert" className="rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">
           {state.message}
         </p>
-      ) : null}
-      <SubmitButton label="Verify email address" pendingLabel="Verifying email" />
+      )}
+      <SubmitButton label="Verify and continue" pendingLabel="Verifying…" />
     </form>
   );
 }
 
-export function ResendEmailVerificationForm() {
-  const [state, formAction] = useActionState(
-    resendEmailVerificationAction,
-    initialState,
-  );
-
+export function ResendEmailVerificationForm({ email = "" }: { email?: string }) {
+  const [state, formAction] = useActionState(resendEmailVerificationAction, initialState);
   return (
-    <form action={formAction} className="mt-6 grid gap-3">
-      <label
-        className="grid gap-2 text-sm font-medium text-[color:var(--px-text)]"
-        htmlFor="verification-email"
-      >
+    <form action={formAction} className="mt-4 grid gap-3">
+      <label className="grid gap-2 text-sm font-medium text-[color:var(--px-text)]">
         Email address
         <Input
-          aria-describedby={state.fieldErrors?.email ? "verification-email-error" : undefined}
-          aria-invalid={Boolean(state.fieldErrors?.email)}
-          autoComplete="email"
           autoCapitalize="none"
-          id="verification-email"
-          inputMode="email"
+          autoComplete="email"
+          defaultValue={email}
           name="email"
-          placeholder="you@example.com"
           required
           type="email"
         />
       </label>
-      {state.fieldErrors?.email ? (
-        <span
-          className="text-xs font-semibold text-red-700"
-          id="verification-email-error"
-        >
-          {state.fieldErrors.email}
-        </span>
-      ) : null}
-      {state.message ? (
+      {state.message && (
         <p
-          className={
-            state.status === "success"
-              ? "rounded-[var(--px-radius-sm)] bg-emerald-50 p-3 text-sm font-semibold text-emerald-800"
-              : "rounded-[var(--px-radius-sm)] bg-red-50 p-3 text-sm font-semibold text-red-700"
-          }
+          className={state.status === "success" ? "text-sm text-[color:var(--px-text-muted)]" : "text-sm font-semibold text-red-700"}
           role={state.status === "success" ? "status" : "alert"}
         >
           {state.message}
         </p>
-      ) : null}
-      <SubmitButton
-        label="Resend verification link"
-        pendingLabel="Sending request"
-      />
+      )}
+      <SubmitButton label="Send a new code" pendingLabel="Sending…" />
     </form>
   );
 }
 
-function SubmitButton({
-  label,
-  pendingLabel,
-}: {
-  label: string;
-  pendingLabel: string;
-}) {
+function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
   const { pending } = useFormStatus();
   return (
     <Button disabled={pending} type="submit">
