@@ -42,11 +42,16 @@ import {
   passwordResetDelivery,
 } from "@/lib/auth/password-reset-delivery";
 import {
-  createEmailVerificationToken,
+  createEmailVerificationCode,
+  EMAIL_VERIFICATION_CODE_TTL_MINUTES,
   EMAIL_VERIFICATION_RATE_WINDOW_MINUTES,
-  EMAIL_VERIFICATION_TOKEN_TTL_HOURS,
+  EMAIL_VERIFICATION_ATTEMPT_WINDOW_MINUTES,
+  hashEmailVerificationCode,
   hashEmailVerificationToken,
+  isEmailVerificationCode,
+  MAX_EMAIL_VERIFICATION_ATTEMPTS_PER_WINDOW,
   MAX_EMAIL_VERIFICATION_REQUESTS_PER_WINDOW,
+  verifyEmailVerificationCode,
 } from "@/lib/auth/email-verification";
 import {
   deliverEmailVerification,
@@ -135,13 +140,13 @@ function duplicateTargetIncludes(
 type PendingEmailVerification = {
   email: string;
   expiresAt: Date;
-  token: string;
+  code: string;
 } | null;
 
 /** Schedule email work after the response and log only redacted delivery metadata. */
 function scheduleEmailVerificationDelivery(
   pendingDelivery: PendingEmailVerification,
-  route: "/sign-up" | "/verify-email",
+  route: "/sign-up" | "/verify-email" | "/sign-in",
 ) {
   after(async () => {
     if (!pendingDelivery) return;
@@ -163,6 +168,39 @@ function scheduleEmailVerificationDelivery(
         timestamp: new Date().toISOString(),
       });
     }
+  });
+}
+
+
+/**
+ * Account-bound, rate-limited one-time code issuance. Never disclose whether
+ * an email exists; callers use the same neutral feedback for every outcome.
+ */
+async function issueVerificationCode(email: string): Promise<PendingEmailVerification> {
+  if (!hasDatabaseUrl() || !isEmailVerificationDeliveryConfigured()) return null;
+  return getPrisma().$transaction(async (tx) => {
+    const user = await tx.user.findUnique({
+      select: { id: true, email: true, emailVerifiedAt: true, isActive: true },
+      where: { email },
+    });
+    if (!user || !user.isActive || user.emailVerifiedAt) return null;
+    const windowStart = new Date(Date.now() - EMAIL_VERIFICATION_RATE_WINDOW_MINUTES * 60_000);
+    const requests = await tx.emailVerificationToken.count({
+      where: { createdAt: { gt: windowStart }, userId: user.id },
+    });
+    if (requests >= MAX_EMAIL_VERIFICATION_REQUESTS_PER_WINDOW) return null;
+    const code = createEmailVerificationCode();
+    const tokenHash = await hashEmailVerificationCode(code);
+    const now = new Date();
+    await tx.emailVerificationToken.updateMany({
+      data: { consumedAt: now },
+      where: { userId: user.id, consumedAt: null },
+    });
+    const expiresAt = new Date(now.getTime() + EMAIL_VERIFICATION_CODE_TTL_MINUTES * 60_000);
+    await tx.emailVerificationToken.create({
+      data: { userId: user.id, tokenHash, expiresAt },
+    });
+    return { email: user.email, expiresAt, code };
   });
 }
 
@@ -238,6 +276,8 @@ export async function signUpAction(
   }
 
   const passwordHash = await hashPassword(parsed.data.password);
+  const verificationCode = createEmailVerificationCode();
+  const verificationHash = await hashEmailVerificationCode(verificationCode);
 
   let createdUserId: string;
   let pendingVerification: Exclude<PendingEmailVerification, null>;
@@ -326,14 +366,13 @@ export async function signUpAction(
         },
       });
 
-      const token = createEmailVerificationToken();
       const expiresAt = new Date(
-        Date.now() + EMAIL_VERIFICATION_TOKEN_TTL_HOURS * 60 * 60 * 1000,
+        Date.now() + EMAIL_VERIFICATION_CODE_TTL_MINUTES * 60_000,
       );
       await tx.emailVerificationToken.create({
         data: {
           expiresAt,
-          tokenHash: hashEmailVerificationToken(token),
+          tokenHash: verificationHash,
           userId: user.id,
         },
       });
@@ -342,7 +381,7 @@ export async function signUpAction(
         email: parsed.data.email,
         expiresAt,
         status: "created" as const,
-        token,
+        code: verificationCode,
         userId: user.id,
       };
     });
@@ -371,7 +410,7 @@ export async function signUpAction(
     pendingVerification = {
       email: transactionResult.email,
       expiresAt: transactionResult.expiresAt,
-      token: transactionResult.token,
+      code: transactionResult.code,
     };
   } catch (error: unknown) {
     if (duplicateTargetIncludes(error, "email")) {
@@ -410,7 +449,7 @@ export async function signUpAction(
     entityType: "user",
   });
   scheduleEmailVerificationDelivery(pendingVerification, "/sign-up");
-  redirect("/verify-email?status=sent");
+  redirect(`/verify-email?status=sent&email=${encodeURIComponent(parsed.data.email)}`);
 }
 
 export async function signInAction(
@@ -479,11 +518,14 @@ export async function signInAction(
     !user.emailVerifiedAt &&
     user.accountClassification !== "INTERNAL_ADMIN"
   ) {
-    return {
-      message: "Verify your email address before signing in. You can request a new verification link below.",
-      status: "error",
-      values,
-    };
+    let pendingCode: PendingEmailVerification = null;
+    try {
+      pendingCode = await issueVerificationCode(parsed.data.email);
+    } catch (error) {
+      logServerDataError({ error, operation: "auth.email_code.sign_in", route: "/sign-in" });
+    }
+    scheduleEmailVerificationDelivery(pendingCode, "/sign-in");
+    redirect(`/verify-email?email=${encodeURIComponent(parsed.data.email)}&status=${pendingCode ? "sent" : "pending"}`);
   }
 
   const access = evaluateAccountAccess(user);
@@ -535,7 +577,116 @@ export async function signInAction(
   redirect(nextPath);
 }
 
+
+/**
+ * Verify a six-digit code plus its account email. Keep old link redemption
+ * available briefly for emails issued before the rollout; new emails use
+ * code-only verification.
+ */
 export async function verifyEmailAction(
+  state: EmailVerificationFormState,
+  formData: FormData,
+): Promise<EmailVerificationFormState> {
+  const code = formValue(formData, "code");
+  if (!code) {
+    if (formValue(formData, "token")) return verifyLegacyEmailLinkAction(state, formData);
+    return { message: "Enter the six-digit code from your email.", status: "error" };
+  }
+  const email = formValue(formData, "email").toLowerCase();
+  if (!emailSchema.safeParse(email).success || !isEmailVerificationCode(code)) {
+    return { message: "Enter your email and a six-digit code.", status: "error" };
+  }
+  if (!hasDatabaseUrl()) {
+    return { message: "Verification is temporarily unavailable.", status: "error" };
+  }
+
+  const now = new Date();
+  let verifiedUserId: string | null = null;
+  try {
+    verifiedUserId = await getPrisma().$transaction(async (tx) => {
+      const user = await tx.user.findUnique({
+        select: { id: true, isActive: true, emailVerifiedAt: true },
+        where: { email },
+      });
+      if (!user || !user.isActive || user.emailVerifiedAt) return null;
+
+      // Each failed guess is counted in the database, not in ephemeral
+      // serverless memory. A code can only be guessed five times per window.
+      const windowStart = new Date(now.getTime() - EMAIL_VERIFICATION_ATTEMPT_WINDOW_MINUTES * 60_000);
+      const attempts = await tx.auditLog.count({
+        where: {
+          action: "auth.email_code_attempt",
+          actorId: user.id,
+          createdAt: { gt: windowStart },
+        },
+      });
+      if (attempts >= MAX_EMAIL_VERIFICATION_ATTEMPTS_PER_WINDOW) return null;
+
+      const grant = await tx.emailVerificationToken.findFirst({
+        select: { id: true, tokenHash: true, expiresAt: true, consumedAt: true },
+        where: { userId: user.id, consumedAt: null },
+        orderBy: { createdAt: "desc" },
+      });
+      const matches = Boolean(
+        grant &&
+        grant.expiresAt > now &&
+        await verifyEmailVerificationCode(code, grant.tokenHash),
+      );
+      await tx.auditLog.create({
+        data: {
+          action: "auth.email_code_attempt",
+          actorId: user.id,
+          entityId: user.id,
+          entityType: "user",
+          metadata: { successful: matches },
+        },
+      });
+      if (!grant || !matches) return null;
+
+      const claimed = await tx.emailVerificationToken.updateMany({
+        data: { consumedAt: now },
+        where: { id: grant.id, consumedAt: null, expiresAt: { gt: now } },
+      });
+      if (claimed.count !== 1) return null;
+
+      await tx.user.update({
+        data: { emailVerifiedAt: now, verificationStatus: "VERIFIED" },
+        where: { id: user.id },
+      });
+      await tx.emailVerificationToken.updateMany({
+        data: { consumedAt: now },
+        where: { userId: user.id, consumedAt: null },
+      });
+      return user.id;
+    });
+  } catch (error) {
+    logServerDataError({ error, operation: "auth.email_code.verify", route: "/verify-email" });
+    return { message: "Verification is temporarily unavailable. Try again.", status: "error" };
+  }
+
+  if (!verifiedUserId) {
+    return { message: "Code incorrect, expired, or too many attempts. Request a new code if needed.", status: "error" };
+  }
+  try {
+    await writeAuditLog({
+      action: "auth.email_verified",
+      actorId: verifiedUserId,
+      entityId: verifiedUserId,
+      entityType: "user",
+    });
+  } catch (error) {
+    logServerDataError({ error, operation: "auth.email_code.audit", route: "/verify-email" });
+  }
+  try {
+    await createSession(verifiedUserId);
+  } catch (error) {
+    logServerDataError({ error, operation: "auth.email_code.session", route: "/verify-email" });
+    redirect("/sign-in?verified=1");
+  }
+  redirect("/app");
+}
+
+async function verifyLegacyEmailLinkAction(
   _state: EmailVerificationFormState,
   formData: FormData,
 ): Promise<EmailVerificationFormState> {
@@ -669,58 +820,15 @@ export async function resendEmailVerificationAction(
   }
 
   let pendingDelivery: PendingEmailVerification = null;
-  if (hasDatabaseUrl() && isEmailVerificationDeliveryConfigured()) {
-    try {
-      pendingDelivery = await getPrisma().$transaction(async (tx) => {
-        const user = await tx.user.findUnique({
-          select: { email: true, emailVerifiedAt: true, id: true, isActive: true },
-          where: { email: parsed.data },
-        });
-        if (!user || !user.isActive || user.emailVerifiedAt) return null;
-
-        const windowStart = new Date(
-          Date.now() - EMAIL_VERIFICATION_RATE_WINDOW_MINUTES * 60 * 1000,
-        );
-        const recentRequests = await tx.emailVerificationToken.count({
-          where: {
-            createdAt: { gt: windowStart },
-            userId: user.id,
-          },
-        });
-        if (recentRequests >= MAX_EMAIL_VERIFICATION_REQUESTS_PER_WINDOW) {
-          return null;
-        }
-
-        const token = createEmailVerificationToken();
-        const expiresAt = new Date(
-          Date.now() + EMAIL_VERIFICATION_TOKEN_TTL_HOURS * 60 * 60 * 1000,
-        );
-        await tx.emailVerificationToken.updateMany({
-          data: { consumedAt: new Date() },
-          where: { consumedAt: null, userId: user.id },
-        });
-        await tx.emailVerificationToken.create({
-          data: {
-            expiresAt,
-            tokenHash: hashEmailVerificationToken(token),
-            userId: user.id,
-          },
-        });
-        return { email: user.email, expiresAt, token };
-      });
-    } catch (error) {
-      logServerDataError({
-        error,
-        operation: "auth.email_verification.resend",
-        route: "/verify-email",
-      });
-    }
+  try {
+    pendingDelivery = await issueVerificationCode(parsed.data);
+  } catch (error) {
+    logServerDataError({ error, operation: "auth.email_code.resend", route: "/verify-email" });
   }
 
-  // Same response and same scheduling shape for existing and unknown addresses.
   scheduleEmailVerificationDelivery(pendingDelivery, "/verify-email");
   return {
-    message: "If this email belongs to an active account that still needs verification, a new link will be sent.",
+    message: "If this account still needs verification, a new six-digit code will be sent.",
     status: "success",
   };
 }
