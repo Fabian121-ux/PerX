@@ -1,47 +1,40 @@
-# Email verification for public registration
+# Email verification for PtahX public accounts
 
-**Implemented:** 2026-11-12  
-**Authentication store:** Prisma `User` and `Session` (Supabase Auth migration is not part of this change).
+**Original implementation:** 2026-11-12  
+**Code-based UX updated:** 2026-11-25  
+**Authentication:** Next.js server actions, Prisma User + Session, PostgreSQL on Supabase (not Supabase Auth).
 
-## Registration flow
+## User experience
 
-1. The registration action checks registration capacity and rejects duplicate email/username values.
-2. In production, it refuses to create a public account until a real outbound email provider is configured.
-3. The account and its 24-hour verification-token digest are created in one database transaction. The raw token is never stored.
-4. No app session is issued at registration. The user is sent to `/verify-email` and must confirm the address before they can sign in.
-5. The email opens a confirmation page. The user must press **Verify email address** to consume the grant. Merely opening the email link does not consume it, which protects against link-prefetching scanners.
-6. The grant is consumed atomically. The matching account is marked `emailVerifiedAt` and `verificationStatus=VERIFIED`, then the user is sent to sign-in.
+1. New users create accounts with name, username, email, password, and terms acceptance.
+2. The server creates a pending user and a single-use **six-digit code** whose database expiry is **five minutes** after issuance. No session is issued yet.
+3. Resend emails contain the numeric code only—never an activation URL.
+4. The user is redirected to `/verify-email?status=sent&email=...`. This is a compact form: email (prefilled), code input, one primary **Verify and continue** button. The secondary resend control is collapsed.
+5. On successful verification, the server consumes the code and marks the user verified in one transaction; then it creates the session and redirects directly to `/app`.
+6. When an unverified user enters valid sign-in credentials, the app opens the code page, issuing a new code if there isn't already a valid one. Existing verified accounts and internal admins keep normal password sign-in.
 
-## Recovery and abuse controls
+## Security and abuse controls
 
-- Verification grants are SHA-256 hashed before storage, single-use, and expire after 24 hours.
-- A resend request is limited to three per account in a rolling 30-minute window.
-- Resend responses do not disclose whether an email address belongs to an account.
-- Previous unused grants are retired when a fresh link is issued.
-- Public accounts without verified email are denied sign-in.
-- The existing internal administrator classification is exempted from the new sign-in check so the existing admin account and password remain usable.
-- Delivery logs contain provider/status/reason metadata only. They never include email addresses, verification links, or raw tokens.
-- Local development uses the existing console provider. Production does not treat a console log as successful delivery.
+- Each code is cryptographically generated via `crypto.randomInt` and stored **only as a bcrypt hash**, not plaintext.
+- The email and submitted code are required together. Codes are single-use and expire at the PostgreSQL `expiresAt` timestamp after five minutes.
+- **Five verification guesses per account per rolling five-minute window**. Failed guesses are counted as redacted `AuditLog` records; no plaintext codes, email content, or tokens in logs.
+- Per-account PostgreSQL transaction advisory locks serialize verification attempts, preventing parallel guesses from bypassing the per-account attempt limit. They also serialize issuance/rate-limit decisions.
+- At most **six generated verification codes per account per 30-minute window**; this includes the original signup code.
+- Explicit resends invalidate older pending codes; repeated sign-ins do **not** replace still-active codes.
+- Unknown addresses receive neutral resend responses, avoiding account-existence disclosures.
+- Existing unexpired 24-hour email links issued before the rollout retain server-side legacy redemption temporarily; no new links are sent. Remove that handler after all old grants have expired.
+- `createSession` is called only after the account's email has been marked verified; session and account enforcement checks still apply.
+- Browser/regression tests must use a disposable loopback database; no production user or email mutations.
 
-## Production configuration required
+## Delivery and operations
 
-The existing email-provider abstraction currently selects Resend only when both of these server-side Vercel variables are present:
+- Production signup is blocked if Resend email delivery isn't configured.
+- `RESEND_API_KEY` is server-only. The verified sender identity is `PtahX <hello@ptahx.com>`.
+- Sending occurs via Next.js `after()`, outside the visible request; delivery provider failures are logged only as safe provider/status metadata.
+- The user can request a new code in the collapsed **Didn't receive a code?** panel; resend is intentionally rate-limited.
+- E2E acceptance should prove: six-digit entry, five-minute expiry, successful session redirect, replay blocked, rejected expired code, and behavior on narrow screens.
+- This does **not** add a second factor for every established user login. The code verifies unverified account email ownership; existing verified members sign in using their password.
 
-- `RESEND_API_KEY` — secret API key; set as encrypted/sensitive in Vercel and never expose it to the browser.
-- `EMAIL_FROM` — a verified sender such as `PtahX <hello@ptahx.com>`.
+## Compatibility
 
-The production app origin must be:
-
-- `NEXT_PUBLIC_APP_URL=https://www.ptahx.com`
-
-The sender domain must be verified with the email provider and its requested DNS records published (SPF and DKIM; DMARC is recommended). Configure the values for both Production and Preview, then create a new deployment so the runtime receives them.
-
-**Observed Vercel configuration at implementation time:** the project had neither `RESEND_API_KEY` nor `EMAIL_FROM`. Therefore Production verification delivery is not yet live. With the current guard, public registration returns a clear temporary-unavailable error instead of creating an account that cannot receive its verification link.
-
-## Existing administrator protection
-
-The existing administrator is still held in the Prisma `User` table, with the existing password hash and sessions. This change does not migrate the admin to `auth.users`, change the password hash, revoke sessions, or require that account to re-register. The admin is exempt from the new public-account email-verification sign-in requirement.
-
-## Scope boundary
-
-This implements email verification within the app's current Prisma-backed authentication system, reusing the repo's transactional email provider interface. It does **not** complete the previously discussed migration of authentication to Supabase Auth, configure Supabase Auth SMTP, or change the password/session store. Those are separate changes requiring a verified SMTP sender and a deliberate migration plan for the existing administrator.
+The Prisma schema and `EmailVerificationToken` table remain unchanged; `tokenHash` stores bcrypt hashes for newly issued numeric codes and legacy SHA-256 hashes only for grants issued before the rollout. No data migration required.
