@@ -116,7 +116,7 @@ jobs:
           node --import tsx --input-type=module -e 'import { enforceTestDatabaseIsolation } from "./tests/e2e/utils/db-guard.ts"; enforceTestDatabaseIsolation();'
           npm run db:local -- migrate deploy
       - name: Verify real reaction UI and persistence on desktop and mobile
-        run: npx playwright test tests/e2e/social-reactions.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
+        run: npx playwright test tests/e2e/social-reactions.spec.ts tests/e2e/email-code.spec.ts tests/e2e/auth-forms.spec.ts --project=chromium --project=mobile-chrome --workers=1 --retries=0
         env:
           NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
           PERX_DATA_MODE: database
