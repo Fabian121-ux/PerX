@@ -523,6 +523,7 @@ describe("Auth Actions", () => {
     it("verifies the correct code, consumes it once, and creates an active session", async () => {
       const digest = await hashEmailVerificationCode("123456");
       const tx = {
+        $queryRaw: vi.fn().mockResolvedValue([{ locked: 1 }]),
         user: {
           findUnique: vi.fn().mockResolvedValue({ id: "user_1", emailVerifiedAt: null, isActive: true }),
           update: vi.fn().mockResolvedValue({ id: "user_1" }),
@@ -556,6 +557,7 @@ describe("Auth Actions", () => {
     it("rejects an expired code and does not verify the account", async () => {
       const digest = await hashEmailVerificationCode("123456");
       const tx = {
+        $queryRaw: vi.fn().mockResolvedValue([{ locked: 1 }]),
         user: {
           findUnique: vi.fn().mockResolvedValue({ id: "user_1", emailVerifiedAt: null, isActive: true }),
           update: vi.fn(),
@@ -582,6 +584,7 @@ describe("Auth Actions", () => {
 
     it("caps code guesses at five per five minutes even across server instances", async () => {
       const tx = {
+        $queryRaw: vi.fn().mockResolvedValue([{ locked: 1 }]),
         user: { findUnique: vi.fn().mockResolvedValue({ id: "user_1", emailVerifiedAt: null, isActive: true }) },
         auditLog: { count: vi.fn().mockResolvedValue(5), create: vi.fn() },
         emailVerificationToken: { findFirst: vi.fn(), updateMany: vi.fn() },
