@@ -176,7 +176,7 @@ function scheduleEmailVerificationDelivery(
  * Account-bound, rate-limited one-time code issuance. Never disclose whether
  * an email exists; callers use the same neutral feedback for every outcome.
  */
-async function issueVerificationCode(email: string): Promise<PendingEmailVerification> {
+async function issueVerificationCode(email: string, force = false): Promise<PendingEmailVerification> {
   if (!hasDatabaseUrl() || !isEmailVerificationDeliveryConfigured()) return null;
   return getPrisma().$transaction(async (tx) => {
     const user = await tx.user.findUnique({
@@ -184,6 +184,15 @@ async function issueVerificationCode(email: string): Promise<PendingEmailVerific
       where: { email },
     });
     if (!user || !user.isActive || user.emailVerifiedAt) return null;
+    // A fresh code from signup remains valid; another sign-in must not
+    // silently invalidate it. Explicit "resend" is allowed to replace it.
+    if (!force) {
+      const active = await tx.emailVerificationToken.findFirst({
+        select: { id: true },
+        where: { userId: user.id, consumedAt: null, expiresAt: { gt: new Date() } },
+      });
+      if (active) return null;
+    }
     const windowStart = new Date(Date.now() - EMAIL_VERIFICATION_RATE_WINDOW_MINUTES * 60_000);
     const requests = await tx.emailVerificationToken.count({
       where: { createdAt: { gt: windowStart }, userId: user.id },
@@ -821,7 +830,7 @@ export async function resendEmailVerificationAction(
 
   let pendingDelivery: PendingEmailVerification = null;
   try {
-    pendingDelivery = await issueVerificationCode(parsed.data);
+    pendingDelivery = await issueVerificationCode(parsed.data, true);
   } catch (error) {
     logServerDataError({ error, operation: "auth.email_code.resend", route: "/verify-email" });
   }
