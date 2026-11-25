@@ -1,70 +1,36 @@
-const PTAHX_LOGO_URL =
-  "https://www.ptahx.com/icons/favicon-48x48.png";
-
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
+const PTAHX_LOGO_URL = "https://www.ptahx.com/icons/favicon-48x48.png";
 
 export function buildEmailVerificationEmail({
   expiresAt,
-  verificationUrl,
+  code,
 }: {
   expiresAt: Date;
-  verificationUrl: string;
+  code: string;
 }) {
-  const hours = Math.max(
-    1,
-    Math.ceil((expiresAt.getTime() - Date.now()) / 3_600_000),
-  );
-  const safeUrl = escapeHtml(verificationUrl);
-
   const text = [
-    "Welcome to PtahX.",
+    "Your PtahX verification code:",
     "",
-    "Confirm that this email address belongs to you to activate your account:",
-    verificationUrl,
+    code,
     "",
-    `This link expires in about ${hours} hours and can be used once.`,
-    "",
-    "If you did not create a PtahX account, you can ignore this email.",
+    "Enter this code on the verification page. It expires 5 minutes after it was issued and can only be used once.",
+    "If you did not request it, ignore this email.",
   ].join("\n");
 
   const html = [
-    '<div style="margin:0;padding:32px 16px;background:#f4f6fa;font-family:Arial,Helvetica,sans-serif;color:#182230">',
-    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e5eaf1;border-radius:16px">',
-    "<tr>",
-    '<td style="padding:32px 36px 8px">',
-    '<table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr>',
-    `<td style="vertical-align:middle;padding-right:10px"><img src="${PTAHX_LOGO_URL}" width="36" height="36" alt="" style="display:block;width:36px;height:36px;border:0"></td>`,
-    '<td style="vertical-align:middle;font-size:22px;font-weight:700;letter-spacing:-.5px;color:#172033">PtahX</td>',
-    "</tr></table>",
-    "</td>",
-    "</tr>",
-    "<tr>",
-    '<td style="padding:24px 36px 36px">',
-    '<p style="margin:0 0 12px;font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#52637a">Welcome to PtahX</p>',
-    '<h1 style="margin:0 0 16px;font-size:28px;line-height:1.2;font-weight:700;color:#172033">Verify your email</h1>',
-    '<p style="margin:0 0 24px;font-size:16px;line-height:1.65;color:#465468">Confirm this email address to activate your PtahX account and join the startup ecosystem.</p>',
-    `<p style="margin:0 0 24px"><a href="${safeUrl}" style="display:inline-block;padding:14px 22px;border-radius:9px;background:#2457d6;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none">Verify email address</a></p>`,
-    `<p style="margin:0 0 16px;font-size:13px;line-height:1.6;color:#64748b">Or copy this link into your browser:<br><a href="${safeUrl}" style="color:#2457d6;word-break:break-all">${safeUrl}</a></p>`,
-    `<p style="margin:0 0 24px;font-size:13px;line-height:1.6;color:#64748b">For your security, this link expires in about ${hours} hours and can only be used once.</p>`,
-    '<hr style="height:1px;border:0;background:#e8edf3;margin:0 0 18px">',
-    '<p style="margin:0;font-size:13px;line-height:1.6;color:#64748b">If you did not create a PtahX account, you can ignore this email. Your account will not be activated.</p>',
-    "</td>",
-    "</tr>",
-    "</table>",
-    '<p style="margin:18px auto 0;max-width:560px;text-align:center;font-size:12px;color:#8a97a8">PtahX · Building connections across the startup ecosystem</p>',
-    "</div>",
+    '<div style="margin:0;padding:28px 16px;background:#f4f6fa;font-family:Arial,Helvetica,sans-serif;color:#182230">',
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #e5eaf1;border-radius:16px">',
+    '<tr><td style="padding:30px">',
+    '<div style="display:flex;align-items:center;gap:10px"><img src="' + PTAHX_LOGO_URL + '" width="36" height="36" alt="" style="width:36px;height:36px;border:0"><span style="font-size:20px;font-weight:700">PtahX</span></div>',
+    '<h1 style="font-size:26px;margin:24px 0 8px">Verify your email</h1>',
+    '<p style="font-size:15px;line-height:1.6;color:#52637a">Copy this code into PtahX to activate your account.</p>',
+    '<p style="margin:24px 0;padding:18px;border-radius:12px;background:#f0f4ff;color:#173477;font-size:32px;letter-spacing:9px;text-align:center;font-weight:800;font-family:Arial,Helvetica,sans-serif">' + code + '</p>',
+    '<p style="color:#52637a;font-size:13px">Expires in <strong>5 minutes</strong>. The code can only be used once.</p>',
+    '<p style="color:#64748b;font-size:12px;margin-top:26px">If you did not request a PtahX account, you can ignore this email.</p>',
+    '</td></tr></table></div>',
   ].join("");
 
-  return {
-    html,
-    subject: "Verify your PtahX email address",
-    text,
-  };
+  // The timestamp is accepted for transport/testing; TTL is enforced by the
+  // token record in PostgreSQL, not by message copy or the client clock.
+  void expiresAt;
+  return { html, subject: "Your PtahX verification code", text };
 }
