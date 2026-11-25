@@ -53,7 +53,7 @@ test("email code verifies once, creates a session, and cannot be replayed", asyn
     await page.goto(`/verify-email?email=${encodeURIComponent(email)}`);
     await page.getByLabel("Verification code").fill(code);
     await page.getByRole("button", { name: "Verify and continue" }).click();
-    await expect(page.getByRole("alert")).toContainText(/incorrect|expired|attempts/i);
+    await expect(page.getByRole("alert").filter({ hasText: /incorrect|expired|attempts/i })).toContainText(/incorrect|expired|attempts/i);
     expect(new URL(page.url()).pathname).toBe("/verify-email");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   } finally {
@@ -84,7 +84,7 @@ test("an expired code cannot activate an account", async ({ page }) => {
     await page.goto(`/verify-email?email=${encodeURIComponent(email)}`);
     await page.getByLabel("Verification code").fill("654321");
     await page.getByRole("button", { name: "Verify and continue" }).click();
-    await expect(page.getByRole("alert")).toContainText(/incorrect|expired|attempts/i);
+    await expect(page.getByRole("alert").filter({ hasText: /incorrect|expired|attempts/i })).toContainText(/incorrect|expired|attempts/i);
     const user = await db.query<{ emailVerifiedAt: Date | null }>('SELECT "emailVerifiedAt" FROM "User" WHERE id=$1',[userId]);
     expect(user.rows[0].emailVerifiedAt).toBeNull();
   } finally {
