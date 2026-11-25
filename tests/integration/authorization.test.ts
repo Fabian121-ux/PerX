@@ -268,7 +268,7 @@ describeWithTestDatabase("Server-Side Authorization Rules", () => {
 
       await expectRedirect(
         signUpAction({ status: "idle" }, form),
-        "/verify-email?status=sent",
+        `/verify-email?status=sent&email=${encodeURIComponent(email)}`,
       );
       const user = await f.prisma.user.findUniqueOrThrow({
         where: { email },

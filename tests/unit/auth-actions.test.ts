@@ -6,6 +6,7 @@ import {
   verifyEmailAction,
   resendEmailVerificationAction,
 } from "@/features/auth/actions";
+import { hashEmailVerificationCode } from "@/lib/auth/email-verification";
 import { getResolvedDataMode, getSignupConfig, hasDatabaseUrl } from "@/lib/env";
 import { getPrisma } from "@/lib/db/prisma";
 import * as session from "@/lib/auth/session";
@@ -200,7 +201,7 @@ describe("Auth Actions", () => {
       formData.set("roles", "ADMIN");
 
       await expect(signUpAction(idleState, formData)).rejects.toThrow(
-        "REDIRECT:/verify-email?status=sent",
+        "REDIRECT:/verify-email?status=sent&email=test%40test.com",
       );
       expect(tx.notification.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -325,7 +326,7 @@ describe("Auth Actions", () => {
       formData.set("terms", "on");
 
       await expect(signUpAction(idleState, formData)).rejects.toThrow(
-        "REDIRECT:/verify-email?status=sent",
+        "REDIRECT:/verify-email?status=sent&email=test%40test.com",
       );
       expect(tx.emailVerificationToken.create).toHaveBeenCalled();
       expect(tx.$executeRawUnsafe).not.toHaveBeenCalled();
@@ -487,10 +488,9 @@ describe("Auth Actions", () => {
       formData.set("email", "newuser@test.com");
       formData.set("password", "validpass");
 
-      await expect(signInAction(idleState, formData)).resolves.toMatchObject({
-        message: "Verify your email address before signing in. You can request a new verification link below.",
-        status: "error",
-      });
+      await expect(signInAction(idleState, formData)).rejects.toThrow(
+        "REDIRECT:/verify-email?email=newuser%40test.com&status=pending",
+      );
       expect(session.createSession).not.toHaveBeenCalled();
     });
 
@@ -520,6 +520,84 @@ describe("Auth Actions", () => {
   });
 
   describe("email verification", () => {
+    it("verifies the correct code, consumes it once, and creates an active session", async () => {
+      const digest = await hashEmailVerificationCode("123456");
+      const tx = {
+        $queryRaw: vi.fn().mockResolvedValue([{ locked: 1 }]),
+        user: {
+          findUnique: vi.fn().mockResolvedValue({ id: "user_1", emailVerifiedAt: null, isActive: true }),
+          update: vi.fn().mockResolvedValue({ id: "user_1" }),
+        },
+        auditLog: { count: vi.fn().mockResolvedValue(0), create: vi.fn().mockResolvedValue({}) },
+        emailVerificationToken: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: "code_1", tokenHash: digest, expiresAt: new Date(Date.now() + 5 * 60_000), consumedAt: null,
+          }),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        },
+      };
+      vi.mocked(getPrisma).mockReturnValue({
+        $transaction: vi.fn((callback) => callback(tx)),
+      } as never);
+      const formData = new FormData();
+      formData.set("email", "newuser@test.com");
+      formData.set("code", "123456");
+      await expect(verifyEmailAction(idleState, formData)).rejects.toThrow("REDIRECT:/app");
+      expect(session.createSession).toHaveBeenCalledWith("user_1");
+      expect(tx.emailVerificationToken.updateMany).toHaveBeenCalledTimes(2);
+      expect(tx.user.update).toHaveBeenCalledWith(expect.objectContaining({
+        where: { id: "user_1" },
+        data: expect.objectContaining({ verificationStatus: "VERIFIED" }),
+      }));
+      expect(tx.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({ action: "auth.email_code_attempt", metadata: { successful: true } }),
+      }));
+    });
+
+    it("rejects an expired code and does not verify the account", async () => {
+      const digest = await hashEmailVerificationCode("123456");
+      const tx = {
+        $queryRaw: vi.fn().mockResolvedValue([{ locked: 1 }]),
+        user: {
+          findUnique: vi.fn().mockResolvedValue({ id: "user_1", emailVerifiedAt: null, isActive: true }),
+          update: vi.fn(),
+        },
+        auditLog: { count: vi.fn().mockResolvedValue(0), create: vi.fn().mockResolvedValue({}) },
+        emailVerificationToken: {
+          findFirst: vi.fn().mockResolvedValue({
+            id: "expired", tokenHash: digest, expiresAt: new Date(Date.now() - 1), consumedAt: null,
+          }),
+          updateMany: vi.fn(),
+        },
+      };
+      vi.mocked(getPrisma).mockReturnValue({ $transaction: vi.fn((callback) => callback(tx)) } as never);
+      const data = new FormData();
+      data.set("email", "newuser@test.com");
+      data.set("code", "123456");
+      await expect(verifyEmailAction(idleState, data)).resolves.toMatchObject({
+        status: "error",
+        message: expect.stringContaining("expired"),
+      });
+      expect(tx.user.update).not.toHaveBeenCalled();
+      expect(session.createSession).not.toHaveBeenCalled();
+    });
+
+    it("caps code guesses at five per five minutes even across server instances", async () => {
+      const tx = {
+        $queryRaw: vi.fn().mockResolvedValue([{ locked: 1 }]),
+        user: { findUnique: vi.fn().mockResolvedValue({ id: "user_1", emailVerifiedAt: null, isActive: true }) },
+        auditLog: { count: vi.fn().mockResolvedValue(5), create: vi.fn() },
+        emailVerificationToken: { findFirst: vi.fn(), updateMany: vi.fn() },
+      };
+      vi.mocked(getPrisma).mockReturnValue({ $transaction: vi.fn((callback) => callback(tx)) } as never);
+      const data = new FormData();
+      data.set("email", "newuser@test.com");
+      data.set("code", "123456");
+      await expect(verifyEmailAction(idleState, data)).resolves.toMatchObject({ status: "error" });
+      expect(tx.emailVerificationToken.findFirst).not.toHaveBeenCalled();
+      expect(session.createSession).not.toHaveBeenCalled();
+    });
+
     it("consumes a valid verification token and activates the matching email", async () => {
       const tokenStore = {
         findUnique: vi.fn().mockResolvedValue({
@@ -625,7 +703,7 @@ describe("Auth Actions", () => {
       await expect(
         resendEmailVerificationAction({ status: "idle" }, formData),
       ).resolves.toMatchObject({
-        message: "If this email belongs to an active account that still needs verification, a new link will be sent.",
+        message: "If this account still needs verification, a new six-digit code will be sent.",
         status: "success",
       });
     });
