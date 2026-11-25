@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { SignInForm } from "@/components/auth/sign-in-form";
-import { BrandLogo } from "@/components/brand-logo";
 import { PublicPageShell } from "@/components/standard-page";
 import { Card } from "@/components/ui/card";
 import { FormNotice } from "@/components/ui/form-notice";
@@ -11,12 +10,11 @@ import { getCurrentUser } from "@/lib/auth/session";
 import type { AuthFormState } from "@/features/auth/actions";
 
 const errors: Record<string, string> = {
-  "database-not-configured": "Database configuration is missing.",
-  "invalid-credentials": "The email or password you entered is incorrect.",
-  "account-deactivated": "Your account has been deactivated.",
-  unavailable:
-    "The authentication service is temporarily unavailable. Please try again.",
-  "server-error": "An unexpected server error occurred. Please try again.",
+  "database-not-configured": "Sign-in is temporarily unavailable.",
+  "invalid-credentials": "The email or password is incorrect.",
+  "account-deactivated": "This account is deactivated.",
+  unavailable: "Sign-in is temporarily unavailable. Try again.",
+  "server-error": "Something went wrong. Try again.",
 };
 
 export default async function SignInPage({
@@ -32,19 +30,10 @@ export default async function SignInPage({
   }>;
 }) {
   const params = await searchParams;
-  const error = params.error
-    ? errors[params.error] || "An unexpected error occurred."
-    : null;
+  const error = params.error ? errors[params.error] || "Sign-in failed." : null;
   const nextPath = getSafeAuthRedirect(params.next || params.returnTo);
   const currentUser = await getCurrentUser().catch(() => null);
   if (currentUser) redirect(nextPath);
-
-  const isSignedOut = params.signedOut === "1";
-  // Completing a reset signs every session out, so the user lands here with no
-  // session and no other cue that it worked. Without this the flow ends in an
-  // unexplained bounce to a blank form.
-  const didResetPassword = params.passwordReset === "1";
-  const didVerifyEmail = params.verified === "1";
 
   const initialState: AuthFormState | undefined = error
     ? { message: error, status: "error" }
@@ -52,88 +41,29 @@ export default async function SignInPage({
 
   return (
     <PublicPageShell>
-      <main className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[.9fr_1.1fr] lg:px-8">
-        <section className="ptahx-hero-card hidden rounded-[24px] p-8 shadow-[var(--px-shadow-strong)] lg:grid">
-          <div>
-            <BrandLogo className="h-12" dark />
-            <div className="mt-10 max-w-sm">
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-100">
-                Secure access
-              </p>
-              <h2 className="mt-3 text-4xl font-black">
-                Deals start with verified access.
-              </h2>
-              <p className="mt-4 text-sm leading-7 text-blue-50">
-                Sign in to manage opportunities, proposals, messages,
-                milestones, simulated deal states and reputation from one
-                connected workspace.
-              </p>
-            </div>
+      <main className="mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-md place-items-center px-4 py-8 sm:px-6">
+        <Card className="w-full">
+          <h1 className="text-2xl font-bold text-[color:var(--px-text)]">Sign in to PtahX</h1>
+          <p className="mt-2 text-sm text-[color:var(--px-text-muted)]">
+            Enter your email and password.
+          </p>
+
+          {params.verified === "1" && !error && (
+            <FormNotice className="mt-4" tone="success">Email verified. You can sign in.</FormNotice>
+          )}
+          {params.passwordReset === "1" && !error && (
+            <FormNotice className="mt-4" tone="success">Password updated. Sign in again.</FormNotice>
+          )}
+          {params.signedOut === "1" && !error && params.passwordReset !== "1" && (
+            <FormNotice className="mt-4" tone="success">Signed out.</FormNotice>
+          )}
+
+          <SignInForm initialState={initialState} nextPath={nextPath} />
+          <div className="mt-5 flex flex-wrap justify-between gap-3 text-sm">
+            <Link className="font-semibold text-[color:var(--px-primary)]" href="/password-recovery">Forgot password?</Link>
+            <Link className="font-semibold text-[color:var(--px-primary)]" href="/sign-up">Create account</Link>
           </div>
-          <div className="mt-auto grid gap-3">
-            {["Discovery", "Proposal", "Deal", "Trust"].map((item) => (
-              <div
-                className="flex items-center justify-between rounded-[var(--px-radius-sm)] bg-white/10 px-4 py-3 ring-1 ring-white/10"
-                key={item}
-              >
-                <span className="font-semibold">{item}</span>
-                <span className="rounded-full bg-white/14 px-2 py-1 text-xs font-bold text-white">
-                  Ready
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-        <section className="grid place-items-center">
-          <Card className="w-full max-w-md">
-            <p className="text-sm font-semibold uppercase tracking-wide text-[color:var(--px-primary)]">
-              Sign in
-            </p>
-            <h1 className="mt-2 text-3xl font-bold text-[color:var(--px-text)]">
-              Welcome back to PtahX
-            </h1>
-
-            {didVerifyEmail && !error && (
-              <FormNotice className="mb-4 mt-4" tone="success">
-                Your email is verified. You can now sign in.
-              </FormNotice>
-            )}
-
-            {didResetPassword && !error && (
-              <FormNotice className="mb-4 mt-4" tone="success">
-                Your password has been updated. Sign in with your new password.
-              </FormNotice>
-            )}
-
-            {isSignedOut && !error && !didResetPassword && (
-              <FormNotice className="mb-4 mt-4" tone="success">
-                You have been signed out successfully.
-              </FormNotice>
-            )}
-
-            <SignInForm initialState={initialState} nextPath={nextPath} />
-            <div className="mt-5 flex items-center justify-between text-sm">
-              <Link
-                className="font-medium text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"
-                href="/password-recovery"
-              >
-                Recover password
-              </Link>
-              <Link
-                className="font-medium text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"
-                href="/verify-email"
-              >
-                Verify or resend email
-              </Link>
-              <Link
-                className="font-medium text-[color:var(--px-primary)] hover:text-[color:var(--px-primary-strong)]"
-                href="/sign-up"
-              >
-                Create account
-              </Link>
-            </div>
-          </Card>
-        </section>
+        </Card>
       </main>
     </PublicPageShell>
   );
