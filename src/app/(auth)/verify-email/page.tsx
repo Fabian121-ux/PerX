@@ -16,7 +16,8 @@ export default async function VerifyEmailPage({
   const params = await searchParams;
   const email = typeof params.email === "string" ? params.email : "";
   const legacyToken = typeof params.token === "string" ? params.token : undefined;
-  const configured = isEmailVerificationDeliveryConfigured();
+  // Development uses the console sender for local browser acceptance tests.
+  const configured = isEmailVerificationDeliveryConfigured() || process.env.NODE_ENV !== "production";
 
   return (
     <PublicPageShell>
