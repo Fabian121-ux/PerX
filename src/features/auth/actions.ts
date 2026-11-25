@@ -184,6 +184,9 @@ async function issueVerificationCode(email: string, force = false): Promise<Pend
       where: { email },
     });
     if (!user || !user.isActive || user.emailVerifiedAt) return null;
+    // Serialize issuance for one account across serverless instances, so
+    // concurrent resend requests cannot bypass the per-account rate limit.
+    await tx.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(hashtext(${user.id}))`;
     // A fresh code from signup remains valid; another sign-in must not
     // silently invalidate it. Explicit "resend" is allowed to replace it.
     if (!force) {
@@ -618,6 +621,9 @@ export async function verifyEmailAction(
         where: { email },
       });
       if (!user || !user.isActive || user.emailVerifiedAt) return null;
+      // Serialize competing guesses: without an account-scoped DB lock,
+      // parallel attempts could all read the same count and bypass the cap.
+      await tx.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(hashtext(${user.id}))`;
 
       // Each failed guess is counted in the database, not in ephemeral
       // serverless memory. A code can only be guessed five times per window.
