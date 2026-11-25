@@ -35,6 +35,18 @@ test.describe("auth form experience", () => {
     );
   });
 
+  test("email verification presents one primary code action and a collapsed resend", async ({ page }) => {
+    await page.goto("/verify-email?status=sent&email=member%40example.com");
+    await expect(page.getByRole("heading", { name: "Verify your email" })).toBeVisible();
+    await expect(page.getByText(/valid for 5 minutes/i)).toBeVisible();
+    await expect(page.getByLabel("Email address").first()).toHaveValue("member@example.com");
+    await expect(page.getByLabel("Verification code")).toHaveAttribute("maxlength", "6");
+    await expect(page.getByRole("button", { name: "Verify and continue" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Send a new code" })).not.toBeVisible();
+    await page.getByText("Didn't receive a code?").click();
+    await expect(page.getByRole("button", { name: "Send a new code" })).toBeVisible();
+  });
+
   test("sign-in sanitizes external callbacks and supports password visibility", async ({
     page,
   }) => {
