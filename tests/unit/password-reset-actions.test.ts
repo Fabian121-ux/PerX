@@ -7,7 +7,9 @@ const mocks = vi.hoisted(() => ({
    * throws outside a request scope, which is why this mock is required at all.
    */
   afterTasks: [] as Array<() => unknown>,
-  consumePasswordResetToken: vi.fn(),
+  tokenFindFirst: vi.fn(),
+  tokenFindUnique: vi.fn(),
+  tokenUpdateMany: vi.fn(),
   deliver: vi.fn(),
   hasExceededResetRequestLimit: vi.fn(),
   hashPassword: vi.fn(),
@@ -38,8 +40,8 @@ vi.mock("@/lib/auth/password", () => ({
   hashPassword: mocks.hashPassword,
   verifyPassword: vi.fn(),
 }));
-vi.mock("@/lib/auth/password-reset", () => ({
-  consumePasswordResetToken: mocks.consumePasswordResetToken,
+vi.mock("@/lib/auth/password-reset", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/auth/password-reset")>()),
   hasExceededResetRequestLimit: mocks.hasExceededResetRequestLimit,
   issuePasswordResetToken: mocks.issuePasswordResetToken,
 }));
@@ -51,9 +53,14 @@ vi.mock("@/lib/db/prisma", () => ({
   getPrisma: () => ({
     $transaction: async (fn: (tx: unknown) => unknown) =>
       fn({
+        passwordResetToken: {
+          findUnique: mocks.tokenFindUnique,
+          updateMany: mocks.tokenUpdateMany,
+        },
         session: { deleteMany: mocks.sessionDeleteMany },
         user: { update: mocks.userUpdate },
       }),
+    passwordResetToken: { findFirst: mocks.tokenFindFirst },
     user: { findUnique: mocks.userFindUnique },
   }),
 }));
@@ -189,17 +196,13 @@ describe("reset password submission", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.hashPassword.mockResolvedValue("new-bcrypt-hash");
-    mocks.consumePasswordResetToken.mockResolvedValue({
-      ok: true,
-      userId: "user-1",
-    });
+    mocks.tokenFindFirst.mockResolvedValue({ id: "token-1" });
+    mocks.tokenFindUnique.mockResolvedValue({ id: "token-1", userId: "user-1" });
+    mocks.tokenUpdateMany.mockResolvedValue({ count: 1 });
   });
 
   it("rejects a token that is invalid, expired, or already used", async () => {
-    mocks.consumePasswordResetToken.mockResolvedValue({
-      ok: false,
-      reason: "invalid",
-    });
+    mocks.tokenFindFirst.mockResolvedValue(null);
 
     const state = await resetPasswordAction(
       { status: "idle" },
@@ -213,6 +216,8 @@ describe("reset password submission", () => {
     expect(state.status).toBe("error");
     expect(state.message).toMatch(/invalid or has expired/i);
     expect(mocks.userUpdate).not.toHaveBeenCalled();
+    expect(mocks.hashPassword).not.toHaveBeenCalled();
+    expect(mocks.tokenUpdateMany).not.toHaveBeenCalled();
   });
 
   it("rejects mismatched confirmation before consuming the token", async () => {
@@ -226,7 +231,8 @@ describe("reset password submission", () => {
     );
 
     expect(state.status).toBe("error");
-    expect(mocks.consumePasswordResetToken).not.toHaveBeenCalled();
+    expect(mocks.tokenUpdateMany).not.toHaveBeenCalled();
+    expect(mocks.tokenFindFirst).not.toHaveBeenCalled();
   });
 
   it("enforces the shared password policy", async () => {
@@ -237,7 +243,8 @@ describe("reset password submission", () => {
 
     expect(state.status).toBe("error");
     expect(state.message).toMatch(/at least 10 characters/i);
-    expect(mocks.consumePasswordResetToken).not.toHaveBeenCalled();
+    expect(mocks.tokenUpdateMany).not.toHaveBeenCalled();
+    expect(mocks.tokenFindFirst).not.toHaveBeenCalled();
   });
 
   it("writes a new hash and destroys every existing session", async () => {
@@ -275,6 +282,9 @@ describe("reset password submission", () => {
       ),
     );
 
+    expect(mocks.writeAuditLog).toHaveBeenCalledWith(expect.objectContaining({
+      action: "auth.password_reset_completed", actorId: "user-1",
+    }));
     const logged = JSON.stringify(mocks.writeAuditLog.mock.calls);
     expect(logged).not.toContain("CorrectHorse9");
     expect(logged).not.toContain("new-bcrypt-hash");
