@@ -91,6 +91,14 @@ it("makes anonymous root a single public feed without the marketing stack", asyn
     "/sign-up",
   );
 });
+it("offers a first keyboard link targeting the public main content", async () => {
+  const view = render(await Home());
+  const skip = view.getByRole("link", { name: "Skip to content" });
+  expect(view.container.querySelector("a")).toBe(skip);
+  expect(skip).toHaveAttribute("href", "#public-feed");
+  expect(view.getByRole("main")).toHaveAttribute("id", "public-feed");
+  expect(view.getByRole("main")).toHaveAttribute("tabindex", "-1");
+});
 it("redirects authenticated root before fetching public posts", async () => {
   mocks.user.mockResolvedValue({ id: "member" });
   await expect(Home()).rejects.toThrow("redirect:/app");
