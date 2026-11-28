@@ -6,10 +6,14 @@ const prismaMocks = vi.hoisted(() => ({
   findFirst: vi.fn(),
   findUnique: vi.fn(),
   updateMany: vi.fn(),
+  transaction: vi.fn(),
+  updateUser: vi.fn(),
+  deleteSessions: vi.fn(),
 }));
 
 vi.mock("@/lib/db/prisma", () => ({
   getPrisma: () => ({
+    $transaction: prismaMocks.transaction,
     passwordResetToken: {
       count: prismaMocks.count,
       create: prismaMocks.create,
@@ -22,6 +26,7 @@ vi.mock("@/lib/db/prisma", () => ({
 
 import {
   consumePasswordResetToken,
+  redeemPasswordResetToken,
   hashResetToken,
   hasExceededResetRequestLimit,
   isPasswordResetTokenRedeemable,
@@ -136,5 +141,66 @@ describe("password reset tokens", () => {
 
     prismaMocks.count.mockResolvedValue(0);
     expect(await hasExceededResetRequestLimit("user-1")).toBe(false);
+  });
+});
+
+describe("atomic password recovery (PXR-003)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    prismaMocks.findUnique.mockResolvedValue({ id: "t1", userId: "user-1" });
+    prismaMocks.updateMany.mockResolvedValue({ count: 1 });
+    prismaMocks.updateUser.mockResolvedValue({});
+    prismaMocks.deleteSessions.mockResolvedValue({ count: 2 });
+    prismaMocks.transaction.mockImplementation((callback) => callback({
+      passwordResetToken: {
+        findUnique: prismaMocks.findUnique,
+        updateMany: prismaMocks.updateMany,
+      },
+      user: { update: prismaMocks.updateUser },
+      session: { deleteMany: prismaMocks.deleteSessions },
+    }));
+  });
+
+  it("claims the grant, writes the password and removes sessions together", async () => {
+    expect(await redeemPasswordResetToken("raw-token", "new-hash")).toEqual({
+      ok: true, userId: "user-1",
+    });
+    expect(prismaMocks.transaction).toHaveBeenCalledTimes(1);
+    expect(prismaMocks.updateUser).toHaveBeenCalledWith({
+      data: { passwordHash: "new-hash" }, where: { id: "user-1" },
+    });
+    expect(prismaMocks.deleteSessions).toHaveBeenCalledWith({
+      where: { userId: "user-1" },
+    });
+  });
+
+  it("does not write the password or sessions if the claim loses the race", async () => {
+    prismaMocks.updateMany.mockResolvedValueOnce({ count: 0 });
+    expect(await redeemPasswordResetToken("raw-token", "new-hash")).toEqual({
+      ok: false, reason: "invalid",
+    });
+    expect(prismaMocks.updateUser).not.toHaveBeenCalled();
+    expect(prismaMocks.deleteSessions).not.toHaveBeenCalled();
+  });
+
+  it("rejects the transaction if session revocation fails", async () => {
+    let committed = false;
+    prismaMocks.transaction.mockImplementation(async (callback) => {
+      const result = await callback({
+        passwordResetToken: {
+          findUnique: prismaMocks.findUnique,
+          updateMany: prismaMocks.updateMany,
+        },
+        user: { update: prismaMocks.updateUser },
+        session: { deleteMany: prismaMocks.deleteSessions },
+      });
+      committed = true;
+      return result;
+    });
+    prismaMocks.deleteSessions.mockRejectedValueOnce(new Error("session write failed"));
+    await expect(redeemPasswordResetToken("raw-token", "new-hash")).rejects.toThrow("session write failed");
+    expect(prismaMocks.updateMany).toHaveBeenCalledTimes(1);
+    expect(prismaMocks.updateUser).toHaveBeenCalledTimes(1);
+    expect(committed).toBe(false);
   });
 });
