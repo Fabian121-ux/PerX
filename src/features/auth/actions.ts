@@ -33,7 +33,8 @@ import {
   signUpSchema,
 } from "@/lib/validation/auth";
 import {
-  consumePasswordResetToken,
+  redeemPasswordResetToken,
+  isPasswordResetTokenRedeemable,
   hasExceededResetRequestLimit,
   issuePasswordResetToken,
 } from "@/lib/auth/password-reset";
@@ -975,10 +976,9 @@ export type PasswordResetFormState = {
 /**
  * Redeem a reset token and set a new password.
  *
- * The token is consumed atomically BEFORE the password is written, so a
- * replayed link cannot set a password twice. All existing sessions are then
- * destroyed: account recovery must evict an attacker who already holds a
- * stolen session cookie.
+ * The token claim, password update and session revocation commit together.
+ * A failed write leaves the token usable, and a replay cannot change the
+ * password twice.
  */
 export async function resetPasswordAction(
   _state: PasswordResetFormState,
@@ -1003,8 +1003,7 @@ export async function resetPasswordAction(
     return { message: "Password reset is unavailable.", status: "error" };
   }
 
-  const consumed = await consumePasswordResetToken(token);
-  if (!consumed.ok) {
+  if (!(await isPasswordResetTokenRedeemable(token))) {
     return {
       message: "This reset link is invalid or has expired.",
       status: "error",
@@ -1012,14 +1011,13 @@ export async function resetPasswordAction(
   }
 
   const passwordHash = await hashPassword(parsedPassword.data);
-  await getPrisma().$transaction(async (tx) => {
-    await tx.user.update({
-      data: { passwordHash },
-      where: { id: consumed.userId },
-    });
-    // Server-authoritative sign-out of every existing session.
-    await tx.session.deleteMany({ where: { userId: consumed.userId } });
-  });
+  const consumed = await redeemPasswordResetToken(token, passwordHash);
+  if (!consumed.ok) {
+    return {
+      message: "This reset link is invalid or has expired.",
+      status: "error",
+    };
+  }
   await writeAuditLog({
     action: "auth.password_reset_completed",
     actorId: consumed.userId,
