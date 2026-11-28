@@ -114,6 +114,40 @@ describe("message events route", () => {
     expect(mocks.closeRealtime).toHaveBeenCalledTimes(1);
   });
 
+  it("closes normally before the platform timeout and resumes from Last-Event-ID", async () => {
+    vi.useFakeTimers();
+    try {
+      const response = await GET(request());
+      const reader = response.body!.getReader();
+      const first = await readUntil(reader, "event: conversations");
+      expect(first).toContain("id: checkpoint-1");
+
+      await vi.advanceTimersByTimeAsync(240_000);
+      expect(mocks.closeRealtime).toHaveBeenCalledTimes(1);
+      let done = false;
+      for (let index = 0; index < 100 && !done; index += 1) {
+        done = (await reader.read()).done === true;
+      }
+      expect(done).toBe(true);
+      const snapshotCalls = mocks.getMessageSnapshot.mock.calls.length;
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(mocks.getMessageSnapshot).toHaveBeenCalledTimes(snapshotCalls);
+
+      const resumed = await GET(new Request(request().url, {
+        headers: { "Last-Event-ID": "checkpoint-1" },
+      }));
+      const resumedReader = resumed.body!.getReader();
+      await readUntil(resumedReader, "event: conversations");
+      expect(mocks.getMessageMutationsAfter).toHaveBeenLastCalledWith(
+        expect.objectContaining({ cursor: "checkpoint-1" }),
+      );
+      await resumedReader.cancel();
+    } finally {
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    }
+  });
+
   it("closes a subscription that resolves after the stream is cancelled", async () => {
     const pending = deferred<{ close: () => Promise<void> }>();
     mocks.subscribeToConversationRealtime.mockReturnValue(pending.promise);

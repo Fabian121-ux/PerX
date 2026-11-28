@@ -126,7 +126,9 @@ export async function updateProfileAction(formData: FormData) {
           allowConnectionRequests: parsed.data.allowConnectionRequests,
           allowMessagesFromConnections:
             parsed.data.allowMessagesFromConnections,
-          allowMessagesFromMembers: parsed.data.allowMessagesFromMembers,
+          ...(formData.has("allowMessagesFromMembers")
+            ? { allowMessagesFromMembers: parsed.data.allowMessagesFromMembers }
+            : {}),
           biography: parsed.data.biography,
           headline: parsed.data.headline,
           isDiscoverable: parsed.data.isDiscoverable,
