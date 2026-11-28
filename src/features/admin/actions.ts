@@ -476,10 +476,13 @@ export async function updateModerationCaseStatusAction(formData: FormData) {
   if (!moderationCase) throw new Error("Case not found.");
 
   await getPrisma().$transaction(async (tx) => {
-    await tx.moderationCase.update({
+    const updated = await tx.moderationCase.updateMany({
       data: { status: parsedStatus.data as ModerationCaseStatus },
-      where: { id: caseId },
+      where: { id: caseId, status: moderationCase.status },
     });
+    if (updated.count !== 1) {
+      throw new Error("Case status changed during review. Refresh and try again.");
+    }
     await tx.moderationCaseEvent.create({
       data: {
         actorId: admin.id,
