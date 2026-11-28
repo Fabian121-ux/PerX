@@ -39,7 +39,7 @@ vi.mock("@/lib/db/prisma", () => ({
   }),
 }));
 
-import { reviewPolicyFlagCaseAction } from "@/features/admin/actions";
+import { reviewPolicyFlagCaseAction, updateModerationCaseStatusAction } from "@/features/admin/actions";
 
 const CASE_ID = "case-1";
 const OPPORTUNITY_ID = "opportunity-1";
@@ -294,5 +294,46 @@ describe("policy flag case review action", () => {
     await expect(reviewPolicyFlagCaseAction(decisionForm("clear", "short"))).rejects.toThrow();
     await expect(reviewPolicyFlagCaseAction(decisionForm("banana"))).rejects.toThrow();
     expect(mocks.transaction).not.toHaveBeenCalled();
+  });
+});
+
+describe("moderation case status transitions (PXR-012)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.requireCapabilityOrNotFound.mockResolvedValue({ id: "admin-1" });
+    mocks.findCase.mockResolvedValue({ status: "NEW" });
+    mocks.transaction.mockImplementation((callback) => callback(tx));
+    tx.moderationCase.updateMany.mockResolvedValue({ count: 1 });
+  });
+
+  function statusForm() {
+    const form = new FormData();
+    form.set("caseId", CASE_ID);
+    form.set("status", "RESOLVED");
+    form.set("reason", "Reviewed the case.");
+    return form;
+  }
+
+  it("guards the write and records the matching previous status", async () => {
+    await updateModerationCaseStatusAction(statusForm());
+    expect(tx.moderationCase.updateMany).toHaveBeenCalledWith({
+      where: { id: CASE_ID, status: "NEW" },
+      data: { status: "RESOLVED" },
+    });
+    expect(tx.moderationCaseEvent.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ previousStatus: "NEW", nextStatus: "RESOLVED" }),
+    });
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        metadata: expect.objectContaining({ fromStatus: "NEW", toStatus: "RESOLVED" }),
+      }),
+    });
+  });
+
+  it("rejects stale decisions without writing misleading audit records", async () => {
+    tx.moderationCase.updateMany.mockResolvedValue({ count: 0 });
+    await expect(updateModerationCaseStatusAction(statusForm())).rejects.toThrow(/changed during review/i);
+    expect(tx.moderationCaseEvent.create).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
 });
