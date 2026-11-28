@@ -99,7 +99,24 @@ export interface PtahXProfileProvider {
   getPublicProfile(username: string): Promise<any>;
 }
 
+
+export type AdminActivitySummary = {
+  eventsLast24Hours: number;
+  eventsLast7Days: number;
+  eventsLast30Days: number;
+  activeActorsLast7Days: number;
+  recentEvents: Array<{
+    action: string;
+    actor: { id: string; name: string; username: string } | null;
+    createdAt: Date;
+    entityId: string | null;
+    entityType: string;
+    id: string;
+  }>;
+};
+
 export interface PtahXAdminProvider {
+  getAdminActivitySummary(): Promise<AdminActivitySummary>;
   getAdminDealsPage(params?: CursorPageParams): Promise<CursorPage<AdminDealSummary>>;
   getAdminMetrics(): Promise<any>;
   getAdminList(kind: AdminListKind): Promise<any[]>;

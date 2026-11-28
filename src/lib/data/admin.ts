@@ -29,3 +29,8 @@ export async function getAdminListPage(
   const provider = await getPtahXDataProvider();
   return provider.admin.getAdminListPage(kind, params);
 }
+
+export async function getAdminActivitySummary() {
+  const provider = await getPtahXDataProvider();
+  return provider.admin.getAdminActivitySummary();
+}
