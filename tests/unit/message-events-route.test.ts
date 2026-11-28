@@ -126,7 +126,7 @@ describe("message events route", () => {
       expect(mocks.closeRealtime).toHaveBeenCalledTimes(1);
       let done = false;
       for (let index = 0; index < 100 && !done; index += 1) {
-        done = (await reader.read()).done;
+        done = (await reader.read()).done === true;
       }
       expect(done).toBe(true);
       const snapshotCalls = mocks.getMessageSnapshot.mock.calls.length;
