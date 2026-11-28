@@ -4,8 +4,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getAdminMetrics: vi.fn(),
   requireCapabilityOrNotFound: vi.fn(),
+  unstableCache: vi.fn((fn: () => Promise<unknown>) => fn()),
 }));
 
+vi.mock("next/cache", () => ({
+  unstable_cache: mocks.unstableCache,
+}));
 vi.mock("@/lib/auth/session", () => ({
   requireCapabilityOrNotFound: mocks.requireCapabilityOrNotFound,
 }));
@@ -17,7 +21,8 @@ import AdminDashboardPage from "@/app/admin/(overview)/page";
 
 describe("admin dashboard", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    mocks.getAdminMetrics.mockClear();
+    mocks.requireCapabilityOrNotFound.mockClear();
     mocks.requireCapabilityOrNotFound.mockResolvedValue({
       id: "admin-1",
       roles: ["ADMIN"],
@@ -31,6 +36,19 @@ describe("admin dashboard", () => {
       users: 240,
       verification: 3,
     });
+  });
+
+  it("uses a short, environment-scoped cache for dashboard metrics", () => {
+    expect(mocks.unstableCache).toHaveBeenCalledTimes(1);
+    expect(mocks.unstableCache).toHaveBeenCalledWith(
+      expect.any(Function),
+      [
+        "admin-dashboard-metrics-v1",
+        process.env.VERCEL_ENV ?? "local",
+        process.env.PERX_DATA_MODE ?? "auto",
+      ],
+      { revalidate: 30, tags: ["admin-dashboard-metrics"] },
+    );
   });
 
   it("renders every available metric as a link to its workspace", async () => {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { ArrowUpRight } from "lucide-react";
 
 import { AdminSection } from "@/components/admin-section";
@@ -25,9 +26,23 @@ const metricLinks: Array<{
 
 type AdminMetrics = Record<(typeof metricLinks)[number]["valueKey"], number>;
 
+// Dashboard counts are platform-wide aggregates, not user-specific data.
+// Cache them briefly so repeated admin navigation does not fan out seven
+// COUNT queries on every page request. Keep preview, production, and local
+// data modes isolated to prevent cross-environment cache reuse.
+const getCachedAdminMetrics = unstable_cache(
+  getAdminMetrics,
+  [
+    "admin-dashboard-metrics-v1",
+    process.env.VERCEL_ENV ?? "local",
+    process.env.PERX_DATA_MODE ?? "auto",
+  ],
+  { revalidate: 30, tags: ["admin-dashboard-metrics"] },
+);
+
 export default async function AdminDashboardPage() {
   const admin = await requireCapabilityOrNotFound("admin:access");
-  const metrics = (await getAdminMetrics()) as AdminMetrics;
+  const metrics = (await getCachedAdminMetrics()) as AdminMetrics;
   const visibleMetrics = metricLinks.filter((item) =>
     hasCapability(admin.roles, item.capability),
   );
