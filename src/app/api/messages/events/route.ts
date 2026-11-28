@@ -20,6 +20,8 @@ import { getMessageSnapshot } from "@/lib/messages/snapshot";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+// Close normally before the observed 300-second hosting limit.
+const streamLifetimeMs = 240_000;
 const keepAliveIntervalMs = 15_000;
 const accessValidationIntervalMs = 30_000;
 const reconciliationIntervalMs = 60_000;
@@ -82,6 +84,7 @@ export async function GET(request: Request) {
       let realtimeStart: Promise<void> | null = null;
       let realtimeRetryMs = realtimeRetryInitialMs;
       let realtimeRetry: ReturnType<typeof setTimeout> | null = null;
+      let rollover: ReturnType<typeof setTimeout> | null = null;
       let keepAlive: ReturnType<typeof setInterval> | null = null;
       let accessValidation: ReturnType<typeof setInterval> | null = null;
       let reconciliation: ReturnType<typeof setInterval> | null = null;
@@ -111,6 +114,8 @@ export async function GET(request: Request) {
       const close = () => {
         if (closed) return;
         closed = true;
+        if (rollover) clearTimeout(rollover);
+        request.signal.removeEventListener("abort", close);
         if (realtimeRetry) clearTimeout(realtimeRetry);
         if (keepAlive) clearInterval(keepAlive);
         if (accessValidation) clearInterval(accessValidation);
@@ -365,7 +370,10 @@ export async function GET(request: Request) {
         () => void sendReconciliation(true),
         reconciliationIntervalMs,
       );
+      // EventSource reconnects on normal EOF and carries Last-Event-ID.
+      rollover = setTimeout(close, streamLifetimeMs);
       request.signal.addEventListener("abort", close, { once: true });
+      if (request.signal.aborted) close();
     },
     cancel() {
       closeStream();
