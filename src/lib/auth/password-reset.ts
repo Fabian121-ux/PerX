@@ -97,10 +97,11 @@ export type ConsumedPasswordReset =
  */
 export async function consumePasswordResetToken(
   token: string,
+  transaction?: Pick<ReturnType<typeof getPrisma>, "passwordResetToken">,
 ): Promise<ConsumedPasswordReset> {
   if (!token) return { ok: false, reason: "invalid" };
 
-  const prisma = getPrisma();
+  const prisma = transaction ?? getPrisma();
   const tokenHash = hashResetToken(token);
   const grant = await prisma.passwordResetToken.findUnique({
     select: { id: true, userId: true },
@@ -119,6 +120,29 @@ export async function consumePasswordResetToken(
   if (!claimed.count) return { ok: false, reason: "invalid" };
 
   return { ok: true, userId: grant.userId };
+}
+
+/**
+ * Claim the grant, replace the password and revoke sessions in a single
+ * transaction. A failed password or session write rolls back the grant claim.
+ */
+export async function redeemPasswordResetToken(
+  token: string,
+  passwordHash: string,
+): Promise<ConsumedPasswordReset> {
+  if (!token) return { ok: false, reason: "invalid" };
+
+  return getPrisma().$transaction(async (tx) => {
+    const consumed = await consumePasswordResetToken(token, tx);
+    if (!consumed.ok) return consumed;
+
+    await tx.user.update({
+      data: { passwordHash },
+      where: { id: consumed.userId },
+    });
+    await tx.session.deleteMany({ where: { userId: consumed.userId } });
+    return consumed;
+  });
 }
 
 /**
