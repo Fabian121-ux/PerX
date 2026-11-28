@@ -970,7 +970,7 @@ export async function reviewPolicyFlagCaseAction(formData: FormData) {
   const clearing = parsedDecision.data === "clear";
   const ownerId = moderationCase.reportedUserId;
 
-  const reviewed = await getPrisma().$transaction(async (tx) => {
+  await getPrisma().$transaction(async (tx) => {
     /*
      * Guarded by FLAGGED: if the listing already moved - the owner archived it,
      * another admin decided - this matches nothing and nothing is released.
@@ -983,13 +983,18 @@ export async function reviewPolicyFlagCaseAction(formData: FormData) {
       },
       where: { id: moderationCase.targetId, moderationStatus: "FLAGGED" },
     });
-    if (listingResult.count !== 1) return false;
+    if (listingResult.count !== 1) {
+      throw new Error("This case changed during review. Review it again.");
+    }
 
     const caseResult = await tx.moderationCase.updateMany({
       data: { status: "RESOLVED" as const },
       where: { id: moderationCase.id, status: moderationCase.status },
     });
-    if (caseResult.count !== 1) return false;
+    // A rejected transaction must also roll back the preceding listing write.
+    if (caseResult.count !== 1) {
+      throw new Error("This case changed during review. Review it again.");
+    }
 
     await tx.moderationCaseEvent.create({
       data: {
@@ -1045,13 +1050,7 @@ export async function reviewPolicyFlagCaseAction(formData: FormData) {
         },
       });
     }
-
-    return true;
   });
-
-  if (!reviewed) {
-    throw new Error("This case changed during review. Review it again.");
-  }
 
   revalidatePath("/admin/moderation");
   revalidatePath("/admin/moderation/policy-flags");
