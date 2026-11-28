@@ -137,6 +137,28 @@ describe("policy flag case review action", () => {
     );
   });
 
+  it("rejects inside the transaction when the case claim fails after the listing write", async () => {
+    let committed = false;
+    mocks.transaction.mockImplementation(async (callback) => {
+      const result = await callback(tx);
+      committed = true;
+      return result;
+    });
+    tx.moderationCase.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(
+      reviewPolicyFlagCaseAction(decisionForm("clear")),
+    ).rejects.toThrow(/changed during review/i);
+
+    expect(tx.opportunity.updateMany).toHaveBeenCalledTimes(1);
+    expect(tx.moderationCase.updateMany).toHaveBeenCalledTimes(1);
+    expect(committed).toBe(false);
+    expect(tx.moderationCaseEvent.create).not.toHaveBeenCalled();
+    expect(tx.moderationAction.create).not.toHaveBeenCalled();
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+    expect(tx.notification.create).not.toHaveBeenCalled();
+  });
+
   it("does not change the listing when the case write fails", async () => {
     tx.moderationCase.updateMany.mockRejectedValue(new Error("case write failed"));
 
