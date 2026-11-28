@@ -27,6 +27,12 @@ export default async function Home() {
   ]);
   return (
     <div className="min-h-dvh min-w-0 bg-[color:var(--px-page)]">
+      <a
+        className="ptahx-skip-link rounded-lg bg-[color:var(--px-surface)] px-4 py-3 font-semibold text-[color:var(--px-text)] shadow-lg"
+        href="#public-feed"
+      >
+        Skip to content
+      </a>
       <header className="sticky top-0 z-30 border-b border-[color:var(--px-border)] bg-[color:var(--px-surface)]/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[640px] items-center justify-between gap-2 px-3 sm:px-4">
           <Link href="/" aria-label="PtahX home">
@@ -52,7 +58,9 @@ export default async function Home() {
         </Link>
       </div>
       <main
-        className="mx-auto grid min-w-0 max-w-[640px] gap-4 px-2 py-4 sm:px-4"
+        id="public-feed"
+        tabIndex={-1}
+        className="mx-auto grid min-w-0 max-w-[640px] scroll-mt-20 gap-4 px-2 py-4 sm:px-4"
         aria-label="Public feed"
       >
         <h1 className="px-2 text-xl font-black text-[color:var(--px-text)]">Latest updates</h1>
