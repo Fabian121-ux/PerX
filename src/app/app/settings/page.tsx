@@ -10,6 +10,11 @@ export default async function SettingsPage() {
       title="Account settings"
     >
       <Card>
+        <h2 className="font-semibold text-[color:var(--px-text)]">Notifications</h2>
+        <p className="mt-2 text-sm text-[color:var(--px-text-muted)]">Choose whether this device can receive push alerts when preX is closed.</p>
+        <ButtonLink className="mt-4" href="/app/settings/notifications" variant="secondary">Notification settings</ButtonLink>
+      </Card>
+      <Card>
         <h2 className="font-semibold text-[color:var(--px-text)]">Security</h2>
         <p className="mt-2 text-sm text-[color:var(--px-text-muted)]">
           Review sessions, password policy, and account protection controls.

@@ -361,6 +361,7 @@ model User {
   reviewsGiven                      Review[]                  @relation("ReviewAuthor")
   reviewsReceived                   Review[]                  @relation("ReviewSubject")
   notifications                     Notification[]
+  pushSubscriptions                 PushSubscription[]
   auditLogs                         AuditLog[]                @relation("AuditActor")
   moderationActions                 ModerationAction[]        @relation("ModerationActor")
   connectionsSent                   Connection[]              @relation("ConnectionRequester")
@@ -1190,6 +1191,20 @@ model TrustSignal {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+model PushSubscription {
+  id         String   @id @default(cuid())
+  userId     String
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  categories String[] @default(["messages", "connections", "deals", "opportunities", "system"])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model Notification {

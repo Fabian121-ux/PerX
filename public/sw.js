@@ -1,6 +1,6 @@
 /* PtahX PWA v10 — public assets only. Authenticated HTML, RSC responses,
    API data, deals, messages and Supabase media must NEVER enter CacheStorage. */
-const VERSION = "v10";
+const VERSION = "v11";
 const CACHE_PREFIX = "ptahx-";
 const SHELL_CACHE = `${CACHE_PREFIX}offline-shell-${VERSION}`;
 const BUILD_CACHE = `${CACHE_PREFIX}immutable-build-${VERSION}`;
@@ -135,4 +135,51 @@ self.addEventListener("fetch", (event) => {
   if (bucket && request.destination !== "document") {
     event.respondWith(serveImmutableAsset(event, bucket));
   }
+});
+
+
+// Push notifications are intentionally handled by the service worker so they
+// can be displayed when the installed PWA has no open window.
+self.addEventListener("push", (event) => {
+  event.waitUntil((async () => {
+    let payload = {};
+    try {
+      payload = event.data ? event.data.json() : {};
+    } catch {
+      payload = { title: "preX", body: "You have a new update." };
+    }
+    const title = typeof payload.title === "string" ? payload.title.slice(0, 80) : "preX";
+    const body = typeof payload.body === "string" ? payload.body.slice(0, 180) : "You have a new update.";
+    const url = typeof payload.url === "string" && payload.url.startsWith("/") && !payload.url.startsWith("//")
+      ? payload.url
+      : "/app/notifications";
+    await self.registration.showNotification(title, {
+      body,
+      data: { url },
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      tag: typeof payload.tag === "string" ? payload.tag.slice(0, 100) : "prex-update",
+      renotify: false,
+      timestamp: Date.now(),
+    });
+  })());
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = event.notification.data?.url;
+  const url = typeof target === "string" && target.startsWith("/") && !target.startsWith("//")
+    ? new URL(target, self.location.origin).href
+    : new URL("/app/notifications", self.location.origin).href;
+  event.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const client of windows) {
+      if ("focus" in client) {
+        await client.focus();
+        if ("navigate" in client) await client.navigate(url);
+        return;
+      }
+    }
+    await self.clients.openWindow(url);
+  })());
 });

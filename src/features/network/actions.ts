@@ -12,6 +12,7 @@ import {
 } from "@/lib/account/enforcement";
 import { assertCanRequestConnection } from "@/lib/account/enforcement";
 import { writeAuditLog } from "@/lib/logging/audit";
+import { sendPushToUsers } from "@/lib/push/web-push";
 import { lockUserPair } from "@/lib/network/pair-lock";
 import {
   isDiscoverableNetworkTarget,
@@ -202,6 +203,12 @@ export async function requestConnectionAction(targetUserId: string) {
   });
 
   if (changed) {
+    await sendPushToUsers([targetUserId], "connections", {
+      body: "Someone sent you a connection request.",
+      tag: `connection-request-${targetUserId}`,
+      title: "New connection request",
+      url: "/app/connections?tab=requests",
+    }).catch((error) => console.warn("Connection push delivery failed:", error));
     await writeAuditLog({
       actorId: user.id,
       action: "connection.request",
@@ -215,7 +222,7 @@ export async function requestConnectionAction(targetUserId: string) {
 export async function acceptConnectionAction(connectionId: string) {
   const user = await requireUser();
 
-  await getPrisma().$transaction(async (tx) => {
+  const candidate = await getPrisma().$transaction(async (tx) => {
     const candidate = await tx.connection.findUnique({
       select: {
         id: true,
@@ -336,6 +343,12 @@ export async function acceptConnectionAction(connectionId: string) {
     return candidate;
   });
 
+  await sendPushToUsers([candidate.requesterId], "connections", {
+    body: `${user.name} accepted your connection request.`,
+    tag: `connection-accepted-${connectionId}`,
+    title: "Connection accepted",
+    url: "/app/connections?tab=connections",
+  }).catch((error) => console.warn("Connection push delivery failed:", error));
   await writeAuditLog({
     actorId: user.id,
     action: "connection.accept",
@@ -348,7 +361,7 @@ export async function acceptConnectionAction(connectionId: string) {
 export async function rejectConnectionAction(connectionId: string) {
   const user = await requireUser();
 
-  await getPrisma().$transaction(async (tx) => {
+  const candidate = await getPrisma().$transaction(async (tx) => {
     const candidate = await tx.connection.findUnique({
       select: {
         id: true,
@@ -464,8 +477,15 @@ export async function rejectConnectionAction(connectionId: string) {
         },
       });
     }
+    return candidate;
   });
 
+  await sendPushToUsers([candidate.requesterId], "connections", {
+    body: `${user.name} declined your connection request.`,
+    tag: `connection-declined-${connectionId}`,
+    title: "Connection request declined",
+    url: "/app/connections?tab=sent",
+  }).catch((error) => console.warn("Connection push delivery failed:", error));
   await writeAuditLog({
     actorId: user.id,
     action: "connection.decline",

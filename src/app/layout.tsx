@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
+import { PushNotificationManager } from "@/components/pwa/push-notification-manager";
 import { PerformanceVitals } from "@/components/performance/performance-vitals";
 import { NavigationProgress } from "@/components/navigation/navigation-progress";
 import { MockModeIndicator } from "@/components/dev/mock-mode-indicator";
@@ -71,6 +72,7 @@ export default function RootLayout({
           <FeedbackProvider>
             <InteractionPressFeedback />
             <ServiceWorkerRegister />
+            <PushNotificationManager />
             <PerformanceVitals />
             <NavigationProgress />
             {children}
